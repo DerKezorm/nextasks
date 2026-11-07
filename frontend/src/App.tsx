@@ -16,7 +16,7 @@ import { TrashPage } from './pages/TrashPage'
 import { OfflinePage } from './components/AppInstall'
 import { useAuth } from './state/auth'
 import { SyncProvider, useSyncState, useView } from './state/sync'
-import { TILES } from './sync/tiles'
+import { shownTiles, TILES } from './sync/tiles'
 
 /** Everything behind the sign-in: without an account the page goes to the sign-in, and comes back after. An account
  * that still has to set up its second factor (the operator requires one) reaches its own account page only. */
@@ -63,10 +63,20 @@ function Home() {
         <SidebarBody />
       </main>
     )
-  if (!space) return <Navigate to="/today" replace />
   if (!sync.loaded) return <main className="flex-1" />
+  if (!space) return <Navigate to={startPath(view)} replace />
   const first = view.listsOf(space)[0]
   return <Navigate to={first ? `/lists/${first.id}` : '/today'} replace />
+}
+
+/** Where the start page leads: the first tile still shown, else the first own filter shown, else the first list. */
+function startPath(view: ReturnType<typeof useView>): string {
+  const tile = shownTiles(view)[0]
+  if (tile) return `/${tile}`
+  const filter = view.shownFilters[0]
+  if (filter) return `/filters/${filter.id}`
+  const list = view.defaultList
+  return list ? `/lists/${list.id}` : '/today'
 }
 
 export default function App() {
