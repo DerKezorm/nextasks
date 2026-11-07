@@ -100,6 +100,9 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'reload') self.skipWaiting()
+  // The page asks which files this worker's build has: when its own entry script is among them, it already runs this
+  // build (a hard reload passes the old worker by) and takes the worker over without offering a "new version".
+  if (event.data && event.data.type === 'shell' && event.ports[0]) event.ports[0].postMessage({ version: VERSION, shell: SHELL })
 })
 
 /** Where a click on a notification leads: a path of the own origin, else the list with the reminder, else Today. */

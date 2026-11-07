@@ -43,19 +43,53 @@ export function isIos(agent = navigator.userAgent, touchPoints = navigator.maxTo
   return /iPhone|iPad|iPod/.test(agent) || (/Macintosh/.test(agent) && touchPoints > 1)
 }
 
-function watch(registration: ServiceWorkerRegistration) {
-  const offerIfWaiting = () => {
-    // Only a worker that replaces one: the very first takes over by itself.
-    if (registration.waiting && navigator.serviceWorker.controller) {
-      waiting = registration.waiting
-      set({ update: true })
+/** The page's own entry script, as the built start page names it (`/assets/index-<hash>.js`). */
+function entryScript(doc: Document = document): string | null {
+  return doc.querySelector<HTMLScriptElement>('script[type="module"][src*="/assets/"]')?.getAttribute('src') ?? null
+}
+
+/** Whether a worker's build is the one this page already runs: its files name the page's own entry script. */
+export function isCurrentBuild(shell: unknown, entry: string | null = entryScript()): boolean {
+  if (!entry || !Array.isArray(shell)) return false
+  const path = entry.startsWith('/') ? entry : new URL(entry, window.location.origin).pathname
+  return shell.includes(path)
+}
+
+/** The files of a waiting worker's build; null when it does not answer (an older worker) within a second. */
+function shellOf(worker: ServiceWorker): Promise<unknown> {
+  return new Promise((resolve) => {
+    const channel = new MessageChannel()
+    const late = window.setTimeout(() => resolve(null), 1000)
+    channel.port1.onmessage = (event) => {
+      window.clearTimeout(late)
+      resolve((event.data as { shell?: unknown } | null)?.shell ?? null)
     }
+    worker.postMessage({ type: 'shell' }, [channel.port2])
+  })
+}
+
+/** Set when a waiting worker turned out to be this page's own build: it takes over without a reload. */
+let silent = false
+
+function watch(registration: ServiceWorkerRegistration) {
+  const offerIfWaiting = async () => {
+    // Only a worker that replaces one: the very first takes over by itself.
+    const worker = registration.waiting
+    if (!worker || !navigator.serviceWorker.controller) return
+    if (isCurrentBuild(await shellOf(worker))) {
+      // A hard reload already brought this build; the old worker was only passed by. Nothing new to offer.
+      silent = true
+      worker.postMessage({ type: 'reload' })
+      return
+    }
+    waiting = worker
+    set({ update: true })
   }
-  offerIfWaiting()
+  void offerIfWaiting()
   registration.addEventListener('updatefound', () => {
     const worker = registration.installing
     worker?.addEventListener('statechange', () => {
-      if (worker.state === 'installed') offerIfWaiting()
+      if (worker.state === 'installed') void offerIfWaiting()
     })
   })
   // An app open for days still learns of a new version: on every return to it.
@@ -85,6 +119,10 @@ export function startApp(): void {
   let reloading = false
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     // The new worker took over after "reload": now the page comes from it.
+    if (silent) {
+      silent = false
+      return
+    }
     if (!reloading && waiting) {
       reloading = true
       window.location.reload()
