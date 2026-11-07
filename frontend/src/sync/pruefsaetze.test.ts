@@ -1,9 +1,10 @@
 // The shared test sets of server, web and app (`nextasks-ios/docs/pruefsaetze`, copied unchanged into
 // `src/test/pruefsaetze`): repetition, the tie rule, quick entry and order keys must come out exactly as the Python
-// reference computes them.
+// reference computes them. Own filters too: what each finds, in which order, and the number in the sidebar.
 import { describe, expect, it } from 'vitest'
 
 import ausblenden from '../test/pruefsaetze/ausblenden.json'
+import filter from '../test/pruefsaetze/filter.json'
 import gleichstand from '../test/pruefsaetze/gleichstand.json'
 import klartext from '../test/pruefsaetze/notiz-klartext.json'
 import position from '../test/pruefsaetze/position.json'
@@ -17,7 +18,7 @@ import { outcome } from './merge'
 import { isValidKey, keyBetween, keysBetween } from './position'
 import { parseQuick } from './quick'
 import { nextDue, parseRule, step } from './repeat'
-import { TILES, tileItems } from './tiles'
+import { filterCount, filterItems, TILES, tileItems } from './tiles'
 import type { Data, Kind } from './types'
 import { buildView, type Rec } from './view'
 
@@ -180,5 +181,55 @@ describe('ausblenden.json', () => {
   it.each(ausblenden.default_list.map((c) => [c.hidden.join(',') || 'none', c] as const))('default list with %s hidden', (_, c) => {
     const got = view(c.hidden).defaultList?.id ?? null
     expect(got).toBe(c.expect === null ? null : id(c.expect))
+  })
+})
+
+describe('filter.json', () => {
+  // The set names things in words; the view takes them as ids as they are, the conditions name the same words.
+  const rec = (kind: Kind, id: string, data: Data): Rec => {
+    const made = fresh(kind, id)
+    return { kind, id, data: { ...made.data, ...data, id }, clock: made.clock }
+  }
+  const world = filter.world
+  const view = (hidden: string[]) =>
+    buildView(
+      [
+        ...world.spaces.map((s) => rec('space', s.id, { name: s.id, private: s.id === 's-privat', role: 'manager' })),
+        ...world.lists.map((l) => rec('list', l.id, { space_id: l.space_id, name: l.id, position: 'a0' })),
+        ...world.reminders.map((r) => {
+          const extra = r as { parent_id?: string; due_date?: string; due_time?: string; flagged?: boolean; priority?: number; tags?: string[]; assignees?: number[]; completed_at?: string; deleted?: boolean }
+          return rec('reminder', r.id, {
+            list_id: r.list_id,
+            parent_id: extra.parent_id ?? null,
+            title: r.id,
+            position: r.position,
+            due_date: extra.due_date ?? null,
+            due_time: extra.due_time ?? null,
+            flagged: !!extra.flagged,
+            priority: extra.priority ?? 0,
+            tags: extra.tags ?? [],
+            assignees: extra.assignees ?? [],
+            completed_at: extra.completed_at ?? null,
+            deleted_at: extra.deleted ? '2026-11-05T10:00:00.000Z' : null,
+          })
+        }),
+        ...hidden.map((space) => rec('space_pref', space, { hidden: true })),
+      ],
+      new Map(),
+      filter.me,
+    )
+  // Completions count by their day in a fixed zone (minutes from UTC), so that the set needs no time zone database.
+  const dayIn = (zone: number) => (moment: string) => new Date(Date.parse(moment) + zone * 60_000).toISOString().slice(0, 10)
+
+  it.each(filter.cases.map((c) => [c.name, c] as const))('%s', (_, c) => {
+    const zone = (c as { zone?: number }).zone ?? filter.zone
+    const v = view(c.hidden)
+    expect(filterItems(v, c.rules, filter.today, dayIn(zone)).map((r) => r.id)).toEqual(c.expect)
+    // The number only counts open ones, so the zone of completions does not matter for it.
+    expect(filterCount(v, c.rules, filter.today)).toBe(c.count)
+  })
+
+  it('has enough cases', () => {
+    expect(filter.cases.length).toBeGreaterThanOrEqual(30)
   })
 })

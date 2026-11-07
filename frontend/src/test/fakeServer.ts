@@ -12,6 +12,7 @@ import { cleanTags, cleanText, fresh, REQUIRED, SERVER_ONLY, textLength } from '
 import { mergeInto } from '../sync/merge'
 import { isValidKey, keyAtEnd } from '../sync/position'
 import { parseRule } from '../sync/repeat'
+import { TILE_IDS } from '../sync/tiles'
 import type { Clock, CompleteOp, Data, DeleteOp, Item, Kind, Op, PositionOp, PutOp, Result } from '../sync/types'
 import { uuid4 } from '../sync/uuid'
 
@@ -32,7 +33,7 @@ interface Row {
   data: Data
   clock: Clock
   cursor: number
-  /** list_pref, space_pref: whose it is. */
+  /** list_pref, space_pref, filter, tile_pref: whose it is. */
   owner?: number
   trashed_at?: number
 }
@@ -55,6 +56,10 @@ interface Failure {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const BASE = '/api/app/1'
+/** Kinds that belong to one account; the others never see them. */
+const OWN: Kind[] = ['list_pref', 'space_pref', 'filter', 'tile_pref']
+/** Own kinds outside any space (contract 0.5, only with the feature `filters`). */
+const ACCOUNT_KINDS: Kind[] = ['filter', 'tile_pref']
 
 function error(status: number, code: string, extra: Record<string, unknown> = {}): Answer {
   return { status, body: { detail: { code, message: code.replace(/_/g, ' '), ...extra } } }
@@ -81,7 +86,7 @@ export class FakeServer {
   /** The account of the browser's session; null: signed out. */
   session: number | null = null
   rows = new Map<string, Row>()
-  tombs = new Map<string, { kind: Kind; id: string; cursor: number; space_id: string | null }>()
+  tombs = new Map<string, { kind: Kind; id: string; cursor: number; space_id: string | null; owner?: number }>()
   /** Entries `deleted: true` for one account (it left a space, or a record moved out of its sight). */
   hidden: { account: number; kind: Kind; id: string; cursor: number }[] = []
   results = new Map<string, Result>()
@@ -115,7 +120,7 @@ export class FakeServer {
     strip_location: true,
     update_check: false,
   }
-  features = ['changes', 'batch', 'files', 'wait', 'invites', 'webpush']
+  features = ['changes', 'batch', 'files', 'wait', 'invites', 'webpush', 'space_prefs', 'filters']
   limits = { attachment_bytes: 50 * 1024 * 1024 }
   failures: Failure[] = []
   requests: { method: string; path: string; body: unknown }[] = []
@@ -156,9 +161,16 @@ export class FakeServer {
     return row
   }
 
-  /** A person's own setting (`list_pref`, `space_pref`) as if made on another device. */
-  addPref(kind: 'list_pref' | 'space_pref', id: string, owner: number, data: Data): void {
+  /** A person's own setting (`list_pref`, `space_pref`, `tile_pref`) as if made on another device. */
+  addPref(kind: 'list_pref' | 'space_pref' | 'tile_pref', id: string, owner: number, data: Data): void {
     this.set(kind, id, data, owner)
+  }
+
+  /** An own filter as if made on another device: at the end of the owner's filters. */
+  addFilter(owner: number, name: string, rules: Data = {}, data: Data = {}, id = uuid4()): string {
+    const siblings = [...this.rows.values()].filter((r) => r.kind === 'filter' && r.owner === owner).map((r) => ({ position: r.data.position as string }))
+    this.set('filter', id, { name, rules, position: keyAtEnd(siblings), ...data }, owner)
+    return id
   }
 
   addSpace(name: string, manager: number, options: { private?: boolean; color?: string; icon?: string; id?: string } = {}): string {
@@ -248,6 +260,9 @@ export class FakeServer {
       }
       case 'space_pref':
         return row.id
+      case 'filter':
+      case 'tile_pref':
+        return null
     }
   }
 
@@ -256,7 +271,8 @@ export class FakeServer {
   }
 
   private sees(account: number, row: Row): boolean {
-    if ((row.kind === 'list_pref' || row.kind === 'space_pref') && row.owner !== account) return false
+    if (OWN.includes(row.kind) && row.owner !== account) return false
+    if (ACCOUNT_KINDS.includes(row.kind)) return true
     return !!this.member(this.spaceOf(row), account)
   }
 
@@ -302,6 +318,7 @@ export class FakeServer {
       if (at > since) offer(`${row.kind}:${row.id}`, at, { ...this.item(row, account), cursor: at })
     }
     for (const tomb of this.tombs.values()) {
+      if (tomb.owner !== undefined && tomb.owner !== account) continue
       if (tomb.cursor > since && (tomb.space_id === null || this.member(tomb.space_id, account)))
         offer(`${tomb.kind}:${tomb.id}`, tomb.cursor, { kind: tomb.kind, id: tomb.id, cursor: tomb.cursor, deleted: true, data: null, clock: null })
     }
@@ -341,8 +358,13 @@ export class FakeServer {
     const position = (name: string) => {
       if (name in fields && !isValidKey(fields[name])) bad.push(name)
     }
-    if (kind === 'space' || kind === 'list' || kind === 'section') text('name', 1, 80)
-    if (kind === 'list' || kind === 'section' || kind === 'reminder') position('position')
+    if (kind === 'space' || kind === 'list' || kind === 'section' || kind === 'filter') text('name', 1, 80)
+    if (kind === 'list' || kind === 'section' || kind === 'reminder' || kind === 'filter') position('position')
+    if (kind === 'filter' && 'rules' in fields) {
+      const rules = fields.rules
+      if (!rules || typeof rules !== 'object' || Array.isArray(rules) || JSON.stringify(rules).length > 4000) bad.push('rules')
+    }
+    if ((kind === 'filter' || kind === 'tile_pref' || kind === 'space_pref' || kind === 'list_pref') && 'hidden' in fields && typeof fields.hidden !== 'boolean') bad.push('hidden')
     if (kind === 'list' && 'view' in fields && !['list', 'columns'].includes(fields.view as string)) bad.push('view')
     if (kind === 'reminder') {
       text('title', 1, 500)
@@ -360,12 +382,16 @@ export class FakeServer {
 
   private put(account: number, op: PutOp): Result {
     const fail = (code: string, row?: Row, extra: Partial<Result> = {}) => this.result(op.op_id, false, code, row, account, extra)
-    if (!['space', 'list', 'section', 'reminder', 'list_pref', 'space_pref'].includes(op.kind) || !UUID.test(op.id)) return fail('invalid')
+    const kinds: Kind[] = ['space', 'list', 'section', 'reminder', 'list_pref', 'space_pref', ...(this.features.includes('filters') ? ACCOUNT_KINDS : [])]
+    if (!kinds.includes(op.kind) || !UUID.test(op.id)) return fail('invalid')
+    if (op.kind === 'tile_pref' && !Object.values(TILE_IDS).includes(op.id)) return fail('invalid')
     if (this.tombs.has(`${op.kind}:${op.id}`)) return fail('gone')
-    const own = op.kind === 'list_pref' || op.kind === 'space_pref'
+    const own = OWN.includes(op.kind)
     const key = own ? `${op.kind}:${account}:${op.id}` : `${op.kind}:${op.id}`
     const existing = this.rows.get(key)
     if (existing && !this.sees(account, existing)) return fail('not_found')
+    // Someone else's filter: its id is not for this account.
+    if (op.kind === 'filter' && !existing && [...this.rows.values()].some((r) => r.kind === 'filter' && r.id === op.id)) return fail('not_found')
     const fields: Data = {}
     const ignored: string[] = []
     for (const [field, value] of Object.entries(op.fields)) {
@@ -477,6 +503,16 @@ export class FakeServer {
   }
 
   private remove(account: number, op: DeleteOp): Result {
+    if (op.kind === 'filter' && this.features.includes('filters')) {
+      const row = this.rows.get(`filter:${account}:${op.id}`)
+      if (!row) {
+        const tomb = this.tombs.get(`filter:${op.id}`)
+        return tomb?.owner === account ? this.result(op.op_id, true, null, undefined, account) : this.result(op.op_id, false, 'not_found', undefined, account)
+      }
+      this.rows.delete(`filter:${account}:${op.id}`)
+      this.tombs.set(`filter:${op.id}`, { kind: 'filter', id: op.id, cursor: this.bump(), space_id: null, owner: account })
+      return this.result(op.op_id, true, null, undefined, account)
+    }
     if (!['section', 'attachment'].includes(op.kind)) return this.result(op.op_id, false, 'invalid', undefined, account)
     const row = this.row(op.kind, op.id)
     if (!row) return this.tombs.has(`${op.kind}:${op.id}`) ? this.result(op.op_id, true, null, undefined, account) : this.result(op.op_id, false, 'not_found', undefined, account)

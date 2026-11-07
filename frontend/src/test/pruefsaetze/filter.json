@@ -1,0 +1,625 @@
+{
+ "today": "2026-11-07",
+ "me": 1,
+ "zone": 60,
+ "comment": "Eine Quelle, Konto me, heute today; Erledigt-Tage in zone (Minuten zu UTC). Referenz referenz/filter.py.",
+ "world": {
+  "spaces": [
+   {
+    "id": "s-privat"
+   },
+   {
+    "id": "s-familie"
+   },
+   {
+    "id": "s-verein"
+   }
+  ],
+  "lists": [
+   {
+    "id": "l-aufgaben",
+    "space_id": "s-privat"
+   },
+   {
+    "id": "l-einkauf",
+    "space_id": "s-familie"
+   },
+   {
+    "id": "l-haushalt",
+    "space_id": "s-familie"
+   },
+   {
+    "id": "l-training",
+    "space_id": "s-verein"
+   }
+  ],
+  "reminders": [
+   {
+    "id": "r-ueberfaellig",
+    "list_id": "l-haushalt",
+    "position": "a0",
+    "due_date": "2026-11-05",
+    "priority": 3
+   },
+   {
+    "id": "r-heute-frueh",
+    "list_id": "l-einkauf",
+    "position": "a1",
+    "due_date": "2026-11-07",
+    "due_time": "08:00",
+    "tags": [
+     "Markt"
+    ]
+   },
+   {
+    "id": "r-heute",
+    "list_id": "l-aufgaben",
+    "position": "a0",
+    "due_date": "2026-11-07",
+    "flagged": true
+   },
+   {
+    "id": "r-morgen",
+    "list_id": "l-einkauf",
+    "position": "a0",
+    "due_date": "2026-11-08",
+    "assignees": [
+     1
+    ]
+   },
+   {
+    "id": "r-in-sechs-tagen",
+    "list_id": "l-training",
+    "position": "a0",
+    "due_date": "2026-11-13",
+    "assignees": [
+     2
+    ]
+   },
+   {
+    "id": "r-in-sieben-tagen",
+    "list_id": "l-training",
+    "position": "a1",
+    "due_date": "2026-11-14",
+    "assignees": [
+     1,
+     2
+    ]
+   },
+   {
+    "id": "r-ohne-datum",
+    "list_id": "l-haushalt",
+    "position": "a1",
+    "priority": 1,
+    "tags": [
+     "Garten",
+     "markt"
+    ]
+   },
+   {
+    "id": "r-unteraufgabe",
+    "list_id": "l-einkauf",
+    "parent_id": "r-morgen",
+    "position": "a0",
+    "flagged": true
+   },
+   {
+    "id": "r-papierkorb",
+    "list_id": "l-einkauf",
+    "position": "a2",
+    "due_date": "2026-11-07",
+    "deleted": true
+   },
+   {
+    "id": "r-erledigt-heute",
+    "list_id": "l-einkauf",
+    "position": "a3",
+    "completed_at": "2026-11-07T09:15:00.000Z"
+   },
+   {
+    "id": "r-erledigt-spaet",
+    "list_id": "l-aufgaben",
+    "position": "a1",
+    "completed_at": "2026-11-06T23:30:00.000Z"
+   },
+   {
+    "id": "r-erledigt-gestern",
+    "list_id": "l-haushalt",
+    "position": "a2",
+    "completed_at": "2026-11-06T10:00:00.000Z",
+    "due_date": "2026-11-07"
+   },
+   {
+    "id": "r-erledigt-vor-zehn",
+    "list_id": "l-training",
+    "position": "a2",
+    "completed_at": "2026-10-28T12:00:00.000Z",
+    "flagged": true
+   },
+   {
+    "id": "r-erledigt-vor-vierzig",
+    "list_id": "l-aufgaben",
+    "position": "a2",
+    "completed_at": "2026-09-28T12:00:00.000Z"
+   }
+  ]
+ },
+ "cases": [
+  {
+   "name": "leer = alles Offene",
+   "rules": {},
+   "hidden": [],
+   "expect": [
+    "r-ueberfaellig",
+    "r-heute",
+    "r-heute-frueh",
+    "r-morgen",
+    "r-in-sechs-tagen",
+    "r-in-sieben-tagen",
+    "r-unteraufgabe",
+    "r-ohne-datum"
+   ],
+   "count": 8
+  },
+  {
+   "name": "Heute wie die Kachel",
+   "rules": {
+    "due": [
+     "overdue",
+     "today"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-ueberfaellig",
+    "r-heute",
+    "r-heute-frueh"
+   ],
+   "count": 3
+  },
+  {
+   "name": "nur heute",
+   "rules": {
+    "due": [
+     "today"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-heute",
+    "r-heute-frueh"
+   ],
+   "count": 2
+  },
+  {
+   "name": "morgen",
+   "rules": {
+    "due": [
+     "tomorrow"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-morgen"
+   ],
+   "count": 1
+  },
+  {
+   "name": "nächste 7 Tage, heute eingeschlossen, Tag 7 nicht",
+   "rules": {
+    "due": [
+     "next7"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-heute",
+    "r-heute-frueh",
+    "r-morgen",
+    "r-in-sechs-tagen"
+   ],
+   "count": 4
+  },
+  {
+   "name": "später",
+   "rules": {
+    "due": [
+     "later"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-in-sieben-tagen"
+   ],
+   "count": 1
+  },
+  {
+   "name": "mit Datum",
+   "rules": {
+    "due": [
+     "any"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-ueberfaellig",
+    "r-heute",
+    "r-heute-frueh",
+    "r-morgen",
+    "r-in-sechs-tagen",
+    "r-in-sieben-tagen"
+   ],
+   "count": 6
+  },
+  {
+   "name": "ohne Datum",
+   "rules": {
+    "due": [
+     "none"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-unteraufgabe",
+    "r-ohne-datum"
+   ],
+   "count": 2
+  },
+  {
+   "name": "erledigt",
+   "rules": {
+    "state": "completed"
+   },
+   "hidden": [],
+   "expect": [
+    "r-erledigt-heute",
+    "r-erledigt-spaet",
+    "r-erledigt-gestern",
+    "r-erledigt-vor-zehn",
+    "r-erledigt-vor-vierzig"
+   ],
+   "count": null
+  },
+  {
+   "name": "heute erledigt, in Berlin (+60)",
+   "rules": {
+    "state": "completed",
+    "done": [
+     "today"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-erledigt-heute",
+    "r-erledigt-spaet"
+   ],
+   "count": null
+  },
+  {
+   "name": "heute erledigt, in UTC",
+   "rules": {
+    "state": "completed",
+    "done": [
+     "today"
+    ]
+   },
+   "hidden": [],
+   "zone": 0,
+   "expect": [
+    "r-erledigt-heute"
+   ],
+   "count": null
+  },
+  {
+   "name": "gestern erledigt",
+   "rules": {
+    "state": "completed",
+    "done": [
+     "yesterday"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-erledigt-gestern"
+   ],
+   "count": null
+  },
+  {
+   "name": "letzte 7 Tage",
+   "rules": {
+    "state": "completed",
+    "done": [
+     "last7"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-erledigt-heute",
+    "r-erledigt-spaet",
+    "r-erledigt-gestern"
+   ],
+   "count": null
+  },
+  {
+   "name": "letzte 30 Tage",
+   "rules": {
+    "state": "completed",
+    "done": [
+     "last30"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-erledigt-heute",
+    "r-erledigt-spaet",
+    "r-erledigt-gestern",
+    "r-erledigt-vor-zehn"
+   ],
+   "count": null
+  },
+  {
+   "name": "früher",
+   "rules": {
+    "state": "completed",
+    "done": [
+     "earlier"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-erledigt-vor-vierzig"
+   ],
+   "count": null
+  },
+  {
+   "name": "Fälligkeit gilt nicht für Erledigte",
+   "rules": {
+    "state": "completed",
+    "due": [
+     "today"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-erledigt-heute",
+    "r-erledigt-spaet",
+    "r-erledigt-gestern",
+    "r-erledigt-vor-zehn",
+    "r-erledigt-vor-vierzig"
+   ],
+   "count": null
+  },
+  {
+   "name": "alle: heute fällig oder heute erledigt",
+   "rules": {
+    "state": "all",
+    "due": [
+     "today"
+    ],
+    "done": [
+     "today"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-heute",
+    "r-heute-frueh",
+    "r-erledigt-heute",
+    "r-erledigt-spaet"
+   ],
+   "count": null
+  },
+  {
+   "name": "Bereich Familie",
+   "rules": {
+    "spaces": [
+     "s-familie"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-ueberfaellig",
+    "r-heute-frueh",
+    "r-morgen",
+    "r-unteraufgabe",
+    "r-ohne-datum"
+   ],
+   "count": 5
+  },
+  {
+   "name": "Liste Einkauf oder Bereich Verein",
+   "rules": {
+    "spaces": [
+     "s-verein"
+    ],
+    "lists": [
+     "l-einkauf"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-heute-frueh",
+    "r-morgen",
+    "r-in-sechs-tagen",
+    "r-in-sieben-tagen",
+    "r-unteraufgabe"
+   ],
+   "count": 5
+  },
+  {
+   "name": "Unteraufgabe zählt in der Liste ihres Vaters",
+   "rules": {
+    "lists": [
+     "l-einkauf"
+    ],
+    "flagged": true
+   },
+   "hidden": [],
+   "expect": [
+    "r-unteraufgabe"
+   ],
+   "count": 1
+  },
+  {
+   "name": "markiert",
+   "rules": {
+    "flagged": true
+   },
+   "hidden": [],
+   "expect": [
+    "r-heute",
+    "r-unteraufgabe"
+   ],
+   "count": 2
+  },
+  {
+   "name": "mir zugewiesen",
+   "rules": {
+    "assignees": [
+     "me"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-morgen",
+    "r-in-sieben-tagen"
+   ],
+   "count": 2
+  },
+  {
+   "name": "niemandem",
+   "rules": {
+    "assignees": [
+     "nobody"
+    ],
+    "due": [
+     "any"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-ueberfaellig",
+    "r-heute",
+    "r-heute-frueh"
+   ],
+   "count": 3
+  },
+  {
+   "name": "Person 2 oder mir",
+   "rules": {
+    "assignees": [
+     2,
+     "me"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-morgen",
+    "r-in-sechs-tagen",
+    "r-in-sieben-tagen"
+   ],
+   "count": 3
+  },
+  {
+   "name": "Priorität hoch oder niedrig",
+   "rules": {
+    "priority": [
+     3,
+     1
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-ueberfaellig",
+    "r-ohne-datum"
+   ],
+   "count": 2
+  },
+  {
+   "name": "Schlagwort ohne Groß und klein",
+   "rules": {
+    "tags": [
+     "MARKT"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-heute-frueh",
+    "r-ohne-datum"
+   ],
+   "count": 2
+  },
+  {
+   "name": "UND über Bedingungen",
+   "rules": {
+    "spaces": [
+     "s-familie"
+    ],
+    "due": [
+     "overdue",
+     "today"
+    ],
+    "tags": [
+     "markt"
+    ]
+   },
+   "hidden": [],
+   "expect": [
+    "r-heute-frueh"
+   ],
+   "count": 1
+  },
+  {
+   "name": "unbekannte Werte und Schlüssel werden überlesen",
+   "rules": {
+    "due": [
+     "someday"
+    ],
+    "color_of_sky": "blue",
+    "state": "maybe"
+   },
+   "hidden": [],
+   "expect": [
+    "r-ueberfaellig",
+    "r-heute",
+    "r-heute-frueh",
+    "r-morgen",
+    "r-in-sechs-tagen",
+    "r-in-sieben-tagen",
+    "r-unteraufgabe",
+    "r-ohne-datum"
+   ],
+   "count": 8
+  },
+  {
+   "name": "Bereich Familie ausgeblendet",
+   "rules": {},
+   "hidden": [
+    "s-familie"
+   ],
+   "expect": [
+    "r-heute",
+    "r-in-sechs-tagen",
+    "r-in-sieben-tagen"
+   ],
+   "count": 3
+  },
+  {
+   "name": "ausgeblendet, aber im Filter genannt",
+   "rules": {
+    "lists": [
+     "l-einkauf"
+    ]
+   },
+   "hidden": [
+    "s-familie"
+   ],
+   "expect": [
+    "r-heute-frueh",
+    "r-morgen",
+    "r-unteraufgabe"
+   ],
+   "count": 3
+  }
+ ]
+}

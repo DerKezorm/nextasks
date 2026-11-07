@@ -3,22 +3,26 @@
  * and for the operator Server with a second row for its parts (the iPhone app and invitations among them). The tab is
  * in the address (`?tab=server&sub=backups`), so a link can point at one; a tab someone may not see falls back to
  * General. The own account is `AccountPage.tsx`; spaces and lists are made in the sidebar, which of them it shows is
- * chosen under General ("Spaces").
+ * chosen under General ("Spaces"), as which collections and own filters it shows ("Sidebar").
  */
-import { Download, Eye, Files, Globe, History, Info, KeyRound, Layers, Palette, Plug, ShieldCheck, Smartphone, Users } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Download, Eye, EyeOff, Files, FunnelPlus, Globe, History, Info, KeyRound, Layers, PanelLeft, Palette, Pencil, Plug, ShieldCheck, Smartphone, Users } from 'lucide-react'
+import { createElement, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { authApi } from '../api/client'
 import { changeLanguage, languageOptions, templateFile, type LanguageOption } from '../i18n'
-import { setSpaceHidden } from '../lib/actions'
+import { Badge } from '../components/Badge'
+import { useShell } from '../components/Shell'
+import { setFilterHidden, setSpaceHidden, setTileHidden } from '../lib/actions'
 import { applyMode, storedMode, type Mode } from '../lib/theme'
 import { useAuth } from '../state/auth'
-import { useEngine, useView } from '../state/sync'
+import { TILE_LOOK } from '../lib/tileLook'
+import { useEngine, useFiltersOffered, useView } from '../state/sync'
+import { TILE_IDS, TILES } from '../sync/tiles'
 import { AccountsCard, ApiTokensCard, AppCard, BackupsCard, FilesCard, LanguagesCard, LogCard, MailCard, ProxyHint, useServerSettings } from './settings/ServerCards'
 import { SignInPart } from './settings/SignInCards'
-import { Card, saveAsFile, TabRow, Toggle, type Tab } from './settings/ui'
+import { Card, saveAsFile, SubHead, TabRow, Toggle, type Tab } from './settings/ui'
 
 type Top = 'general' | 'looks' | 'server'
 type Part = 'accounts' | 'signin' | 'app' | 'api' | 'files' | 'backups' | 'languages' | 'log'
@@ -32,6 +36,7 @@ export function SettingsPage() {
   const { me } = useAuth()
   const [params, setParams] = useSearchParams()
   const operator = me?.role === 'operator'
+  const filtersOffered = useFiltersOffered()
   const asked = params.get('tab') as Top | null
   const top: Top = asked && TOPS.includes(asked) && (asked !== 'server' || operator) ? asked : 'general'
   const askedPart = params.get('sub') as Part | null
@@ -50,6 +55,7 @@ export function SettingsPage() {
         <div className="space-y-6 pt-1">
           {top === 'general' && <LanguageCard />}
           {top === 'general' && <SpacesCard />}
+          {top === 'general' && filtersOffered && <SidebarCard />}
           {top === 'looks' && <Looks />}
           {top === 'server' && <ProxyHint />}
           {top === 'server' && <ServerPart part={part} />}
@@ -122,6 +128,79 @@ function SpacesCard() {
       {view.spaces.map((space) => (
         <Toggle key={space.id} label={space.name} checked={!view.isHidden(space.id)} onChange={(shown) => setSpaceHidden(engine, space.id, !shown)} />
       ))}
+    </Card>
+  )
+}
+
+/** One entry of the sidebar overview: its sign, its name, what else it offers, and the eye to show or hide it. */
+function EyeRow({ sign, label, name, hidden, onHidden, testId, children }: { sign: ReactNode; label: string; name?: ReactNode; hidden: boolean; onHidden: (hidden: boolean) => void; testId: string; children?: ReactNode }) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-ink-700 bg-ink-850 px-4 py-2.5 text-sm" data-testid={testId}>
+      {sign}
+      <span className={'min-w-0 flex-1 truncate font-medium ' + (hidden ? 'text-mist-500' : 'text-mist-100')}>{name ?? label}</span>
+      {children}
+      <button
+        type="button"
+        aria-pressed={!hidden}
+        aria-label={t(hidden ? 'sidebarPrefs.show' : 'sidebarPrefs.hide', { name: label })}
+        title={t(hidden ? 'sidebarPrefs.show' : 'sidebarPrefs.hide', { name: label })}
+        onClick={() => onHidden(!hidden)}
+        className={'rounded-lg p-1.5 hover:bg-ink-800 ' + (hidden ? 'text-mist-500 hover:text-mist-100' : 'text-accent-400')}
+        data-testid={`${testId}-eye`}
+      >
+        {hidden ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+      </button>
+    </div>
+  )
+}
+
+/**
+ * What the sidebar shows: the six collections and the own filters, each with an eye (`tile_pref`, `hidden` of the filter).
+ * A filter one hid stays here, to change or to show again.
+ */
+function SidebarCard() {
+  const { t } = useTranslation()
+  const engine = useEngine()
+  const view = useView()
+  const shell = useShell()
+  return (
+    <Card icon={PanelLeft} title={t('sidebarPrefs.title')} text={t('sidebarPrefs.text')} id="sidebar">
+      <SubHead title={t('tiles.label')} />
+      {TILES.map((tile) => (
+        <EyeRow
+          key={tile}
+          testId={`pref-tile-${tile}`}
+          sign={createElement(TILE_LOOK[tile].icon, { className: 'h-[18px] w-[18px] shrink-0 text-accent-400', strokeWidth: 2, 'aria-hidden': true })}
+          label={t(`tiles.${tile}`)}
+          hidden={view.isTileHidden(TILE_IDS[tile])}
+          onHidden={(hidden) => setTileHidden(engine, tile, hidden)}
+        />
+      ))}
+      <SubHead title={t('filter.section')} />
+      {view.filters.length === 0 && <p className="text-sm text-mist-500">{t('sidebarPrefs.noFilters')}</p>}
+      {view.filters.map((filter) => (
+        <EyeRow
+          key={filter.id}
+          testId={`pref-filter-${filter.name}`}
+          sign={<Badge color={filter.color} icon={filter.icon} size="sm" />}
+          label={filter.name}
+          name={
+            <Link to={`/filters/${filter.id}`} className="hover:underline">
+              {filter.name}
+            </Link>
+          }
+          hidden={filter.hidden}
+          onHidden={(hidden) => setFilterHidden(engine, filter.id, hidden)}
+        >
+          <button type="button" onClick={() => shell.editFilter(filter.id)} className="rounded-lg p-1.5 text-mist-500 hover:bg-ink-800 hover:text-mist-100" aria-label={t('filter.editNamed', { name: filter.name })} title={t('filter.editNamed', { name: filter.name })} data-testid={`pref-filter-${filter.name}-edit`}>
+            <Pencil className="h-4 w-4" aria-hidden />
+          </button>
+        </EyeRow>
+      ))}
+      <button type="button" onClick={() => shell.newFilter()} className="inline-flex items-center gap-2 rounded-full border border-ink-700 px-3.5 py-1.5 text-sm text-mist-300 hover:bg-ink-800" data-testid="pref-new-filter">
+        <FunnelPlus className="h-4 w-4" strokeWidth={1.8} aria-hidden /> {t('filter.new')}
+      </button>
     </Card>
   )
 }

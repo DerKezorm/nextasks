@@ -503,6 +503,13 @@
     "prefsShown": "Show in the sidebar",
     "prefsNone": "No space yet."
   },
+  "sidebarPrefs": {
+    "title": "Sidebar",
+    "text": "Which collections and filters the sidebar shows. Hidden filters stay here and can still be edited. The setting is yours only, on all your devices.",
+    "hide": "Hide “{{name}}”",
+    "show": "Show “{{name}}”",
+    "noFilters": "No filter of your own yet."
+  },
   "about": {
     "menu": "About nextasks",
     "subtitle": "Tasks for families and small groups, on your own server.",
@@ -739,6 +746,63 @@
     "sub_other": "{{count}} open tasks in all spaces",
     "subDone_one": "one completed task",
     "subDone_other": "{{count}} completed tasks"
+  },
+  "filter": {
+    "section": "Filters",
+    "new": "New filter",
+    "newTitle": "New filter",
+    "editTitle": "Edit filter",
+    "edit": "Edit filter",
+    "editNamed": "Edit “{{name}}”",
+    "name": "Name",
+    "create": "Create filter",
+    "delete": "Delete",
+    "deleteSure": "Delete the filter for good",
+    "hide": "Hide filter",
+    "empty": "No task matches this filter.",
+    "subAll_one": "one task",
+    "subAll_other": "{{count}} tasks",
+    "conditions": "Conditions",
+    "conditionsHint": "Every chosen condition must match; within one, any value will do. What is not chosen does not count.",
+    "state": "Which tasks",
+    "states": {
+      "open": "Open",
+      "completed": "Completed",
+      "all": "All"
+    },
+    "due": "Due",
+    "dueHint": "for open tasks",
+    "dueWords": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "next7": "Next 7 days",
+      "later": "Later",
+      "any": "With a date",
+      "none": "Without a date"
+    },
+    "done": "Completed",
+    "doneHint": "for completed tasks",
+    "doneWords": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "earlier": "Earlier"
+    },
+    "place": "Space or list",
+    "placeGone_one": "One chosen place no longer exists.",
+    "placeGone_other": "{{count}} chosen places no longer exist.",
+    "removeGone": "Remove",
+    "flagged": "Mark",
+    "flaggedOnly": "Marked only",
+    "me": "Me",
+    "nobody": "Nobody",
+    "addTag": "Add a tag",
+    "add": "Add",
+    "matches_one": "Matches one task right now.",
+    "matches_other": "Matches {{count}} tasks right now.",
+    "tooLong": "Too many conditions: at most 4000 characters together."
   },
   "sync": {
     "loading": "Loading …",
@@ -1415,7 +1479,8 @@
     "leave": "Leave space …",
     "editList": "Name, colour, symbol …",
     "editSpace": "Name, colour, symbol …",
-    "members": "Members …"
+    "members": "Members …",
+    "editFilter": "Name, conditions …"
   },
   "notes": {
     "tools": "Formatting",

@@ -71,3 +71,15 @@ export function useSyncState(): { status: SyncStatus; waiting: number; notices: 
   )
   return { status: engine.status, waiting: engine.queue.length, notices: engine.notices, loaded: engine.status !== 'loading' }
 }
+
+/** Whether the server knows own filters and hidden collections (`filters` in `features`, contract 0.5); an older one
+ * would refuse them. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useFiltersOffered(): boolean {
+  const engine = useEngine()
+  useSyncExternalStore(
+    (listener) => engine.subscribe(listener),
+    () => engine.version,
+  )
+  return engine.me?.features.includes('filters') ?? false
+}

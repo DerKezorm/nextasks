@@ -1,18 +1,18 @@
 /**
- * What the context menu offers on a task, a list and a space: the actions the web has elsewhere already (the "…"
+ * What the context menu offers on a task, a list, a space and an own filter: the actions the web has elsewhere already (the "…"
  * menus, the detail, the dialogs), nothing the server could not do. A member sees no manager's entries.
  */
 import { Bell, Bookmark, CalendarDays, Check, ChevronsUp, Columns3, Eye, EyeOff, FolderInput, Link2, List as ListIcon, ListPlus, ListTree, LogOut, PanelRightOpen, Pencil, RotateCcw, SquareArrowOutUpRight, Trash2, UserPlus, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { moveList, moveReminder, setPref, setSpaceHidden, siblingsAt } from '../lib/actions'
+import { deleteFilter, moveList, moveReminder, setFilterHidden, setPref, setSpaceHidden, siblingsAt } from '../lib/actions'
 import { copyText } from '../lib/copy'
 import { localDay } from '../lib/due'
 import { colorOf } from '../lib/look'
 import { useEngine, useView } from '../state/sync'
 import { addDays } from '../sync/repeat'
-import type { List, Reminder, Space } from '../sync/types'
+import type { Filter, List, Reminder, Space } from '../sync/types'
 import { useContextMenu, type MenuItems } from './ContextMenu'
 import { personName } from './People'
 import { useShell } from './Shell'
@@ -181,6 +181,30 @@ export function useSpaceMenu(space: Space) {
         },
     ]
   })
+}
+
+/** The menu of an own filter in the sidebar: open, change, hide (it stays in the settings), delete for good. */
+export function useFilterMenu(filter: Filter) {
+  const { t } = useTranslation()
+  const engine = useEngine()
+  const shell = useShell()
+  const navigate = useNavigate()
+  return useContextMenu((): MenuItems => [
+    { label: t('menu.open'), icon: SquareArrowOutUpRight, run: () => navigate(`/filters/${filter.id}`) },
+    { label: t('menu.editFilter'), icon: Pencil, run: () => shell.editFilter(filter.id) },
+    { label: t('filter.hide'), icon: EyeOff, run: () => setFilterHidden(engine, filter.id, true) },
+    'line',
+    {
+      label: t('filter.delete'),
+      icon: Trash2,
+      danger: true,
+      confirm: t('filter.deleteSure'),
+      run: () => {
+        deleteFilter(engine, filter.id)
+        if (window.location.pathname === `/filters/${filter.id}`) navigate('/today')
+      },
+    },
+  ])
 }
 
 /** The menu of an entry of the trash: bring it back (for good the server removes it by itself after 30 days). */

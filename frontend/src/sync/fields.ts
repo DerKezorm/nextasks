@@ -25,6 +25,8 @@ export const GROUPS: Partial<Record<Kind, Record<string, string[]>>> = {
   },
   list_pref: { show_completed: ['show_completed'], notify_changes: ['notify_changes'] },
   space_pref: { hidden: ['hidden'] },
+  filter: { name: ['name'], color: ['color'], icon: ['icon'], position: ['position'], rules: ['rules'], hidden: ['hidden'] },
+  tile_pref: { hidden: ['hidden'] },
 }
 
 /** The clock key a field is kept under; null for fields without a clock (`id`, `private`, `created_by`, …). */
@@ -79,6 +81,8 @@ export const DEFAULTS: Record<Kind, Data> = {
   attachment: {},
   list_pref: { show_completed: false, notify_changes: false },
   space_pref: { hidden: false },
+  filter: { name: '', color: 'blue', icon: 'filter', position: '', rules: {}, hidden: false },
+  tile_pref: { hidden: false },
 }
 
 /** Fields a `put` must carry when it creates the record. */
@@ -89,6 +93,8 @@ export const REQUIRED: Partial<Record<Kind, string[]>> = {
   reminder: ['list_id', 'title', 'position'],
   list_pref: [],
   space_pref: [],
+  filter: ['name', 'position'],
+  tile_pref: [],
 }
 
 /** Fields only the server sets: a `put` may carry them, the server ignores them. */

@@ -7,6 +7,7 @@ import { SidebarBody } from './components/Sidebar'
 import { AboutPage } from './pages/AboutPage'
 import { AccountPage } from './pages/AccountPage'
 import { AppConnectPage, ConfirmEmailPage, InvitePage, LoginPage, SetupPage, UnsubscribePage } from './pages/AuthPages'
+import { FilterPage } from './pages/FilterPage'
 import { ListPage } from './pages/ListPage'
 import { SearchPage } from './pages/SearchPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -96,6 +97,7 @@ export default function App() {
           <Route key={tile} path={tile} element={<TilePage tile={tile} />} />
         ))}
         <Route path="lists/:id" element={<ListPage />} />
+        <Route path="filters/:id" element={<FilterPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="trash" element={<TrashPage />} />
         <Route path="settings" element={<SettingsPage />} />

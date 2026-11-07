@@ -19,13 +19,14 @@ import { MembersDialog } from './MembersDialog'
 import { BackToOverview } from './PageHead'
 import { ShellContext, type Shell } from './Shell'
 import { Sidebar } from './Sidebar'
+import { FilterDialog } from './FilterDialog'
 import { ListDialog, SpaceDialog } from './ThingDialogs'
 import { WhatsNewBanner } from './WhatsNew'
 
 /** Pages without a head of their own: on a phone they get the way back to the overview above them. */
 const PLAIN = ['/settings', '/account', '/about', '/trash']
 
-type Open = { kind: 'list'; list: string | null; space?: string } | { kind: 'space'; space: string | null } | { kind: 'members'; space: string } | { kind: 'keys' } | null
+type Open = { kind: 'list'; list: string | null; space?: string } | { kind: 'space'; space: string | null } | { kind: 'filter'; filter: string | null } | { kind: 'members'; space: string } | { kind: 'keys' } | null
 
 function typing(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null
@@ -126,6 +127,8 @@ export function AppShell() {
       editList: (list) => setDialog({ kind: 'list', list }),
       editSpace: (space) => setDialog({ kind: 'space', space }),
       members: (space) => setDialog({ kind: 'members', space }),
+      newFilter: () => setDialog({ kind: 'filter', filter: null }),
+      editFilter: (filter) => setDialog({ kind: 'filter', filter }),
     }),
     [opened, pane, selected, openReminder, showPopup, closeReminder, togglePane, closePane, navigate],
   )
@@ -229,6 +232,7 @@ export function AppShell() {
       </div>
       {dialog?.kind === 'list' && <ListDialog listId={dialog.list} spaceId={dialog.space} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'space' && <SpaceDialog spaceId={dialog.space} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'filter' && <FilterDialog filterId={dialog.filter} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'members' && <MembersDialog spaceId={dialog.space} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'keys' && <KeysDialog onClose={() => setDialog(null)} />}
       {sync.notices.length > 0 && (

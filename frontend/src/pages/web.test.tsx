@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { localDay } from '../lib/due'
 import { addDays } from '../sync/repeat'
+import { TILE_IDS } from '../sync/tiles'
 import { FakeServer, smallWorld } from '../test/fakeServer'
 import { blur, button, choose, click, drag, focus, mount, press, row, settle, submit, titles, type, unmount, where } from '../test/harness'
 
@@ -737,5 +738,148 @@ describe('spaces and people', () => {
     await new Promise((resolve) => setTimeout(resolve, 2200))
     await settle()
     expect(page.querySelector('[data-testid="devices"]')?.textContent).toContain('Test phone')
+  })
+})
+
+describe('own filters and the sidebar overview (filter, tile_pref)', () => {
+  const rightClick = (el: Element) => act(async () => void el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 60 })))
+  const entry = (label: string) => [...document.querySelectorAll<HTMLButtonElement>('[data-testid="context-menu"] [role^="menuitem"]')].find((b) => b.dataset.entry === label)
+  const filterRow = (page: HTMLElement, name: string) => page.querySelector(`aside [data-testid="filter-${name}"]`)
+  const ownFilter = (server: FakeServer, owner: number, name: string) => [...server.rows.values()].find((r) => r.kind === 'filter' && r.owner === owner && r.data.name === name)
+
+  it('shows the filters under "Filters" with their number of open tasks; a hidden one stays out', async () => {
+    const { server, robin, home } = world()
+    const dueHome = server.addFilter(robin, 'Due at home', { due: ['overdue', 'today'], lists: [home] }, { color: 'orange', icon: 'house' })
+    server.addFilter(robin, 'Done lately', { state: 'completed', done: ['last7'] })
+    server.addFilter(robin, 'Secret', {}, { hidden: true })
+    const page = await mount(server, '/all')
+    const section = page.querySelector('aside [data-testid="filters"]')!
+    expect([...section.querySelectorAll('a')].map((a) => a.textContent)).toEqual(['Due at home3', 'Done lately'])
+    expect(page.querySelector('[data-testid="filter-count-Due at home"]')?.textContent).toBe('3')
+    expect(page.querySelector('[data-testid="filter-count-Done lately"]')).toBeNull()
+    expect(filterRow(page, 'Secret')).toBeNull()
+    await click(filterRow(page, 'Due at home'))
+    expect(where.path).toBe(`/filters/${dueHome}`)
+    expect(page.querySelector('#filter-title')?.textContent).toBe('Due at home')
+    expect(titles(page)).toEqual(['Overdue bins', 'Today without time', 'Today at nine'])
+  })
+
+  it('shows completed ones on the page of a filter of completed tasks, newest first', async () => {
+    const { server, robin, home } = world()
+    server.addReminder(home, 'Done before', { completed_at: new Date(Date.now() - 3 * 86_400_000).toISOString(), completed_by: robin })
+    const done = server.addFilter(robin, 'Done lately', { state: 'completed', done: ['today', 'yesterday', 'last7'] })
+    const page = await mount(server, `/filters/${done}`)
+    expect(titles(page)).toEqual(['Done already', 'Done before'])
+  })
+
+  it('leaves out the collections one hid', async () => {
+    const { server, robin } = world()
+    server.addPref('tile_pref', TILE_IDS.today, robin, { hidden: true })
+    server.addPref('tile_pref', TILE_IDS.done, robin, { hidden: true })
+    const page = await mount(server, '/all')
+    const tiles = [...page.querySelectorAll('aside nav a')].map((a) => a.getAttribute('data-testid'))
+    expect(tiles).toEqual(['tile-scheduled', 'tile-all', 'tile-flagged', 'tile-assigned'])
+  })
+
+  it('hides and deletes a filter from its context menu', async () => {
+    const { server, robin } = world()
+    const keep = server.addFilter(robin, 'Keep out')
+    const gone = server.addFilter(robin, 'Away with it')
+    const page = await mount(server, `/filters/${gone}`)
+    await rightClick(filterRow(page, 'Keep out')!)
+    await click(entry('Hide filter'))
+    await settle()
+    expect(server.rows.get(`filter:${robin}:${keep}`)?.data.hidden).toBe(true)
+    expect(filterRow(page, 'Keep out')).toBeNull()
+    await rightClick(filterRow(page, 'Away with it')!)
+    await click(entry('Delete'))
+    expect(entry('Delete')?.textContent).toContain('Delete the filter for good')
+    await click(entry('Delete'))
+    await settle()
+    expect(server.rows.has(`filter:${robin}:${gone}`)).toBe(false)
+    expect(where.path).toBe('/today')
+  })
+
+  it('switches collections and filters with the eyes of the settings; a hidden filter stays there', async () => {
+    const { server, robin } = world()
+    const secret = server.addFilter(robin, 'Secret', {}, { hidden: true })
+    const page = await mount(server, '/settings')
+    const card = page.querySelector('#sidebar')!
+    expect([...card.querySelectorAll('[data-testid^="pref-tile-"][data-testid$="-eye"]')]).toHaveLength(6)
+    const eye = card.querySelector('[data-testid="pref-tile-today-eye"]')!
+    expect(eye.getAttribute('aria-pressed')).toBe('true')
+    expect(eye.getAttribute('aria-label')).toBe('Hide “Today”')
+    await click(eye)
+    await settle()
+    expect(server.rows.get(`tile_pref:${robin}:${TILE_IDS.today}`)?.data.hidden).toBe(true)
+    expect(page.querySelector('aside [data-testid="tile-today"]')).toBeNull()
+    expect(card.querySelector('[data-testid="pref-tile-today-eye"]')?.getAttribute('aria-pressed')).toBe('false')
+
+    expect(filterRow(page, 'Secret')).toBeNull()
+    expect(card.querySelector('[data-testid="pref-filter-Secret-eye"]')?.getAttribute('aria-pressed')).toBe('false')
+    await click(card.querySelector('[data-testid="pref-filter-Secret-eye"]'))
+    await settle()
+    expect(server.rows.get(`filter:${robin}:${secret}`)?.data.hidden).toBe(false)
+    expect(filterRow(page, 'Secret')).not.toBeNull()
+    await click(card.querySelector('[data-testid="pref-filter-Secret-eye"]'))
+    await settle()
+    expect(filterRow(page, 'Secret')).toBeNull()
+    // Still to be changed from here.
+    await click(card.querySelector('[data-testid="pref-filter-Secret-edit"]'))
+    expect(document.querySelector('[role="dialog"]')?.getAttribute('aria-label')).toBe('Edit filter')
+  })
+
+  it('makes a filter in the editor: completed today in the list Home', async () => {
+    const { server, robin, home } = world()
+    const page = await mount(server, '/today')
+    await click(page.querySelector('[data-testid="new-filter"]'))
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
+    expect(dialog.getAttribute('aria-label')).toBe('New filter')
+    await type(dialog.querySelector('input.nc-field'), 'Done at home today')
+    expect(dialog.querySelector('[data-testid="condition-done"]')).toBeNull()
+    await click(dialog.querySelector('[data-testid="state-completed"]'))
+    expect(dialog.querySelector('[data-testid="condition-due"]')).toBeNull()
+    await click(dialog.querySelector('[data-testid="done-today"]'))
+    await click(dialog.querySelector('[data-testid="place-list-Home"]'))
+    expect(dialog.querySelector('[data-testid="place-list-Home"]')?.getAttribute('aria-pressed')).toBe('true')
+    expect(dialog.querySelector('[data-testid="filter-matches"]')?.textContent).toBe('Matches one task right now.')
+    await click(button(dialog, 'Create filter'))
+    await settle()
+    const made = ownFilter(server, robin, 'Done at home today')!
+    expect(made.data).toMatchObject({ color: 'blue', icon: 'filter', hidden: false, rules: { state: 'completed', done: ['today'], lists: [home] } })
+    expect(where.path).toBe(`/filters/${made.id}`)
+    expect(titles(page)).toEqual(['Done already'])
+    expect(filterRow(page, 'Done at home today')).not.toBeNull()
+  })
+
+  it('offers people, priorities and tags, and keeps conditions it does not know when it changes a filter', async () => {
+    const { server, robin, home, alex } = world()
+    const id = server.addFilter(robin, 'Mixed', { due: ['today', 'someday'], future: { x: 1 }, assignees: [alex] })
+    server.addReminder(home, 'Tagged', { tags: ['Garden'], priority: 2 })
+    const page = await mount(server, `/filters/${id}`)
+    await click(page.querySelector('[data-testid="edit-filter"]'))
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
+    expect(dialog.querySelector('[data-testid="due-today"]')?.getAttribute('aria-pressed')).toBe('true')
+    expect(dialog.querySelector(`[data-testid="who-${alex}"]`)?.getAttribute('aria-pressed')).toBe('true')
+    expect(dialog.querySelector(`[data-testid="who-${alex}"]`)?.textContent).toBe('Alex')
+    await click(dialog.querySelector(`[data-testid="who-${alex}"]`))
+    await click(dialog.querySelector('[data-testid="who-me"]'))
+    await click(dialog.querySelector('[data-testid="priority-2"]'))
+    await click(button(dialog, '#Garden'))
+    await type(dialog.querySelector('input[aria-label="Add a tag"]'), '#Shed')
+    await press(dialog.querySelector('input[aria-label="Add a tag"]'), 'Enter')
+    await click(dialog.querySelector('[data-testid="flagged"]'))
+    await click(button(dialog, 'Save'))
+    await settle()
+    expect(server.rows.get(`filter:${robin}:${id}`)?.data.rules).toEqual({ future: { x: 1 }, state: 'open', due: ['today', 'someday'], flagged: true, assignees: ['me'], priority: [2], tags: ['Garden', 'Shed'] })
+  })
+
+  it('offers neither filters nor the eyes when the server does not know them', async () => {
+    const { server } = world()
+    server.features = server.features.filter((word) => word !== 'filters')
+    const page = await mount(server, '/settings')
+    expect(page.querySelector('[data-testid="new-filter"]')).toBeNull()
+    expect(page.querySelector('#sidebar')).toBeNull()
+    expect(page.querySelector('#spaces')).not.toBeNull()
   })
 })

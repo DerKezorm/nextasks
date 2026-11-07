@@ -82,7 +82,7 @@ function SymbolPicker({ color, icon, onIcon }: { color: string; icon: string; on
   )
 }
 
-function LookPicker({ color, icon, onColor, onIcon }: { color: string; icon: string; onColor: (c: string) => void; onIcon: (i: string) => void }) {
+export function LookPicker({ color, icon, onColor, onIcon }: { color: string; icon: string; onColor: (c: string) => void; onIcon: (i: string) => void }) {
   const { t } = useTranslation()
   return (
     <>
@@ -108,7 +108,7 @@ function LookPicker({ color, icon, onColor, onIcon }: { color: string; icon: str
   )
 }
 
-function NameField({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
+export function NameField({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-mist-500">{label}</span>

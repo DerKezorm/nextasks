@@ -4,7 +4,8 @@
  */
 import type { SyncEngine } from '../sync/engine'
 import { byPosition, keyAtEnd, keyAtStart, keysBetween, placeAt } from '../sync/position'
-import type { Data, Reminder } from '../sync/types'
+import { DONE_WORDS, DUE_WORDS, TILE_IDS, type Rules, type Tile } from '../sync/tiles'
+import type { Data, FilterRules, Reminder } from '../sync/types'
 import { uuid4 } from '../sync/uuid'
 import type { View } from '../sync/view'
 import { plainNotes } from './notes'
@@ -105,6 +106,54 @@ export function setPref(engine: SyncEngine, listId: string, change: { show_compl
 /** Hides a space for oneself (everywhere one signs in), or shows it again. */
 export function setSpaceHidden(engine: SyncEngine, spaceId: string, hidden: boolean): void {
   engine.put('space_pref', spaceId, { hidden })
+}
+
+/** Hides a collection from the sidebar for oneself (everywhere one signs in), or shows it again. */
+export function setTileHidden(engine: SyncEngine, tile: Tile, hidden: boolean): void {
+  engine.put('tile_pref', TILE_IDS[tile], { hidden })
+}
+
+/** A new own filter, at the end of the filters. */
+export function createFilter(engine: SyncEngine, view: View, fields: { name: string; color: string; icon: string; rules: FilterRules }): string {
+  const id = uuid4()
+  engine.put('filter', id, { ...fields, hidden: false, position: keyAtEnd(view.filters) })
+  return id
+}
+
+export function setFilterHidden(engine: SyncEngine, filterId: string, hidden: boolean): void {
+  engine.put('filter', filterId, { hidden })
+}
+
+/** Filters have no trash: deleting is for good. */
+export function deleteFilter(engine: SyncEngine, filterId: string): void {
+  engine.remove('filter', filterId)
+}
+
+const RULE_KEYS = ['state', 'due', 'done', 'spaces', 'lists', 'flagged', 'assignees', 'priority', 'tags']
+
+/**
+ * The conditions as stored. What this page does not know (keys and values of a newer app) stays as it was; a
+ * condition the chosen state leaves without meaning (due dates for completed ones, completion days for open ones) and
+ * an empty one are left out.
+ */
+export function writeRules(rules: Rules, before: unknown = {}): FilterRules {
+  const old = (before && typeof before === 'object' && !Array.isArray(before) ? before : {}) as Record<string, unknown>
+  const out: FilterRules = {}
+  for (const [key, value] of Object.entries(old)) if (!RULE_KEYS.includes(key)) out[key] = value
+  const unknown = (key: string, isKnown: (value: unknown) => boolean) => (Array.isArray(old[key]) ? (old[key] as unknown[]).filter((value) => !isKnown(value)) : [])
+  const put = (key: string, values: unknown[]) => {
+    if (values.length) out[key] = values
+  }
+  out.state = rules.state
+  if (rules.state !== 'completed') put('due', [...rules.due, ...unknown('due', (v) => DUE_WORDS.includes(v as never))])
+  if (rules.state !== 'open') put('done', [...rules.done, ...unknown('done', (v) => DONE_WORDS.includes(v as never))])
+  put('spaces', rules.spaces)
+  put('lists', rules.lists)
+  if (rules.flagged) out.flagged = true
+  put('assignees', [...rules.assignees, ...unknown('assignees', (v) => v === 'me' || v === 'nobody' || Number.isInteger(v))])
+  put('priority', [...rules.priority].sort())
+  put('tags', rules.tags)
+  return out
 }
 
 /** Searching: title, the note as plain text, tags and link, every word must occur; hidden spaces stay out. */

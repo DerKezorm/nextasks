@@ -65,6 +65,10 @@ export function seeded(german: boolean): FakeServer {
 
   server.addReminder(games, w('Trikots waschen', 'Wash the shirts'), { due_date: day(2), assignees: [robin], created_by: alex })
   server.addReminder(games, w('Fahrgemeinschaft Samstag', 'Car pool on Saturday'), { due_date: day(1), due_time: '08:00', created_by: alex })
+
+  server.addFilter(robin, w('Diese Woche', 'This week'), { due: ['overdue', 'next7'] }, { color: 'indigo', icon: 'calendar' })
+  server.addFilter(robin, w('Familie, mir zugewiesen', 'Family, mine'), { spaces: [family], assignees: ['me'] }, { color: 'green', icon: 'house' })
+  server.addFilter(robin, w('Heute erledigt', 'Done today'), { state: 'completed', done: ['today'] }, { color: 'teal' })
   return server
 }
 

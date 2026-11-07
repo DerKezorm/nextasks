@@ -14,7 +14,8 @@ import { groupByDay, tileItems, type Tile } from '../sync/tiles'
 import type { Data, Reminder } from '../sync/types'
 
 /** Top-level rows only: a subtask whose parent shows too appears under it. */
-function tops(items: Reminder[]): Reminder[] {
+// eslint-disable-next-line react-refresh/only-export-components
+export function tops(items: Reminder[]): Reminder[] {
   const shown = new Set(items.map((r) => r.id))
   return items.filter((r) => !r.parent_id || !shown.has(r.parent_id))
 }

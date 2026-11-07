@@ -493,8 +493,8 @@ export class SyncEngine {
     this.put(kind, id, { deleted_at: back ? null : this.nowIso() })
   }
 
-  /** For good: sections and attachments. */
-  remove(kind: 'section' | 'attachment', id: string): void {
+  /** For good: sections, attachments and own filters. */
+  remove(kind: 'section' | 'attachment' | 'filter', id: string): void {
     this.records.delete(keyFor(kind, id))
     this.enqueue({ op_id: uuid4(), type: 'delete', kind, id })
   }

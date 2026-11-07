@@ -34,6 +34,9 @@ export interface Shell {
   editList: (listId: string) => void
   editSpace: (spaceId: string) => void
   members: (spaceId: string) => void
+  /** The dialog for a new own filter, or to change one. */
+  newFilter: () => void
+  editFilter: (filterId: string) => void
 }
 
 const noop = () => undefined
@@ -58,6 +61,8 @@ export const ShellContext = createContext<Shell>({
   editList: noop,
   editSpace: noop,
   members: noop,
+  newFilter: noop,
+  editFilter: noop,
 })
 
 export function useShell(): Shell {

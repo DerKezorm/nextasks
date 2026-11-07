@@ -1,12 +1,13 @@
 /**
  * The left column (docs "Aussehen", "Web"): logo and word mark; the collections as rows (Today, Scheduled, All,
- * Marked, Assigned to me, Done) with a petrol symbol and their number; one block per space with a small head (its
+ * Marked, Assigned to me, Done) with a petrol symbol and their number, those one hid left out; the own filters under
+ * "Filters", each with its plaque and, for open tasks, its number; one block per space with a small head (its
  * symbol, its name in capitals, the members of a shared one) and its lists, each a row with its plaque. Lists and
  * spaces are sorted by dragging; a task dropped on a list moves there. Spaces one hid wait folded under "Hidden spaces
- * (n)" to be shown again. At the bottom: new list, new space, the trash, how the sync stands, and the account with
+ * (n)" to be shown again. At the bottom: new list, new space, new filter, the trash, how the sync stands, and the account with
  * light/dark and the keys. On a phone the same is a page of its own.
  */
-import { ChevronDown, ChevronRight, CloudOff, Eye, EyeOff, FolderPlus, Keyboard, ListPlus, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react'
+import { ChevronDown, ChevronRight, CloudOff, Eye, EyeOff, FolderPlus, FunnelPlus, Keyboard, ListPlus, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react'
 import { createElement, useState, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useLocation } from 'react-router-dom'
@@ -16,13 +17,13 @@ import { localDay } from '../lib/due'
 import { dragging, draggedReminder, DRAG_LIST, DRAG_SPACE } from '../lib/drag'
 import { iconFor } from '../lib/look'
 import { TILE_LOOK } from '../lib/tileLook'
-import { useEngine, useSyncState, useView } from '../state/sync'
-import { tileCount, TILES } from '../sync/tiles'
-import type { List, Space } from '../sync/types'
+import { useEngine, useFiltersOffered, useSyncState, useView } from '../state/sync'
+import { filterCount, shownTiles, tileCount } from '../sync/tiles'
+import type { Filter, List, Space } from '../sync/types'
 import { AccountMenu } from './AccountMenu'
 import { Badge } from './Badge'
 import { Logo } from './Logo'
-import { useHideSpace, useListMenu, useSpaceMenu } from './Menus'
+import { useFilterMenu, useHideSpace, useListMenu, useSpaceMenu } from './Menus'
 import { AvatarStack } from './People'
 import { Popover } from './Popover'
 import { useShell } from './Shell'
@@ -46,6 +47,7 @@ export function SidebarBody() {
   const view = useView()
   const sync = useSyncState()
   const shell = useShell()
+  const filtersOffered = useFiltersOffered()
   const today = localDay()
   return (
     <div className="flex min-h-full flex-col px-2.5 pt-3 pb-2">
@@ -57,7 +59,7 @@ export function SidebarBody() {
       </Link>
 
       <nav aria-label={t('tiles.label')} className="space-y-px">
-        {TILES.map((tile) => {
+        {shownTiles(view).map((tile) => {
           const count = sync.loaded ? tileCount(view, tile, today) : null
           return (
             <NavLink key={tile} to={`/${tile}`} data-testid={`tile-${tile}`} className={({ isActive }) => row(isActive)}>
@@ -73,6 +75,8 @@ export function SidebarBody() {
         })}
       </nav>
 
+      {filtersOffered && view.shownFilters.length > 0 && <Filters />}
+
       <div className="mt-2" data-testid="spaces">
         {view.shownSpaces.map((space) => (
           <SpaceBlock key={space.id} space={space} index={view.spaces.indexOf(space)} />
@@ -87,6 +91,11 @@ export function SidebarBody() {
         <button type="button" onClick={() => shell.newSpace()} className={row(false) + ' w-full text-left'}>
           <FolderPlus className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('sidebar.newSpace')}
         </button>
+        {filtersOffered && (
+          <button type="button" onClick={() => shell.newFilter()} className={row(false) + ' w-full text-left'} data-testid="new-filter">
+            <FunnelPlus className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('filter.new')}
+          </button>
+        )}
         <NavLink to="/trash" className={({ isActive }) => row(isActive)}>
           <Trash2 className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('trash.title')}
         </NavLink>
@@ -101,6 +110,48 @@ export function SidebarBody() {
         </div>
       </div>
     </div>
+  )
+}
+
+/** The own filters shown, in their order, under a small head like a space's. */
+function Filters() {
+  const { t } = useTranslation()
+  const view = useView()
+  const [open, setOpen] = useState(true)
+  return (
+    <section aria-label={t('filter.section')} className="mt-4" data-testid="filters">
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="group/filters flex w-full min-w-0 items-center gap-2 px-1.5 py-1 text-left text-[11.5px] font-bold tracking-[0.06em] text-mist-500 uppercase hover:text-mist-100">
+        <span className="truncate">{t('filter.section')}</span>
+        {open ? <ChevronDown className="h-3 w-3 shrink-0 opacity-0 group-hover/filters:opacity-100" aria-hidden /> : <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />}
+      </button>
+      {open && (
+        <ul className="mt-0.5 space-y-px">
+          {view.shownFilters.map((filter) => (
+            <FilterRow key={filter.id} filter={filter} />
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+function FilterRow({ filter }: { filter: Filter }) {
+  const view = useView()
+  const sync = useSyncState()
+  const menu = useFilterMenu(filter)
+  const count = sync.loaded ? filterCount(view, filter.rules, localDay()) : null
+  return (
+    <li {...menu}>
+      <NavLink to={`/filters/${filter.id}`} data-testid={`filter-${filter.name}`} className={({ isActive }) => row(isActive) + ' py-[5px]'}>
+        <Badge color={filter.color} icon={filter.icon} size="sm" />
+        <span className="min-w-0 flex-1 truncate">{filter.name}</span>
+        {count ? (
+          <span className="text-[12.5px] font-normal text-mist-600 tabular-nums" data-testid={`filter-count-${filter.name}`}>
+            {count}
+          </span>
+        ) : null}
+      </NavLink>
+    </li>
   )
 }
 

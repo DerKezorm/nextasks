@@ -3,7 +3,7 @@
  * nextasks-ios). Field names stay English and as the server writes them.
  */
 
-export type Kind = 'space' | 'member' | 'list' | 'section' | 'reminder' | 'attachment' | 'list_pref' | 'space_pref'
+export type Kind = 'space' | 'member' | 'list' | 'section' | 'reminder' | 'attachment' | 'list_pref' | 'space_pref' | 'filter' | 'tile_pref'
 
 /** When each field or field group last changed, ms UTC. */
 export type Clock = Record<string, number>
@@ -131,6 +131,40 @@ export interface SpacePref {
   hidden: boolean
 }
 
+/**
+ * The conditions of an own filter (contract 0.5), as stored: every named condition must match, within one any value
+ * does. Unknown keys and values are passed over when reading and kept when writing (a newer app may know more).
+ */
+export interface FilterRules {
+  state?: 'open' | 'completed' | 'all'
+  due?: string[]
+  done?: string[]
+  spaces?: string[]
+  lists?: string[]
+  flagged?: boolean
+  assignees?: ('me' | 'nobody' | number)[]
+  priority?: number[]
+  tags?: string[]
+  [key: string]: unknown
+}
+
+/** An own filter (contract 0.5): a saved view of one's tasks, in the sidebar under "Filters". */
+export interface Filter {
+  id: string
+  name: string
+  color: string
+  icon: string
+  position: string
+  rules: FilterRules
+  hidden: boolean
+}
+
+/** Whether one of the six collections shows in the sidebar (contract 0.5); the id is the collection's fixed one. */
+export interface TilePref {
+  id: string
+  hidden: boolean
+}
+
 export interface KindTypes {
   space: Space
   member: Member
@@ -140,6 +174,8 @@ export interface KindTypes {
   attachment: Attachment
   list_pref: ListPref
   space_pref: SpacePref
+  filter: Filter
+  tile_pref: TilePref
 }
 
 // ---- Operations -----------------------------------------------------------------------------------------------------
@@ -156,7 +192,7 @@ export interface PutOp {
 export interface DeleteOp {
   op_id: string
   type: 'delete'
-  kind: 'section' | 'attachment'
+  kind: 'section' | 'attachment' | 'filter'
   id: string
 }
 

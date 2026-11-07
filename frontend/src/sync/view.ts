@@ -4,7 +4,7 @@
  * contradict each other.
  */
 import { byPosition } from './position'
-import type { Attachment, Data, Kind, List, ListPref, Member, Person, Reminder, Section, Space, SpacePref } from './types'
+import type { Attachment, Data, Filter, Kind, List, ListPref, Member, Person, Reminder, Section, Space, SpacePref, TilePref } from './types'
 
 export interface Rec {
   kind: Kind
@@ -50,6 +50,13 @@ export interface View {
    * never a list in a hidden space. */
   defaultList: List | undefined
   trash: { spaces: Space[]; lists: List[]; reminders: Reminder[] }
+  /** The own filters by position, hidden ones included (the settings list them all). */
+  filters: Filter[]
+  /** The filters the sidebar shows. */
+  shownFilters: Filter[]
+  filter(id: string): Filter | undefined
+  /** Whether one hid the collection with this fixed id (`tile_pref`). */
+  isTileHidden(tileId: string): boolean
   /** Space order: index in the sidebar, for sorting across spaces. */
   spaceIndex(id: string): number
   listIndex(id: string): number
@@ -83,6 +90,8 @@ export function buildView(records: Iterable<Rec>, people: Map<number, Person>, m
   const members = new Map<string, Member[]>()
   const prefs = new Map<string, ListPref>()
   const hidden = new Set<string>()
+  const filters = new Map<string, Filter>()
+  const hiddenTiles = new Set<string>()
   for (const rec of records) {
     const data = { ...rec.data, id: rec.id }
     switch (rec.kind) {
@@ -113,6 +122,16 @@ export function buildView(records: Iterable<Rec>, people: Map<number, Person>, m
         break
       case 'space_pref':
         if ((data as unknown as SpacePref).hidden) hidden.add(rec.id)
+        break
+      case 'filter': {
+        // Rules that are not an object read as none (`{}`: everything open).
+        const raw = (data as Data).rules
+        const rules = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}
+        filters.set(rec.id, { ...(data as unknown as Filter), rules: rules as Filter['rules'] })
+        break
+      }
+      case 'tile_pref':
+        if ((data as unknown as TilePref).hidden) hiddenTiles.add(rec.id)
         break
     }
   }
@@ -188,6 +207,8 @@ export function buildView(records: Iterable<Rec>, people: Map<number, Person>, m
     }),
   }
 
+  const filterList = [...filters.values()].sort(byPosition)
+
   return {
     me,
     people,
@@ -214,6 +235,10 @@ export function buildView(records: Iterable<Rec>, people: Map<number, Person>, m
     firstPrivateList,
     defaultList: defaultSpace ? (listsBySpace.get(defaultSpace.id) ?? [])[0] : undefined,
     trash,
+    filters: filterList,
+    shownFilters: filterList.filter((f) => !f.hidden),
+    filter: (id) => filters.get(id),
+    isTileHidden: (tileId) => hiddenTiles.has(tileId),
     spaceIndex: (id) => spaceOrder.get(id) ?? 9999,
     listIndex: (id) => listOrder.get(id) ?? 99999,
   }

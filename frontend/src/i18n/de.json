@@ -503,6 +503,13 @@
     "prefsShown": "In der Seitenleiste zeigen",
     "prefsNone": "Noch kein Bereich."
   },
+  "sidebarPrefs": {
+    "title": "Seitenleiste",
+    "text": "Welche Sammlungen und Filter die Seitenleiste zeigt. Ausgeblendete Filter bleiben hier und lassen sich weiter bearbeiten. Die Einstellung gilt nur für dich, auf all deinen Geräten.",
+    "hide": "„{{name}}“ ausblenden",
+    "show": "„{{name}}“ einblenden",
+    "noFilters": "Noch kein eigener Filter."
+  },
   "about": {
     "menu": "Über nextasks",
     "subtitle": "Aufgaben für Familie und kleine Gruppen, auf dem eigenen Server.",
@@ -739,6 +746,63 @@
     "sub_other": "{{count}} offene Aufgaben in allen Bereichen",
     "subDone_one": "eine erledigte Aufgabe",
     "subDone_other": "{{count}} erledigte Aufgaben"
+  },
+  "filter": {
+    "section": "Filter",
+    "new": "Neuer Filter",
+    "newTitle": "Neuer Filter",
+    "editTitle": "Filter bearbeiten",
+    "edit": "Filter bearbeiten",
+    "editNamed": "„{{name}}“ bearbeiten",
+    "name": "Name",
+    "create": "Filter anlegen",
+    "delete": "Löschen",
+    "deleteSure": "Filter endgültig löschen",
+    "hide": "Filter ausblenden",
+    "empty": "Keine Aufgabe passt zu diesem Filter.",
+    "subAll_one": "eine Aufgabe",
+    "subAll_other": "{{count}} Aufgaben",
+    "conditions": "Bedingungen",
+    "conditionsHint": "Alle gewählten Bedingungen müssen passen, innerhalb einer reicht ein Wert. Was nicht gewählt ist, spielt keine Rolle.",
+    "state": "Welche Aufgaben",
+    "states": {
+      "open": "Offene",
+      "completed": "Erledigte",
+      "all": "Alle"
+    },
+    "due": "Fällig",
+    "dueHint": "gilt für offene",
+    "dueWords": {
+      "overdue": "Überfällig",
+      "today": "Heute",
+      "tomorrow": "Morgen",
+      "next7": "Nächste 7 Tage",
+      "later": "Später",
+      "any": "Mit Datum",
+      "none": "Ohne Datum"
+    },
+    "done": "Erledigt",
+    "doneHint": "gilt für erledigte",
+    "doneWords": {
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "last7": "Letzte 7 Tage",
+      "last30": "Letzte 30 Tage",
+      "earlier": "Früher"
+    },
+    "place": "Bereich oder Liste",
+    "placeGone_one": "Einen gewählten Ort gibt es nicht mehr.",
+    "placeGone_other": "{{count}} gewählte Orte gibt es nicht mehr.",
+    "removeGone": "Entfernen",
+    "flagged": "Markierung",
+    "flaggedOnly": "Nur markierte",
+    "me": "Mir",
+    "nobody": "Niemandem",
+    "addTag": "Schlagwort hinzufügen",
+    "add": "Hinzufügen",
+    "matches_one": "Passt gerade auf eine Aufgabe.",
+    "matches_other": "Passt gerade auf {{count}} Aufgaben.",
+    "tooLong": "Zu viele Bedingungen: zusammen höchstens 4000 Zeichen."
   },
   "sync": {
     "loading": "Lädt …",
@@ -1415,7 +1479,8 @@
     "leave": "Bereich verlassen …",
     "editList": "Name, Farbe, Symbol …",
     "editSpace": "Name, Farbe, Symbol …",
-    "members": "Mitglieder …"
+    "members": "Mitglieder …",
+    "editFilter": "Name, Bedingungen …"
   },
   "notes": {
     "tools": "Formatieren",
