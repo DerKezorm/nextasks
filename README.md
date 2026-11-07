@@ -7,8 +7,7 @@ space: whoever ticks a task off first, ticks it off for everybody.
 nextasks has a calm look of its own: petrol as the one accent, tick boxes, lists with a coloured plaque, light and
 dark.
 
-**Early days.** nextasks was rebuilt from the ground up in November 2026. There is no release and no published image
-yet; build it from source.
+**Early days.** nextasks was rebuilt from the ground up in November 2026. Expect rough edges, and keep backups.
 
 ![Today: overdue tasks in red, the ones due today with their time, priorities and the people they are assigned to](docs/screenshots/today.png)
 
@@ -63,8 +62,7 @@ its own, and nextasks installs from the browser as an app.*
 
   Events: a task was assigned to you, a task with a time is due, someone joined one of your spaces, and, for lists
   you follow, what others added or completed, bundled over ten minutes.
-- **Installable** from the browser as an app; it starts without the network and offers a reload when a new version
-  is there.
+- **Installable** from the browser as an app; it offers a reload when a new version is there.
 - **Accounts** by invitation only, a second factor (TOTP, which the operator can require for everybody), profile
   pictures, sign-in through any number of OpenID Connect providers side by side.
 - **For the operator**: backups on a schedule, to download, upload and restore; a log in four levels; switches for
@@ -79,7 +77,7 @@ An iPhone and iPad app for nextasks is coming to the App Store.
 ```yaml
 services:
   nextasks:
-    build: .
+    image: ghcr.io/derkezorm/nextasks:latest
     container_name: nextasks
     restart: unless-stopped
     ports:
@@ -92,8 +90,9 @@ services:
       TZ: Europe/Berlin
 ```
 
-Clone this repository and run `docker compose up -d --build`. The [docker-compose.yml](docker-compose.yml) here has
-the same service with every option explained.
+Then `docker compose up -d`. Images for `linux/amd64` and `linux/arm64` are on the GitHub Container Registry, one tag
+per release (`0.1.0`) and `latest`. The [docker-compose.yml](docker-compose.yml) in this repository has the same service
+with every option explained; it builds from source with `docker compose up -d --build`.
 
 Open `http://<your-host>:8510`. The first account you create there becomes the operator. It needs the **setup code**
 from the server's log, so that nobody who reaches a fresh instance first can take it over:
@@ -160,9 +159,11 @@ restore it. The new server then has the old accounts, spaces, tasks and files.
 ## Updating
 
 ```
-git pull
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
+
+Make a backup first (see above). What changed is in the release notes, and nextasks shows it once after the update.
 
 ## Environment
 
