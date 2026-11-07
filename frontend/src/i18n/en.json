@@ -803,6 +803,7 @@
       "lock": "Lock",
       "key": "Key",
       "search": "Search",
+      "filter": "Filter",
       "target": "Target",
       "sparkles": "Sparkles",
       "bolt": "Lightning",
