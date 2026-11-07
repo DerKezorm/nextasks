@@ -1,32 +1,33 @@
 {
   "0.1.0": {
-    "lead": "nextasks is rebuilt: tasks for families and small groups, in the browser and as an iPhone app.",
+    "lead": "nextasks is rebuilt: tasks for families and small groups, in the browser, installable as an app, and with an iPhone app.",
     "sections": [
       {
         "title": "Collections, spaces and lists",
         "where": "Sidebar on the left",
-        "body": "At the top the collections Today, Scheduled, All, Marked, Assigned to me and Completed, below them your spaces with their lists. Drag lists and spaces to sort them; a task dropped on a list moves there."
+        "body": "At the top the collections Today, Scheduled, All, Marked, Assigned to me and Completed, below them your spaces with their lists. A space you do not need can be hidden from its menu; it then counts nowhere until you show it again."
       },
       {
-        "title": "Quick entry",
-        "where": "Below every list, or press N",
-        "body": "“Milk tomorrow 9am #groceries !!” creates a task with date, time, tag and priority. You see what was recognised while typing."
+        "title": "Tasks and notes",
+        "where": "Click a task, or New task at the top",
+        "body": "A task opens as a card in the middle; the button at the end of its row shows it in a column on the right instead. Notes are written with bold, lists, checklists and pictures, without any marks to learn. A right click opens a menu wherever there is something to do."
       },
       {
         "title": "Together with others",
         "where": "Space, menu “Members”",
-        "body": "Invite family or friends to a space with a link and assign tasks to one or more people. One is enough: whoever completes it first completes it for everyone."
+        "body": "Invite family or friends to a space with a link or by mail and assign tasks to one or more people. One is enough: whoever completes it first completes it for everyone."
       },
       {
-        "title": "iPhone app and notifications",
-        "where": "My account, Connections",
-        "body": "Connect the iPhone app with a QR code. In the browser, notifications arrive as web push, also while the page is closed."
+        "title": "Notifications and reports",
+        "where": "My account, Notifications",
+        "body": "One table says what reaches you by mail, in the browser or on the iPhone: tasks assigned to you, tasks that are due, changes in lists you follow, and the reports “My day” and “Weekly report”."
       }
     ],
     "smallTitle": "Also",
     "small": [
-      "Columns per section, subtasks, attachments, repetitions in words instead of formulas.",
-      "Trash for 30 days, search, keyboard shortcuts, light and dark."
+      "Quick entry with Shift+N: “Milk tomorrow 9am #groceries !!” sets date, time, tag and priority.",
+      "Install nextasks as an app from the account menu; it says when there is a new version.",
+      "An API for programs (docs/api.md), columns per section, subtasks, repetitions in words, a trash for 30 days, light and dark."
     ]
   }
 }

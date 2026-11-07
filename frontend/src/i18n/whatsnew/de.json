@@ -1,32 +1,33 @@
 {
   "0.1.0": {
-    "lead": "nextasks ist neu gebaut: Aufgaben für Familie und kleine Gruppen, im Browser und als iPhone-App.",
+    "lead": "nextasks ist neu gebaut: Aufgaben für Familie und kleine Gruppen, im Browser, als App installierbar und mit einer iPhone-App.",
     "sections": [
       {
         "title": "Sammlungen, Bereiche und Listen",
         "where": "Seitenleiste links",
-        "body": "Oben die Sammlungen Heute, Geplant, Alle, Markiert, Mir zugewiesen und Erledigt, darunter deine Bereiche mit ihren Listen. Listen und Bereiche sortierst du durch Ziehen; eine Aufgabe, die du auf eine Liste ziehst, wandert dorthin."
+        "body": "Oben die Sammlungen Heute, Geplant, Alle, Markiert, Mir zugewiesen und Erledigt, darunter deine Bereiche mit ihren Listen. Einen Bereich, den du nicht brauchst, blendest du über sein Menü aus; er zählt dann nirgends mit, bis du ihn wieder einblendest."
       },
       {
-        "title": "Schnelleingabe",
-        "where": "Unter jeder Liste, oder N drücken",
-        "body": "„Milch morgen 9 Uhr #einkauf !!“ legt eine Aufgabe mit Datum, Uhrzeit, Schlagwort und Priorität an. Was erkannt wurde, siehst du beim Tippen."
+        "title": "Aufgaben und Notizen",
+        "where": "Klick auf eine Aufgabe, oder oben „Neue Aufgabe“",
+        "body": "Eine Aufgabe öffnet sich als Karte in der Mitte; der Knopf am Ende der Zeile zeigt sie stattdessen in einer Spalte rechts. Notizen schreibst du mit Fett, Listen, Checklisten und Bildern, ohne Zeichen lernen zu müssen. Ein Rechtsklick öffnet überall ein Menü, wo es etwas zu tun gibt."
       },
       {
         "title": "Gemeinsam mit anderen",
         "where": "Bereich, Menü „Mitglieder“",
-        "body": "Lade Familie oder Freunde mit einem Link in einen Bereich ein und weise Aufgaben einer oder mehreren Personen zu. Einer reicht: Wer zuerst abhakt, erledigt sie für alle."
+        "body": "Lade Familie oder Freunde per Link oder Mail in einen Bereich ein und weise Aufgaben einer oder mehreren Personen zu. Einer reicht: Wer zuerst abhakt, erledigt sie für alle."
       },
       {
-        "title": "iPhone-App und Mitteilungen",
-        "where": "Mein Konto, Verbindungen",
-        "body": "Verbinde die iPhone-App per QR-Code. Im Browser kommen Mitteilungen als Web-Push, auch wenn die Seite geschlossen ist."
+        "title": "Benachrichtigungen und Berichte",
+        "where": "Mein Konto, Benachrichtigungen",
+        "body": "Eine Tabelle sagt, was dich per Mail, im Browser oder auf dem iPhone erreicht: dir zugewiesene Aufgaben, fällige Aufgaben, Änderungen in Listen, denen du folgst, und die Berichte „Mein Tag“ und „Wochenbericht“."
       }
     ],
     "smallTitle": "Außerdem",
     "small": [
-      "Spalten je Abschnitt, Unteraufgaben, Anhänge, Wiederholungen in Worten statt Formeln.",
-      "Papierkorb mit 30 Tagen, Suche, Tastenkürzel, hell und dunkel."
+      "Schnelleingabe mit Umschalt+N: „Milch morgen 9 Uhr #einkauf !!“ setzt Datum, Uhrzeit, Schlagwort und Priorität.",
+      "nextasks lässt sich über das Kontomenü als App installieren und meldet sich, wenn es eine neue Version gibt.",
+      "Eine API für Programme (docs/api.md), Spalten je Abschnitt, Unteraufgaben, Wiederholungen in Worten, Papierkorb mit 30 Tagen, hell und dunkel."
     ]
   }
 }
