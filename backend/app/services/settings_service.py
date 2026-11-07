@@ -20,6 +20,9 @@ DEFAULTS: dict[str, Any] = {
     "backup_keep": 7,
     #: Largest attachment, in MB; never above ``NEXTASKS_UPLOAD_MAX_MB`` (at most 50).
     "upload_max_mb": 50,
+    #: Photos attached to tasks keep of their metadata only the orientation and the colour profile: no place, no
+    #: device, no times (``services/media.py``). Off: they stay as they came.
+    "strip_location": True,
     #: The address people use to reach nextasks: invitation links, the QR code of the app, the OIDC redirect. Empty
     #: means ``NEXTASKS_PUBLIC_URL``, and without that the request's own.
     "public_url": "",

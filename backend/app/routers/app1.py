@@ -59,6 +59,7 @@ from ..services import (
     devices,
     files,
     logs,
+    media,
     notify,
     push,
     records,
@@ -597,7 +598,7 @@ async def upload(
     op_id: Annotated[str, Form(min_length=1, max_length=64)],
     file: UploadFile,
 ) -> JSONResponse:
-    limit = await run_in_threadpool(_limit)
+    limit, clean = await run_in_threadpool(_rules)
     running = _OneAtATime(found.key, op_id)
     await run_in_threadpool(running.__enter__)
     try:
@@ -624,6 +625,9 @@ async def upload(
                         digest.update(chunk)
                         await handle.write(chunk)
             hexdigest = digest.hexdigest()
+            if clean and size and (code is None or code.startswith("same:")):
+                # Before the hash is compared or kept: the row, the file and an upload sent again all agree on it.
+                hexdigest, size = await run_in_threadpool(_clean_photo, received, hexdigest, size)
             if code is None and size == 0:
                 code = "invalid"
             if code is not None and code.startswith("same:"):
@@ -648,9 +652,30 @@ async def upload(
         running.__exit__(None, None, None)
 
 
-def _limit() -> int:
+def _rules() -> tuple[int, bool]:
+    """The largest attachment, and whether photos lose their metadata (``strip_location``)."""
     with SessionLocal() as db:
-        return attachment_bytes(db)
+        return attachment_bytes(db), bool(settings_service.get(db, "strip_location"))
+
+
+def _clean_photo(path: Any, digest: str, size: int) -> tuple[str, int]:
+    """A photo keeps of its metadata only the orientation and the colour profile (``services/media.py``); its hash
+    and size are then those of what is kept. The cleaning is the same every time, so the same photo sent again (a
+    retry with another ``op_id``) comes to the same hash, and one cleaned already stays as it is."""
+    with open(path, "rb") as handle:
+        kind = media.sniff(handle.read(64))
+    if kind not in media.PICTURES:
+        return digest, size
+    removed = media.strip(path, kind)
+    hasher = hashlib.sha256()
+    size = 0
+    with open(path, "rb") as handle:
+        while chunk := handle.read(1024 * 1024):
+            size += len(chunk)
+            hasher.update(chunk)
+    if removed:
+        logger.info("Photo cleaned kind=%s removed=%s", kind, ",".join(sorted(removed)))
+    return hasher.hexdigest(), size
 
 
 def _answer_upload(found: Caller, op: dict[str, Any], stored: dict[str, Any], attachment_id: str) -> dict[str, Any]:

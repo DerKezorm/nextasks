@@ -112,7 +112,7 @@ export class FakeServer {
     api_tokens_allowed: true,
     upload_max_mb: 50,
     upload_ceiling_mb: 50,
-    strip_location: false,
+    strip_location: true,
     update_check: false,
   }
   features = ['changes', 'batch', 'files', 'wait', 'invites', 'webpush']

@@ -43,6 +43,8 @@ class SettingsOut(BaseModel):
     api_tokens_allowed: bool
     upload_max_mb: int
     upload_ceiling_mb: int
+    #: Photos lose place, device and the rest of their metadata on upload (``services/media.py``).
+    strip_location: bool
     update_check: bool
     #: The iPhone app may use ``/api/app/1`` (off: 403 ``app_disabled``; the devices stay paired).
     app_enabled: bool
@@ -73,6 +75,7 @@ class SettingsIn(BaseModel):
     smtp_from: str | None = Field(default=None, max_length=255)
     api_tokens_allowed: bool | None = None
     upload_max_mb: int | None = Field(default=None, ge=1, le=100_000)
+    strip_location: bool | None = None
     update_check: bool | None = None
     app_enabled: bool | None = None
     app_pairing_allowed: bool | None = None
@@ -105,6 +108,7 @@ def _view(db: DbSession) -> SettingsOut:
         api_tokens_allowed=bool(values["api_tokens_allowed"]),
         upload_max_mb=settings_service.upload_max_mb(db),
         upload_ceiling_mb=get_settings().upload_max_mb,
+        strip_location=bool(values["strip_location"]),
         update_check=bool(values["update_check"]),
         app_enabled=bool(values["app_enabled"]),
         app_pairing_allowed=bool(values["app_pairing_allowed"]),
