@@ -492,10 +492,43 @@ class SpacePref(Base):
     cursor: Mapped[int] = mapped_column(Integer, default=0, index=True)
 
 
+class SavedFilter(Base):
+    """One person's own filter (``filter``, id = the maker's): a name in the sidebar and the conditions it shows tasks
+    by. Nobody else ever sees it. The server keeps ``rules`` as it came and never evaluates them: app and web do, so
+    a newer condition passes an older server unchanged."""
+
+    __tablename__ = "filters"
+
+    id: Mapped[str] = mapped_column(ID, primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    color: Mapped[str] = mapped_column(String(16), default="blue")
+    icon: Mapped[str] = mapped_column(String(64), default="filter")
+    position: Mapped[str] = mapped_column(String(200))
+    rules: Mapped[Any] = mapped_column(JSON, default=dict)
+    hidden: Mapped[bool] = mapped_column(Boolean, default=False)
+    clock: Mapped[Any] = mapped_column(JSON, default=dict)
+    cursor: Mapped[int] = mapped_column(Integer, default=0, index=True)
+
+
+class TilePref(Base):
+    """One person's setting for one of the six built-in tiles (``tile_pref``, id = the tile's fixed one): hidden on
+    the own main page. Nobody else ever sees it."""
+
+    __tablename__ = "tile_prefs"
+
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), primary_key=True)
+    tile_id: Mapped[str] = mapped_column(ID, primary_key=True)
+    hidden: Mapped[bool] = mapped_column(Boolean, default=False)
+    clock: Mapped[Any] = mapped_column(JSON, default=dict)
+    cursor: Mapped[int] = mapped_column(Integer, default=0, index=True)
+
+
 class Gone(Base):
-    """A tombstone: the thing went for good (bin run out or emptied, a section or attachment deleted, a member gone).
-    Kept at least 90 days; a change to it is refused (``gone``). ``account_id`` names the owner of a ``list_pref``
-    or ``space_pref`` (0 for everything else)."""
+    """A tombstone: the thing went for good (bin run out or emptied, a section, attachment or filter deleted, a member
+    gone). Kept at least 90 days; a change to it is refused (``gone``). ``account_id`` names the owner of a
+    ``list_pref``, ``space_pref`` or ``filter`` (0 for everything else); a filter lies in no space, its ``space_id``
+    is empty."""
 
     __tablename__ = "gone"
 
@@ -730,12 +763,14 @@ __all__ = [
     "OidcProvider",
     "PageCursor",
     "Reminder",
+    "SavedFilter",
     "Section",
     "Setting",
     "Space",
     "SpacePref",
     "SyncState",
     "TaskList",
+    "TilePref",
     "WebPushSubscription",
     "utcnow",
 ]

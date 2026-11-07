@@ -14,6 +14,9 @@ break; with equal values that only holds when a page may run over ``limit`` at t
 
 **What went** comes from ``Gone`` (for whoever is in the space it was in) and ``Hidden`` (for one account), both only
 for ``since > 0``: ``since=0`` is everything there is.
+
+**What belongs to an account alone** (``filter``, ``tile_pref``, contract 0.5) lies in no space: it comes to its owner
+at its own cursor, with no ``granted_cursor`` to raise it, and to nobody else.
 """
 
 from __future__ import annotations
@@ -34,10 +37,12 @@ from ..models import (
     Member,
     PageCursor,
     Reminder,
+    SavedFilter,
     Section,
     Space,
     SpacePref,
     TaskList,
+    TilePref,
     utcnow,
 )
 from . import cursor, records, visibility
@@ -68,6 +73,11 @@ _MODELS: dict[str, Any] = {
     "attachment": Attachment,
     "list_pref": ListPref,
     "space_pref": SpacePref,
+}
+#: The kinds that belong to an account and to no space (``records.OWN_KINDS``).
+_OWN_MODELS: dict[str, Any] = {
+    "filter": SavedFilter,
+    "tile_pref": TilePref,
 }
 
 
@@ -103,6 +113,12 @@ def _live(db: Session, account_id: int, low: int, high: int, limit: int | None) 
     for kind, model in _MODELS.items():
         extra = [model.account_id == account_id] if kind in records.PREF_KINDS else []
         run(kind, model, model.space_id, *extra)
+    for kind, model in _OWN_MODELS.items():
+        query = (select(model).where(model.account_id == account_id, model.cursor > low, model.cursor <= high)
+                 .order_by(model.cursor))
+        if limit is not None:
+            query = query.limit(limit)
+        found += [Item(int(row.cursor), kind, records.entry_id(kind, row), row) for row in db.scalars(query)]
     return found
 
 
@@ -117,7 +133,8 @@ def _went(db: Session, account_id: int, low: int, high: int, limit: int | None) 
         query = query.limit(limit)
     found = [Item(int(eff), row.kind, row.id, deleted=True) for row, eff in db.execute(query)]
     # A private space goes with its account only; anything else that went for everybody in a space the account
-    # left meanwhile it heard of through ``Hidden``. Its own list and space settings it hears of wherever they were.
+    # left meanwhile it heard of through ``Hidden``. Its own list and space settings it hears of wherever they were,
+    # and its own filters, which lie in no space (``space_id`` empty), here alone.
     own = select(Gone).where(Gone.account_id == account_id, Gone.cursor > low, Gone.cursor <= high,
                              Gone.space_id.not_in(select(Member.space_id).where(Member.account_id == account_id)))
     found += [Item(row.cursor, row.kind, row.id, deleted=True) for row in db.scalars(own)]
@@ -218,6 +235,8 @@ def entry_for(db: Session, account_id: int, kind: str, row: Any) -> dict[str, An
     """A thing as ``/changes`` would give it to this account now, or None when the account does not see it."""
     if row is None:
         return None
+    if kind in records.OWN_KINDS:
+        return records.entry(kind, row, int(row.cursor)) if row.account_id == account_id else None
     space_id = row.id if kind == "space" else row.space_id
     member = db.get(Member, (space_id, account_id))
     if member is None:

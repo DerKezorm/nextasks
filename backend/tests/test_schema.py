@@ -30,5 +30,5 @@ def test_a_database_of_the_old_nextasks_is_refused_and_left_as_it_is(table: str)
 def test_a_new_database_has_the_tables_of_the_data_model() -> None:
     names = set(inspect(engine).get_table_names())
     assert {"spaces", "members", "lists", "sections", "reminders", "attachments", "list_prefs", "gone", "hidden",
-            "sync_state", "app_devices", "app_ops"} <= names
+            "space_prefs", "filters", "tile_prefs", "sync_state", "app_devices", "app_ops"} <= names
     assert not names & {"teams", "tasks", "task_lists", "handovers", "absences", "calendar_feeds"}

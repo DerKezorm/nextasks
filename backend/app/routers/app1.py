@@ -270,7 +270,8 @@ def attachment_bytes(db: Any) -> int:
 
 def features(db: Any) -> list[str]:
     # ``space_prefs``: the kind ``space_pref`` (hiding a space) is known here (contract 0.3); older servers refuse it.
-    offered = ["changes", "batch", "files", "wait", "invites", "space_prefs"]
+    # ``filters``: the kinds ``filter`` and ``tile_pref`` are (contract 0.5); an app sends them only where it is named.
+    offered = ["changes", "batch", "files", "wait", "invites", "space_prefs", "filters"]
     if push.relay_url():
         offered.append("push")
     if webpush.ready(db):
@@ -343,7 +344,8 @@ class Person(BaseModel):
 
 
 class Entry(BaseModel):
-    #: ``space``, ``member``, ``list``, ``section``, ``reminder``, ``attachment``, ``list_pref`` or ``space_pref``.
+    #: ``space``, ``member``, ``list``, ``section``, ``reminder``, ``attachment``, ``list_pref``, ``space_pref``,
+    #: ``filter`` or ``tile_pref``.
     kind: str
     id: str
     cursor: int

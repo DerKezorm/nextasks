@@ -19,7 +19,7 @@ from typing import Annotated, Any
 
 from pydantic import PlainSerializer
 
-from . import fractional, position, wiederholung
+from . import fractional, gleichstand, position, wiederholung
 
 UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
@@ -37,10 +37,18 @@ WHITE_SPACE = frozenset(
 MAX_TAGS = 20
 MAX_ASSIGNEES = 10
 
-PUT_KINDS = ("space", "list", "section", "reminder", "list_pref", "space_pref")
-KINDS = ("space", "member", "list", "section", "reminder", "attachment", "list_pref", "space_pref")
+PUT_KINDS = ("space", "list", "section", "reminder", "list_pref", "space_pref", "filter", "tile_pref")
+KINDS = ("space", "member", "list", "section", "reminder", "attachment", "list_pref", "space_pref", "filter",
+         "tile_pref")
 #: The own settings of an account: nobody else ever sees them; ``id`` = the list's or the space's.
 PREF_KINDS = ("list_pref", "space_pref")
+#: What belongs to an account and to no space (contract 0.5): nobody else ever sees it, and it reaches only the own
+#: devices. ``filter`` has an id of its own; ``tile_pref`` the fixed one of its tile.
+OWN_KINDS = ("filter", "tile_pref")
+#: The six built-in tiles: Today, Scheduled, All, Flagged, Assigned to me, Completed. No other id makes a ``tile_pref``.
+TILE_IDS = tuple(f"00000000-0000-4000-8000-0000000000a{number}" for number in range(1, 7))
+#: The longest ``rules`` of a filter, written as JSON (RFC 8785, in code points).
+MAX_RULES = 4000
 
 #: Clock key -> its fields. A field that stands alone is its own key.
 GROUPS: dict[str, dict[str, tuple[str, ...]]] = {
@@ -54,6 +62,8 @@ GROUPS: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "list_pref": {},
     "space_pref": {},
+    "filter": {},
+    "tile_pref": {},
 }
 #: The fields with a clock, alone or in a group, per kind (in the order of the data model).
 CLOCKED: dict[str, tuple[str, ...]] = {
@@ -67,6 +77,9 @@ CLOCKED: dict[str, tuple[str, ...]] = {
     ),
     "list_pref": ("show_completed", "notify_changes"),
     "space_pref": ("hidden",),
+    # ``rules`` is one field with one clock: the later object wins whole, conditions are never merged one by one.
+    "filter": ("name", "color", "icon", "position", "rules", "hidden"),
+    "tile_pref": ("hidden",),
 }
 #: What only the server sets: named in ``ignored`` when sent.
 SERVER_ONLY = frozenset({"created_by", "completed_by", "private", "role", "id"})
@@ -78,6 +91,8 @@ REQUIRED: dict[str, tuple[str, ...]] = {
     "reminder": ("list_id", "title", "position"),
     "list_pref": (),
     "space_pref": (),
+    "filter": ("name", "position"),
+    "tile_pref": (),
 }
 DEFAULTS: dict[str, dict[str, Any]] = {
     "space": {"color": "blue", "icon": "list", "deleted_at": None},
@@ -90,6 +105,8 @@ DEFAULTS: dict[str, dict[str, Any]] = {
     },
     "list_pref": {"show_completed": False, "notify_changes": False},
     "space_pref": {"hidden": False},
+    "filter": {"color": "blue", "icon": "filter", "rules": {}, "hidden": False},
+    "tile_pref": {"hidden": False},
 }
 
 
@@ -309,6 +326,20 @@ def _view(value: Any) -> str:
     return str(value)
 
 
+def _rules(value: Any) -> dict[str, Any]:
+    """Any object up to ``MAX_RULES`` characters written. Its conditions are not checked: the server never evaluates a
+    filter, and one made by a newer app must pass unchanged."""
+    if not isinstance(value, dict):
+        raise TypeError
+    try:
+        written = gleichstand.canonical(value)
+    except RecursionError as exc:
+        raise ValueError from exc
+    if len(written) > MAX_RULES:
+        raise ValueError
+    return value
+
+
 CHECKS: dict[str, dict[str, Any]] = {
     "space": {"name": lambda v: text(v, 1, 80), "color": _color, "icon": _icon, "deleted_at": stamp_or_none},
     "list": {
@@ -327,6 +358,11 @@ CHECKS: dict[str, dict[str, Any]] = {
     },
     "list_pref": {"show_completed": _bool, "notify_changes": _bool},
     "space_pref": {"hidden": _bool},
+    "filter": {
+        "name": lambda v: text(v, 1, 80), "color": _color, "icon": _icon, "position": _position, "rules": _rules,
+        "hidden": _bool,
+    },
+    "tile_pref": {"hidden": _bool},
 }
 #: Fields that may not be null.
 NOT_NULL: dict[str, frozenset[str]] = {
@@ -442,6 +478,11 @@ def data_of(kind: str, row: Any, *, role: str | None = None, own_member: bool = 
         return {"id": row.list_id, "show_completed": row.show_completed, "notify_changes": row.notify_changes}
     if kind == "space_pref":
         return {"id": row.space_id, "hidden": row.hidden}
+    if kind == "filter":
+        return {"id": row.id, "name": row.name, "color": row.color, "icon": row.icon, "position": row.position,
+                "rules": row.rules if isinstance(row.rules, dict) else {}, "hidden": row.hidden}
+    if kind == "tile_pref":
+        return {"id": row.tile_id, "hidden": row.hidden}
     raise ValueError(kind)
 
 
@@ -459,6 +500,8 @@ def entry_id(kind: str, row: Any) -> str:
         return row.list_id
     if kind == "space_pref":
         return row.space_id
+    if kind == "tile_pref":
+        return row.tile_id
     return row.id
 
 

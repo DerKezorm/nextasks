@@ -33,9 +33,11 @@ from ..models import (
     NotifySent,
     PageCursor,
     Reminder,
+    SavedFilter,
     Space,
     SpacePref,
     TaskList,
+    TilePref,
     utcnow,
 )
 from . import clock, cursor, files, spaces
@@ -128,7 +130,8 @@ def leave_with_successor(db: Session, space: Space, account_id: int) -> None:
 
 
 def remove_account(db: Session, account_id: int) -> None:
-    """Before an account is deleted: its space "Private" goes for good, it leaves every other space."""
+    """Before an account is deleted: its space "Private" goes for good, it leaves every other space, its filters and
+    tile settings go. Nobody else ever saw those, so no tombstone is needed; its own tombstones of filters go too."""
     for space_id in spaces.space_ids_of(db, account_id):
         space = db.get(Space, space_id)
         if space is None:
@@ -138,6 +141,10 @@ def remove_account(db: Session, account_id: int) -> None:
             purge_space(db, space)
         else:
             leave_with_successor(db, space, account_id)
+    # Gone by the foreign keys as well; said here, so that it does not hang on PRAGMA foreign_keys.
+    db.execute(delete(SavedFilter).where(SavedFilter.account_id == account_id))
+    db.execute(delete(TilePref).where(TilePref.account_id == account_id))
+    db.execute(delete(Gone).where(Gone.kind == "filter", Gone.account_id == account_id))
     db.flush()
 
 

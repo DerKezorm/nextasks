@@ -33,10 +33,12 @@ from ..models import (
     ListPref,
     Member,
     Reminder,
+    SavedFilter,
     Section,
     Space,
     SpacePref,
     TaskList,
+    TilePref,
     utcnow,
 )
 from . import changes, clock, cursor, files, gleichstand, records, spaces, wiederholung
@@ -52,6 +54,8 @@ _MODELS: dict[str, Any] = {
     "reminder": Reminder,
     "list_pref": ListPref,
     "space_pref": SpacePref,
+    "filter": SavedFilter,
+    "tile_pref": TilePref,
     "attachment": Attachment,
 }
 
@@ -103,19 +107,36 @@ class Events:
 
 
 def _load(db: Session, kind: str, item_id: str, account_id: int) -> Any:
-    if kind in records.PREF_KINDS:
+    if kind in records.PREF_KINDS or kind == "tile_pref":
         return db.get(_MODELS[kind], (account_id, item_id))
     return db.get(_MODELS[kind], item_id)
 
 
 def _is_gone(db: Session, kind: str, item_id: str, account_id: int = 0) -> bool:
-    accounts = [0, account_id] if kind in records.PREF_KINDS else [0]
+    accounts = [0, account_id] if kind in records.PREF_KINDS or kind in records.OWN_KINDS else [0]
     return db.scalar(select(Gone.kind).where(Gone.kind == kind, Gone.id == item_id,
                                              Gone.account_id.in_(accounts)).limit(1)) is not None
 
 
-def _space_of(kind: str, row: Any) -> str:
+def _foreign_filter(db: Session, item_id: str, account_id: int) -> bool:
+    """The id is, or was, another account's filter: for this one it does not exist, and it may not take it over."""
+    row = db.get(SavedFilter, item_id)
+    if row is not None:
+        return row.account_id != account_id
+    return db.scalar(select(Gone.kind).where(Gone.kind == "filter", Gone.id == item_id,
+                                             Gone.account_id != account_id).limit(1)) is not None
+
+
+def _space_of(kind: str, row: Any) -> str | None:
+    """The space a thing lies in; None for what belongs to an account alone (``records.OWN_KINDS``)."""
+    if kind in records.OWN_KINDS:
+        return None
     return row.id if kind == "space" else row.space_id
+
+
+def _audience(db: Session, caller: Caller, space_id: str | None) -> list[int]:
+    """Who sees a change: the members of its space, or the caller alone for its own things."""
+    return [caller.id] if space_id is None else spaces.member_ids(db, space_id)
 
 
 def _member(db: Session, caller: Caller, space_id: str) -> Member | None:
@@ -176,12 +197,16 @@ def put(db: Session, caller: Caller, op: dict[str, Any], events: Events) -> Outc
         raise Failed("invalid", fields=["kind"])
     if not records.is_uuid(item_id):
         raise Failed("invalid", fields=["id"])
+    if kind == "tile_pref" and item_id not in records.TILE_IDS:
+        raise Failed("invalid", fields=["id"])
     try:
         incoming = records.take_apart(kind, op.get("fields"), op.get("clock"))
     except records.Invalid as exc:
         raise Failed("invalid", fields=exc.fields) from exc
     now_ms = clock.now_ms()
     incoming.clocks = _capped(incoming.clocks, now_ms)
+    if kind == "filter" and _foreign_filter(db, item_id, caller.id):
+        raise Failed("not_found")
     if _is_gone(db, kind, item_id, caller.id):
         raise Failed("gone")
     if kind == "list_pref" and _is_gone(db, "list", item_id):
@@ -191,7 +216,8 @@ def put(db: Session, caller: Caller, op: dict[str, Any], events: Events) -> Outc
     row = _load(db, kind, item_id, caller.id)
     if row is None:
         return _create(db, caller, kind, item_id, incoming, now_ms, events)
-    if _member(db, caller, _space_of(kind, row)) is None:
+    space_id = _space_of(kind, row)
+    if space_id is not None and _member(db, caller, space_id) is None:
         raise Failed("not_found")
     if incoming.missing:
         raise Failed("invalid", fields=sorted(incoming.missing))
@@ -270,7 +296,7 @@ def _create(db: Session, caller: Caller, kind: str, item_id: str, incoming: reco
                        show_completed=data["show_completed"], notify_changes=data["notify_changes"], clock=clocks)
         spaces.restamp(db, [row])
         db.add(row)
-    else:  # space_pref
+    elif kind == "space_pref":
         space = db.get(Space, item_id)
         if space is None:
             raise Failed("gone" if _is_gone(db, "space", item_id) else "parent_missing")
@@ -279,8 +305,17 @@ def _create(db: Session, caller: Caller, kind: str, item_id: str, incoming: reco
         row = SpacePref(account_id=caller.id, space_id=space.id, hidden=data["hidden"], clock=clocks)
         spaces.restamp(db, [row])
         db.add(row)
+    elif kind == "filter":
+        row = SavedFilter(id=item_id, account_id=caller.id, name=data["name"], color=data["color"], icon=data["icon"],
+                          position=data["position"], rules=data["rules"], hidden=data["hidden"], clock=clocks)
+        spaces.restamp(db, [row])
+        db.add(row)
+    else:  # tile_pref
+        row = TilePref(account_id=caller.id, tile_id=item_id, hidden=data["hidden"], clock=clocks)
+        spaces.restamp(db, [row])
+        db.add(row)
     db.flush()
-    events.accounts.update(spaces.member_ids(db, _space_of(kind, row)))
+    events.accounts.update(_audience(db, caller, _space_of(kind, row)))
     return Outcome(True, kind=kind, item_id=item_id,
                    values={"applied": applied, "ignored": sorted(set(incoming.ignored)), "dropped_assignees": dropped})
 
@@ -358,8 +393,8 @@ def _update(db: Session, caller: Caller, kind: str, row: Any, incoming: records.
         new = [person for person in (row.assignees or []) if person not in before_assignees and person != caller.id]
         if new:
             events.assigned.append((row.id, new))
-    events.accounts.update(spaces.member_ids(db, old_space))
-    events.accounts.update(spaces.member_ids(db, new_space))
+    events.accounts.update(_audience(db, caller, old_space))
+    events.accounts.update(_audience(db, caller, new_space))
     return Outcome(True, kind=kind, item_id=records.entry_id(kind, row),
                    values={"applied": sorted(taken), "ignored": sorted(set(kept_keys)), "dropped_assignees": dropped})
 
@@ -370,10 +405,12 @@ def _update(db: Session, caller: Caller, kind: str, row: Any, incoming: records.
 def delete(db: Session, caller: Caller, op: dict[str, Any], events: Events) -> Outcome:
     kind = op.get("kind")
     item_id = op.get("id")
-    if kind not in ("section", "attachment"):
+    if kind not in ("section", "attachment", "filter"):
         raise Failed("invalid", fields=["kind"])
     if not records.is_uuid(item_id):
         raise Failed("invalid", fields=["id"])
+    if kind == "filter":
+        return _delete_filter(db, caller, item_id, events)
     row = db.get(_MODELS[kind], item_id)
     if row is None:
         # Vertragslücke: "already gone: ok" is read as "a tombstone is there"; an id the server never had is
@@ -392,6 +429,23 @@ def delete(db: Session, caller: Caller, op: dict[str, Any], events: Events) -> O
         files.forget_if_unused(db, digest)
     events.accounts.update(spaces.member_ids(db, space_id))
     return Outcome(True, kind=kind, item_id=item_id)
+
+
+def _delete_filter(db: Session, caller: Caller, item_id: str, events: Events) -> Outcome:
+    """For good, no bin: the tombstone names the owner, so only its devices hear of it (``changes._went``)."""
+    if _foreign_filter(db, item_id, caller.id):
+        raise Failed("not_found")
+    row = db.get(SavedFilter, item_id)
+    if row is None:
+        if _is_gone(db, "filter", item_id, caller.id):
+            return Outcome(True, kind="filter", item_id=item_id)
+        raise Failed("not_found")
+    db.delete(row)
+    db.flush()
+    # A filter lies in no space: the empty ``space_id`` matches no membership, the owner hears of it as its own.
+    spaces.tombstone(db, "filter", item_id, "", account_id=caller.id)
+    events.accounts.add(caller.id)
+    return Outcome(True, kind="filter", item_id=item_id)
 
 
 # --- complete ---------------------------------------------------------------------------------------------------------
