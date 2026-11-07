@@ -2,17 +2,85 @@
  * Making and changing spaces and lists: name, colour, symbol; a list also chooses its space. Deleting puts them into
  * the trash (a space only by its managers, "Private" never).
  */
-import { Trash2 } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { Search, Trash2 } from 'lucide-react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
 import { createList, createSpace, moveList } from '../lib/actions'
-import { colorOf, COLOR_NAMES, ICONS } from '../lib/look'
+import { colorOf, COLOR_NAMES, findSymbols, SYMBOL_GROUPS, type SymbolEntry } from '../lib/look'
 import { Badge } from './Badge'
 import { useEngine, useView } from '../state/sync'
 import { textLength } from '../sync/fields'
 import { Dialog } from './Dialog'
+
+/**
+ * The symbols, a few hundred of them: a search over names and search words in German and English, otherwise all in
+ * their groups. The chosen one stays marked in the field, also when the search hides it.
+ */
+function SymbolPicker({ color, icon, onIcon }: { color: string; icon: string; onIcon: (i: string) => void }) {
+  const { t } = useTranslation()
+  const [query, setQuery] = useState('')
+  const title = (entry: SymbolEntry) => t(`look.icons.${entry.name}`)
+  const found = useMemo(() => findSymbols(query, (entry) => t(`look.icons.${entry.name}`)), [query, t])
+  const searching = query.trim() !== ''
+
+  const button = (entry: SymbolEntry) => (
+    <button
+      key={entry.name}
+      type="button"
+      role="radio"
+      aria-checked={icon === entry.name}
+      aria-label={title(entry)}
+      title={title(entry)}
+      onClick={() => onIcon(entry.name)}
+      className={'grid h-8 w-8 place-items-center rounded-lg ' + (icon === entry.name ? 'text-white' : 'bg-ink-800 text-mist-300 hover:bg-ink-700')}
+      style={icon === entry.name ? { background: colorOf(color) } : undefined}
+    >
+      <entry.icon className="h-4 w-4" />
+    </button>
+  )
+
+  return (
+    <fieldset>
+      <legend className="mb-1.5 text-xs font-medium text-mist-500">{t('look.icon')}</legend>
+      <label className="relative mb-2 block">
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-mist-500" aria-hidden />
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            // Enter takes the only match instead of sending the form.
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              if (found.length === 1) onIcon(found[0].name)
+            }
+          }}
+          placeholder={t('look.iconSearch')}
+          aria-label={t('look.iconSearch')}
+          className="w-full rounded-lg border border-ink-700 bg-ink-850 py-1.5 pl-8 pr-2 text-sm text-mist-100 placeholder:text-mist-500 focus:border-accent-500 focus:outline-none"
+        />
+      </label>
+      <div className="h-64 overflow-y-auto pr-1" role="radiogroup" aria-label={t('look.icon')}>
+        {searching ? (
+          found.length > 0 ? (
+            <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-10">{found.map(button)}</div>
+          ) : (
+            <p className="py-3 text-sm text-mist-500">{t('look.iconNone')}</p>
+          )
+        ) : (
+          SYMBOL_GROUPS.map((group) => (
+            <div key={group} className="mb-3 last:mb-0">
+              <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-mist-500">{t(`look.iconGroups.${group}`)}</p>
+              <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-10">{found.filter((entry) => entry.group === group).map(button)}</div>
+            </div>
+          ))
+        )}
+      </div>
+    </fieldset>
+  )
+}
 
 function LookPicker({ color, icon, onColor, onIcon }: { color: string; icon: string; onColor: (c: string) => void; onIcon: (i: string) => void }) {
   const { t } = useTranslation()
@@ -35,26 +103,7 @@ function LookPicker({ color, icon, onColor, onIcon }: { color: string; icon: str
           ))}
         </div>
       </fieldset>
-      <fieldset>
-        <legend className="mb-1.5 text-xs font-medium text-mist-500">{t('look.icon')}</legend>
-        <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-10" role="radiogroup" aria-label={t('look.icon')}>
-          {ICONS.map(([name, Icon]) => (
-            <button
-              key={name}
-              type="button"
-              role="radio"
-              aria-checked={icon === name}
-              aria-label={t(`look.icons.${name}`)}
-              title={t(`look.icons.${name}`)}
-              onClick={() => onIcon(name)}
-              className={'grid h-8 w-8 place-items-center rounded-lg ' + (icon === name ? 'text-white' : 'bg-ink-800 text-mist-300 hover:bg-ink-700')}
-              style={icon === name ? { background: colorOf(color) } : undefined}
-            >
-              <Icon className="h-4 w-4" />
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      <SymbolPicker color={color} icon={icon} onIcon={onIcon} />
     </>
   )
 }

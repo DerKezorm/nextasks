@@ -2,112 +2,39 @@
  * Colours and symbols of spaces and lists: the names the data model stores (`symbole.json`, column `lucide`), drawn
  * with lucide-react. An unknown name shows `list`.
  */
-import {
-  Banknote,
-  Bell,
-  Bike,
-  Book,
-  Bookmark,
-  Briefcase,
-  Cake,
-  Calendar,
-  Camera,
-  Car,
-  Clock,
-  Coffee,
-  CreditCard,
-  Dumbbell,
-  FileText,
-  Film,
-  Flag,
-  Folder,
-  Gamepad2,
-  Gift,
-  Globe,
-  GraduationCap,
-  Hammer,
-  Heart,
-  House,
-  Inbox,
-  Laptop,
-  Leaf,
-  Lightbulb,
-  List,
-  Lock,
-  Moon,
-  Music,
-  Paintbrush,
-  PawPrint,
-  Pill,
-  Plane,
-  ShoppingCart,
-  Smartphone,
-  Star,
-  Stethoscope,
-  Sun,
-  Trophy,
-  User,
-  Users,
-  Utensils,
-  type LucideIcon,
-} from 'lucide-react'
+import { List, type LucideIcon } from 'lucide-react'
 
 import { COLORS } from '../sync/types'
+import { SYMBOLS, type SymbolEntry } from './symbols'
 
-/** The symbols in the order of `symbole.json`. */
-export const ICONS: [string, LucideIcon][] = [
-  ['list', List],
-  ['cart', ShoppingCart],
-  ['house', House],
-  ['briefcase', Briefcase],
-  ['gift', Gift],
-  ['heart', Heart],
-  ['star', Star],
-  ['book', Book],
-  ['school', GraduationCap],
-  ['sport', Dumbbell],
-  ['car', Car],
-  ['bike', Bike],
-  ['plane', Plane],
-  ['food', Utensils],
-  ['coffee', Coffee],
-  ['health', Pill],
-  ['doctor', Stethoscope],
-  ['pet', PawPrint],
-  ['plant', Leaf],
-  ['tools', Hammer],
-  ['paint', Paintbrush],
-  ['music', Music],
-  ['game', Gamepad2],
-  ['film', Film],
-  ['camera', Camera],
-  ['calendar', Calendar],
-  ['clock', Clock],
-  ['bell', Bell],
-  ['flag', Flag],
-  ['bookmark', Bookmark],
-  ['inbox', Inbox],
-  ['folder', Folder],
-  ['document', FileText],
-  ['money', Banknote],
-  ['card', CreditCard],
-  ['people', Users],
-  ['person', User],
-  ['computer', Laptop],
-  ['phone', Smartphone],
-  ['globe', Globe],
-  ['sun', Sun],
-  ['moon', Moon],
-  ['party', Cake],
-  ['trophy', Trophy],
-  ['idea', Lightbulb],
-  ['lock', Lock],
-]
+export { SYMBOL_GROUPS, SYMBOLS, type SymbolEntry, type SymbolGroup } from './symbols'
 
-const BY_NAME = new Map(ICONS)
+const BY_NAME = new Map(SYMBOLS.map((entry) => [entry.name, entry.icon]))
 
 export function iconFor(name: string | null | undefined): LucideIcon {
   return BY_NAME.get(name ?? '') ?? List
+}
+
+/** Lower case without accents, so that "kuhl" finds "Kühlschrank" and "cafe" finds "Café". */
+export function plain(text: string): string {
+  return text
+    .toLowerCase()
+    .replaceAll('ß', 'ss')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+}
+
+/**
+ * The symbols a search finds: every word typed has to start a word of the symbol, among its name in the current
+ * language (`title`) and its search words in German and English. Nothing typed finds all.
+ */
+export function findSymbols(query: string, title: (entry: SymbolEntry) => string): SymbolEntry[] {
+  const parts = plain(query).split(/[\s-]+/).filter(Boolean)
+  if (parts.length === 0) return SYMBOLS
+  return SYMBOLS.filter((entry) => {
+    const own = plain(`${title(entry)} ${entry.words}`).split(/[\s-]+/)
+    return parts.every((part) => own.some((word) => word.startsWith(part)))
+  })
 }
 
 /**
