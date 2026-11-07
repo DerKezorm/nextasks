@@ -1,0 +1,190 @@
+/* The note editor in the app: transparent on the app's own field, the app's colours and text size, no frame. */
+:root {
+  --ink: #15202b;
+  --muted: #66737d;
+  --line: #e3e8ea;
+  --raised: #eef2f3;
+  --petrol: #1f7f99;
+  --fill: #1f7f99;
+  --box: #9fb0b8;
+  color-scheme: light;
+  font-size: 17px;
+  -webkit-text-size-adjust: 100%;
+}
+
+:root[data-theme='dark'] {
+  --ink: #e7eef1;
+  --muted: #8d9ba4;
+  --line: #26323a;
+  --raised: #1d282f;
+  --petrol: #5cc3db;
+  --fill: #38a9c4;
+  --box: #6f8590;
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: -apple-system, system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+
+#note {
+  position: relative;
+}
+
+.nt-note-body {
+  min-height: 6.5rem;
+  padding: 0.35rem 0.3rem 0.6rem;
+  font-size: 1rem;
+  line-height: 1.45;
+  outline: none;
+  word-break: break-word;
+  caret-color: var(--petrol);
+}
+
+#note[data-empty='true'] .nt-note-body > p:first-child::before {
+  content: var(--note-placeholder);
+  position: absolute;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.nt-note-body > * + * {
+  margin-top: 0.45rem;
+}
+
+.nt-note-body p {
+  margin: 0;
+}
+
+.nt-note-body h1,
+.nt-note-body h2,
+.nt-note-body h3 {
+  margin: 0.2rem 0 0;
+  line-height: 1.25;
+}
+
+.nt-note-body h1 {
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.nt-note-body h2 {
+  font-size: 1.12rem;
+  font-weight: 700;
+}
+
+.nt-note-body h3 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.nt-note-body ul,
+.nt-note-body ol {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+
+.nt-note-body li > * + * {
+  margin-top: 0.25rem;
+}
+
+/* A task box big enough for a finger: the touch area reaches past the drawn box. */
+.nt-note-body li[data-item-type='task'] {
+  list-style: none;
+  position: relative;
+  margin-left: -1.4rem;
+  padding-left: 1.85rem;
+}
+
+.nt-note-body li[data-item-type='task']::before {
+  content: '';
+  position: absolute;
+  left: 0.05rem;
+  top: 0.12rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  box-sizing: border-box;
+  border: 2px solid var(--box);
+  border-radius: 0.32rem;
+}
+
+.nt-note-body li[data-item-type='task'][data-checked='true']::before {
+  border-color: var(--fill);
+  background: var(--fill)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+    center / 0.75rem no-repeat;
+}
+
+.nt-note-body li[data-item-type='task'][data-checked='true'] > p {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.nt-note-body blockquote {
+  margin: 0;
+  border-left: 3px solid var(--fill);
+  padding-left: 0.7rem;
+  color: var(--muted);
+}
+
+.nt-note-body code {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.88em;
+  background: var(--raised);
+  border-radius: 5px;
+  padding: 0.05rem 0.3rem;
+}
+
+.nt-note-body pre {
+  margin: 0;
+  background: var(--raised);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  overflow-x: auto;
+}
+
+.nt-note-body pre code {
+  background: none;
+  padding: 0;
+}
+
+.nt-note-body a,
+.nt-note-extimg {
+  color: var(--petrol);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nt-note-body hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.nt-note-img {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+}
+
+.nt-note-img img {
+  display: block;
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 10px;
+}
+
+.nt-note-img[data-removed='true'] {
+  font-style: italic;
+  color: var(--muted);
+}
+
+.ProseMirror-selectednode img {
+  outline: 2px solid var(--fill);
+}

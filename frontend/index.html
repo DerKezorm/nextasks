@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- The frame of the installed app and of the browser: the page's own ground, light or dark as the system is. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f6f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1417" />
+    <!-- Installable as an app: the manifest, the symbols, the service worker /sw.js. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="nextasks" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="application-name" content="nextasks" />
+    <title>nextasks</title>
+    <!-- Before the first paint, as its own file because of the Content Security Policy. -->
+    <script src="/theme.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

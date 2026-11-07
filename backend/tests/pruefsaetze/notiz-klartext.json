@@ -1,0 +1,256 @@
+{
+ "about": "Prüft datenmodell.md, \"Notiz (Markdown, seit 07.11.2026)\", Klartext. Jeder Fall: name, lang (fehlt = de), input (Markdown), expect (Klartext). Bild-Wort: de \"[Bild]\", sonst \"[Image]\".",
+ "rules": [
+  "Zeilenenden \\r\\n und \\r werden \\n.",
+  "Codeblock mit ``` oder ~~~ (bis 3 Leerzeichen davor): Zeilen darin bleiben, wie sie sind (nur Leerraum am Zeilenende fällt weg), die Zäune fallen weg; ohne schließenden Zaun bis zum Ende.",
+  "Außerhalb: Zitatzeichen > am Zeilenanfang fallen weg (auch mehrere). Trennlinie (---, ***, ___, auch mit Leerzeichen) und Setext-Linie (===) werden eine leere Zeile.",
+  "# bis ###### mit folgendem Leerzeichen (oder allein) am Anfang fällt weg, ebenso schließende # am Ende.",
+  "Listenzeichen (-, *, +, 1., 1)) mit Leerzeichen danach fällt weg; folgt [ ] wird daraus ☐, folgt [x]/[X] wird ☑ (je mit einem Leerzeichen). Einzug am Zeilenanfang fällt weg.",
+  "Im Text: Code `x` (auch ``x``) bleibt unverändert ohne Backticks (ein Leerzeichen an beiden Enden fällt weg); \\Zeichen bleibt das Zeichen; ![alt](…) wird das Bild-Wort; [Text](url \"Titel\") wird Text, ohne Text die Adresse; <https://…> und <mailto:…> werden die Adresse (ohne mailto:).",
+  "Dann fallen ** __ ~~ * _ um Text weg (innen kein Leerzeichen am Rand; _ und __ nur, wenn davor und danach kein Buchstabe oder keine Ziffer steht: 0-9 A-Z a-z À-Ö Ø-ö ø-ÿ). HTML bleibt Text.",
+  "Leerraum am Zeilenende und ein \\ am Zeilenende fallen weg; mehrere Leerzeilen hintereinander werden eine; das Ganze wird getrimmt."
+ ],
+ "cases": [
+  {
+   "name": "leere Notiz",
+   "input": "",
+   "expect": ""
+  },
+  {
+   "name": "nur Leerraum",
+   "input": "  \n\n \t \n",
+   "expect": ""
+  },
+  {
+   "name": "schlichter Text",
+   "input": "Milch und Brot",
+   "expect": "Milch und Brot"
+  },
+  {
+   "name": "fett",
+   "input": "Das ist **wichtig**.",
+   "expect": "Das ist wichtig."
+  },
+  {
+   "name": "fett mit Unterstrichen",
+   "input": "Das ist __wichtig__.",
+   "expect": "Das ist wichtig."
+  },
+  {
+   "name": "kursiv",
+   "input": "Ein *kleiner* Hinweis",
+   "expect": "Ein kleiner Hinweis"
+  },
+  {
+   "name": "kursiv mit Unterstrich",
+   "input": "Ein _kleiner_ Hinweis",
+   "expect": "Ein kleiner Hinweis"
+  },
+  {
+   "name": "Unterstriche im Wort bleiben",
+   "input": "datei_name_neu.txt und snake_case",
+   "expect": "datei_name_neu.txt und snake_case"
+  },
+  {
+   "name": "fett und kursiv verschachtelt",
+   "input": "***sehr*** wichtig und **fett mit *kursiv* drin**",
+   "expect": "sehr wichtig und fett mit kursiv drin"
+  },
+  {
+   "name": "durchgestrichen",
+   "input": "~~Mehl~~ Zucker",
+   "expect": "Mehl Zucker"
+  },
+  {
+   "name": "Stern ohne Partner bleibt",
+   "input": "5 * 3 = 15 und ein * allein",
+   "expect": "5 * 3 = 15 und ein * allein"
+  },
+  {
+   "name": "Überschriften",
+   "input": "# Einkauf\n## Markt\n### Bäcker ###",
+   "expect": "Einkauf\nMarkt\nBäcker"
+  },
+  {
+   "name": "Raute ohne Leerzeichen ist keine Überschrift",
+   "input": "#einkauf bleibt",
+   "expect": "#einkauf bleibt"
+  },
+  {
+   "name": "Setext-Überschrift",
+   "input": "Titel\n=====\nText",
+   "expect": "Titel\n\nText"
+  },
+  {
+   "name": "Punktliste",
+   "input": "- Milch\n* Eier\n+ Butter",
+   "expect": "Milch\nEier\nButter"
+  },
+  {
+   "name": "Nummernliste",
+   "input": "1. Anrufen\n2) Schreiben\n10. Abschicken",
+   "expect": "Anrufen\nSchreiben\nAbschicken"
+  },
+  {
+   "name": "Checkliste",
+   "input": "- [ ] Milch\n- [x] Brot\n- [X] Eier",
+   "expect": "☐ Milch\n☑ Brot\n☑ Eier"
+  },
+  {
+   "name": "Checkliste mit Formatierung",
+   "input": "- [ ] **Zahnarzt** anrufen",
+   "expect": "☐ Zahnarzt anrufen"
+  },
+  {
+   "name": "verschachtelte Listen",
+   "input": "- Küche\n  - Spüle\n    - [x] Abfluss\n- Bad",
+   "expect": "Küche\nSpüle\n☑ Abfluss\nBad"
+  },
+  {
+   "name": "Zitat",
+   "input": "> Bitte vorher anrufen\n> > geschachtelt",
+   "expect": "Bitte vorher anrufen\ngeschachtelt"
+  },
+  {
+   "name": "Zitat mit Liste",
+   "input": "> - eins\n> - zwei",
+   "expect": "eins\nzwei"
+  },
+  {
+   "name": "Code im Text",
+   "input": "Befehl `ls -la` ausführen",
+   "expect": "Befehl ls -la ausführen"
+  },
+  {
+   "name": "Code im Text behält Zeichen",
+   "input": "Muster `**nicht fett**` und `a_b_c`",
+   "expect": "Muster **nicht fett** und a_b_c"
+  },
+  {
+   "name": "Code mit doppelten Backticks",
+   "input": "``Code mit ` darin``",
+   "expect": "Code mit ` darin"
+  },
+  {
+   "name": "Codeblock",
+   "input": "Vorher\n```python\nprint(\"**hallo**\")\n  # eingerückt\n```\nNachher",
+   "expect": "Vorher\nprint(\"**hallo**\")\n  # eingerückt\nNachher"
+  },
+  {
+   "name": "Codeblock mit Tilden",
+   "input": "~~~\n- keine Liste\n~~~",
+   "expect": "- keine Liste"
+  },
+  {
+   "name": "Codeblock ohne Ende",
+   "input": "```\noffen\n# bleibt",
+   "expect": "offen\n# bleibt"
+  },
+  {
+   "name": "Link",
+   "input": "Siehe [Fahrplan](https://example.com/plan) für Zeiten",
+   "expect": "Siehe Fahrplan für Zeiten"
+  },
+  {
+   "name": "Link mit Titel",
+   "input": "[Rezept](https://example.com \"Omas Rezept\")",
+   "expect": "Rezept"
+  },
+  {
+   "name": "Link mit Formatierung im Text",
+   "input": "[**Formular** holen](https://example.com/f)",
+   "expect": "Formular holen"
+  },
+  {
+   "name": "Link ohne Text",
+   "input": "[](https://example.com/leer)",
+   "expect": "https://example.com/leer"
+  },
+  {
+   "name": "Autolink",
+   "input": "Mehr unter <https://example.com/info>",
+   "expect": "Mehr unter https://example.com/info"
+  },
+  {
+   "name": "Mail-Autolink",
+   "input": "Schreib an <mailto:kim@example.com>",
+   "expect": "Schreib an kim@example.com"
+  },
+  {
+   "name": "bloße Adresse bleibt",
+   "input": "https://example.com/a_b_c",
+   "expect": "https://example.com/a_b_c"
+  },
+  {
+   "name": "Bild als Anhang",
+   "input": "Foto: ![Zählerstand](attachment:0b3e4c1a-5d6f-4a7b-8c9d-0e1f2a3b4c5d)",
+   "expect": "Foto: [Bild]"
+  },
+  {
+   "name": "Bild ohne Namen",
+   "input": "![](attachment:0b3e4c1a-5d6f-4a7b-8c9d-0e1f2a3b4c5d)",
+   "expect": "[Bild]"
+  },
+  {
+   "name": "fremdes Bild",
+   "input": "![Logo](https://example.com/logo.png)",
+   "expect": "[Bild]"
+  },
+  {
+   "name": "Bild auf Englisch",
+   "input": "Photo ![meter](attachment:0b3e4c1a-5d6f-4a7b-8c9d-0e1f2a3b4c5d)",
+   "expect": "Photo [Image]",
+   "lang": "en"
+  },
+  {
+   "name": "Bild in einem Link",
+   "input": "[![Plan](attachment:0b3e4c1a-5d6f-4a7b-8c9d-0e1f2a3b4c5d)](https://example.com/plan)",
+   "expect": "[Bild]"
+  },
+  {
+   "name": "Trennlinie",
+   "input": "oben\n---\nunten\n* * *\nende",
+   "expect": "oben\n\nunten\n\nende"
+  },
+  {
+   "name": "HTML bleibt Text",
+   "input": "<b>fett?</b> <script>alert(1)</script>",
+   "expect": "<b>fett?</b> <script>alert(1)</script>"
+  },
+  {
+   "name": "Escapes",
+   "input": "Preis \\*nicht kursiv\\* und \\# keine Überschrift \\_x\\_",
+   "expect": "Preis *nicht kursiv* und # keine Überschrift _x_"
+  },
+  {
+   "name": "harter Umbruch",
+   "input": "Zeile eins\\\nZeile zwei  \nZeile drei",
+   "expect": "Zeile eins\nZeile zwei\nZeile drei"
+  },
+  {
+   "name": "viele Leerzeilen werden eine",
+   "input": "eins\n\n\n\nzwei\n\n\n",
+   "expect": "eins\n\nzwei"
+  },
+  {
+   "name": "Windows-Zeilenenden",
+   "input": "- [ ] eins\r\n- [x] zwei\r\n",
+   "expect": "☐ eins\n☑ zwei"
+  },
+  {
+   "name": "Absätze bleiben getrennt",
+   "input": "Erster Absatz.\n\nZweiter **Absatz**.",
+   "expect": "Erster Absatz.\n\nZweiter Absatz."
+  },
+  {
+   "name": "Umlaute und Emoji",
+   "input": "**Grüße** an _Jörg_ 🎉",
+   "expect": "Grüße an Jörg 🎉"
+  },
+  {
+   "name": "Unterstrich nach Umlaut bleibt",
+   "input": "Größe_klein_ bleibt",
+   "expect": "Größe_klein_ bleibt"
+  }
+ ]
+}

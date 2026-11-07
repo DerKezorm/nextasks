@@ -1,0 +1,1244 @@
+{
+ "cases": [
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Milch kaufen",
+   "expect": {
+    "title": "Milch kaufen",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Milch kaufen morgen",
+   "expect": {
+    "title": "Milch kaufen",
+    "due_date": "2026-11-07",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "heute Bericht schreiben",
+   "expect": {
+    "title": "Bericht schreiben",
+    "due_date": "2026-11-06",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Steuer übermorgen",
+   "expect": {
+    "title": "Steuer",
+    "due_date": "2026-11-08",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Zahnarzt Montag 9:30",
+   "expect": {
+    "title": "Zahnarzt",
+    "due_date": "2026-11-09",
+    "due_time": "09:30",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Zahnarzt mo 9:30",
+   "expect": {
+    "title": "Zahnarzt",
+    "due_date": "2026-11-09",
+    "due_time": "09:30",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Team freitag",
+   "expect": {
+    "title": "Team",
+    "due_date": "2026-11-13",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Team Fr",
+   "expect": {
+    "title": "Team",
+    "due_date": "2026-11-13",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Anruf um 9",
+   "expect": {
+    "title": "Anruf",
+    "due_date": "2026-11-07",
+    "due_time": "09:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Anruf um 11",
+   "expect": {
+    "title": "Anruf",
+    "due_date": "2026-11-06",
+    "due_time": "11:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Anruf 14 Uhr",
+   "expect": {
+    "title": "Anruf",
+    "due_date": "2026-11-06",
+    "due_time": "14:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Anruf um 14 Uhr",
+   "expect": {
+    "title": "Anruf",
+    "due_date": "2026-11-06",
+    "due_time": "14:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Anruf 10:00",
+   "expect": {
+    "title": "Anruf",
+    "due_date": "2026-11-06",
+    "due_time": "10:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Anruf 9:59",
+   "expect": {
+    "title": "Anruf",
+    "due_date": "2026-11-07",
+    "due_time": "09:59",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Anruf 21:00",
+   "expect": {
+    "title": "Anruf",
+    "due_date": "2026-11-06",
+    "due_time": "21:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Anruf um 9:30",
+   "expect": {
+    "title": "Anruf",
+    "due_date": "2026-11-07",
+    "due_time": "09:30",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Anruf 07 Uhr",
+   "expect": {
+    "title": "Anruf",
+    "due_date": "2026-11-07",
+    "due_time": "07:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Geschenk 24.12.",
+   "expect": {
+    "title": "Geschenk",
+    "due_date": "2026-12-24",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Neujahr 1.1.",
+   "expect": {
+    "title": "Neujahr",
+    "due_date": "2027-01-01",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Termin 06.11.",
+   "expect": {
+    "title": "Termin",
+    "due_date": "2026-11-06",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Termin 05.11.",
+   "expect": {
+    "title": "Termin",
+    "due_date": "2027-11-05",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Termin 5.11.2026",
+   "expect": {
+    "title": "Termin",
+    "due_date": "2026-11-05",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Termin 1.3.2027",
+   "expect": {
+    "title": "Termin",
+    "due_date": "2027-03-01",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Termin 31.02.",
+   "expect": {
+    "title": "Termin 31.02.",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Schaltjahr 29.02.",
+   "expect": {
+    "title": "Schaltjahr 29.02.",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Termin 7.13.",
+   "expect": {
+    "title": "Termin 7.13.",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Termin 24.12",
+   "expect": {
+    "title": "Termin 24.12",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Bericht !!",
+   "expect": {
+    "title": "Bericht",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 2
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Bericht ! ",
+   "expect": {
+    "title": "Bericht",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 1
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "!!! Bericht",
+   "expect": {
+    "title": "Bericht",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 3
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Wichtig!! Bericht",
+   "expect": {
+    "title": "Wichtig!! Bericht",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Bericht !!!!",
+   "expect": {
+    "title": "Bericht !!!!",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Bericht ! !!!",
+   "expect": {
+    "title": "Bericht !!!",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 1
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Einkauf #haushalt #Wochenende",
+   "expect": {
+    "title": "Einkauf",
+    "due_date": null,
+    "due_time": null,
+    "tags": [
+     "haushalt",
+     "Wochenende"
+    ],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "#Arbeit Bericht #arbeit",
+   "expect": {
+    "title": "Bericht",
+    "due_date": null,
+    "due_time": null,
+    "tags": [
+     "Arbeit"
+    ],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Preis #",
+   "expect": {
+    "title": "Preis #",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "C# lernen",
+   "expect": {
+    "title": "C# lernen",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Tag #a#b",
+   "expect": {
+    "title": "Tag #a#b",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "MORGEN ANRUFEN UM 9 UHR",
+   "expect": {
+    "title": "ANRUFEN",
+    "due_date": "2026-11-07",
+    "due_time": "09:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Arzt am Montag um 8",
+   "expect": {
+    "title": "Arzt",
+    "due_date": "2026-11-09",
+    "due_time": "08:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Treffen am Ende",
+   "expect": {
+    "title": "Treffen am Ende",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Treffen um",
+   "expect": {
+    "title": "Treffen um",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "morgen und übermorgen putzen",
+   "expect": {
+    "title": "und übermorgen putzen",
+    "due_date": "2026-11-07",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "9:30 und 11:00 Meeting",
+   "expect": {
+    "title": "und 11:00 Meeting",
+    "due_date": "2026-11-07",
+    "due_time": "09:30",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "  Viel   Platz  ",
+   "expect": {
+    "title": "Viel Platz",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "so schnell wie möglich",
+   "expect": {
+    "title": "schnell wie möglich",
+    "due_date": "2026-11-08",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Do 18 Uhr Sport",
+   "expect": {
+    "title": "Sport",
+    "due_date": "2026-11-12",
+    "due_time": "18:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Sport 25 Uhr",
+   "expect": {
+    "title": "Sport 25 Uhr",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Sport um 24",
+   "expect": {
+    "title": "Sport um 24",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Sport 9",
+   "expect": {
+    "title": "Sport 9",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Brief 9am",
+   "expect": {
+    "title": "Brief",
+    "due_date": "2026-11-07",
+    "due_time": "09:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Übermorgen 7:05 #Garten !",
+   "expect": {
+    "title": "",
+    "due_date": "2026-11-08",
+    "due_time": "07:05",
+    "tags": [
+     "Garten"
+    ],
+    "priority": 1
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Rechnung 1.12.2027 15:30 !!! #büro",
+   "expect": {
+    "title": "Rechnung",
+    "due_date": "2027-12-01",
+    "due_time": "15:30",
+    "tags": [
+     "büro"
+    ],
+    "priority": 3
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Geschenk 12/24",
+   "expect": {
+    "title": "Geschenk 12/24",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "übermorgen Reifen",
+   "expect": {
+    "title": "Reifen",
+    "due_date": "2026-11-08",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Heute: Bericht",
+   "expect": {
+    "title": "Heute: Bericht",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Wochenmarkt samstag 8 uhr",
+   "expect": {
+    "title": "Wochenmarkt",
+    "due_date": "2026-11-07",
+    "due_time": "08:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Bad putzen sonntag",
+   "expect": {
+    "title": "Bad putzen",
+    "due_date": "2026-11-08",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Termin am 24.12. um 15 Uhr",
+   "expect": {
+    "title": "Termin",
+    "due_date": "2026-12-24",
+    "due_time": "15:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Talk tomorrow",
+   "expect": {
+    "title": "Talk tomorrow",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-11-06T10:00",
+   "input": "Zeile\teins\nzwei",
+   "expect": {
+    "title": "Zeile eins zwei",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-12-31T23:30",
+   "input": "Sekt morgen",
+   "expect": {
+    "title": "Sekt",
+    "due_date": "2027-01-01",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-12-31T23:30",
+   "input": "Neujahr 1.1.",
+   "expect": {
+    "title": "Neujahr",
+    "due_date": "2027-01-01",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-12-31T23:30",
+   "input": "Silvester 31.12.",
+   "expect": {
+    "title": "Silvester",
+    "due_date": "2026-12-31",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-12-31T23:30",
+   "input": "Feuerwerk um 23",
+   "expect": {
+    "title": "Feuerwerk",
+    "due_date": "2027-01-01",
+    "due_time": "23:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-12-31T23:30",
+   "input": "Party 23:45",
+   "expect": {
+    "title": "Party",
+    "due_date": "2026-12-31",
+    "due_time": "23:45",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "de",
+   "now": "2026-12-31T23:30",
+   "input": "Sport Do",
+   "expect": {
+    "title": "Sport",
+    "due_date": "2027-01-07",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Buy milk tomorrow",
+   "expect": {
+    "title": "Buy milk",
+    "due_date": "2026-11-07",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "today write report",
+   "expect": {
+    "title": "write report",
+    "due_date": "2026-11-06",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Dentist monday 9:30am",
+   "expect": {
+    "title": "Dentist",
+    "due_date": "2026-11-09",
+    "due_time": "09:30",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Call mom at 9pm",
+   "expect": {
+    "title": "Call mom",
+    "due_date": "2026-11-06",
+    "due_time": "21:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Standup 9am",
+   "expect": {
+    "title": "Standup",
+    "due_date": "2026-11-07",
+    "due_time": "09:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Standup 12pm",
+   "expect": {
+    "title": "Standup",
+    "due_date": "2026-11-06",
+    "due_time": "12:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Night job 12am",
+   "expect": {
+    "title": "Night job",
+    "due_date": "2026-11-07",
+    "due_time": "00:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Lunch 12:30pm",
+   "expect": {
+    "title": "Lunch",
+    "due_date": "2026-11-06",
+    "due_time": "12:30",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Late 11:59PM",
+   "expect": {
+    "title": "Late",
+    "due_date": "2026-11-06",
+    "due_time": "23:59",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Gift 12/24",
+   "expect": {
+    "title": "Gift",
+    "due_date": "2026-12-24",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Party 1/1",
+   "expect": {
+    "title": "Party",
+    "due_date": "2027-01-01",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Bill 11/6",
+   "expect": {
+    "title": "Bill",
+    "due_date": "2026-11-06",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Bill 11/5",
+   "expect": {
+    "title": "Bill",
+    "due_date": "2027-11-05",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Bill 13/1",
+   "expect": {
+    "title": "Bill 13/1",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Bill 24.12.",
+   "expect": {
+    "title": "Bill",
+    "due_date": "2026-12-24",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Gym friday",
+   "expect": {
+    "title": "Gym",
+    "due_date": "2026-11-13",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Gym fri 18:00",
+   "expect": {
+    "title": "Gym",
+    "due_date": "2026-11-13",
+    "due_time": "18:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Report on Monday",
+   "expect": {
+    "title": "Report",
+    "due_date": "2026-11-09",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Do laundry",
+   "expect": {
+    "title": "Do laundry",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "So what",
+   "expect": {
+    "title": "So what",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Meeting at noon",
+   "expect": {
+    "title": "Meeting at noon",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Review 9pm tomorrow !! #work #Q4",
+   "expect": {
+    "title": "Review",
+    "due_date": "2026-11-07",
+    "due_time": "21:00",
+    "tags": [
+     "work",
+     "Q4"
+    ],
+    "priority": 2
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Fix bug!! now",
+   "expect": {
+    "title": "Fix bug!! now",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Plan 13pm",
+   "expect": {
+    "title": "Plan 13pm",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Plan 0am",
+   "expect": {
+    "title": "Plan 0am",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Talk morgen",
+   "expect": {
+    "title": "Talk morgen",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "TOMORROW CALL 10AM",
+   "expect": {
+    "title": "CALL",
+    "due_date": "2026-11-07",
+    "due_time": "10:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Pay rent 2/29",
+   "expect": {
+    "title": "Pay rent 2/29",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Trip 3/1/2027",
+   "expect": {
+    "title": "Trip 3/1/2027",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Call at 9",
+   "expect": {
+    "title": "Call at 9",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Call 9 Uhr",
+   "expect": {
+    "title": "Call 9 Uhr",
+    "due_date": null,
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Sunday sun",
+   "expect": {
+    "title": "sun",
+    "due_date": "2026-11-08",
+    "due_time": null,
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "Run 6:00 6pm",
+   "expect": {
+    "title": "Run 6pm",
+    "due_date": "2026-11-07",
+    "due_time": "06:00",
+    "tags": [],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-11-06T10:00",
+   "input": "#a #b #A #c",
+   "expect": {
+    "title": "",
+    "due_date": null,
+    "due_time": null,
+    "tags": [
+     "a",
+     "b",
+     "c"
+    ],
+    "priority": 0
+   }
+  },
+  {
+   "lang": "en",
+   "now": "2026-12-31T23:30",
+   "input": "Brunch tomorrow 11am",
+   "expect": {
+    "title": "Brunch",
+    "due_date": "2027-01-01",
+    "due_time": "11:00",
+    "tags": [],
+    "priority": 0
+   }
+  }
+ ]
+}

@@ -1,0 +1,14 @@
+# Security
+
+## Reporting a vulnerability
+
+Please do not open a public issue for a security problem. Report it privately through GitHub instead:
+**Security, Report a vulnerability** on this repository (private vulnerability reporting). Say what you found, how to
+reproduce it, and which version you ran.
+
+You get an answer within a week. A fix goes out as a new release; the release notes name the problem once the fix is
+available, and you are thanked there unless you would rather not be.
+
+## Supported versions
+
+nextasks has no release yet. Once it has, only the newest release gets security fixes.

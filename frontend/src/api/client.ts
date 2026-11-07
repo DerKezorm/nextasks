@@ -1,0 +1,291 @@
+/**
+ * The server's API. Every call names this browser tab in `X-Nextasks-Client` (changes without it are refused, the
+ * wall against requests from other sites). Errors come back as `ApiError` with the server's code; the page builds
+ * its sentence from `errors.<code>` in the language files.
+ */
+
+import type { AuthentikAddress } from '../vendor/nexoidc/oidc'
+
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+    public readonly values: Record<string, unknown> = {},
+  ) {
+    super(code)
+  }
+}
+
+const CLIENT_KEY = 'nextasks.client'
+/** Sent on `window` when a request finds that the session is gone: the page goes back to the sign-in. */
+export const SIGNED_OUT_EVENT = 'nextasks:signed-out'
+
+function randomId(): string {
+  const bytes = new Uint8Array(12)
+  crypto.getRandomValues(bytes)
+  return 'tab-' + Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+let clientId: string | null = null
+
+/** One id per tab: sessionStorage survives a reload of the tab but is not shared with other tabs. */
+export function tabId(): string {
+  if (clientId) return clientId
+  try {
+    clientId = sessionStorage.getItem(CLIENT_KEY)
+    if (!clientId) {
+      clientId = randomId()
+      sessionStorage.setItem(CLIENT_KEY, clientId)
+    }
+  } catch {
+    clientId = randomId()
+  }
+  return clientId
+}
+
+type Options = {
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+  query?: Record<string, string | number | boolean | string[] | undefined>
+  body?: unknown
+  /** A file as the body (an upload), sent as it is. */
+  raw?: Blob
+  /** The answer is a file, not JSON. */
+  blob?: boolean
+  /** Headers of its own, next to the ones every request carries (the password of an upload). */
+  headers?: Record<string, string>
+}
+
+const BUSY_TRIES = 3
+const BUSY_WAIT_MS = 1500
+
+export async function api<T>(path: string, options: Options = {}): Promise<T> {
+  const repeatable = (options.method ?? 'GET') === 'GET'
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await once<T>(path, options)
+    } catch (error) {
+      if (!(error instanceof ApiError && error.code === 'busy' && repeatable && attempt < BUSY_TRIES)) throw error
+      await new Promise((resolve) => setTimeout(resolve, BUSY_WAIT_MS))
+    }
+  }
+}
+
+async function once<T>(path: string, options: Options): Promise<T> {
+  const url = new URL(path, window.location.origin)
+  for (const [key, value] of Object.entries(options.query ?? {})) {
+    if (Array.isArray(value)) for (const item of value) url.searchParams.append(key, item)
+    else if (value !== undefined) url.searchParams.set(key, String(value))
+  }
+  const headers: Record<string, string> = { ...options.headers, Accept: 'application/json', 'X-Nextasks-Client': tabId() }
+  let body: BodyInit | undefined
+  if (options.raw) body = options.raw
+  else if (options.body !== undefined) {
+    headers['Content-Type'] = 'application/json'
+    body = JSON.stringify(options.body)
+  }
+  const response = await fetch(url.pathname + url.search, { method: options.method ?? 'GET', headers, body })
+  if (response.status === 204) return undefined as T
+  if (options.blob && response.ok) return (await response.blob()) as T
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    const detail = data?.detail
+    if (detail && typeof detail === 'object' && typeof detail.code === 'string') {
+      const { code, message: _message, ...values } = detail
+      if (code === 'sign_in_required') window.dispatchEvent(new Event(SIGNED_OUT_EVENT))
+      throw new ApiError(response.status, code, values)
+    }
+    throw new ApiError(response.status, response.status === 401 ? 'sign_in_required' : 'internal_error')
+  }
+  return data as T
+}
+
+/** An upload with progress (fetch cannot report it): resolves with the server's answer. */
+export function upload<T>(path: string, query: Record<string, string | number>, file: Blob, onProgress?: (part: number) => void): Promise<T> {
+  const url = new URL(path, window.location.origin)
+  for (const [key, value] of Object.entries(query)) url.searchParams.set(key, String(value))
+  return new Promise<T>((resolve, reject) => {
+    const request = new XMLHttpRequest()
+    request.open('POST', url.pathname + url.search)
+    request.setRequestHeader('X-Nextasks-Client', tabId())
+    request.setRequestHeader('Accept', 'application/json')
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) onProgress(event.loaded / event.total)
+    }
+    request.onload = () => {
+      let data: unknown = null
+      try {
+        data = JSON.parse(request.responseText)
+      } catch {
+        // no JSON
+      }
+      if (request.status >= 200 && request.status < 300) return resolve(data as T)
+      const detail = (data as { detail?: { code?: string } } | null)?.detail
+      reject(new ApiError(request.status, typeof detail?.code === 'string' ? detail.code : 'internal_error', (detail as Record<string, unknown>) ?? {}))
+    }
+    request.onerror = () => reject(new ApiError(0, 'network'))
+    request.send(file)
+  })
+}
+
+// ---- Types ----------------------------------------------------------------------------------------------------------
+
+export type Me = {
+  id: number
+  name: string
+  display_name: string
+  role: 'operator' | 'member'
+  sign_in: 'password' | 'oidc'
+  email: string
+  language: string
+  two_factor: boolean
+  two_factor_recovery_left: number
+  avatar: string | null
+  version: string
+  whats_new_seen: string
+  shares_allowed?: boolean
+  mail?: boolean
+  second_factor_setup_required?: boolean
+  /** A password account without a second factor of its own, signed in at a provider that checks it: its API tokens
+   * wait until it sets one up (they come without that provider). */
+  keys_wait_for_second_factor?: boolean
+  upload_max_mb?: number
+}
+
+export type SetupState = { needs_setup: boolean; code_required: boolean; signed_in: boolean; version: string; min_password: number }
+/** A button of the sign-in and invitation pages: an active provider of the list (the shared module's `public_list`). */
+export type ProviderButton = { slug: string; label: string }
+/** `providers`: the buttons, in the operator's order. */
+export type Methods = { password: boolean; providers: ProviderButton[] }
+/** An active provider and whether the own account is linked to it (My account, Security). */
+export type MyProvider = { slug: string; label: string; linked: boolean; managed: string }
+/** A provider as the operator's list shows it; never the secret, only whether one is stored. */
+export type OidcProvider = {
+  id: number
+  slug: string
+  label: string
+  issuer: string
+  client_id: string
+  has_secret: boolean
+  scopes: string
+  enabled: boolean
+  auto_create: boolean
+  trusts_second_factor: boolean
+  /** "" by hand, "authentik" from the button, another program's name while coupled. */
+  managed: string
+  position: number
+  redirect_uri: string
+  links: number
+  /** False for an entry another program keeps (the shared module's coupling). */
+  editable: boolean
+}
+export type OidcProviderForm = {
+  label: string
+  slug?: string
+  issuer: string
+  client_id: string
+  client_secret: string
+  scopes: string
+  enabled: boolean
+  auto_create: boolean
+  trusts_second_factor: boolean
+}
+export type ProviderImpact = { issuer_change: number; count: number; only: number; only_names: string[] }
+export type AuthentikStep = { key: string; ok: boolean; detail: string; reason?: string; status?: number }
+export type AuthentikResult = {
+  steps: AuthentikStep[]
+  /** With the reason `issuer_change`: how many accounts would have to link again. */
+  count?: number
+  /** The public address the run stored (the card's suggestion, confirmed); it stays even when a later step failed. */
+  public_url?: string
+  /** With the reason `public_url_needed`: what the card shows about the address (the same as `oidcApi.address`). */
+  address?: AuthentikAddress
+}
+
+/** What the server asks before a new public address leaves redirect addresses behind (409 `public_url_change`). */
+export type AddressQuestion = { count: number; address: string; hand: number }
+
+// ---- Calls ----------------------------------------------------------------------------------------------------------
+
+export const authApi = {
+  setupState: () => api<SetupState>('/api/setup'),
+  setup: (name: string, password: string, code: string, language: string) =>
+    api<Me>('/api/setup', { method: 'POST', body: { name, password, code, language } }),
+  methods: () => api<Methods>('/api/auth/methods'),
+  login: (name: string, password: string) => api<Me | { second_factor: true }>('/api/auth/login', { method: 'POST', body: { name, password } }),
+  code: (code: string) => api<Me>('/api/auth/login/totp', { method: 'POST', body: { code } }),
+  cancelCode: () => api<void>('/api/auth/login/totp/cancel', { method: 'POST' }),
+  logout: () => api<void>('/api/auth/logout', { method: 'POST' }),
+  me: () => api<Me>('/api/auth/me'),
+  language: (language: string) => api<Me>('/api/me/language', { method: 'PUT', body: { language } }),
+  profile: (display_name: string) => api<Me>('/api/me/profile', { method: 'PUT', body: { display_name } }),
+  password: (current: string, next: string) => api<void>('/api/auth/password', { method: 'PUT', body: { current, new: next } }),
+  whatsNewSeen: () => api<Me>('/api/me/whats-new/seen', { method: 'POST' }),
+  myProviders: () => api<MyProvider[]>('/api/oidc/me'),
+  linkStart: (slug: string, password: string) => api<{ url: string }>(`/api/oidc/${encodeURIComponent(slug)}/link`, { method: 'POST', body: { password } }),
+  unlink: (slug: string) => api<void>(`/api/oidc/${encodeURIComponent(slug)}/link`, { method: 'DELETE' }),
+}
+
+/** The operator's provider list and the authentik button (Settings, Server, Sign-in; the shared module's routes). */
+export const oidcApi = {
+  providers: () => api<OidcProvider[]>('/api/oidc/admin/providers'),
+  add: (form: OidcProviderForm) => api<OidcProvider>('/api/oidc/admin/providers', { method: 'POST', body: form }),
+  save: (id: number, form: OidcProviderForm) => api<OidcProvider & { dropped: number }>(`/api/oidc/admin/providers/${id}`, { method: 'PUT', body: form }),
+  remove: (id: number) => api<{ count: number; only: number }>(`/api/oidc/admin/providers/${id}`, { method: 'DELETE' }),
+  order: (ids: number[]) => api<ProviderButton[]>('/api/oidc/admin/providers/order', { method: 'PUT', body: { ids } }),
+  impact: (id: number, issuer = '') => api<ProviderImpact>(`/api/oidc/admin/providers/${id}/impact`, { query: issuer ? { issuer } : {} }),
+  unlinkAccount: (account: number, provider: number, password: string) =>
+    api<void>(`/api/oidc/admin/accounts/${account}/links/${provider}`, { method: 'DELETE', body: { current_password: password } }),
+  /**
+   * `confirm_issuer_change`: the answer to the question the button stops at when another issuer takes the links.
+   * `public_url`: the suggested address ("Use it and set up"), only sent while nextasks has none.
+   */
+  authentik: (url: string, token: string, confirm_issuer_change = false, public_url = '') =>
+    api<AuthentikResult>('/api/oidc/authentik/setup', {
+      method: 'POST',
+      body: { url, token, confirm_issuer_change, ...(public_url ? { public_url } : {}) },
+    }),
+  /** What the authentik card shows about the public address. */
+  address: () => api<AuthentikAddress>('/api/oidc/authentik/address'),
+  /** "Use it only": the address becomes the public one; 409 `public_url_change` asks first, `confirm` answers it. */
+  saveAddress: (public_url: string, confirm = false) =>
+    api<AuthentikAddress>('/api/oidc/authentik/address', { method: 'POST', body: { public_url, confirm } }),
+}
+
+export type ApiToken = {
+  id: number
+  name: string
+  /** `read`, or `write`: also makes and changes tasks and lists where its account may write. */
+  level: 'read' | 'write'
+  prefix: string
+  created_at: string
+  last_used_at: string | null
+  expires_at: string | null
+  blocked: boolean
+  /** The spaces it may see; null: every space its account may read. */
+  spaces: { id: string; name: string }[] | null
+}
+/** For the operator: `account_display` is the name people see (dialogs say it), `account_blocked` none of them counts. */
+export type AnyApiToken = Omit<ApiToken, 'spaces'> & { account: string; account_display: string; account_blocked: boolean; spaces: number | null }
+
+/** API tokens for programs (`/api/v1`). A new one is narrow: chosen spaces, 90 days (as nexbrand's F26). */
+export const apiTokensApi = {
+  /** `choices`: the spaces a new token may be given (those a token of the account reads, never by operator powers). */
+  list: () => api<{ allowed: boolean; tokens: ApiToken[]; choices: { id: string; name: string }[] }>('/api/api-tokens'),
+  /** `spaces` null: every space the account may read, now and later, asked for on purpose (`all_spaces`). */
+  make: (name: string, spaces: string[] | null, days: number | null, level: 'read' | 'write' = 'read') =>
+    api<{ token: ApiToken; secret: string }>('/api/api-tokens', { method: 'POST', body: spaces === null ? { name, all_spaces: true, days, level } : { name, spaces, days, level } }),
+  remove: (id: number) => api<void>(`/api/api-tokens/${id}`, { method: 'DELETE' }),
+  every: () => api<AnyApiToken[]>('/api/admin/api-tokens'),
+  block: (id: number) => api<AnyApiToken>(`/api/admin/api-tokens/${id}/block`, { method: 'POST' }),
+}
+
+export function avatarUrl(person: { id: number; avatar: string | null }): string | null {
+  return person.avatar ? `/api/avatars/${person.id}?v=${encodeURIComponent(person.avatar)}` : null
+}
+
+/** The password for an upload rides in a header, as base64 of its UTF-8: a header carries no umlauts. */
+export function passwordHeader(password: string): string {
+  let bytes = ''
+  for (const byte of new TextEncoder().encode(password)) bytes += String.fromCharCode(byte)
+  return btoa(bytes)
+}

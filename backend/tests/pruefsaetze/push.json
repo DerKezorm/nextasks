@@ -1,0 +1,10 @@
+{
+ "info": "nextasks-push-v1",
+ "device_private_key": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+ "device_public_key": "B6N8vBQgk8i3VdwbEOhstCY3StFqqFPtC9/AsrhtHHw=",
+ "ephemeral_private_key": "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2A=",
+ "ephemeral_public_key": "ZLEBsdC+WocEvQePmJUAH8A+jp+VIvGI3RKNmEbUhGY=",
+ "nonce": "YWJjZGVmZ2hpamts",
+ "plaintext": "{\"title\":\"Anna\",\"text\":\"Milch kaufen\",\"reminder_id\":\"6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40\",\"list_id\":\"0b8e4d2c-1f3a-4e6b-8c9d-7a5f3e2b1c60\",\"type\":\"due\"}",
+ "enc": "ZLEBsdC+WocEvQePmJUAH8A+jp+VIvGI3RKNmEbUhGZhYmNkZWZnaGlqa2znI47na3Z8kI+jcA+aQcSzw8o/fJpu4wKZbsAj5G6End6Gr82fZl5s5pb9TWcF7YqBtDs5Ad7GnOxSMjr4vzMKZz76ErGlZOv4WJtrRD8QdltZ/iB5tUa8u11r60wHqLqmFLUYAEjMkYOxXs9ZrrnS2UnL6lUspWSd7fyC6BRsM+XAcf3IdsIBbghM0GXX1ReEAfckNVPg36V93h1L3f3B3Uw1H1x5kbHn"
+}

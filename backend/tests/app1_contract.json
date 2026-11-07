@@ -1,0 +1,156 @@
+{
+  "DELETE /api/app/1/device": [],
+  "DELETE /api/app/1/push": [
+    "status"
+  ],
+  "DELETE /api/app/1/spaces/{space_id}/invites/{invite_id}": [],
+  "DELETE /api/app/1/spaces/{space_id}/members/{account_id}": [],
+  "DELETE /api/app/1/webpush": [
+    "status"
+  ],
+  "GET /api/app/1/changes": [
+    "cursor",
+    "items",
+    "items.clock",
+    "items.cursor",
+    "items.data",
+    "items.deleted",
+    "items.id",
+    "items.kind",
+    "more",
+    "people",
+    "people.avatar_hash",
+    "people.id",
+    "people.name",
+    "space_ids"
+  ],
+  "GET /api/app/1/files/{attachment_id}": [],
+  "GET /api/app/1/me": [
+    "account",
+    "account.avatar_hash",
+    "account.id",
+    "account.language",
+    "account.name",
+    "account.operator",
+    "account.timezone",
+    "account.username",
+    "device",
+    "device.id",
+    "device.name",
+    "features",
+    "limits",
+    "limits.attachment_bytes",
+    "now",
+    "version"
+  ],
+  "GET /api/app/1/people/{account_id}/avatar": [],
+  "GET /api/app/1/spaces/{space_id}/invites": [
+    "created_by",
+    "expires_at",
+    "id"
+  ],
+  "GET /api/app/1/wait": [
+    "cursor"
+  ],
+  "GET /api/app/1/webpush/key": [
+    "public_key"
+  ],
+  "POST /api/app/1/batch": [
+    "cursor",
+    "results",
+    "results.applied",
+    "results.code",
+    "results.copy",
+    "results.copy.clock",
+    "results.copy.cursor",
+    "results.copy.data",
+    "results.copy.deleted",
+    "results.copy.id",
+    "results.copy.kind",
+    "results.copy_id",
+    "results.current",
+    "results.current.clock",
+    "results.current.cursor",
+    "results.current.data",
+    "results.current.deleted",
+    "results.current.id",
+    "results.current.kind",
+    "results.dropped_assignees",
+    "results.fields",
+    "results.ignored",
+    "results.next_due",
+    "results.ok",
+    "results.op_id"
+  ],
+  "POST /api/app/1/files": [
+    "applied",
+    "code",
+    "copy",
+    "copy.clock",
+    "copy.cursor",
+    "copy.data",
+    "copy.deleted",
+    "copy.id",
+    "copy.kind",
+    "copy_id",
+    "current",
+    "current.clock",
+    "current.cursor",
+    "current.data",
+    "current.deleted",
+    "current.id",
+    "current.kind",
+    "dropped_assignees",
+    "fields",
+    "ignored",
+    "next_due",
+    "ok",
+    "op_id"
+  ],
+  "POST /api/app/1/pairing/code": [
+    "account",
+    "account.id",
+    "account.name",
+    "key"
+  ],
+  "POST /api/app/1/pairing/{pairing_id}/key": [
+    "account",
+    "account.id",
+    "account.name",
+    "key"
+  ],
+  "POST /api/app/1/spaces/{space_id}/invites": [
+    "expires_at",
+    "id",
+    "link"
+  ],
+  "PUT /api/app/1/me": [
+    "account",
+    "account.avatar_hash",
+    "account.id",
+    "account.language",
+    "account.name",
+    "account.operator",
+    "account.timezone",
+    "account.username",
+    "device",
+    "device.id",
+    "device.name",
+    "features",
+    "limits",
+    "limits.attachment_bytes",
+    "now",
+    "version"
+  ],
+  "PUT /api/app/1/push": [
+    "status"
+  ],
+  "PUT /api/app/1/spaces/{space_id}/members/{account_id}": [
+    "account_id",
+    "role",
+    "space_id"
+  ],
+  "PUT /api/app/1/webpush": [
+    "status"
+  ]
+}

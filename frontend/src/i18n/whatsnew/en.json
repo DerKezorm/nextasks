@@ -1,0 +1,32 @@
+{
+  "0.1.0": {
+    "lead": "nextasks is rebuilt: tasks for families and small groups, in the browser and as an iPhone app.",
+    "sections": [
+      {
+        "title": "Collections, spaces and lists",
+        "where": "Sidebar on the left",
+        "body": "At the top the collections Today, Scheduled, All, Marked, Assigned to me and Completed, below them your spaces with their lists. Drag lists and spaces to sort them; a task dropped on a list moves there."
+      },
+      {
+        "title": "Quick entry",
+        "where": "Below every list, or press N",
+        "body": "“Milk tomorrow 9am #groceries !!” creates a task with date, time, tag and priority. You see what was recognised while typing."
+      },
+      {
+        "title": "Together with others",
+        "where": "Space, menu “Members”",
+        "body": "Invite family or friends to a space with a link and assign tasks to one or more people. One is enough: whoever completes it first completes it for everyone."
+      },
+      {
+        "title": "iPhone app and notifications",
+        "where": "My account, Connections",
+        "body": "Connect the iPhone app with a QR code. In the browser, notifications arrive as web push, also while the page is closed."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "Columns per section, subtasks, attachments, repetitions in words instead of formulas.",
+      "Trash for 30 days, search, keyboard shortcuts, light and dark."
+    ]
+  }
+}

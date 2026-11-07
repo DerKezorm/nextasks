@@ -1,0 +1,32 @@
+{
+  "0.1.0": {
+    "lead": "nextasks ist neu gebaut: Aufgaben für Familie und kleine Gruppen, im Browser und als iPhone-App.",
+    "sections": [
+      {
+        "title": "Sammlungen, Bereiche und Listen",
+        "where": "Seitenleiste links",
+        "body": "Oben die Sammlungen Heute, Geplant, Alle, Markiert, Mir zugewiesen und Erledigt, darunter deine Bereiche mit ihren Listen. Listen und Bereiche sortierst du durch Ziehen; eine Aufgabe, die du auf eine Liste ziehst, wandert dorthin."
+      },
+      {
+        "title": "Schnelleingabe",
+        "where": "Unter jeder Liste, oder N drücken",
+        "body": "„Milch morgen 9 Uhr #einkauf !!“ legt eine Aufgabe mit Datum, Uhrzeit, Schlagwort und Priorität an. Was erkannt wurde, siehst du beim Tippen."
+      },
+      {
+        "title": "Gemeinsam mit anderen",
+        "where": "Bereich, Menü „Mitglieder“",
+        "body": "Lade Familie oder Freunde mit einem Link in einen Bereich ein und weise Aufgaben einer oder mehreren Personen zu. Einer reicht: Wer zuerst abhakt, erledigt sie für alle."
+      },
+      {
+        "title": "iPhone-App und Mitteilungen",
+        "where": "Mein Konto, Verbindungen",
+        "body": "Verbinde die iPhone-App per QR-Code. Im Browser kommen Mitteilungen als Web-Push, auch wenn die Seite geschlossen ist."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Spalten je Abschnitt, Unteraufgaben, Anhänge, Wiederholungen in Worten statt Formeln.",
+      "Papierkorb mit 30 Tagen, Suche, Tastenkürzel, hell und dunkel."
+    ]
+  }
+}

@@ -1,0 +1,347 @@
+{
+ "today": "2026-11-06",
+ "me": 1,
+ "world": {
+  "spaces": [
+   {
+    "id": "s-verein",
+    "private": false,
+    "name": "Verein"
+   },
+   {
+    "id": "s-privat",
+    "private": true,
+    "name": "Privat"
+   },
+   {
+    "id": "s-familie",
+    "private": false,
+    "name": "Familie"
+   },
+   {
+    "id": "s-archiv",
+    "private": false,
+    "name": "Archiv"
+   }
+  ],
+  "lists": [
+   {
+    "id": "l-notizen",
+    "space_id": "s-privat",
+    "position": "a1"
+   },
+   {
+    "id": "l-aufgaben",
+    "space_id": "s-privat",
+    "position": "a0"
+   },
+   {
+    "id": "l-haushalt",
+    "space_id": "s-familie",
+    "position": "a0"
+   },
+   {
+    "id": "l-training",
+    "space_id": "s-verein",
+    "position": "a0"
+   }
+  ],
+  "reminders": [
+   {
+    "id": "r-heute-privat",
+    "list_id": "l-aufgaben",
+    "due_date": "2026-11-06"
+   },
+   {
+    "id": "r-markiert-privat",
+    "list_id": "l-notizen",
+    "flagged": true
+   },
+   {
+    "id": "r-erledigt-privat",
+    "list_id": "l-aufgaben",
+    "completed": true
+   },
+   {
+    "id": "r-ueberfaellig-familie",
+    "list_id": "l-haushalt",
+    "due_date": "2026-11-05"
+   },
+   {
+    "id": "r-mir-familie",
+    "list_id": "l-haushalt",
+    "due_date": "2026-11-20",
+    "assignees": [
+     1
+    ]
+   },
+   {
+    "id": "r-erledigt-familie",
+    "list_id": "l-haushalt",
+    "completed": true
+   },
+   {
+    "id": "r-papierkorb-familie",
+    "list_id": "l-haushalt",
+    "due_date": "2026-11-06",
+    "deleted": true
+   },
+   {
+    "id": "r-markiert-verein",
+    "list_id": "l-training",
+    "flagged": true,
+    "assignees": [
+     1,
+     2
+    ]
+   },
+   {
+    "id": "r-heute-verein",
+    "list_id": "l-training",
+    "due_date": "2026-11-06"
+   }
+  ]
+ },
+ "collections": [
+  {
+   "hidden": [],
+   "expect": {
+    "today": 3,
+    "scheduled": 4,
+    "all": 6,
+    "flagged": 2,
+    "assigned": 2,
+    "done": 2
+   }
+  },
+  {
+   "hidden": [
+    "s-familie"
+   ],
+   "expect": {
+    "today": 2,
+    "scheduled": 2,
+    "all": 4,
+    "flagged": 2,
+    "assigned": 1,
+    "done": 1
+   }
+  },
+  {
+   "hidden": [
+    "s-verein"
+   ],
+   "expect": {
+    "today": 2,
+    "scheduled": 3,
+    "all": 4,
+    "flagged": 1,
+    "assigned": 1,
+    "done": 2
+   }
+  },
+  {
+   "hidden": [
+    "s-privat"
+   ],
+   "expect": {
+    "today": 2,
+    "scheduled": 3,
+    "all": 4,
+    "flagged": 1,
+    "assigned": 2,
+    "done": 1
+   }
+  },
+  {
+   "hidden": [
+    "s-familie",
+    "s-verein"
+   ],
+   "expect": {
+    "today": 1,
+    "scheduled": 1,
+    "all": 2,
+    "flagged": 1,
+    "assigned": 0,
+    "done": 1
+   }
+  },
+  {
+   "hidden": [
+    "s-privat",
+    "s-familie",
+    "s-verein",
+    "s-archiv"
+   ],
+   "expect": {
+    "today": 0,
+    "scheduled": 0,
+    "all": 0,
+    "flagged": 0,
+    "assigned": 0,
+    "done": 0
+   }
+  }
+ ],
+ "default_list": [
+  {
+   "hidden": [],
+   "expect": "l-aufgaben"
+  },
+  {
+   "hidden": [
+    "s-familie"
+   ],
+   "expect": "l-aufgaben"
+  },
+  {
+   "hidden": [
+    "s-privat"
+   ],
+   "expect": "l-haushalt"
+  },
+  {
+   "hidden": [
+    "s-privat",
+    "s-familie"
+   ],
+   "expect": "l-training"
+  },
+  {
+   "hidden": [
+    "s-archiv"
+   ],
+   "expect": "l-aufgaben"
+  },
+  {
+   "hidden": [
+    "s-privat",
+    "s-familie",
+    "s-verein"
+   ],
+   "expect": null
+  },
+  {
+   "hidden": [
+    "s-privat",
+    "s-familie",
+    "s-verein",
+    "s-archiv"
+   ],
+   "expect": null
+  }
+ ],
+ "local_source": [
+  {
+   "servers": 0,
+   "mode": "auto",
+   "local": {
+    "spaces": 0,
+    "lists": 0,
+    "reminders": 0
+   },
+   "expect": true
+  },
+  {
+   "servers": 0,
+   "mode": "never",
+   "local": {
+    "spaces": 0,
+    "lists": 0,
+    "reminders": 0
+   },
+   "expect": true
+  },
+  {
+   "servers": 0,
+   "mode": "always",
+   "local": {
+    "spaces": 0,
+    "lists": 0,
+    "reminders": 0
+   },
+   "expect": true
+  },
+  {
+   "servers": 1,
+   "mode": "auto",
+   "local": {
+    "spaces": 0,
+    "lists": 0,
+    "reminders": 0
+   },
+   "expect": false
+  },
+  {
+   "servers": 1,
+   "mode": "auto",
+   "local": {
+    "spaces": 0,
+    "lists": 0,
+    "reminders": 1
+   },
+   "expect": true
+  },
+  {
+   "servers": 1,
+   "mode": "auto",
+   "local": {
+    "spaces": 1,
+    "lists": 0,
+    "reminders": 0
+   },
+   "expect": true
+  },
+  {
+   "servers": 1,
+   "mode": "auto",
+   "local": {
+    "spaces": 0,
+    "lists": 1,
+    "reminders": 0
+   },
+   "expect": true
+  },
+  {
+   "servers": 2,
+   "mode": "auto",
+   "local": {
+    "spaces": 0,
+    "lists": 0,
+    "reminders": 0
+   },
+   "expect": false
+  },
+  {
+   "servers": 1,
+   "mode": "always",
+   "local": {
+    "spaces": 0,
+    "lists": 0,
+    "reminders": 0
+   },
+   "expect": true
+  },
+  {
+   "servers": 1,
+   "mode": "never",
+   "local": {
+    "spaces": 0,
+    "lists": 0,
+    "reminders": 5
+   },
+   "expect": false
+  },
+  {
+   "servers": 1,
+   "mode": "never",
+   "local": {
+    "spaces": 2,
+    "lists": 3,
+    "reminders": 5
+   },
+   "expect": false
+  }
+ ]
+}

@@ -1,0 +1,35 @@
+{
+  "id": "/today",
+  "name": "nextasks",
+  "short_name": "nextasks",
+  "description": "Tasks for families and small groups.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/today",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f6f7",
+  "theme_color": "#f4f6f7",
+  "categories": ["productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "New task",
+      "short_name": "New task",
+      "url": "/today?reminder=new",
+      "icons": [{ "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Today",
+      "short_name": "Today",
+      "url": "/today",
+      "icons": [{ "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

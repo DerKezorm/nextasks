@@ -1,0 +1,805 @@
+{
+ "canonical": [
+  {
+   "value": "Milch kaufen",
+   "expect": "\"Milch kaufen\""
+  },
+  {
+   "value": "Müller über Öl",
+   "expect": "\"Müller über Öl\""
+  },
+  {
+   "value": "Einkauf 🛒",
+   "expect": "\"Einkauf 🛒\""
+  },
+  {
+   "value": "a/b",
+   "expect": "\"a/b\""
+  },
+  {
+   "value": "Zeile 1\nZeile 2",
+   "expect": "\"Zeile 1\\nZeile 2\""
+  },
+  {
+   "value": "Tab\there",
+   "expect": "\"Tab\\there\""
+  },
+  {
+   "value": "Er sagte \"ja\"",
+   "expect": "\"Er sagte \\\"ja\\\"\""
+  },
+  {
+   "value": "C:\\Pfad",
+   "expect": "\"C:\\\\Pfad\""
+  },
+  {
+   "value": "\b\f\r",
+   "expect": "\"\\b\\f\\r\""
+  },
+  {
+   "value": "\u0001\u001f",
+   "expect": "\"\\u0001\\u001f\""
+  },
+  {
+   "value": " €",
+   "expect": "\" €\""
+  },
+  {
+   "value": "",
+   "expect": "\"\""
+  },
+  {
+   "value": 0,
+   "expect": "0"
+  },
+  {
+   "value": -0.0,
+   "expect": "0"
+  },
+  {
+   "value": 3,
+   "expect": "3"
+  },
+  {
+   "value": -1,
+   "expect": "-1"
+  },
+  {
+   "value": 1762420500000,
+   "expect": "1762420500000"
+  },
+  {
+   "value": 1.0,
+   "expect": "1"
+  },
+  {
+   "value": 52.52,
+   "expect": "52.52"
+  },
+  {
+   "value": -33.8688,
+   "expect": "-33.8688"
+  },
+  {
+   "value": 1e-06,
+   "expect": "0.000001"
+  },
+  {
+   "value": 1e-07,
+   "expect": "1e-7"
+  },
+  {
+   "value": 1e+21,
+   "expect": "1e+21"
+  },
+  {
+   "value": null,
+   "expect": "null"
+  },
+  {
+   "value": true,
+   "expect": "true"
+  },
+  {
+   "value": false,
+   "expect": "false"
+  },
+  {
+   "value": [],
+   "expect": "[]"
+  },
+  {
+   "value": [
+    "einkauf",
+    "Büro",
+    "🛒"
+   ],
+   "expect": "[\"einkauf\",\"Büro\",\"🛒\"]"
+  },
+  {
+   "value": [
+    3,
+    10,
+    2
+   ],
+   "expect": "[3,10,2]"
+  },
+  {
+   "value": {
+    "due_time": "08:00",
+    "repeat": null,
+    "due_date": "2026-11-06",
+    "repeat_from": "due"
+   },
+   "expect": "{\"due_date\":\"2026-11-06\",\"due_time\":\"08:00\",\"repeat\":null,\"repeat_from\":\"due\"}"
+  },
+  {
+   "value": {
+    "repeat_from": "completion",
+    "repeat": "FREQ=MONTHLY;INTERVAL=2",
+    "due_time": null,
+    "due_date": "2026-11-30"
+   },
+   "expect": "{\"due_date\":\"2026-11-30\",\"due_time\":null,\"repeat\":\"FREQ=MONTHLY;INTERVAL=2\",\"repeat_from\":\"completion\"}"
+  },
+  {
+   "value": {
+    "position": "a0V",
+    "parent_id": null,
+    "section_id": "3d2a1b4c-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+    "list_id": "0b8e4d2c-1f3a-4e6b-8c9d-7a5f3e2b1c60"
+   },
+   "expect": "{\"list_id\":\"0b8e4d2c-1f3a-4e6b-8c9d-7a5f3e2b1c60\",\"parent_id\":null,\"position\":\"a0V\",\"section_id\":\"3d2a1b4c-5e6f-4a7b-8c9d-0e1f2a3b4c5d\"}"
+  },
+  {
+   "value": {
+    "completed_by": 3,
+    "completed_at": "2026-11-06T09:15:00.000Z"
+   },
+   "expect": "{\"completed_at\":\"2026-11-06T09:15:00.000Z\",\"completed_by\":3}"
+  },
+  {
+   "value": {
+    "completed_by": null,
+    "completed_at": null
+   },
+   "expect": "{\"completed_at\":null,\"completed_by\":null}"
+  },
+  {
+   "value": {
+    "radius_m": 150,
+    "on": "arrive",
+    "name": "Büro",
+    "lon": 13.405,
+    "lat": 52.52
+   },
+   "expect": "{\"lat\":52.52,\"lon\":13.405,\"name\":\"Büro\",\"on\":\"arrive\",\"radius_m\":150}"
+  },
+  {
+   "value": {
+    "z": 1,
+    "a": {
+     "y": [
+      true,
+      null
+     ],
+     "b": "x"
+    }
+   },
+   "expect": "{\"a\":{\"b\":\"x\",\"y\":[true,null]},\"z\":1}"
+  },
+  {
+   "value": {
+    "ﬁ": 1,
+    "😀": 2,
+    "€": 3,
+    "é": 4,
+    "z": 5,
+    "a": 6
+   },
+   "expect": "{\"a\":6,\"z\":5,\"é\":4,\"€\":3,\"😀\":2,\"ﬁ\":1}"
+  }
+ ],
+ "merge": [
+  {
+   "field": "title",
+   "stored_value": "Alt",
+   "stored_clock": 1762420500000,
+   "incoming_value": "Neu",
+   "incoming_clock": 1762420500001,
+   "expect": "take"
+  },
+  {
+   "field": "title",
+   "stored_value": "Neu",
+   "stored_clock": 1762420500001,
+   "incoming_value": "Alt",
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "title",
+   "stored_value": "Zebra",
+   "stored_clock": 1762420500000,
+   "incoming_value": "apfel",
+   "incoming_clock": 1762420499999,
+   "expect": "keep"
+  },
+  {
+   "field": "title",
+   "stored_value": "gleich",
+   "stored_clock": 1762420500000,
+   "incoming_value": "gleich",
+   "incoming_clock": 1762420500005,
+   "expect": "take"
+  },
+  {
+   "field": "title",
+   "stored_value": "gleich",
+   "stored_clock": 1762420500005,
+   "incoming_value": "gleich",
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "title",
+   "stored_value": "gleich",
+   "stored_clock": 1762420500000,
+   "incoming_value": "gleich",
+   "incoming_clock": 1762420500000,
+   "expect": "same"
+  },
+  {
+   "field": "title",
+   "stored_value": "a",
+   "stored_clock": 1762420500000,
+   "incoming_value": "b",
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "title",
+   "stored_value": "b",
+   "stored_clock": 1762420500000,
+   "incoming_value": "a",
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "title",
+   "stored_value": "Zebra",
+   "stored_clock": 1762420500000,
+   "incoming_value": "apfel",
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "title",
+   "stored_value": "Mueller",
+   "stored_clock": 1762420500000,
+   "incoming_value": "Müller",
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "title",
+   "stored_value": "ü",
+   "stored_clock": 1762420500000,
+   "incoming_value": "🛒",
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "title",
+   "stored_value": "😀",
+   "stored_clock": 1762420500000,
+   "incoming_value": "｡",
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "title",
+   "stored_value": "a b",
+   "stored_clock": 1762420500000,
+   "incoming_value": "a\nb",
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "title",
+   "stored_value": "a!",
+   "stored_clock": 1762420500000,
+   "incoming_value": "a\"",
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "title",
+   "stored_value": "ab",
+   "stored_clock": 1762420500000,
+   "incoming_value": "abc",
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "notes",
+   "stored_value": "",
+   "stored_clock": 0,
+   "incoming_value": "Text",
+   "incoming_clock": 0,
+   "expect": "take"
+  },
+  {
+   "field": "notes",
+   "stored_value": "Text",
+   "stored_clock": 0,
+   "incoming_value": "",
+   "incoming_clock": 0,
+   "expect": "keep"
+  },
+  {
+   "field": "url",
+   "stored_value": null,
+   "stored_clock": 1762420500000,
+   "incoming_value": "https://example.org/a",
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "url",
+   "stored_value": "https://example.org/a",
+   "stored_clock": 1762420500000,
+   "incoming_value": null,
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "priority",
+   "stored_value": 2,
+   "stored_clock": 1762420500000,
+   "incoming_value": 3,
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "priority",
+   "stored_value": 0,
+   "stored_clock": 1762420500000,
+   "incoming_value": null,
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "priority",
+   "stored_value": 3,
+   "stored_clock": 0,
+   "incoming_value": 0,
+   "incoming_clock": 1,
+   "expect": "take"
+  },
+  {
+   "field": "flagged",
+   "stored_value": false,
+   "stored_clock": 1762420500000,
+   "incoming_value": true,
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "flagged",
+   "stored_value": true,
+   "stored_clock": 1762420500000,
+   "incoming_value": false,
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "flagged",
+   "stored_value": null,
+   "stored_clock": 1762420500000,
+   "incoming_value": false,
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "flagged",
+   "stored_value": null,
+   "stored_clock": 1762420500000,
+   "incoming_value": true,
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "assignees",
+   "stored_value": [
+    3,
+    9
+   ],
+   "stored_clock": 1762420500000,
+   "incoming_value": [
+    3,
+    10
+   ],
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "assignees",
+   "stored_value": [
+    10
+   ],
+   "stored_clock": 1762420500000,
+   "incoming_value": [
+    9
+   ],
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "assignees",
+   "stored_value": [],
+   "stored_clock": 1762420500000,
+   "incoming_value": [
+    3
+   ],
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "tags",
+   "stored_value": [
+    "a",
+    "b"
+   ],
+   "stored_clock": 1762420500000,
+   "incoming_value": [
+    "a"
+   ],
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "tags",
+   "stored_value": [
+    "a"
+   ],
+   "stored_clock": 1762420500000,
+   "incoming_value": [
+    "a",
+    "b"
+   ],
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "tags",
+   "stored_value": [
+    "a",
+    "b"
+   ],
+   "stored_clock": 1762420500000,
+   "incoming_value": [
+    "b",
+    "a"
+   ],
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "tags",
+   "stored_value": [
+    "Büro"
+   ],
+   "stored_clock": 1762420500000,
+   "incoming_value": [
+    "Büro"
+   ],
+   "incoming_clock": 1762420500000,
+   "expect": "same"
+  },
+  {
+   "field": "tags",
+   "stored_value": null,
+   "stored_clock": 1762420500000,
+   "incoming_value": [],
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "due",
+   "stored_value": {
+    "due_date": "2026-11-06",
+    "due_time": "08:00",
+    "repeat": null,
+    "repeat_from": "due"
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "repeat_from": "due",
+    "due_time": "08:00",
+    "due_date": "2026-11-06",
+    "repeat": null
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "same"
+  },
+  {
+   "field": "due",
+   "stored_value": {
+    "due_date": "2026-11-06",
+    "due_time": "08:00",
+    "repeat": null,
+    "repeat_from": "due"
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "due_date": "2026-11-06",
+    "due_time": null,
+    "repeat": null,
+    "repeat_from": "due"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "due",
+   "stored_value": {
+    "due_date": "2026-11-06",
+    "due_time": null,
+    "repeat": null,
+    "repeat_from": "due"
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "due_date": "2026-11-06",
+    "due_time": "08:00",
+    "repeat": null,
+    "repeat_from": "due"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "due",
+   "stored_value": {
+    "due_date": "2026-11-06",
+    "due_time": "08:00",
+    "repeat": null,
+    "repeat_from": "due"
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "due_date": "2026-11-07",
+    "due_time": "08:00",
+    "repeat": null,
+    "repeat_from": "due"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "due",
+   "stored_value": {
+    "due_date": "2026-11-06",
+    "due_time": "08:00",
+    "repeat": null,
+    "repeat_from": "due"
+   },
+   "stored_clock": 1762420500001,
+   "incoming_value": {
+    "due_date": "2026-11-07",
+    "due_time": "08:00",
+    "repeat": null,
+    "repeat_from": "due"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "place",
+   "stored_value": {
+    "list_id": "0b8e4d2c-1f3a-4e6b-8c9d-7a5f3e2b1c60",
+    "section_id": null,
+    "parent_id": null,
+    "position": "a0"
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "position": "a0",
+    "parent_id": null,
+    "list_id": "0b8e4d2c-1f3a-4e6b-8c9d-7a5f3e2b1c60",
+    "section_id": null
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "same"
+  },
+  {
+   "field": "place",
+   "stored_value": {
+    "list_id": "0b8e4d2c-1f3a-4e6b-8c9d-7a5f3e2b1c60",
+    "section_id": null,
+    "parent_id": null,
+    "position": "a0"
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "list_id": "0b8e4d2c-1f3a-4e6b-8c9d-7a5f3e2b1c60",
+    "section_id": "3d2a1b4c-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+    "parent_id": null,
+    "position": "a0"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "place",
+   "stored_value": {
+    "list_id": "0b8e4d2c-1f3a-4e6b-8c9d-7a5f3e2b1c60",
+    "section_id": null,
+    "parent_id": null,
+    "position": "a0"
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "list_id": "0b8e4d2c-1f3a-4e6b-8c9d-7a5f3e2b1c60",
+    "section_id": null,
+    "parent_id": null,
+    "position": "a0V"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "completion",
+   "stored_value": {
+    "completed_at": "2026-11-06T09:15:00.000Z",
+    "completed_by": 3
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "completed_at": null,
+    "completed_by": null
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "completion",
+   "stored_value": {
+    "completed_at": null,
+    "completed_by": null
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "completed_at": "2026-11-06T09:15:00.000Z",
+    "completed_by": 3
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "completion",
+   "stored_value": {
+    "completed_at": null,
+    "completed_by": null
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "completed_at": "2026-11-06T09:15:00.000Z",
+    "completed_by": 3
+   },
+   "incoming_clock": 1762420500001,
+   "expect": "take"
+  },
+  {
+   "field": "completion",
+   "stored_value": {
+    "completed_at": "2026-11-06T09:15:00.000Z",
+    "completed_by": 3
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "completed_by": 3,
+    "completed_at": "2026-11-06T09:15:00.001Z"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "completion",
+   "stored_value": {
+    "completed_at": "2026-11-06T09:15:00.000Z",
+    "completed_by": 3
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "completed_by": 3,
+    "completed_at": "2026-11-06T09:15:00.000Z"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "same"
+  },
+  {
+   "field": "deleted_at",
+   "stored_value": null,
+   "stored_clock": 1762420500000,
+   "incoming_value": "2026-11-06T09:15:00.000Z",
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "location",
+   "stored_value": null,
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "name": "Büro",
+    "lat": 52.52,
+    "lon": 13.405,
+    "radius_m": 100,
+    "on": "arrive"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "location",
+   "stored_value": {
+    "name": "Büro",
+    "lat": 52.52,
+    "lon": 13.405,
+    "radius_m": 100,
+    "on": "arrive"
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "name": "Büro",
+    "lat": 52.52,
+    "lon": 13.405,
+    "radius_m": 1000,
+    "on": "arrive"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "keep"
+  },
+  {
+   "field": "location",
+   "stored_value": {
+    "name": "Büro",
+    "lat": 52.52,
+    "lon": 13.405,
+    "radius_m": 1000,
+    "on": "arrive"
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "name": "Büro",
+    "lat": 52.52,
+    "lon": 13.405,
+    "radius_m": 100,
+    "on": "arrive"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "take"
+  },
+  {
+   "field": "location",
+   "stored_value": {
+    "name": "Büro",
+    "lat": 52.52,
+    "lon": 13.405,
+    "radius_m": 100,
+    "on": "arrive"
+   },
+   "stored_clock": 1762420500000,
+   "incoming_value": {
+    "name": "Büro",
+    "lat": 52.52,
+    "lon": 13.405,
+    "radius_m": 100,
+    "on": "arrive"
+   },
+   "incoming_clock": 1762420500000,
+   "expect": "same"
+  }
+ ]
+}
