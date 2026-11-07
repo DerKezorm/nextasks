@@ -32,7 +32,7 @@ from sqlalchemy.orm import Session
 
 from ..db import SessionLocal
 from ..models import Account, AssignedLog, ChangeBundle, ListPref, Member, NotifySent, Reminder, Space, TaskList
-from . import channels, clock, messages, notetext, notifyprefs, push, spaces
+from . import channels, clock, messages, notetext, notifyprefs, push, spaces, visibility
 
 logger = logging.getLogger("nextasks.notify")
 
@@ -73,8 +73,9 @@ def _text(language: str, key: str, **values: Any) -> str:
     return TEXTS.get(language, TEXTS["en"])[key].format(**values)
 
 
-def _name(db: Session, account_id: int, language: str) -> str:
-    row = db.get(Account, account_id)
+def _name(db: Session, viewer_id: int, account_id: int, language: str) -> str:
+    """The name of ``account_id`` as ``viewer_id`` may learn it (``services/visibility``), else a former member."""
+    row = db.get(Account, account_id) if visibility.sees(db, viewer_id, account_id) else None
     return (row.display_name or row.name) if row is not None else _text(language, "former")
 
 
@@ -197,12 +198,12 @@ def _assigned(db: Session, reminder_id: str, people: list[int], actor_id: int) -
         if account_id == actor_id or account_id not in members or account is None or account.blocked_at:
             continue
         language = spaces.language_of(account)
-        text = with_note(_text(language, "assigned", name=_name(db, actor_id, language)), row, language)
+        text = with_note(_text(language, "assigned", name=_name(db, account_id, actor_id, language)), row, language)
         # Vertragslücke: a collapse id is named for ``due`` only; ``assigned:<id>`` and ``changed:<list>`` here.
         pushed = push.Message(title=row.title, text=text, reminder_id=row.id, list_id=row.list_id, type="assigned",
                               collapse=f"assigned:{row.id}")
         now = clock.now()
-        by = _name(db, actor_id, language)
+        by = _name(db, account_id, actor_id, language)
         list_row = db.get(TaskList, row.list_id)
 
         def make(language: str, base: str, unsubscribe: str, by: str = by,
@@ -272,7 +273,7 @@ def bundle_text(db: Session, account: Account, list_row: TaskList | None, events
     if len(kinds) > 1:
         return _text(language, "mixed", n=count, list=list_row.name if list_row else "")
     kind = kinds.pop() if kinds else "added"
-    name = _name(db, people[0], language) if people else _text(language, "former")
+    name = _name(db, account.id, people[0], language) if people else _text(language, "former")
     if len(people) > 1:
         return _text(language, f"others_{kind}", name=name, n=count)
     return _text(language, f"{kind}_{'one' if count == 1 else 'many'}", name=name, n=count)

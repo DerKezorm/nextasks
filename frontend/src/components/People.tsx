@@ -1,6 +1,6 @@
 /**
- * People as the sync shows them (`people` of `/changes`): picture or round letter, "Former member" for a deleted
- * account. Pictures come from `/people/{id}/avatar` with the web's header, so they are fetched and shown as a blob.
+ * People as the sync shows them (`people` of `/changes`): picture or round letter, "Former member" for an account
+ * deleted since or one that shares no space with this one any more. Pictures come from `/people/{id}/avatar` with the web's header, so they are fetched and shown as a blob.
  */
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'

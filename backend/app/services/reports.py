@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 
 from ..db import SessionLocal
 from ..models import Account, AssignedLog, NotifyRoute, NotifySchedule, Reminder, TaskList
-from . import clock, messages, notify, notifyprefs, spaces
+from . import clock, messages, notify, notifyprefs, spaces, visibility
 from .channels import Message
 from .messages import Item
 from .records import format_stamp
@@ -61,10 +61,12 @@ def _link(base: str, row: Reminder) -> str:
     return f"{base}/lists/{row.list_id}?reminder={row.id}"
 
 
-def _name(db: Session, account_id: int | None, language: str) -> str:
-    row = db.get(Account, account_id) if account_id else None
+def _name(db: Session, viewer_id: int, account_id: int | None, language: str) -> str:
+    """The name of ``account_id`` as ``viewer_id`` may learn it (``services/visibility``); a former member for one
+    deleted since or sharing no space with the reader any more."""
+    row = db.get(Account, account_id) if account_id and visibility.sees(db, viewer_id, account_id) else None
     if row is None:
-        return "?"  # an account deleted since
+        return visibility.former(language)
     return row.display_name or row.name
 
 
@@ -92,7 +94,7 @@ def _daily_parts(db: Session, account: Account, *, base: str, today: date,
     given: dict[str, str] = {}
     for log in db.scalars(select(AssignedLog).where(AssignedLog.account_id == account.id, AssignedLog.at > since)
                           .order_by(AssignedLog.at)):
-        given[log.reminder_id] = _name(db, log.by_id, language)
+        given[log.reminder_id] = _name(db, account.id, log.by_id, language)
 
     def item(row: Reminder, late: bool = False) -> Item:
         by = given.get(row.id)
@@ -138,13 +140,14 @@ def _weekly_parts(db: Session, account: Account, *, base: str, today: date,
         Reminder.space_id.in_(space_ids), Reminder.completed_at.is_not(None), Reminder.completed_at >= since,
         Reminder.deleted_at.is_(None)).order_by(Reminder.completed_at.desc())) if not notify.in_bin(db, row)]
     done = [Item(title=row.title, list_name=_list_name(db, row), link=_link(base, row),
-                 who=words["done_by"].format(name=_name(db, row.completed_by, language)) if row.completed_by else "")
+                 who=words["done_by"].format(name=_name(db, account.id, row.completed_by, language))
+                 if row.completed_by else "")
             for row in done_rows]
     last = (today + timedelta(days=6)).isoformat()
     upcoming_rows = [row for row in _open_rows(db, space_ids) if today.isoformat() <= (row.due_date or "") <= last]
     upcoming = []
     for row in sorted(upcoming_rows, key=_order):
-        people = [_name(db, person, language) for person in (row.assignees or [])]
+        people = [_name(db, account.id, person, language) for person in (row.assignees or [])]
         upcoming.append(Item(title=row.title, list_name=_list_name(db, row), link=_link(base, row),
                              due_date=row.due_date, due_time=row.due_time,
                              who=words["for"].format(names=", ".join(people)) if people else ""))

@@ -242,8 +242,9 @@ def test_mixed_changes_and_several_people_are_told_as_such() -> None:
     with SessionLocal() as db:
         from app.models import Account
 
-        reader = SimpleNamespace(language="en", browser_language="")
         anna = db.scalar(select(Account).where(Account.name == "anna"))
+        # The reader is anna herself here: she sees her own name.
+        reader = SimpleNamespace(id=anna.id, language="en", browser_language="")
         listed = SimpleNamespace(name="Shopping")
         mixed = [{"by": anna.id, "type": "added"}, {"by": anna.id, "type": "completed"}]
         assert notify.bundle_text(db, reader, listed, mixed) == "2 changes in Shopping"

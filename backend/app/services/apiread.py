@@ -43,7 +43,7 @@ from ..models import (
     SpacePref,
     TaskList,
 )
-from . import clock, notetext, records, settings_service, spaces
+from . import clock, notetext, records, settings_service, spaces, visibility
 
 #: Changes that took their cursor shortly before a moment and were committed after it still count for it.
 MARGIN = timedelta(minutes=1)
@@ -253,10 +253,12 @@ class World:
         if account_id is None:
             return None
         if account_id not in self._people:
-            self._people[account_id] = self.db.get(Account, account_id)
+            shown = visibility.sees(self.db, self.sight.account_id, account_id)
+            self._people[account_id] = self.db.get(Account, account_id) if shown else None
         row = self._people[account_id]
         if row is None:
-            # An account deleted since: named as a former member by whoever shows it.
+            # An account deleted since, or one that shares no space with the token's account any more: named as a
+            # former member by whoever shows it.
             return {"id": account_id, "name": None, "display_name": None}
         return {"id": row.id, "name": row.name, "display_name": row.display_name or row.name}
 

@@ -21,7 +21,7 @@ export interface Item {
 
 export interface Person {
   id: number
-  /** null: the account was deleted ("Former member"). */
+  /** null: the account was deleted, or shares no space with this one any more ("Former member"). */
   name: string | null
   avatar_hash: string | null
 }

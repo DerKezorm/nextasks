@@ -97,8 +97,8 @@ A task as `/api/v1` shows it:
 
 - `notes` is Markdown as the interface writes it; `notes_text` the same as plain text (images as `[Bild]`/`[Image]`).
 - `priority`: 0 none, 1 low, 2 medium, 3 high. `repeat`: the rule, as in the interface, or null.
-- `assignees` and `completed_by` name accounts as `{"id", "name", "display_name"}`; an account deleted since has
-  `name` and `display_name` null.
+- `assignees` and `completed_by` name accounts as `{"id", "name", "display_name"}`; an account deleted since, or one
+  that shares no space with the token's account any more, has `name` and `display_name` null (a former member).
 - `trashed`: the task is in the bin, on its own or with its parent, list or space; `trashed_at` says since when.
 - `updated_at`: when the server last got a change of it.
 - `link` opens the task in the web interface; it needs the operator's public address and is null without it.

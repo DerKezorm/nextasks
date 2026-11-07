@@ -13,8 +13,8 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from ..models import Account
-from . import media
+from ..models import OPERATOR, Account
+from . import media, visibility
 
 logger = logging.getLogger("nextasks.accounts")
 
@@ -69,6 +69,8 @@ def make(data: bytes) -> bytes:
 
 
 def may_see(db: Session, viewer: Account, owner_id: int) -> bool:
-    """Every account of the server: anybody may see the picture of any account that exists (unlike nexcanvas, where
-    only those who share a space see each other)."""
-    return db.get(Account, owner_id) is not None
+    """The account itself, whoever shares a space with it (``services/visibility``), and the operator, who manages
+    the accounts and sees each one's picture in the list of accounts."""
+    if db.get(Account, owner_id) is None:
+        return False
+    return viewer.role == OPERATOR or visibility.sees(db, viewer.id, owner_id)

@@ -44,7 +44,7 @@ from ..security import (
     session_by_provider,
     start_session,
 )
-from ..services import accounts, avatars, clock, cursor, locales, mailer, settings_service, spaces, totp
+from ..services import accounts, clock, cursor, locales, mailer, settings_service, spaces, totp, visibility
 from ..services.accounts import AccountError
 from ..services.oidc_store import SqlStore
 from ..vendor.nexoidc import providers
@@ -419,7 +419,7 @@ def people(
         return {}
     out: dict[str, str] = {}
     for row in db.scalars(select(AccountRow).where(AccountRow.name.in_(wanted), AccountRow.display_name != "")):
-        if avatars.may_see(db, account, row.id):
+        if visibility.sees(db, account.id, row.id):
             out[row.name] = row.display_name
     return out
 

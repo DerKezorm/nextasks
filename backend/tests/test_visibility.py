@@ -144,6 +144,9 @@ def test_people_are_oneself_those_one_shares_with_and_those_named_in_what_one_se
     assert carl.delete(f"/api/app/1/spaces/{space}/members/{carl_account.id}").status_code == 204
     people = {p["id"]: p for p in changes(ben)["people"]}
     assert set(people) == {anna_account.id, ben_account.id, carl_account.id}, "Carl made something Ben sees"
+    # Carl shares no space with Ben any more: a former member, without name and picture (services/visibility).
+    assert people[carl_account.id] == {"id": carl_account.id, "name": None, "avatar_hash": None}
+    assert people[anna_account.id]["name"] == "anna"
     assert state(ben)[("reminder", reminder)]["data"]["created_by"] == carl_account.id
     _dora, dora = person("dora")
     assert {p["id"] for p in changes(dora)["people"]} == {p["id"] for p in changes(dora)["people"]} and len(

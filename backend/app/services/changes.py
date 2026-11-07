@@ -40,7 +40,7 @@ from ..models import (
     TaskList,
     utcnow,
 )
-from . import cursor, records
+from . import cursor, records, visibility
 
 DEFAULT_LIMIT = 500
 MAX_LIMIT = 1000
@@ -189,7 +189,9 @@ def page(db: Session, account_id: int, since: int, limit: int = DEFAULT_LIMIT) -
 
 def people(db: Session, account_id: int, spaces: dict[str, int] | None = None) -> list[dict[str, Any]]:
     """The account itself, everybody it shares a space with, and every account named in ``created_by``,
-    ``completed_by`` or ``assignees`` of what it sees. Deleted accounts with ``name`` and ``avatar_hash`` null."""
+    ``completed_by`` or ``assignees`` of what it sees. Name and picture only of the first two
+    (``services/visibility``): one named in what it sees but sharing no space with it any more is given like a
+    deleted account, ``name`` and ``avatar_hash`` null (a former member)."""
     spaces = granted(db, account_id) if spaces is None else spaces
     space_ids = list(spaces)
     wanted: set[int] = {account_id}
@@ -203,7 +205,8 @@ def people(db: Session, account_id: int, spaces: dict[str, int] | None = None) -
             wanted |= {value for value in assignees or [] if isinstance(value, int)}
         wanted |= {value for value in db.scalars(select(Attachment.created_by).where(
             Attachment.space_id.in_(space_ids))) if isinstance(value, int)}
-    known = {row.id: row for row in db.scalars(select(Account).where(Account.id.in_(wanted)))}
+    seen = visibility.seen_by(db, account_id)
+    known = {row.id: row for row in db.scalars(select(Account).where(Account.id.in_(wanted & seen)))}
     return [
         {"id": person, "name": (known[person].display_name or known[person].name) if person in known else None,
          "avatar_hash": (known[person].avatar_hash or None) if person in known else None}

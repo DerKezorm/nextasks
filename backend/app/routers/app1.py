@@ -67,6 +67,7 @@ from ..services import (
     spaces,
     sync,
     totp,
+    visibility,
     webpush,
 )
 from ..services.devices import PairingError
@@ -428,8 +429,7 @@ def get_file(attachment_id: str, request: Request, found: Who) -> Response:
             responses={200: {"content": {"image/webp": {}}}})
 def avatar(account_id: int, request: Request, found: Who) -> Response:
     with SessionLocal() as db:
-        seen = {person["id"] for person in changes.people(db, found.id)}
-        row = db.get(Account, account_id) if account_id in seen else None
+        row = db.get(Account, account_id) if visibility.sees(db, found.id, account_id) else None
         picture = row.avatar if row is not None else None
         digest = row.avatar_hash if row is not None else ""
     if not picture:

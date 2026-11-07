@@ -13,6 +13,7 @@ from app.main import app
 from app.services import avatars
 
 from .conftest import make_account, sign_in
+from .sync_helpers import shared_space
 
 
 def person(name: str) -> TestClient:
@@ -81,13 +82,16 @@ def test_only_pictures_come_in(client: TestClient, account: object) -> None:
     assert anna.put("/api/auth/avatar", content=photo(kind="WEBP")).status_code == 200
 
 
-def test_seen_by_everybody_on_the_server_in_a_team_app(client: TestClient, account: object) -> None:
-    """In nextasks people give each other tasks: everybody sees everybody's picture (nexcanvas: only shared spaces)."""
+def test_seen_by_oneself_the_operator_and_those_sharing_a_space(client: TestClient, account: object) -> None:
+    """A family app: only who shares a space with an account sees its picture (and the operator, who manages it)."""
     anna, bob, carl = person("anna"), person("bob"), person("carl")
     assert anna.put("/api/auth/avatar", content=photo()).status_code == 200
     address = f"/api/avatars/{me(anna)['id']}"
-    assert client.get(address).status_code == 200
-    assert bob.get(address).status_code == 200, "no shared space needed"
+    assert client.get(address).status_code == 200, "the operator"
+    assert anna.get(address).status_code == 200, "oneself"
+    assert bob.get(address).status_code == 404, "no shared space"
+    shared_space(anna, bob)
+    assert bob.get(address).status_code == 200, "a shared space"
     # An account without a picture and one that does not exist answer alike.
     assert bob.get(f"/api/avatars/{me(carl)['id']}").json() == bob.get("/api/avatars/999999").json()
     # Removed: gone for everyone.
