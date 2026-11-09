@@ -1,4 +1,29 @@
 {
+  "0.2.0": {
+    "lead": "Own filters: put together what you want to see, and hide what you do not need.",
+    "sections": [
+      {
+        "title": "Own filters",
+        "where": "Bottom of the sidebar, “New filter”",
+        "body": "A filter gathers tasks by your conditions: open or completed, due today or in the next 7 days, completed today, from certain spaces or lists, marked, assigned to you or someone else, by priority or tag. All chosen conditions must match. Each filter has a name, colour and symbol and sits in the sidebar below the collections."
+      },
+      {
+        "title": "The sidebar the way you like it",
+        "where": "Settings, “Sidebar”",
+        "body": "The eye shows or hides each collection (Today, Scheduled, All and so on) and each own filter. It applies to all your devices, the iPhone app included."
+      },
+      {
+        "title": "Many more symbols",
+        "where": "Edit a space, list or filter",
+        "body": "259 symbols in groups instead of 46, with a search in English and German: “dog” finds the dog, “fridge” the fridge."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "“There is a new version” only shows when there really is one.",
+      "With Today hidden, nextasks starts on the first collection still shown."
+    ]
+  },
   "0.1.0": {
     "lead": "nextasks is rebuilt: tasks for families and small groups, in the browser, installable as an app, and with an iPhone app.",
     "sections": [

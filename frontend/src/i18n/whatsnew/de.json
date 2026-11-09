@@ -1,4 +1,29 @@
 {
+  "0.2.0": {
+    "lead": "Eigene Filter: Stell dir zusammen, was du sehen willst, und blende aus, was du nicht brauchst.",
+    "sections": [
+      {
+        "title": "Eigene Filter",
+        "where": "Seitenleiste unten, „Neuer Filter“",
+        "body": "Ein Filter sammelt Aufgaben nach deinen Bedingungen: offen oder erledigt, fällig heute oder in den nächsten 7 Tagen, heute erledigt, aus bestimmten Bereichen oder Listen, markiert, dir oder jemand anderem zugewiesen, nach Priorität oder Schlagwort. Alle gewählten Bedingungen müssen passen. Jeder Filter hat Name, Farbe und Symbol und steht in der Seitenleiste unter den Sammlungen."
+      },
+      {
+        "title": "Seitenleiste nach deinem Geschmack",
+        "where": "Einstellungen, „Seitenleiste“",
+        "body": "Mit dem Auge blendest du jede Sammlung (Heute, Geplant, Alle und so weiter) und jeden eigenen Filter ein oder aus. Das gilt für alle deine Geräte, auch für die iPhone-App."
+      },
+      {
+        "title": "Viel mehr Symbole",
+        "where": "Bereich, Liste oder Filter bearbeiten",
+        "body": "259 Symbole in Gruppen statt 46, mit Suche auf Deutsch und Englisch: „Hund“ findet den Hund, „kuhl“ den Kühlschrank."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Der Hinweis „Es gibt eine neue Version“ erscheint nur noch, wenn wirklich eine neue da ist.",
+      "Wer „Heute“ ausblendet, landet beim Start auf der ersten Sammlung, die noch zu sehen ist."
+    ]
+  },
   "0.1.0": {
     "lead": "nextasks ist neu gebaut: Aufgaben für Familie und kleine Gruppen, im Browser, als App installierbar und mit einer iPhone-App.",
     "sections": [
