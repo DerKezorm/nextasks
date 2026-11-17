@@ -104,7 +104,8 @@ def short(message: push.Message, link: str) -> notifyprefs.Short:
     def make(language: str) -> channels.Message:
         return channels.Message(title=message.title, text=message.text, link=link, language=language,
                                 data={"type": message.type, "reminder_id": message.reminder_id,
-                                      "list_id": message.list_id, "collapse": message.collapse})
+                                      "list_id": message.list_id, "collapse": message.collapse,
+                                      "priority": message.priority})
 
     return make
 
@@ -164,7 +165,7 @@ def due_round(now: datetime | None = None) -> int:
                 text = with_note(text, row, spaces.language_of(account))
                 # Vertragslücke: the contract names no texts for ``due``; title = the reminder, text = list and time.
                 pushed = push.Message(title=row.title, text=text, reminder_id=row.id, list_id=row.list_id, type="due",
-                                      collapse=key)
+                                      collapse=key, priority=row.priority)
                 notifyprefs.dispatch(db, account, "due", key, _due_mail(row, list_row),
                                      short(pushed, reminder_path(row)), at_once=True)
                 db.commit()

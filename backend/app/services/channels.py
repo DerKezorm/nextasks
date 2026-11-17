@@ -306,7 +306,8 @@ class AppPushChannel(Channel):
         data = message.data
         taken, failed = push.send_all(db, target.account_id, push.Message(
             title=message.title, text=message.text, reminder_id=data.get("reminder_id"), list_id=data.get("list_id"),
-            type=str(data.get("type", "")), collapse=str(data.get("collapse", ""))))
+            type=str(data.get("type", "")), collapse=str(data.get("collapse", "")),
+            priority=data["priority"] if isinstance(data.get("priority"), int) else None))
         if not taken:
             raise DeliveryError("push_failed" if failed else "no_device")
 

@@ -99,9 +99,21 @@ def test_a_due_reminder_rings_once_in_the_persons_own_zone(relay: Relay) -> None
     assert notify.due_round(ringing + timedelta(seconds=30)) == 0, "once"
     [message] = relay.messages()
     assert message == {"title": "Dentist", "text": message["text"], "reminder_id": reminder, "list_id": list_id,
-                       "type": "due"}
+                       "type": "due", "priority": 0}
     assert relay.sent[0]["collapse"] == f"{reminder}:2026-11-06T09:00"
     _ = account
+
+
+def test_a_due_push_names_the_priority_last_for_the_time_sensitive_alert(relay: Relay) -> None:
+    _account, browser = person("anna")
+    browser.put(f"{API}/me", json={"timezone": "UTC"})
+    _space, list_id = private_space(browser)
+    phone_of(browser)
+    _due(browser, list_id, "2026-11-06", "09:00", priority=3)
+    assert notify.due_round(datetime(2026, 11, 6, 9, 0, tzinfo=UTC)) == 1
+    [message] = relay.messages()
+    assert message["priority"] == 3
+    assert list(message) == ["title", "text", "reminder_id", "list_id", "type", "priority"]
 
 
 def test_a_notification_carries_the_note_as_plain_text_never_markdown(relay: Relay) -> None:

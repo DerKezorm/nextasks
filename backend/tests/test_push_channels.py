@@ -177,7 +177,7 @@ def test_from_the_start_the_browser_and_the_app_get_what_they_got_before(service
     due = base._due(anna, list_id, "2026-11-06", "09:00", assignees=[ben_account.id])
     assert notify.due_round(datetime(2026, 11, 6, 9, 0, tzinfo=UTC)) == 1
     assert relay.messages()[-1] == {"title": "Dentist", "text": relay.messages()[-1]["text"], "reminder_id": due,
-                                    "list_id": list_id, "type": "due"}
+                                    "list_id": list_id, "type": "due", "priority": 0}
     assert relay.sent[-1]["collapse"] == f"{due}:2026-11-06T09:00"
     assert services.opened(browser)[-1]["type"] == "due"
     # Changes by others in a followed list: bundled, both ways.

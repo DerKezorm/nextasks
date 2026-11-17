@@ -3,7 +3,8 @@
 (``vertrag-block1.md``, "Mitteilungen").
 
 The app keeps an X25519 key pair per server and hands the relay's ticket and its public key over at every start
-(``PUT /api/app/1/push``). A notification is compact JSON ``{"title", "text", "reminder_id", "list_id", "type"}``,
+(``PUT /api/app/1/push``). A notification is compact JSON ``{"title", "text", "reminder_id", "list_id", "type"}``
+(``due`` adds ``"priority"``),
 encrypted for exactly that device: a fresh X25519 pair and nonce per message, HKDF-SHA256 with the info
 ``nextasks-push-v1``, ChaCha20-Poly1305 (``services/push_crypto.py``, the reference of the test set ``push.json``).
 The relay and Apple only ever see the ciphertext.
@@ -50,6 +51,8 @@ class Message:
     type: str
     #: ``apns-collapse-id``: a second message with the same one replaces the first.
     collapse: str = ""
+    #: 0–3, sent with ``due`` (contract 0.6): the app shows priority 3 time-sensitive. ``None``: left out.
+    priority: int | None = None
 
 
 def relay_url() -> str:
@@ -68,12 +71,12 @@ def key_valid(value: str) -> bool:
 
 
 def plaintext(message: Message) -> bytes:
-    """What the app decrypts: compact, fields in the order of the contract."""
-    return json.dumps(
-        {"title": message.title[:TITLE_MAX], "text": message.text[:TEXT_MAX], "reminder_id": message.reminder_id,
-         "list_id": message.list_id, "type": message.type},
-        ensure_ascii=False, separators=(",", ":"),
-    ).encode("utf-8")
+    """What the app decrypts: compact, fields in the order of the contract; ``priority`` last and only when set."""
+    fields: dict[str, object] = {"title": message.title[:TITLE_MAX], "text": message.text[:TEXT_MAX],
+                                 "reminder_id": message.reminder_id, "list_id": message.list_id, "type": message.type}
+    if message.priority is not None:
+        fields["priority"] = message.priority
+    return json.dumps(fields, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
 
 def seal(message: Message, device_key: str) -> str:
