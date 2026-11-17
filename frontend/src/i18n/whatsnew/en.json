@@ -1,4 +1,18 @@
 {
+  "0.2.1": {
+    "lead": "Important tasks stand out more on the iPhone.",
+    "sections": [
+      {
+        "title": "High priority is time-sensitive",
+        "where": "iPhone app 1.2 or later",
+        "body": "When a task with high priority falls due, the server sends the priority along. The iPhone app then shows the notification as time-sensitive: it stays at the top of the lock screen and gets through Focus and the scheduled summary."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "Older iPhone apps skip the priority that comes along; for them nothing changes."
+    ]
+  },
   "0.2.0": {
     "lead": "Own filters: put together what you want to see, and hide what you do not need.",
     "sections": [

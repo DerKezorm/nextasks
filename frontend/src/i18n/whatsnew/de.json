@@ -1,4 +1,18 @@
 {
+  "0.2.1": {
+    "lead": "Wichtige Aufgaben fallen auf dem iPhone mehr auf.",
+    "sections": [
+      {
+        "title": "Hohe Priorität ist zeitkritisch",
+        "where": "iPhone-App ab 1.2",
+        "body": "Wird eine Aufgabe mit hoher Priorität fällig, schickt der Server die Priorität mit. Die iPhone-App zeigt die Mitteilung dann zeitkritisch: Sie bleibt oben auf dem Sperrbildschirm und kommt auch durch Fokus und die geplante Zusammenfassung."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Ältere iPhone-Apps übergehen die mitgeschickte Priorität, bei ihnen bleibt alles wie bisher."
+    ]
+  },
   "0.2.0": {
     "lead": "Eigene Filter: Stell dir zusammen, was du sehen willst, und blende aus, was du nicht brauchst.",
     "sections": [
