@@ -1,4 +1,18 @@
 {
+  "0.3.0": {
+    "lead": "Connect your server on the iPhone once, and it is on your iPad too.",
+    "sections": [
+      {
+        "title": "Connection through iCloud to all your devices",
+        "where": "iPhone app 1.3 or later",
+        "body": "The iPhone app keeps the connection to your server in the iCloud Keychain. Your other devices with the same Apple ID take it over by themselves and sign in under their own name. Each one shows in your profile under devices and can be disconnected there on its own."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "A device brings in at most five more an hour. An operator who switches off pairing new devices switches this off too."
+    ]
+  },
   "0.2.1": {
     "lead": "Important tasks stand out more on the iPhone.",
     "sections": [

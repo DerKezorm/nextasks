@@ -1,4 +1,18 @@
 {
+  "0.3.0": {
+    "lead": "Einmal auf dem iPhone verbunden, ist dein Server auch auf deinem iPad.",
+    "sections": [
+      {
+        "title": "Verbindung über iCloud auf alle Geräte",
+        "where": "iPhone-App ab 1.3",
+        "body": "Die iPhone-App legt die Verbindung zu deinem Server im iCloud-Schlüsselbund ab. Deine anderen Geräte mit derselben Apple-ID übernehmen sie von selbst und melden sich dabei unter eigenem Namen an. Jedes steht im Profil unter den Geräten und lässt sich dort einzeln trennen."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Ein Gerät bringt höchstens fünf weitere je Stunde herein. Wer als Betreiber das Koppeln neuer Geräte ausschaltet, schaltet auch das aus."
+    ]
+  },
   "0.2.1": {
     "lead": "Wichtige Aufgaben fallen auf dem iPhone mehr auf.",
     "sections": [
