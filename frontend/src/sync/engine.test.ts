@@ -447,6 +447,26 @@ describe('completing', () => {
     expect(b.view().reminder(id)?.due_date).toBe('2026-11-13')
   })
 
+  it('set back by hand onto an occurrence already done, it moves on again without a second copy', async () => {
+    const { server, robin, home } = smallWorld()
+    const id = server.addReminder(home, 'Bins', { due_date: '2026-11-06', repeat: 'FREQ=WEEKLY;BYDAY=FR' })
+    const engine = client(server, robin)
+    await engine.start()
+    engine.toggle(id)
+    engine.toggle(id)
+    await quiet(engine)
+    expect(engine.view().reminder(id)?.due_date).toBe('2026-11-20')
+    server.change('reminder', id, { due_date: '2026-11-13' })
+    await quiet(engine)
+    expect(engine.view().reminder(id)?.due_date).toBe('2026-11-13')
+    engine.toggle(id)
+    expect(engine.view().reminder(id)?.due_date).toBe('2026-11-20')
+    await quiet(engine)
+    expect(engine.notices.map((n) => n.code)).not.toContain('already_done')
+    expect(server.data('reminder', id)?.due_date).toBe('2026-11-20')
+    expect(engine.view().reminders.filter((r) => r.title === 'Bins')).toHaveLength(3)
+  })
+
   it('due_changed: someone moved the due date meanwhile', async () => {
     const { server, robin, home } = smallWorld()
     const id = server.addReminder(home, 'Bins', { due_date: '2026-11-06', repeat: 'FREQ=WEEKLY;BYDAY=FR' })

@@ -77,6 +77,33 @@ def test_a_repeating_reminder_leaves_a_done_copy_and_moves_on() -> None:
     assert state(browser)[("reminder", reminder)]["data"]["due_date"] == "2026-11-13"
 
 
+def test_set_back_by_hand_onto_a_done_occurrence_it_moves_on_again_without_a_second_copy() -> None:
+    """Checked off twice in a row (the next one too), then set back by hand: the copy of that occurrence is there,
+    and the original stands on it again. It must be possible to check it off; it moves on, no second copy."""
+    _account, browser, list_id, reminder = _setup(due_date="2026-11-06", due_time="10:00",
+                                                 repeat="FREQ=WEEKLY;BYDAY=FR", repeat_from="due")
+    sub = make_reminder(browser, list_id, "Yellow bag", parent_id=reminder)
+    assert complete(browser, reminder, "2026-11-06")["ok"]
+    assert complete(browser, reminder, "2026-11-13", at="2026-11-06T09:15:01.000Z")["ok"]
+    put(browser, "reminder", reminder, {"due_date": "2026-11-13", "due_time": "10:00", "repeat": "FREQ=WEEKLY;BYDAY=FR",
+                                        "repeat_from": "due"})
+    complete(browser, sub, None, at="2026-11-06T09:16:00.000Z")
+    copies_before = {key for key in state(browser) if key[0] == "reminder"}
+
+    result = complete(browser, reminder, "2026-11-13", at="2026-11-06T09:20:00.000Z")
+    assert result["ok"], result
+    assert result["copy_id"] == wiederholung.copy_id(reminder, "2026-11-13")
+    assert result["next_due"] == {"due_date": "2026-11-20", "due_time": "10:00"}
+    held = state(browser)
+    assert {key for key in held if key[0] == "reminder"} == copies_before, "no second copy"
+    copy = held[("reminder", wiederholung.copy_id(reminder, "2026-11-13"))]["data"]
+    assert copy["completed_at"] == "2026-11-06T09:15:01.000Z", "the copy stays as it was"
+    assert held[("reminder", reminder)]["data"]["due_date"] == "2026-11-20"
+    assert held[("reminder", sub)]["data"]["completed_at"] is None, "its subtasks open again"
+    # Moved on, the same occurrence again is done already.
+    assert complete(browser, reminder, "2026-11-13")["code"] == "already_done"
+
+
 def test_an_occurrence_that_is_no_longer_the_due_date_changes_nothing() -> None:
     _account, browser, _list, reminder = _setup(due_date="2026-11-06", due_time=None, repeat="FREQ=DAILY",
                                                 repeat_from="due")

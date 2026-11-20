@@ -514,16 +514,19 @@ def complete(db: Session, caller: Caller, op: dict[str, Any], events: Events) ->
         events.accounts.update(spaces.member_ids(db, row.space_id))
         return Outcome(True, kind="reminder", item_id=row.id, values={"copy_id": None, "next_due": None})
     copy = plan["copy"]
-    copy_row = Reminder(
-        id=copy["id"], list_id=row.list_id, space_id=row.space_id, section_id=row.section_id, parent_id=None,
-        position=row.position, title=row.title, notes=row.notes, url=row.url, due_date=copy["due_date"],
-        due_time=row.due_time, repeat=None, repeat_from="due", location=row.location, flagged=row.flagged,
-        priority=row.priority, tags=list(row.tags or []), assignees=list(row.assignees or []), completed_at=at,
-        completed_by=caller.id, created_by=row.created_by, created_at=row.created_at, deleted_at=row.deleted_at,
-        clock={key: at_ms for key in records.clock_keys("reminder")},
-    )
-    _set_trash(copy_row, None)
-    db.add(copy_row)
+    copy_row: Reminder | None = None
+    # ``moved_on``: the copy of this occurrence is there already, only the original moves on (no copy in the plan).
+    if copy is not None:
+        copy_row = Reminder(
+            id=copy["id"], list_id=row.list_id, space_id=row.space_id, section_id=row.section_id, parent_id=None,
+            position=row.position, title=row.title, notes=row.notes, url=row.url, due_date=copy["due_date"],
+            due_time=row.due_time, repeat=None, repeat_from="due", location=row.location, flagged=row.flagged,
+            priority=row.priority, tags=list(row.tags or []), assignees=list(row.assignees or []), completed_at=at,
+            completed_by=caller.id, created_by=row.created_by, created_at=row.created_at, deleted_at=row.deleted_at,
+            clock={key: at_ms for key in records.clock_keys("reminder")},
+        )
+        _set_trash(copy_row, None)
+        db.add(copy_row)
     original = plan["original"]
     row.due_date = original["due_date"]
     row.due_time = original["due_time"]
@@ -534,7 +537,7 @@ def complete(db: Session, caller: Caller, op: dict[str, Any], events: Events) ->
     # already stays (a clock never goes back, or an older change sent again would undo the moving on).
     clocks["due"] = max(at_ms, int(clocks.get("due", 0)))
     row.clock = clocks
-    changed = [copy_row, row]
+    changed = [copy_row, row] if copy_row is not None else [row]
     for sub in _subtasks(db, row):
         if sub.completed_at is not None:
             sub.completed_at = None
@@ -547,8 +550,8 @@ def complete(db: Session, caller: Caller, op: dict[str, Any], events: Events) ->
     db.flush()
     events.completed.append(row.id)
     events.accounts.update(spaces.member_ids(db, row.space_id))
-    return Outcome(True, kind="reminder", item_id=row.id, copy_id=copy_row.id,
-                   values={"copy_id": copy_row.id, "next_due": plan["next_due"]})
+    return Outcome(True, kind="reminder", item_id=row.id, copy_id=plan["copy_id"],
+                   values={"copy_id": plan["copy_id"], "next_due": plan["next_due"]})
 
 
 # --- position ---------------------------------------------------------------------------------------------------------

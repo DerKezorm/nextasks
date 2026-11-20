@@ -532,8 +532,7 @@ export class SyncEngine {
     const world = this.world()
     const rec = world.reminder(op.id)
     if (!rec) return
-    if (op.occurrence && world.reminder(copyId(op.id, op.occurrence))) return
-    if (!rec.data.repeat && rec.data.completed_at) return
+    // The rule itself knows when there is nothing to do (done already, due date moved, the copy there).
     applyComplete(world, op.id, op.occurrence, op.at, op.on, this.me?.account.id ?? null)
   }
 

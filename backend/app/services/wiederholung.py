@@ -291,7 +291,8 @@ def complete(
     Returns ``{"result", "original", "copy", "copy_id", "next_due", "subtasks"}``:
 
     - ``result``: ``completed`` (the original itself is done), ``copy`` (a completed copy was made and the
-      original moved on), ``already_done`` or ``due_changed`` (nothing to do).
+      original moved on), ``moved_on`` (the copy of this occurrence is there already, but the original still stands on
+      it: it moves on without a second copy), ``already_done`` or ``due_changed`` (nothing to do).
     - ``original``: the changed fields of the original (empty when nothing happens).
     - ``copy``: the full copy (all fields of the original with the documented exceptions) or None.
     - ``next_due``: ``{"due_date", "due_time"}`` of the original after moving on, or None.
@@ -312,14 +313,18 @@ def complete(
             "subtasks": "complete",
         }
 
-    if occurrence is not None:
-        cid = copy_id(reminder["id"], occurrence)
-        if cid in existing_ids:
-            return {"result": "already_done", **nothing}
     if reminder.get("completed_at"):
         return {"result": "already_done", **nothing}
+    if occurrence is not None:
+        cid = copy_id(reminder["id"], occurrence)
+        if cid in existing_ids and occurrence != due:
+            # Another device checked this occurrence off and the original moved on: done already.
+            return {"result": "already_done", **nothing}
     if occurrence != due:
         return {"result": "due_changed", **nothing}
+    # The copy may be there while the original stands on its occurrence again (its due date set back by hand after
+    # checking off): then the original moves on all the same, or it could never be checked off again.
+    there = cid in existing_ids
 
     nxt = next_due(repeat, repeat_from, due, on)
     if nxt is None:
@@ -341,6 +346,15 @@ def complete(
         parent_id=None,
     )
     next_fields = {"due_date": nxt.isoformat(), "due_time": reminder.get("due_time")}
+    if there:
+        return {
+            "result": "moved_on",
+            "original": {**next_fields, "repeat": next_rule(repeat), "repeat_from": repeat_from},
+            "copy": None,
+            "copy_id": cid,
+            "next_due": next_fields,
+            "subtasks": "reopen",
+        }
     return {
         "result": "copy",
         "original": {**next_fields, "repeat": next_rule(repeat), "repeat_from": repeat_from},

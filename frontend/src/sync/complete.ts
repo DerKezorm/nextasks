@@ -59,22 +59,27 @@ export function applyComplete(world: CompleteWorld, id: string, occurrence: stri
     return { code: 'ok', copy_id: null, next_due: null, touched }
   }
 
+  if (data.completed_at) return { code: 'already_done', copy_id: null, next_due: null, touched }
   const copy = occurrence ? copyId(id, occurrence) : null
-  if (copy && world.reminder(copy)) return { code: 'already_done', copy_id: null, next_due: null, touched }
+  const there = !!copy && !!world.reminder(copy)
+  // Another device checked this occurrence off and the original moved on: done already.
+  if (there && occurrence !== due) return { code: 'already_done', copy_id: null, next_due: null, touched }
   if (occurrence !== due) return { code: 'due_changed', copy_id: null, next_due: null, touched }
   const outcome = step(repeat, (data.repeat_from as 'due' | 'completion') ?? 'due', due!, on)
   if (outcome.ended) {
-    if (data.completed_at) return { code: 'already_done', copy_id: null, next_due: null, touched }
     finishWithChildren()
     return { code: 'ok', copy_id: null, next_due: null, touched }
   }
 
-  // The done copy: everything of the original, but without repetition, on the day it was due, done now.
-  const copyData: Data = { ...structuredClone(data), id: copy, repeat: null, repeat_from: 'due', due_date: occurrence, completed_at: at, completed_by: by, parent_id: null }
-  const copyClock: Clock = {}
-  for (const key of Object.keys(original.clock)) copyClock[key] = time
-  world.save(copy!, { data: copyData, clock: copyClock })
-  touched.push(copy!)
+  // The done copy: everything of the original, but without repetition, on the day it was due, done now. Is it there
+  // already while the original stands on its occurrence again (set back by hand), only the original moves on.
+  if (!there) {
+    const copyData: Data = { ...structuredClone(data), id: copy, repeat: null, repeat_from: 'due', due_date: occurrence, completed_at: at, completed_by: by, parent_id: null }
+    const copyClock: Clock = {}
+    for (const key of Object.keys(original.clock)) copyClock[key] = time
+    world.save(copy!, { data: copyData, clock: copyClock })
+    touched.push(copy!)
+  }
 
   // The original moves on; its subtasks open again.
   data.due_date = outcome.due
