@@ -1,4 +1,18 @@
 {
+  "0.3.1": {
+    "lead": "Repeating tasks no longer get stuck.",
+    "sections": [
+      {
+        "title": "Ticking off always works",
+        "where": "Web and iPhone",
+        "body": "If you ticked off an occurrence and then set the date back to it by hand, the task could not be ticked off again: all you got was “Already done”. Now it moves on to its next occurrence as usual, without counting that occurrence as done twice."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "In the iPhone app, a quick second tap no longer ticks off the next occurrence too (with the next app update)."
+    ]
+  },
   "0.3.0": {
     "lead": "Connect your server on the iPhone once, and it is on your iPad too.",
     "sections": [

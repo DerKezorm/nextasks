@@ -1,4 +1,18 @@
 {
+  "0.3.1": {
+    "lead": "Wiederkehrende Aufgaben bleiben nicht mehr hängen.",
+    "sections": [
+      {
+        "title": "Abhaken geht immer",
+        "where": "Web und iPhone",
+        "body": "Hast du einen Termin abgehakt und das Datum danach von Hand wieder auf diesen Termin gestellt, ließ sich die Aufgabe nicht mehr abhaken: Es kam nur „Schon erledigt“. Jetzt rückt sie wie gewohnt zum nächsten Termin weiter, ohne den Termin doppelt als erledigt zu zählen."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "In der iPhone-App erledigt ein schnelles zweites Antippen nicht mehr gleich den nächsten Termin mit (ab dem nächsten App-Update)."
+    ]
+  },
   "0.3.0": {
     "lead": "Einmal auf dem iPhone verbunden, ist dein Server auch auf deinem iPad.",
     "sections": [
