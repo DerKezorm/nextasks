@@ -107,6 +107,12 @@
     "ok",
     "op_id"
   ],
+  "POST /api/app/1/devices": [
+    "account",
+    "account.id",
+    "account.name",
+    "key"
+  ],
   "POST /api/app/1/pairing/code": [
     "account",
     "account.id",

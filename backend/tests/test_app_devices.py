@@ -163,3 +163,83 @@ def test_a_required_second_factor_that_is_missing_keeps_the_app_out() -> None:
         settings_service.save(db, {"two_factor_required": True})
     refused = browser.get(f"{API}/me")
     assert refused.status_code == 401 and refused.json()["detail"]["code"] == "not_signed_in"
+
+
+def test_a_device_brings_in_another_device_of_its_account_under_a_key_of_its_own() -> None:
+    account, browser = person("anna")
+    phone_key, phone = _device(browser, "Anna's iPhone")
+    assert "devices" in phone.get(f"{API}/me").json()["features"]
+    brought = phone.post(f"{API}/devices", json={"device": "Anna's iPad"})
+    assert brought.status_code == 200, brought.text
+    assert brought.headers["cache-control"] == "no-store"
+    answer = brought.json()
+    pad_key = answer["key"]
+    assert pad_key.startswith("ntd_") and pad_key != phone_key
+    assert answer["account"] == {"id": account.id, "name": "anna"}
+    pad = TestClient(app, base_url="http://testserver", headers={"Authorization": f"Bearer {pad_key}"})
+    me = pad.get(f"{API}/me").json()
+    assert me["device"]["name"] == "Anna's iPad" and me["account"]["username"] == "anna"
+    assert me["device"]["id"] != phone.get(f"{API}/me").json()["device"]["id"]
+    listed = browser.get("/api/app-devices").json()
+    assert sorted(row["name"] for row in listed) == ["Anna's iPad", "Anna's iPhone"]
+    # Each goes alone: the iPad disconnected, the iPhone works on.
+    row = next(row for row in listed if row["name"] == "Anna's iPad")
+    assert browser.delete(f"/api/app-devices/{row['id']}").status_code == 204
+    assert pad.get(f"{API}/me").status_code == 401
+    assert phone.get(f"{API}/me").status_code == 200
+
+
+def test_bringing_in_a_device_needs_a_device_key_and_the_pairing_switch() -> None:
+    operator = make_account("boss", "operator")
+    admin = TestClient(app, base_url="http://testserver", headers=WEB)
+    assert admin.post("/api/auth/login", json={"name": operator.name, "password": PASSWORD}).status_code == 200
+    _key, phone = _device(admin, "Boss phone")
+    nobody = TestClient(app, base_url="http://testserver")
+    assert nobody.post(f"{API}/devices", json={"device": "x"}).status_code in (401, 403)
+    stranger = TestClient(app, base_url="http://testserver", headers={"Authorization": "Bearer ntd_nothing"})
+    assert stranger.post(f"{API}/devices", json={"device": "x"}).status_code == 401
+    # Not with the browser's session either: that is no device.
+    web = admin.post(f"{API}/devices", json={"device": "x"})
+    assert web.status_code == 401 and web.json()["detail"]["code"] == "not_signed_in"
+    admin.put("/api/settings", json={"app_pairing_allowed": False})
+    closed = phone.post(f"{API}/devices", json={"device": "x"})
+    assert closed.status_code == 403 and closed.json()["detail"]["code"] == "app_pairing_disabled"
+    admin.put("/api/settings", json={"app_pairing_allowed": True})
+    assert len(admin.get("/api/app-devices").json()) == 1
+    # A disconnected device brings in nobody.
+    assert phone.delete(f"{API}/device").status_code == 204
+    assert phone.post(f"{API}/devices", json={"device": "x"}).status_code == 401
+    assert admin.get("/api/app-devices").json() == []
+
+
+def test_a_device_brings_in_only_a_few_devices_an_hour(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(devices, "SIBLINGS_PER_HOUR", 2)
+    _account, browser = person("anna")
+    _key, phone = _device(browser)
+    brought = [phone.post(f"{API}/devices", json={"device": name}) for name in ("one", "two")]
+    assert [answer.status_code for answer in brought] == [200, 200]
+    third = phone.post(f"{API}/devices", json={"device": "three"})
+    assert third.status_code == 429
+    assert third.json()["detail"]["code"] == "too_many" and third.headers["retry-after"] == "3600"
+    # The count is the account's: a device brought in brings in no more this hour either.
+    other = TestClient(app, base_url="http://testserver",
+                       headers={"Authorization": f"Bearer {brought[0].json()['key']}"})
+    assert other.post(f"{API}/devices", json={"device": "four"}).status_code == 429
+    assert len(browser.get("/api/app-devices").json()) == 3
+    # Another account has its own.
+    _bob, bob_browser = person("bob")
+    _bob_key, bob_phone = _device(bob_browser, "Bob's iPhone")
+    assert bob_phone.post(f"{API}/devices", json={"device": "Bob's iPad"}).status_code == 200
+
+
+def test_a_brought_in_device_name_is_cleaned_like_a_pairing() -> None:
+    _account, browser = person("anna")
+    _key, phone = _device(browser)
+    brought = phone.post(f"{API}/devices", json={"device": "  Pad\u0000\n" + "x" * 150})
+    assert brought.status_code == 200, brought.text
+    pad = TestClient(app, base_url="http://testserver", headers={"Authorization": f"Bearer {brought.json()['key']}"})
+    name = pad.get(f"{API}/me").json()["device"]["name"]
+    assert name.startswith("Padx") and len(name) == devices.NAME_CHARS
+    empty = phone.post(f"{API}/devices", json={}).json()["key"]
+    pad2 = TestClient(app, base_url="http://testserver", headers={"Authorization": f"Bearer {empty}"})
+    assert pad2.get(f"{API}/me").json()["device"]["name"] == "iPhone"

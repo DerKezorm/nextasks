@@ -271,7 +271,8 @@ def attachment_bytes(db: Any) -> int:
 def features(db: Any) -> list[str]:
     # ``space_prefs``: the kind ``space_pref`` (hiding a space) is known here (contract 0.3); older servers refuse it.
     # ``filters``: the kinds ``filter`` and ``tile_pref`` are (contract 0.5); an app sends them only where it is named.
-    offered = ["changes", "batch", "files", "wait", "invites", "space_prefs", "filters"]
+    # ``devices``: a device brings in another device of its account (``POST /devices``, contract 0.7).
+    offered = ["changes", "batch", "files", "wait", "invites", "space_prefs", "filters", "devices"]
     if push.relay_url():
         offered.append("push")
     if webpush.ready(db):
@@ -332,6 +333,23 @@ def forget_device(found: Who) -> Response:
     with SessionLocal() as db:
         devices.disconnect(db, found.account.id, found.device_id)
     return Response(status_code=204)
+
+
+@router.post("/devices", response_model=KeyOut, summary="A key of its own for another device of this account")
+def bring_in_device(found: Who, body: KeyIn | None = None) -> JSONResponse:
+    """The owner's iPad takes the iPhone's connection from iCloud and comes in under its own name with it
+    (``devices.sibling``). Device key only; the answer is that of a pairing."""
+    if found.device_id is None:
+        raise _refused("not_signed_in", "No valid device key.", 401)
+    with SessionLocal() as db:
+        try:
+            token, _row = devices.sibling(db, found.account.id, found.device_id, body.device if body else "")
+        except PairingError as exc:
+            raise _refused(exc.code, exc.text, exc.status, 3600 if exc.status == 429 else None) from exc
+        account = db.get(Account, found.account.id)
+        assert account is not None
+        out = KeyOut(key=token, account=PairedAccount(id=account.id, name=account.display_name or account.name))
+    return JSONResponse(content=out.model_dump(), headers={"Cache-Control": "no-store"})
 
 
 # --- Fetching -----------------------------------------------------------------------------------------------------
@@ -897,6 +915,7 @@ PROMISED = (
     "/api/app/1/batch",
     "/api/app/1/changes",
     "/api/app/1/device",
+    "/api/app/1/devices",
     "/api/app/1/files",
     "/api/app/1/files/{attachment_id}",
     "/api/app/1/me",
