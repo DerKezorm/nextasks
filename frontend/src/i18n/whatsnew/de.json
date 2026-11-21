@@ -1,4 +1,18 @@
 {
+  "0.3.2": {
+    "lead": "Das Zeichen von nextasks hat jetzt eine dunkle Fassung.",
+    "sections": [
+      {
+        "title": "Zeichen im dunklen Modus",
+        "where": "Seitenleiste, Anmeldung, Über, Browser-Tab",
+        "body": "Im dunklen Modus sitzt der Haken jetzt auf einer dunklen Kachel in hellerem Petrol statt auf einer weißen. Der Browser-Tab folgt dem System. In der iPhone-App kommt dasselbe mit dem nächsten Update, dort folgt auch das App-Symbol dem hellen, dunklen und getönten Modus."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Zeichen, Symbole und das Skript für den Modus fragt der Browser jetzt vor dem Benutzen nach, und ihre Adressen tragen eine Fassung. So kommt ein neues Zeichen auch in einer installierten Web-App an."
+    ]
+  },
   "0.3.1": {
     "lead": "Wiederkehrende Aufgaben bleiben nicht mehr hängen.",
     "sections": [

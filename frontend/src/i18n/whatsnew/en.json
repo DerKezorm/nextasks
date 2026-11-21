@@ -1,4 +1,18 @@
 {
+  "0.3.2": {
+    "lead": "The nextasks mark now has a dark version.",
+    "sections": [
+      {
+        "title": "The mark in dark mode",
+        "where": "Sidebar, sign-in, About, browser tab",
+        "body": "In dark mode the tick now sits on a dark tile in a lighter petrol instead of a white one. The browser tab follows your system. The iPhone app gets the same with its next update, where the app icon follows light, dark and tinted mode too."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "The browser now asks before it uses the mark, the icons and the theme script again, and their addresses carry a version, so a new mark reaches an installed web app too."
+    ]
+  },
   "0.3.1": {
     "lead": "Repeating tasks no longer get stuck.",
     "sections": [
