@@ -122,8 +122,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(String(data.title || 'nextasks').slice(0, 100), {
       body: String(data.text || '').slice(0, 200),
-      icon: '/icons/icon-192.png',
-      badge: '/logo.svg',
+      icon: '/icons/icon-192.png?v=2',
+      badge: '/logo.svg?v=2',
       // One per task; a new report replaces the one before.
       tag: data.reminder_id ? String(data.reminder_id) : data.type === 'daily' || data.type === 'weekly' ? data.type : undefined,
       data: { url: target(data) },

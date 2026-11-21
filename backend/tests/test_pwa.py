@@ -36,7 +36,8 @@ def test_the_manifest_makes_an_installable_app_that_starts_on_today() -> None:
     icons = {(icon["sizes"], icon["purpose"]): icon["src"] for icon in manifest["icons"]}
     assert set(icons) == {("192x192", "any"), ("512x512", "any"), ("192x192", "maskable"), ("512x512", "maskable")}
     for (sizes, purpose), src in icons.items():
-        width, height, colour = png(PUBLIC / src.lstrip("/"))
+        assert src.endswith("?v=2"), src
+        width, height, colour = png(PUBLIC / src.lstrip("/").split("?")[0])
         assert f"{width}x{height}" == sizes, src
         # A maskable symbol is cut to any shape: white to every edge, nothing clear.
         assert colour == (2 if purpose == "maskable" else 6), src
@@ -51,7 +52,8 @@ def test_the_apple_symbol_is_white_to_the_edges_and_180_wide() -> None:
 def test_the_start_page_names_the_manifest_and_the_frame_light_and_dark() -> None:
     page = (WEB / "index.html").read_text(encoding="utf-8")
     for part in ('<link rel="manifest" href="/manifest.webmanifest" />',
-                 '<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />',
+                 '<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2" />',
+                 '<link rel="icon" type="image/svg+xml" href="/logo.svg?v=2" />',
                  '<meta name="apple-mobile-web-app-capable" content="yes" />',
                  '<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f6f7" />',
                  '<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1417" />',
@@ -63,7 +65,7 @@ def _served(tmp_path: Path) -> TestClient:
     dist = tmp_path / "dist"
     (dist / "assets").mkdir(parents=True)
     (dist / "index.html").write_bytes(b"<!doctype html><title>nextasks</title>")
-    for name in ("manifest.webmanifest", "sw.js"):
+    for name in ("manifest.webmanifest", "sw.js", "logo.svg", "theme.js"):
         shutil.copy(PUBLIC / name, dist / name)
     shutil.copytree(PUBLIC / "icons", dist / "icons")
     served = FastAPI()
@@ -82,6 +84,24 @@ def test_the_server_hands_out_manifest_worker_and_symbols_with_fitting_headers(t
     assert "addEventListener('fetch'" in worker.text
     symbol = client.get("/icons/maskable-512.png")
     assert symbol.status_code == 200 and symbol.headers["content-type"] == "image/png"
+
+
+def test_every_file_of_public_is_asked_for_again(tmp_path: Path) -> None:
+    """Mark, symbols, manifest and theme.js have no hash in their names: without no-cache a browser keeps an old mark."""
+    client = _served(tmp_path)
+    files = [p.relative_to(PUBLIC).as_posix() for p in PUBLIC.rglob("*") if p.is_file()]
+    assert "logo.svg" in files and "icons/icon-192.png" in files
+    for name in files:
+        answer = client.get("/" + name)
+        assert answer.status_code == 200, name
+        assert answer.headers.get("cache-control") == "no-cache", name
+
+
+def test_the_mark_follows_the_system_and_the_worker_names_the_versioned_symbols() -> None:
+    mark = (PUBLIC / "logo.svg").read_text(encoding="utf-8")
+    assert "@media (prefers-color-scheme: dark)" in mark and "#0b1619" in mark
+    worker = (PUBLIC / "sw.js").read_text(encoding="utf-8")
+    assert "icon: '/icons/icon-192.png?v=2'" in worker and "badge: '/logo.svg?v=2'" in worker
 
 
 def test_the_policy_lets_manifest_and_worker_come_from_the_own_origin_only() -> None:

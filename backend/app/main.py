@@ -245,9 +245,11 @@ def _mount_frontend(target: FastAPI, dist: Path) -> None:
             if path == "sw.js":
                 # The service worker: always the newest, and allowed to act for the whole app.
                 return FileResponse(candidate, media_type="text/javascript", headers={"Cache-Control": "no-cache"})
+            # Everything else outside assets/ (mark, symbols, manifest, theme.js) has no hash in its name: the browser asks
+            # again before it uses it, so a new mark reaches an installed app too.
             if path.endswith(".webmanifest"):
-                return FileResponse(candidate, media_type="application/manifest+json")
-            return FileResponse(candidate)
+                return FileResponse(candidate, media_type="application/manifest+json", headers={"Cache-Control": "no-cache"})
+            return FileResponse(candidate, headers={"Cache-Control": "no-cache"})
         return FileResponse(index, headers={"Cache-Control": "no-cache"})
 
 
