@@ -15,14 +15,17 @@
     "found_one": "Ein Treffer",
     "found_other": "{{count}} Treffer",
     "field": "Suchen",
-    "key": "Strg K"
+    "key": "Strg K",
+    "none": "Nichts gefunden",
+    "noneText": "Gesucht wird in Titel, Notiz, Schlagworten und Link; Erledigte nur mit „Auch Erledigte“."
   },
   "common": {
     "cancel": "Abbrechen",
     "close": "Schließen",
     "copy": "Kopieren",
     "copied": "Kopiert",
-    "save": "Speichern"
+    "save": "Speichern",
+    "final": "Das lässt sich nicht rückgängig machen."
   },
   "account": {
     "operator": "Betreiber"
@@ -50,7 +53,9 @@
     "mailSend": "Einladung schicken",
     "mailSent": "Einladung an {{email}} geschickt.",
     "leave": "Bereich verlassen",
-    "leaveSure": "Wirklich verlassen"
+    "leaveTitle": "„{{space}}“ verlassen?",
+    "leaveText": "Du siehst die Listen des Bereichs danach nicht mehr. Zurück kommst du nur mit einer neuen Einladung.",
+    "leaveAsk": "Bereich verlassen …"
   },
   "sidebar": {
     "label": "Seitenleiste",
@@ -521,7 +526,6 @@
     "newHint": "Du verwaltest den neuen Bereich und lädst andere über einen Link ein. Wer im Bereich ist, sieht alle seine Listen.",
     "create": "Bereich anlegen",
     "delete": "In den Papierkorb",
-    "deleteSure": "Bereich mit allen Listen in den Papierkorb",
     "hide": "Bereich ausblenden",
     "show": "Einblenden",
     "showNamed": "„{{name}}“ wieder einblenden",
@@ -529,7 +533,10 @@
     "prefsTitle": "Bereiche",
     "prefsText": "Ausgeblendete Bereiche fehlen in der Seitenleiste, zählen in den Sammlungen nicht mit und kommen in der Suche nicht vor. Mitteilungen und Erinnerungen laufen weiter. Die Einstellung gilt nur für dich, auf all deinen Geräten.",
     "prefsShown": "In der Seitenleiste zeigen",
-    "prefsNone": "Noch kein Bereich."
+    "prefsNone": "Noch kein Bereich.",
+    "deleteTitle": "„{{name}}“ in den Papierkorb?",
+    "deleteText": "Der Bereich kommt mit allen Listen und Aufgaben in den Papierkorb, für alle Mitglieder. Verwalter holen ihn dort 30 Tage lang zurück.",
+    "deleteAsk": "In den Papierkorb …"
   },
   "sidebarPrefs": {
     "title": "Seitenleiste",
@@ -705,13 +712,13 @@
     "title": "Papierkorb",
     "hint": "Gelöschtes bleibt 30 Tage hier, dann ist es endgültig weg.",
     "empty": "Der Papierkorb ist leer.",
-    "spaces": "Bereiche",
-    "lists": "Listen",
-    "reminders": "Aufgaben",
     "restore": "Wiederherstellen",
     "restoreName": "„{{name}}“ wiederherstellen",
     "days_one": "noch ein Tag",
-    "days_other": "noch {{count}} Tage"
+    "days_other": "noch {{count}} Tage",
+    "fromSpace": "Bereich",
+    "fromList": "Liste in „{{space}}“",
+    "fromTask": "Aus „{{list}}“ · {{space}}"
   },
   "apiTokens": {
     "title": "API-Token",
@@ -783,10 +790,10 @@
       "assigned": "Dir ist nichts zugewiesen.",
       "done": "Noch nichts erledigt."
     },
-    "sub_one": "eine offene Aufgabe in allen Bereichen",
-    "sub_other": "{{count}} offene Aufgaben in allen Bereichen",
     "subDone_one": "eine erledigte Aufgabe",
-    "subDone_other": "{{count}} erledigte Aufgaben"
+    "subDone_other": "{{count}} erledigte Aufgaben",
+    "everywhere": "Aus allen Bereichen",
+    "emptyText": "Neue Aufgaben legst du mit „Neue Aufgabe“ an oder schreibst sie unten in die Zeile."
   },
   "filter": {
     "section": "Filter",
@@ -798,7 +805,6 @@
     "name": "Name",
     "create": "Filter anlegen",
     "delete": "Löschen",
-    "deleteSure": "Filter endgültig löschen",
     "hide": "Filter ausblenden",
     "empty": "Keine Aufgabe passt zu diesem Filter.",
     "subAll_one": "eine Aufgabe",
@@ -843,7 +849,12 @@
     "add": "Hinzufügen",
     "matches_one": "Passt gerade auf eine Aufgabe.",
     "matches_other": "Passt gerade auf {{count}} Aufgaben.",
-    "tooLong": "Zu viele Bedingungen: zusammen höchstens 4000 Zeichen."
+    "tooLong": "Zu viele Bedingungen: zusammen höchstens 4000 Zeichen.",
+    "deleteTitle": "Filter „{{name}}“ löschen?",
+    "deleteText": "Der Filter wird endgültig gelöscht. Die Aufgaben, die er zeigt, bleiben, wo sie sind.",
+    "deleteAsk": "Filter löschen …",
+    "menu": "Mehr zu „{{name}}“",
+    "emptyText": "Sobald eine Aufgabe zu den Bedingungen passt, steht sie hier."
   },
   "sync": {
     "loading": "Lädt …",
@@ -870,7 +881,8 @@
     "space_left_copied_other": "Du bist nicht mehr in dem Bereich. {{count}} Aufgaben mit ungesendeten Änderungen liegen als Kopien in „{{list}}“.",
     "upload_lost": "Die Datei „{{name}}“ ging beim Neuladen verloren. Bitte noch einmal anhängen.",
     "too_large": "Das war zu groß für den Server.",
-    "invalid_input": "Der Server konnte die Änderung nicht lesen."
+    "invalid_input": "Der Server konnte die Änderung nicht lesen.",
+    "undo": "Rückgängig"
   },
   "look": {
     "color": "Farbe",
@@ -1170,7 +1182,8 @@
       "time": "Zeit und Termine",
       "celebrate": "Feiern",
       "shapes": "Zeichen und Formen"
-    }
+    },
+    "title": "Symbol und Farbe"
   },
   "list": {
     "newTitle": "Neue Liste",
@@ -1180,7 +1193,6 @@
     "create": "Liste anlegen",
     "moveHint": "Die Liste zieht mit allen Aufgaben in den anderen Bereich. Zuweisungen an Personen, die dort nicht Mitglied sind, fallen weg.",
     "delete": "In den Papierkorb",
-    "deleteSure": "Liste mit allen Aufgaben in den Papierkorb",
     "open_one": "eine offene Aufgabe",
     "open_other": "{{count}} offene Aufgaben",
     "menu": "Mehr zur Liste",
@@ -1195,14 +1207,20 @@
     "cleared_one": "Eine erledigte Aufgabe liegt im Papierkorb.",
     "cleared_other": "{{count}} erledigte Aufgaben liegen im Papierkorb.",
     "notifyOn": "Hinweis bei Änderungen",
-    "notifyOff": "Keine Hinweise bei Änderungen",
     "notifyHint": "Du bekommst einen Hinweis, wenn andere hier etwas hinzufügen oder abhaken.",
-    "empty": "Noch keine Aufgaben.",
     "noSection": "Ohne Abschnitt",
     "sectionName": "Name des Abschnitts",
     "addSection": "Anlegen",
     "renameSection": "Abschnitt umbenennen",
-    "deleteSection": "Abschnitt „{{name}}“ löschen"
+    "deleteSection": "Abschnitt „{{name}}“ löschen",
+    "deleteTitle": "„{{name}}“ in den Papierkorb?",
+    "deleteText": "Die Liste kommt mit allen Aufgaben in den Papierkorb. Dort bleibt sie 30 Tage und lässt sich wiederherstellen.",
+    "deleteAsk": "In den Papierkorb …",
+    "emptyTitle": "Noch keine Aufgaben in „{{name}}“",
+    "emptyText": "Leg die erste mit „Neue Aufgabe“ an oder schreib sie unten in die Zeile.",
+    "menuNamed": "Mehr zu „{{name}}“",
+    "deleteSectionTitle": "Abschnitt „{{name}}“ löschen?",
+    "deleteSectionText": "Der Abschnitt wird endgültig gelöscht. Seine Aufgaben bleiben in der Liste, ohne Abschnitt."
   },
   "reminder": {
     "new": "Neue Aufgabe",
@@ -1218,7 +1236,8 @@
     "priorityIs": "Priorität: {{priority}}",
     "paneToggle": "Details in der Seitenleiste ein-/ausblenden",
     "paneToggleFor": "Details zu „{{title}}“ in der Seitenleiste ein-/ausblenden",
-    "hasNote": "hat eine Notiz"
+    "hasNote": "hat eine Notiz",
+    "trashed": "„{{title}}“ liegt im Papierkorb."
   },
   "quick": {
     "placeholder": "Neue Aufgabe, z. B. „Milch morgen 9 Uhr #einkauf !!“",
@@ -1317,9 +1336,7 @@
       "year_one": "Ein Jahr nach dem Abhaken",
       "year_other": "{{count}} Jahre nach dem Abhaken"
     },
-    "from": "Zählt ab",
-    "fromDue": "der Fälligkeit",
-    "fromCompletion": "dem Abhaken",
+    "from": "Nächster Termin",
     "days": "Wochentage",
     "onTheDay": "Am",
     "onThe": "Am",
@@ -1349,7 +1366,11 @@
     "endOn": "Am",
     "times_one": "noch einmal",
     "times_other": "noch {{count}}-mal",
-    "until": "bis {{day}}"
+    "until": "bis {{day}}",
+    "fromDueTitle": "Ab der Fälligkeit",
+    "fromDueText": "Der nächste Termin folgt dem Plan, auch wenn du später abhakst.",
+    "fromCompletionTitle": "Ab dem Abhaken",
+    "fromCompletionText": "Der nächste Termin zählt ab dem Tag, an dem du abhakst."
   },
   "zone": {
     "title": "Zeitzone",
@@ -1515,7 +1536,6 @@
     "rename": "Umbenennen",
     "newTaskHere": "Neue Aufgabe hier",
     "deleteSection": "Abschnitt löschen",
-    "sure": "Wirklich löschen",
     "invite": "Einladen …",
     "leave": "Bereich verlassen …",
     "editList": "Name, Farbe, Symbol …",
@@ -1542,5 +1562,11 @@
   "columns": {
     "sidebar": "Breite der Seitenleiste",
     "hint": "Ziehen oder Pfeiltasten ändern die Breite, Doppelklick setzt sie zurück."
+  },
+  "notFound": {
+    "page": "Diese Seite gibt es in nextasks nicht.",
+    "list": "Diese Liste gibt es nicht (mehr), oder du siehst sie nicht.",
+    "filter": "Diesen Filter gibt es nicht (mehr).",
+    "home": "Zur Startseite"
   }
 }

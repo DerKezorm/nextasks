@@ -1,13 +1,13 @@
 /**
- * Making and changing an own filter: name, colour, symbol on the left, the conditions on the right as chips. All
- * chosen conditions must match; within one any chosen value does. Which tasks: open ones show the due choices,
- * completed ones the days of completion, all of them both. The number of matches follows every change. A filter has
- * no trash: deleting is for good, after a second click.
+ * Making and changing an own filter, as nexnotes' smart folder: the name with its look in front, symbol and colour
+ * folded away below it, then the conditions as chips. All chosen conditions must match; within one any chosen value
+ * does. Which tasks: open ones show the due choices, completed ones the days of completion, all of them both. The
+ * number of matches follows every change. A filter has no trash: deleting is for good, after the question.
  */
 import { createElement, useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { Plus, Trash2, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { createFilter, deleteFilter, writeRules } from '../lib/actions'
 import { localDay } from '../lib/due'
@@ -15,25 +15,19 @@ import { colorOf, iconFor } from '../lib/look'
 import { useEngine, useView } from '../state/sync'
 import { cleanTags, textLength } from '../sync/fields'
 import { DONE_WORDS, DUE_WORDS, FILTER_STATES, filterItems, readRules, type Rules, type Who } from '../sync/tiles'
-import { Badge } from './Badge'
 import { Dialog } from './Dialog'
+import { askDeleteFilter } from './Menus'
 import { personName } from './People'
+import { useShell } from './Shell'
 import { LookPicker, NameField } from './ThingDialogs'
 
 /** The most the server takes for the conditions, written out (contract 0.5). */
 const RULES_MAX = 4000
 
-/** One value to switch on and off: a pill, petrol when on. */
+/** One value to switch on and off: a chip as nexnotes' search filters, petrol on the wash when on. */
 function Chip({ on, onClick, children, label, testId }: { on: boolean; onClick: () => void; children: ReactNode; label?: string; testId?: string }) {
   return (
-    <button
-      type="button"
-      aria-pressed={on}
-      aria-label={label}
-      data-testid={testId}
-      onClick={onClick}
-      className={'inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-medium ' + (on ? 'border-accent-500/60 bg-accent-500/15 text-accent-400' : 'border-ink-700 bg-ink-900 text-mist-300 hover:text-mist-100')}
-    >
+    <button type="button" aria-pressed={on} aria-label={label} data-testid={testId} onClick={onClick} className="nt-toggle">
       {children}
     </button>
   )
@@ -43,9 +37,9 @@ function Chip({ on, onClick, children, label, testId }: { on: boolean; onClick: 
 function Condition({ title, hint, children, testId }: { title: string; hint?: string; children: ReactNode; testId?: string }) {
   return (
     <fieldset className="space-y-1.5" data-testid={testId}>
-      <legend className="mb-1.5 text-xs font-medium text-mist-500">
+      <legend className="nt-legend">
         {title}
-        {hint && <span className="font-normal text-mist-600"> · {hint}</span>}
+        {hint && <span className="font-normal tracking-normal text-mist-600 normal-case"> · {hint}</span>}
       </legend>
       <div className="flex flex-wrap gap-1.5">{children}</div>
     </fieldset>
@@ -61,13 +55,14 @@ export function FilterDialog({ filterId, onClose }: { filterId: string | null; o
   const engine = useEngine()
   const view = useView()
   const navigate = useNavigate()
+  const location = useLocation()
   const filter = filterId ? view.filter(filterId) : undefined
   const [name, setName] = useState(filter?.name ?? '')
   const [color, setColor] = useState(filter?.color ?? 'blue')
   const [icon, setIcon] = useState(filter?.icon ?? 'filter')
   const [rules, setRules] = useState<Rules>(() => readRules(filter?.rules))
   const [tag, setTag] = useState('')
-  const [sure, setSure] = useState(false)
+  const shell = useShell()
   const change = (part: Partial<Rules>) => setRules((was) => ({ ...was, ...part }))
 
   const stored = writeRules(rules, filter?.rules)
@@ -127,50 +122,44 @@ export function FilterDialog({ filterId, onClose }: { filterId: string | null; o
   )
 
   const footer = (
-    <div className="flex items-center justify-between gap-2">
-      {filter ? (
-        sure ? (
-          <button
-            type="button"
-            className="nc-btn bg-bad-500 text-on-bad"
-            onClick={() => {
-              deleteFilter(engine, filter.id)
-              onClose()
-              if (window.location.pathname === `/filters/${filter.id}`) navigate('/today')
-            }}
-          >
-            <Trash2 className="h-4 w-4" /> {t('filter.deleteSure')}
-          </button>
-        ) : (
-          <button type="button" className="nc-btn nc-btn-ghost text-bad-500" onClick={() => setSure(true)}>
-            <Trash2 className="h-4 w-4" /> {t('filter.delete')}
-          </button>
-        )
-      ) : (
-        <span />
+    <>
+      {filter && (
+        <button
+          type="button"
+          className="nt-btn nt-btn-quiet mr-auto text-bad-500"
+          onClick={() => {
+            onClose()
+            shell.ask(
+              askDeleteFilter(filter, t, () => {
+                deleteFilter(engine, filter.id)
+                if (location.pathname === `/filters/${filter.id}`) navigate('/today')
+              }),
+            )
+          }}
+        >
+          {t('filter.deleteAsk')}
+        </button>
       )}
-      <span className="flex gap-2">
-        <button type="button" className="nc-btn nc-btn-ghost" onClick={onClose}>
-          {t('common.cancel')}
-        </button>
-        <button type="submit" form="filter-form" className="nc-btn nc-btn-accent" disabled={!valid}>
-          {filter ? t('common.save') : t('filter.create')}
-        </button>
-      </span>
-    </div>
+      <button type="button" className="nt-btn nt-btn-ghost" onClick={onClose}>
+        {t('common.cancel')}
+      </button>
+      <button type="submit" form="filter-form" className="nt-btn nt-btn-accent" disabled={!valid}>
+        {filter ? t('common.save') : t('filter.create')}
+      </button>
+    </>
   )
 
   return (
-    <Dialog title={filter ? t('filter.editTitle') : t('filter.newTitle')} onClose={onClose} huge footer={footer}>
-      <form id="filter-form" className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]" onSubmit={submit}>
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Badge color={color} icon={icon} size="lg" />
-            <div className="flex-1">
-              <NameField value={name} onChange={setName} label={t('filter.name')} />
+    <Dialog title={filter ? t('filter.editTitle') : t('filter.newTitle')} onClose={onClose} wide footer={footer}>
+      <form id="filter-form" className="space-y-5" onSubmit={submit}>
+        <div className="space-y-3">
+          <NameField value={name} onChange={setName} label={t('filter.name')} color={color} icon={icon} />
+          <details className="rounded-[12px] border border-ink-700 bg-ink-900 px-3.5 py-2.5" data-testid="filter-look">
+            <summary className="cursor-pointer text-[13px] font-semibold select-none">{t('look.title')}</summary>
+            <div className="mt-3 space-y-4">
+              <LookPicker color={color} icon={icon} onColor={setColor} onIcon={setIcon} />
             </div>
-          </div>
-          <LookPicker color={color} icon={icon} onColor={setColor} onIcon={setIcon} />
+          </details>
         </div>
 
         <div className="space-y-4" data-testid="filter-conditions">
@@ -188,7 +177,7 @@ export function FilterDialog({ filterId, onClose }: { filterId: string | null; o
                 aria-checked={rules.state === state}
                 data-testid={`state-${state}`}
                 onClick={() => change({ state })}
-                className={'rounded-full border px-4 py-1.5 text-sm font-medium ' + (rules.state === state ? 'border-accent-500/60 bg-accent-500/15 text-accent-400' : 'border-ink-700 bg-ink-900 text-mist-500 hover:text-mist-100')}
+                className="nt-toggle px-4"
               >
                 {t(`filter.states.${state}`)}
               </button>
@@ -216,7 +205,7 @@ export function FilterDialog({ filterId, onClose }: { filterId: string | null; o
           )}
 
           <fieldset className="space-y-2" data-testid="condition-place">
-            <legend className="mb-1.5 text-xs font-medium text-mist-500">{t('filter.place')}</legend>
+            <legend className="nt-legend">{t('filter.place')}</legend>
             {view.spaces.map((space) => (
               <div key={space.id} className="flex flex-wrap gap-1.5">
                 <Chip on={rules.spaces.includes(space.id)} onClick={() => change({ spaces: toggled(rules.spaces, space.id) })} testId={`place-space-${space.name}`}>
@@ -225,7 +214,7 @@ export function FilterDialog({ filterId, onClose }: { filterId: string | null; o
                 </Chip>
                 {view.listsOf(space.id).map((list) => (
                   <Chip key={list.id} on={rules.lists.includes(list.id)} onClick={() => change({ lists: toggled(rules.lists, list.id) })} testId={`place-list-${list.name}`}>
-                    <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: colorOf(list.color) }} aria-hidden />
+                    {createElement(iconFor(list.icon), { className: 'h-3.5 w-3.5 shrink-0', strokeWidth: 2, style: { color: colorOf(list.color) }, 'aria-hidden': true })}
                     <span className="truncate">{list.name}</span>
                   </Chip>
                 ))}
@@ -234,7 +223,7 @@ export function FilterDialog({ filterId, onClose }: { filterId: string | null; o
             {gone > 0 && (
               <p className="flex items-center gap-2 text-xs text-mist-500">
                 {t('filter.placeGone', { count: gone })}
-                <button type="button" className="font-semibold text-accent-400" onClick={() => change({ spaces: rules.spaces.filter((id) => knownSpaces.has(id)), lists: rules.lists.filter((id) => knownLists.has(id)) })}>
+                <button type="button" className="nt-btn-quiet font-semibold" onClick={() => change({ spaces: rules.spaces.filter((id) => knownSpaces.has(id)), lists: rules.lists.filter((id) => knownLists.has(id)) })}>
                   {t('filter.removeGone')}
                 </button>
               </p>
@@ -289,9 +278,9 @@ export function FilterDialog({ filterId, onClose }: { filterId: string | null; o
                 placeholder={t('filter.addTag')}
                 aria-label={t('filter.addTag')}
                 maxLength={60}
-                className="w-40 rounded-full border border-ink-700 bg-ink-850 px-3 py-1 text-[13px] text-mist-100 placeholder:text-mist-500 focus:border-accent-500 focus:outline-none"
+                className="nt-field h-[34px] w-40 rounded-full text-[13px]"
               />
-              <button type="button" onClick={addTag} disabled={!tag.trim()} className="rounded-full p-1 text-mist-500 hover:text-mist-100 disabled:opacity-40" aria-label={t('filter.add')} title={t('filter.add')}>
+              <button type="button" onClick={addTag} disabled={!tag.trim()} className="nt-icon-btn" aria-label={t('filter.add')} title={t('filter.add')}>
                 <Plus className="h-4 w-4" aria-hidden />
               </button>
             </span>

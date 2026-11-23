@@ -15,14 +15,17 @@
     "found_one": "One result",
     "found_other": "{{count}} results",
     "field": "Search",
-    "key": "Ctrl K"
+    "key": "Ctrl K",
+    "none": "Nothing found",
+    "noneText": "The search looks at title, note, tags and link; completed ones only with “Include completed”."
   },
   "common": {
     "cancel": "Cancel",
     "close": "Close",
     "copy": "Copy",
     "copied": "Copied",
-    "save": "Save"
+    "save": "Save",
+    "final": "This cannot be undone."
   },
   "account": {
     "operator": "Operator"
@@ -50,7 +53,9 @@
     "mailSend": "Send invitation",
     "mailSent": "Invitation sent to {{email}}.",
     "leave": "Leave space",
-    "leaveSure": "Really leave"
+    "leaveTitle": "Leave “{{space}}”?",
+    "leaveText": "You no longer see the space’s lists afterwards. You only get back in with a new invitation.",
+    "leaveAsk": "Leave space …"
   },
   "sidebar": {
     "label": "Sidebar",
@@ -521,7 +526,6 @@
     "newHint": "You manage the new space and invite others by link. Everyone in a space sees all its lists.",
     "create": "Create space",
     "delete": "Move to trash",
-    "deleteSure": "Move the space and all its lists to the trash",
     "hide": "Hide space",
     "show": "Show",
     "showNamed": "Show “{{name}}” again",
@@ -529,7 +533,10 @@
     "prefsTitle": "Spaces",
     "prefsText": "Hidden spaces are left out of the sidebar, the collections and the search. Notifications and reminders keep coming. The setting is yours only, on all your devices.",
     "prefsShown": "Show in the sidebar",
-    "prefsNone": "No space yet."
+    "prefsNone": "No space yet.",
+    "deleteTitle": "Move “{{name}}” to the trash?",
+    "deleteText": "The space goes to the trash with all its lists and tasks, for every member. Its managers can bring it back from there for 30 days.",
+    "deleteAsk": "Move to trash …"
   },
   "sidebarPrefs": {
     "title": "Sidebar",
@@ -705,13 +712,13 @@
     "title": "Trash",
     "hint": "Deleted things stay here for 30 days, then they are gone for good.",
     "empty": "The trash is empty.",
-    "spaces": "Spaces",
-    "lists": "Lists",
-    "reminders": "Tasks",
     "restore": "Restore",
     "restoreName": "Restore “{{name}}”",
     "days_one": "one day left",
-    "days_other": "{{count}} days left"
+    "days_other": "{{count}} days left",
+    "fromSpace": "Space",
+    "fromList": "List in “{{space}}”",
+    "fromTask": "From “{{list}}” · {{space}}"
   },
   "apiTokens": {
     "title": "API tokens",
@@ -783,10 +790,10 @@
       "assigned": "Nothing is assigned to you.",
       "done": "Nothing completed yet."
     },
-    "sub_one": "one open task in all spaces",
-    "sub_other": "{{count}} open tasks in all spaces",
     "subDone_one": "one completed task",
-    "subDone_other": "{{count}} completed tasks"
+    "subDone_other": "{{count}} completed tasks",
+    "everywhere": "From all spaces",
+    "emptyText": "Add new tasks with “New task”, or type them into the line below."
   },
   "filter": {
     "section": "Filters",
@@ -798,7 +805,6 @@
     "name": "Name",
     "create": "Create filter",
     "delete": "Delete",
-    "deleteSure": "Delete the filter for good",
     "hide": "Hide filter",
     "empty": "No task matches this filter.",
     "subAll_one": "one task",
@@ -843,7 +849,12 @@
     "add": "Add",
     "matches_one": "Matches one task right now.",
     "matches_other": "Matches {{count}} tasks right now.",
-    "tooLong": "Too many conditions: at most 4000 characters together."
+    "tooLong": "Too many conditions: at most 4000 characters together.",
+    "deleteTitle": "Delete the filter “{{name}}”?",
+    "deleteText": "The filter is deleted for good. The tasks it shows stay where they are.",
+    "deleteAsk": "Delete filter …",
+    "menu": "More about “{{name}}”",
+    "emptyText": "As soon as a task matches the conditions, it shows here."
   },
   "sync": {
     "loading": "Loading …",
@@ -870,7 +881,8 @@
     "space_left_copied_other": "You are no longer in that space. {{count}} tasks with unsent changes are kept as copies in “{{list}}”.",
     "upload_lost": "The file “{{name}}” was lost when the page reloaded. Please attach it again.",
     "too_large": "That was too large for the server.",
-    "invalid_input": "The server could not read the change."
+    "invalid_input": "The server could not read the change.",
+    "undo": "Undo"
   },
   "look": {
     "color": "Colour",
@@ -1170,7 +1182,8 @@
       "time": "Time and dates",
       "celebrate": "Celebrations",
       "shapes": "Signs and shapes"
-    }
+    },
+    "title": "Symbol and colour"
   },
   "list": {
     "newTitle": "New list",
@@ -1180,7 +1193,6 @@
     "create": "Create list",
     "moveHint": "The list moves to the other space with all its tasks. Assignments to people who are not members there are dropped.",
     "delete": "Move to trash",
-    "deleteSure": "Move the list and all its tasks to the trash",
     "open_one": "one open task",
     "open_other": "{{count}} open tasks",
     "menu": "More about the list",
@@ -1195,14 +1207,20 @@
     "cleared_one": "One completed task is in the trash.",
     "cleared_other": "{{count}} completed tasks are in the trash.",
     "notifyOn": "Notify me of changes",
-    "notifyOff": "Stop notifying me of changes",
     "notifyHint": "You get a notification when others add or complete something here.",
-    "empty": "No tasks yet.",
     "noSection": "No section",
     "sectionName": "Name of the section",
     "addSection": "Add",
     "renameSection": "Rename section",
-    "deleteSection": "Delete section “{{name}}”"
+    "deleteSection": "Delete section “{{name}}”",
+    "deleteTitle": "Move “{{name}}” to the trash?",
+    "deleteText": "The list goes to the trash with all its tasks. It stays there for 30 days and can be restored.",
+    "deleteAsk": "Move to trash …",
+    "emptyTitle": "No tasks in “{{name}}” yet",
+    "emptyText": "Add the first one with “New task”, or type it into the line below.",
+    "menuNamed": "More about “{{name}}”",
+    "deleteSectionTitle": "Delete the section “{{name}}”?",
+    "deleteSectionText": "The section is deleted for good. Its tasks stay in the list, without a section."
   },
   "reminder": {
     "new": "New task",
@@ -1218,7 +1236,8 @@
     "priorityIs": "Priority: {{priority}}",
     "paneToggle": "Show or hide the details in the side column",
     "paneToggleFor": "Show or hide the details of “{{title}}” in the side column",
-    "hasNote": "has a note"
+    "hasNote": "has a note",
+    "trashed": "“{{title}}” is in the trash."
   },
   "quick": {
     "placeholder": "New task, e.g. “Milk tomorrow 9am #groceries !!”",
@@ -1317,9 +1336,7 @@
       "year_one": "One year after completing",
       "year_other": "{{count}} years after completing"
     },
-    "from": "Counts from",
-    "fromDue": "the due date",
-    "fromCompletion": "completing",
+    "from": "Next date",
     "days": "Weekdays",
     "onTheDay": "On",
     "onThe": "On the",
@@ -1349,7 +1366,11 @@
     "endOn": "On",
     "times_one": "once more",
     "times_other": "{{count}} more times",
-    "until": "until {{day}}"
+    "until": "until {{day}}",
+    "fromDueTitle": "From the due date",
+    "fromDueText": "The next date follows the plan, even when you tick it off later.",
+    "fromCompletionTitle": "From ticking off",
+    "fromCompletionText": "The next date counts from the day you tick it off."
   },
   "zone": {
     "title": "Time zone",
@@ -1515,7 +1536,6 @@
     "rename": "Rename",
     "newTaskHere": "New task here",
     "deleteSection": "Delete section",
-    "sure": "Really delete",
     "invite": "Invite …",
     "leave": "Leave space …",
     "editList": "Name, colour, symbol …",
@@ -1542,5 +1562,11 @@
   "columns": {
     "sidebar": "Width of the sidebar",
     "hint": "Drag or use the arrow keys to change the width; double-click to reset it."
+  },
+  "notFound": {
+    "page": "There is no such page in nextasks.",
+    "list": "This list does not exist (any more), or you cannot see it.",
+    "filter": "This filter does not exist (any more).",
+    "home": "To the start page"
   }
 }

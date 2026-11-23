@@ -1,6 +1,7 @@
 /** What every part of the frame may ask of it: open a task, the chosen row, the quick entry, the search. */
 import { createContext, useContext } from 'react'
 
+import type { Question } from './ConfirmDialog'
 import type { NewTarget } from './DetailPane'
 
 export interface Shell {
@@ -37,6 +38,8 @@ export interface Shell {
   /** The dialog for a new own filter, or to change one. */
   newFilter: () => void
   editFilter: (filterId: string) => void
+  /** The question before deleting (`ConfirmDialog`). */
+  ask: (question: Question) => void
 }
 
 const noop = () => undefined
@@ -63,6 +66,7 @@ export const ShellContext = createContext<Shell>({
   members: noop,
   newFilter: noop,
   editFilter: noop,
+  ask: noop,
 })
 
 export function useShell(): Shell {
