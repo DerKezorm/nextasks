@@ -5,13 +5,15 @@
  * the arrow keys move inside the grid (up and down by a row), Home and End go to the first and last, Enter in the
  * search takes the only match. The chosen one stays marked, also when the search hides it.
  *
- * Colours: the fixed ones of the data model, the chosen one with a check mark and a ring.
+ * Colours: the fixed ones of the data model, the own ones used last on this device and any other as `#rrggbb`.
  */
 import { Check, Search } from 'lucide-react'
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { colorOf, COLOR_NAMES, findSymbols, SYMBOL_GROUPS, type SymbolEntry } from '../lib/look'
+import { hexOf, inkOn } from '../lib/color'
+import { useDevicePref } from '../lib/devicePref'
+import { COLOR_NAMES, fillOf, findSymbols, SYMBOL_GROUPS, type SymbolEntry } from '../lib/look'
 
 export function SymbolPicker({ value, onChange, color }: { value: string; onChange: (name: string) => void; color?: string }) {
   const { t } = useTranslation()
@@ -117,33 +119,131 @@ export function SymbolPicker({ value, onChange, color }: { value: string; onChan
   )
 }
 
+/** How many own colours the device keeps at hand, as in nexnotes. */
+export const RECENT_COLORS = 6
+
+function parseRecent(raw: string | null): string[] {
+  try {
+    const list = JSON.parse(raw ?? '[]')
+    return Array.isArray(list) ? list.map((item) => hexOf(String(item))).filter((item): item is string => item !== null).slice(0, RECENT_COLORS) : []
+  } catch {
+    return []
+  }
+}
+
+function Swatch({ color, label, chosen, onChoose }: { color: string; label: string; chosen: boolean; onChoose: () => void }) {
+  const fill = fillOf(color)
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={chosen}
+      aria-label={label}
+      title={label}
+      onClick={onChoose}
+      className={'flex h-8 items-center justify-center rounded-lg outline-offset-2 focus-visible:outline-2 focus-visible:outline-accent-500 ' + (chosen ? 'ring-2 ring-mist-100 ring-offset-2 ring-offset-ink-850' : 'border border-ink-600')}
+      style={{ background: fill }}
+      data-color={color}
+    >
+      {chosen && <Check aria-hidden className="h-4 w-4" strokeWidth={3} style={{ color: inkOn(fill) }} data-testid="color-chosen" />}
+    </button>
+  )
+}
+
+/**
+ * The fixed colours, the own colours used last on this device, and any other through the system's colour picker or
+ * as `#rrggbb`, as nexnotes' `ColorField` (contract 0.8). The chosen one carries a check mark in black or white,
+ * whichever reads on it.
+ */
 export function ColorField({ value, onChange }: { value: string; onChange: (color: string) => void }) {
   const { t } = useTranslation()
+  const [recentRaw, setRecent] = useDevicePref('colors.own', (raw) => raw)
+  const recent = parseRecent(recentRaw)
+  const own = value.startsWith('#') ? hexOf(value) : null
+  const [draft, setDraft] = useState(own ?? '')
+  const [wrong, setWrong] = useState(false)
+  const picker = useRef<HTMLInputElement>(null)
+
+  useEffect(() => setDraft(own ?? ''), [own])
+
+  /** An own colour is chosen: it goes first in the row of recent ones. */
+  const takeOwn = (hex: string) => {
+    setWrong(false)
+    setRecent(JSON.stringify([hex, ...recent.filter((item) => item !== hex)].slice(0, RECENT_COLORS)))
+    onChange(hex)
+  }
+
+  // The system's picker reports every move while it is open ("input") and the result when it closes ("change"): the
+  // field follows the moves, the choice is the result.
+  useEffect(() => {
+    const input = picker.current
+    if (!input) return
+    const done = () => {
+      const hex = hexOf(input.value)
+      if (hex) takeOwn(hex)
+    }
+    input.addEventListener('change', done)
+    return () => input.removeEventListener('change', done)
+  })
+
+  const typed = () => {
+    if (!draft.trim()) return
+    const hex = hexOf(draft)
+    if (hex) takeOwn(hex)
+    else setWrong(true)
+  }
+
   return (
     <fieldset>
       <legend className="nt-legend">{t('look.color')}</legend>
       <div className="grid grid-cols-6 gap-2" role="radiogroup" aria-label={t('look.color')}>
-        {COLOR_NAMES.map((name) => {
-          const chosen = value === name
-          return (
-            <button
-              key={name}
-              type="button"
-              role="radio"
-              aria-checked={chosen}
-              aria-label={t(`look.colors.${name}`)}
-              title={t(`look.colors.${name}`)}
-              onClick={() => onChange(name)}
-              className={'flex h-8 items-center justify-center rounded-lg outline-offset-2 focus-visible:outline-2 focus-visible:outline-accent-500 ' + (chosen ? 'ring-2 ring-mist-100 ring-offset-2 ring-offset-ink-850' : 'border border-ink-600')}
-              style={{ background: colorOf(name) }}
-              data-color={name}
-            >
-              {/* The colours are dark enough to carry a white symbol (docs "Aussehen", principle 2). */}
-              {chosen && <Check aria-hidden className="h-4 w-4 text-white" strokeWidth={3} data-testid="color-chosen" />}
-            </button>
-          )
-        })}
+        {COLOR_NAMES.map((name) => (
+          <Swatch key={name} color={name} label={t(`look.colors.${name}`)} chosen={value === name} onChoose={() => onChange(name)} />
+        ))}
+        {recent.map((hex) => (
+          <Swatch key={hex} color={hex} label={t('look.ownColor', { hex })} chosen={own === hex} onChoose={() => takeOwn(hex)} />
+        ))}
       </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-2 text-sm text-mist-300">
+          <input
+            ref={picker}
+            type="color"
+            value={own ?? fillOf(value)}
+            aria-label={t('look.pickColor')}
+            onChange={(event) => setDraft(event.target.value)}
+            className="h-8 w-10 cursor-pointer rounded-lg border border-ink-600 bg-transparent p-0.5"
+            data-testid="color-picker"
+          />
+          {t('look.custom')}
+        </label>
+        <input
+          value={draft}
+          onChange={(event) => {
+            setDraft(event.target.value)
+            setWrong(false)
+          }}
+          onBlur={typed}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter') return
+            event.preventDefault()
+            typed()
+          }}
+          placeholder="#rrggbb"
+          aria-label={t('look.hex')}
+          aria-invalid={wrong || undefined}
+          aria-describedby={wrong ? 'color-hex-wrong' : undefined}
+          maxLength={7}
+          spellCheck={false}
+          className="nt-field w-28 font-mono"
+          data-testid="color-hex"
+        />
+      </div>
+      {wrong && (
+        <p id="color-hex-wrong" role="alert" className="mt-1 text-xs text-bad-500">
+          {t('look.hexWrong')}
+        </p>
+      )}
     </fieldset>
   )
 }

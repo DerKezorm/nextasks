@@ -72,6 +72,8 @@ here; a program decides whether to show it).
 Optional `?space_id=`. `{"lists": [{"id", "space_id", "space_name", "name", "color", "icon", "writable", "hidden",
 "sections": [{"id", "name"}], "open": 4}]}`, in the order the interface shows them (lists of hidden spaces at the end).
 `open`: open top-level tasks outside the bin. `hidden`: its space is hidden by the account, as in `/spaces`.
+`color`: one of `red`, `orange`, `yellow`, `green`, `teal`, `blue`, `indigo`, `purple`, `pink`, `brown`, `gray`, or an
+own colour as `#rrggbb` (lower case).
 
 ## Tasks
 

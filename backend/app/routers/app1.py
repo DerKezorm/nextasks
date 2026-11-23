@@ -272,7 +272,8 @@ def features(db: Any) -> list[str]:
     # ``space_prefs``: the kind ``space_pref`` (hiding a space) is known here (contract 0.3); older servers refuse it.
     # ``filters``: the kinds ``filter`` and ``tile_pref`` are (contract 0.5); an app sends them only where it is named.
     # ``devices``: a device brings in another device of its account (``POST /devices``, contract 0.7).
-    offered = ["changes", "batch", "files", "wait", "invites", "space_prefs", "filters", "devices"]
+    # ``own_colors``: a space, list or filter takes an own colour as ``#rrggbb`` besides the fixed names (contract 0.8).
+    offered = ["changes", "batch", "files", "wait", "invites", "space_prefs", "filters", "devices", "own_colors"]
     if push.relay_url():
         offered.append("push")
     if webpush.ready(db):

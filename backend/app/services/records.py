@@ -214,10 +214,16 @@ def _bool(value: Any) -> bool:
     return value
 
 
+OWN_COLOR = re.compile(r"#[0-9a-f]{6}")
+
+
 def _color(value: Any) -> str:
-    if value not in COLORS:
-        raise ValueError
-    return str(value)
+    # One of the fixed names, or an own colour as ``#rrggbb`` in lower case (contract 0.8, word ``own_colors``).
+    if value in COLORS:
+        return str(value)
+    if isinstance(value, str) and OWN_COLOR.fullmatch(value):
+        return value
+    raise ValueError
 
 
 def _icon(value: Any) -> str:

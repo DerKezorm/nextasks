@@ -900,6 +900,11 @@
     "icon": "Symbol",
     "iconSearch": "Symbol suchen, etwa Einkauf oder Hund",
     "iconNone": "Kein Symbol gefunden.",
+    "ownColor": "Eigene Farbe {{hex}}",
+    "pickColor": "Farbe wählen",
+    "custom": "Eigene Farbe",
+    "hex": "Farbe als #rrggbb",
+    "hexWrong": "Gib die Farbe als #rrggbb an, etwa #1e3a8a.",
     "colors": {
       "red": "Rot",
       "orange": "Orange",

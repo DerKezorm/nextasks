@@ -5,6 +5,7 @@
 import { List, type LucideIcon } from 'lucide-react'
 
 import { COLORS } from '../sync/types'
+import { hexOf, readableColor } from './color'
 import { SYMBOLS, type SymbolEntry } from './symbols'
 
 export { SYMBOL_GROUPS, SYMBOLS, type SymbolEntry, type SymbolGroup } from './symbols'
@@ -57,6 +58,14 @@ const HEX: Record<string, string> = {
 
 export const COLOR_NAMES = COLORS
 
+/** A fixed colour by its name, or an own one (`#rrggbb`) made to read on both looks; anything else is blue. */
 export function colorOf(name: string | null | undefined): string {
+  const own = name?.startsWith('#') ? hexOf(name) : null
+  if (own) return readableColor(own)
   return HEX[name ?? ''] ?? HEX.blue
+}
+
+/** The fill of a colour as it is, for the swatch of the picker: a fixed one by its name, an own one unchanged. */
+export function fillOf(name: string): string {
+  return (name.startsWith('#') ? hexOf(name) : null) ?? HEX[name] ?? HEX.blue
 }
