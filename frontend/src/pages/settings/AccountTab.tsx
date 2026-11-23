@@ -322,6 +322,9 @@ export function AccountTab({ part }: { part: AccountPart }) {
           </div>
         </Card>
       )}
+
+      {/* While the second factor is still to be set up, Security is the only page open: the way out has to be here too. */}
+      {part === 'security' && me.second_factor_setup_required && <SignOutCard viaProvider={me.sign_in === 'oidc'} />}
     </div>
   )
 }

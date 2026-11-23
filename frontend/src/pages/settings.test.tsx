@@ -127,6 +127,7 @@ describe('the settings', () => {
       ['/account?linked=pocket', '/settings/security?linked=pocket'],
       ['/about', '/settings/about'],
       ['/settings?tab=looks', '/settings/appearance'],
+      ['/settings?tab=general', '/settings/appearance'],
       ['/settings?tab=server&sub=backups', '/settings/storage'],
       ['/settings?tab=server&sub=app', '/settings/general'],
       ['/settings?tab=server&sub=api', '/settings/general'],
@@ -179,5 +180,27 @@ describe('the settings', () => {
     expect(page.querySelector('#api-tokens')?.textContent).toContain('Accounts may create API tokens')
     expect(page.querySelector('#app')).not.toBeNull()
     expect(page.querySelector('#languages')).not.toBeNull()
+  })
+})
+
+describe('the ways that must stay', () => {
+  it('let an account that still has to set up its second factor sign out on the one page open to it', async () => {
+    const { server, robin } = smallWorld()
+    server.accounts.get(robin)!.setupRequired = true
+    const page = await mount(server, '/today')
+    expect(where.path).toBe('/settings/security')
+    expect(page.querySelector('[data-testid="sign-out-card"]')).not.toBeNull()
+  })
+
+  it('keep "New space" when every space is hidden, and only then in the head of the hidden ones', async () => {
+    const { server, robin } = smallWorld()
+    const mine = [...server.rows.values()].filter((r) => r.kind === 'space' && server.member(r.id, robin)).map((r) => r.id)
+    server.addPref('space_pref', mine[0], robin, { hidden: true })
+    let page = await mount(server, '/today')
+    expect(page.querySelector('[data-testid="new-space-hidden"]')).toBeNull()
+    await unmount()
+    for (const id of mine.slice(1)) server.addPref('space_pref', id, robin, { hidden: true })
+    page = await mount(server, '/today')
+    expect(page.querySelector('[data-testid="new-space-hidden"]')?.getAttribute('aria-label')).toBe('New space')
   })
 })

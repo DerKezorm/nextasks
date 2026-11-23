@@ -82,7 +82,7 @@ export function resolveArea(asked: string | undefined, role: Role | undefined, s
       const part = FORMER_PARTS[params.get('sub') ?? ''] ?? 'accounts'
       return { redirect: may(part) ? areaPath(part) : '/settings' }
     }
-    if (tab === 'general') return { redirect: '/settings' }
+    if (tab === 'general') return { redirect: areaPath('appearance') }
     return { area: 'profile' }
   }
   if (may(asked as AreaSlug) && findArea(asked as AreaSlug)) return { area: asked as AreaSlug }

@@ -25,6 +25,8 @@ export interface Account {
   language: string
   avatar_hash: string | null
   password: string
+  /** The operator asks for a second factor and this account has none yet. */
+  setupRequired?: boolean
 }
 
 interface Row {
@@ -736,6 +738,7 @@ export class FakeServer {
       language: account.language,
       two_factor: false,
       two_factor_recovery_left: 0,
+      second_factor_setup_required: !!account.setupRequired,
       avatar: null,
       version: 'dev',
       whats_new_seen: 'dev',

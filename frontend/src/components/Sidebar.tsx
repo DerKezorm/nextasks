@@ -382,10 +382,18 @@ function HiddenSpaces() {
   const { t } = useTranslation()
   const engine = useEngine()
   const view = useView()
+  const shell = useShell()
   const [open, setOpen] = useState(false)
   return (
     <section className="mt-3" aria-label={t('space.hiddenSpaces', { count: view.hiddenSpaces.length })} data-testid="hidden-spaces">
-      <SideHead title={t('space.hiddenSpaces', { count: view.hiddenSpaces.length })} open={open} onToggle={() => setOpen(!open)} />
+      <SideHead title={t('space.hiddenSpaces', { count: view.hiddenSpaces.length })} open={open} onToggle={() => setOpen(!open)}>
+        {/* "New space" lives in the menu of a shown space; with none shown it would have no place left. */}
+        {view.shownSpaces.length === 0 && (
+          <button type="button" onClick={() => shell.newSpace()} aria-label={t('sidebar.newSpace')} title={t('sidebar.newSpace')} className={PLUS} data-testid="new-space-hidden">
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.2} aria-hidden />
+          </button>
+        )}
+      </SideHead>
       {open && (
         <ul className="mt-0.5 space-y-px">
           {view.hiddenSpaces.map((space) => (
