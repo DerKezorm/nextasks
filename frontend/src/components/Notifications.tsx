@@ -3,7 +3,7 @@
  * and the events, its columns the channels as the server lists them (mail, browser, iPhone/iPad today; a new channel
  * on the server is a new column here by itself), each head with its symbol and state. A channel that cannot be used
  * now (no mail server, no confirmed address, no browser, no paired device) is greyed; what was chosen for it stays.
- * On a narrow screen, or with more than four channels, the table becomes a card per row with a labelled switch per
+ * On a narrow screen, or with more than four channels, the table becomes a card per row with a labelled box per
  * channel, so nothing scrolls sideways.
  *
  * Below it the parts of the channels that need more than a head: the mail address with its confirmation, and this
@@ -91,7 +91,7 @@ function useNarrow(): boolean {
   return narrow
 }
 
-const FIELD = 'h-9 rounded-lg border border-ink-700 bg-ink-850 px-2.5 text-sm text-mist-100 disabled:opacity-50'
+const FIELD = 'nt-field h-9 w-auto px-2.5 disabled:opacity-50'
 
 /** This browser's web push: its state, whether the server offers it, and switching it. Shared by the head of the
  * column "Browser" and the section below, so the button sits where one looks first. */
@@ -220,7 +220,7 @@ function ChannelHead({ channel, compact = false, push }: { channel: NotifyChanne
       {channel.kind === 'webpush' && push?.offered && (push.here === 'off' || push.here === 'on') ? (
         <button
           type="button"
-          className={'nc-btn mt-1 px-2.5 py-1 text-xs ' + (push.here === 'on' ? 'nc-btn-ghost' : 'nc-btn-accent')}
+          className={'nt-btn mt-1 h-8 px-2.5 text-xs ' + (push.here === 'on' ? 'nt-btn-ghost' : 'nt-btn-accent')}
           onClick={() => push.toggle(push.here !== 'on')}
           data-testid="push-toggle-head"
         >
@@ -239,7 +239,7 @@ function ChannelHead({ channel, compact = false, push }: { channel: NotifyChanne
         </Link>
       )}
       {channel.kind === 'mail' && channel.state === 'unavailable' && me?.role === 'operator' && (
-        <Link to="/settings?tab=server&sub=accounts" className="text-[11px] font-medium text-accent-400 hover:underline">
+        <Link to="/settings/mail" className="text-[11px] font-medium text-accent-400 hover:underline">
           {t('notify.toMailServer')}
         </Link>
       )}
@@ -340,7 +340,7 @@ function RouteCards({ state, busy, turn, schedule }: Rows) {
                     <label key={channel.kind} className={'flex min-h-11 items-center gap-2 py-1.5 text-sm text-mist-200 ' + (channel.ready ? '' : 'opacity-60')}>
                       <Icon className="h-4 w-4 shrink-0 text-accent-400" strokeWidth={1.8} aria-hidden />
                       <span className="flex-1">{channel.name}</span>
-                      <RouteBox event={event} channel={channel} state={state} busy={busy} turn={turn} asSwitch />
+                      <RouteBox event={event} channel={channel} state={state} busy={busy} turn={turn} />
                     </label>
                   )
                 })}
@@ -353,15 +353,15 @@ function RouteCards({ state, busy, turn, schedule }: Rows) {
   )
 }
 
-/** One choice: this report or event on this channel. Greyed while the channel cannot be used; the choice stays. */
-function RouteBox({ event, channel, state, busy, turn, asSwitch = false }: { event: string; channel: NotifyChannel; asSwitch?: boolean } & Pick<Rows, 'state' | 'busy' | 'turn'>) {
+/** One choice: this report or event on this channel, a box as every switch of the settings (as nexnotes'). Greyed
+ * while the channel cannot be used; the choice stays. */
+function RouteBox({ event, channel, state, busy, turn }: { event: string; channel: NotifyChannel } & Pick<Rows, 'state' | 'busy' | 'turn'>) {
   const { t } = useTranslation()
   const on = state.routes[event]?.includes(channel.kind) ?? false
   return (
     <input
       type="checkbox"
-      role={asSwitch ? 'switch' : undefined}
-      className={asSwitch ? 'nt-switch' : 'h-5 w-5 accent-accent-500 disabled:opacity-40'}
+      className="h-5 w-5 shrink-0 accent-accent-500 disabled:opacity-40"
       checked={on}
       disabled={busy || !channel.ready}
       title={channel.ready ? undefined : channel.hint || channel.summary}
@@ -419,7 +419,7 @@ function MailAddress({ channel, busy, run }: { channel: NotifyChannel; busy: boo
         <p className="mb-3 flex flex-wrap items-center gap-2 text-sm" data-testid="mail-address">
           <span className="font-medium text-mist-100">{channel.address}</span>
           <span className="rounded-full bg-accent-500/15 px-2 py-0.5 text-xs text-accent-400">{t('notify.mail.confirmed')}</span>
-          <button type="button" className="nc-btn nc-btn-ghost text-xs" disabled={busy} onClick={() => void run(() => api<NotifyState>('/api/me/email', { method: 'DELETE' }), () => t('notify.mail.removed'))}>
+          <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium" disabled={busy} onClick={() => void run(() => api<NotifyState>('/api/me/email', { method: 'DELETE' }), () => t('notify.mail.removed'))}>
             {t('notify.mail.remove')}
           </button>
         </p>
@@ -428,10 +428,10 @@ function MailAddress({ channel, busy, run }: { channel: NotifyChannel; busy: boo
         <div className="mb-3 rounded-xl border border-accent-500/30 bg-accent-500/10 px-3 py-2 text-sm text-mist-200" data-testid="mail-pending">
           <p>{t('notify.mail.pending', { address: channel.pending, until: channel.pending_until ? moment(channel.pending_until, i18n.language) : '' })}</p>
           <div className="mt-2 flex gap-2">
-            <button type="button" className="nc-btn nc-btn-ghost text-xs" disabled={busy || !canSend} onClick={() => void run(() => api<NotifyState>('/api/me/email/resend', { method: 'POST' }), () => t('notify.mail.sent', { address: channel.pending }))}>
+            <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium" disabled={busy || !canSend} onClick={() => void run(() => api<NotifyState>('/api/me/email/resend', { method: 'POST' }), () => t('notify.mail.sent', { address: channel.pending }))}>
               {t('notify.mail.resend')}
             </button>
-            <button type="button" className="nc-btn nc-btn-ghost text-xs" disabled={busy} onClick={() => void run(() => api<NotifyState>('/api/me/email/pending', { method: 'DELETE' }))}>
+            <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium" disabled={busy} onClick={() => void run(() => api<NotifyState>('/api/me/email/pending', { method: 'DELETE' }))}>
               {t('notify.mail.cancel')}
             </button>
           </div>
@@ -441,7 +441,7 @@ function MailAddress({ channel, busy, run }: { channel: NotifyChannel; busy: boo
       {channel.suggestion && !channel.pending && (
         <p className="mb-3 flex flex-wrap items-center gap-2 text-sm text-mist-300" data-testid="mail-suggestion">
           {t('notify.mail.suggestion', { address: channel.suggestion })}
-          <button type="button" className="nc-btn nc-btn-ghost text-xs" disabled={busy || !canSend} onClick={() => void send(channel.suggestion ?? '')}>
+          <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium" disabled={busy || !canSend} onClick={() => void send(channel.suggestion ?? '')}>
             {t('notify.mail.useSuggestion')}
           </button>
         </p>
@@ -455,9 +455,9 @@ function MailAddress({ channel, busy, run }: { channel: NotifyChannel; busy: boo
       >
         <label className="min-w-60 flex-1 text-sm">
           <span className="text-xs font-medium text-mist-400">{t('notify.mail.address')}</span>
-          <input type="email" autoComplete="email" value={address} onChange={(e) => setAddress(e.target.value)} placeholder={channel.address || 'name@example.com'} className={FIELD + ' mt-1 w-full'} data-testid="mail-input" />
+          <input type="email" autoComplete="email" value={address} onChange={(e) => setAddress(e.target.value)} placeholder={channel.address || 'name@example.com'} className="nt-field mt-1" data-testid="mail-input" />
         </label>
-        <button type="submit" className="nc-btn nc-btn-accent" disabled={busy || !canSend || !address.trim()}>
+        <button type="submit" className="nt-btn nt-btn-accent" disabled={busy || !canSend || !address.trim()}>
           {t('notify.mail.send')}
         </button>
       </form>
@@ -494,7 +494,7 @@ function BrowserPush({ channel, busy, run, push }: { channel: NotifyChannel; bus
           <span className={shownHere === 'on' ? 'font-semibold text-ok-500' : 'font-semibold text-mist-400'}>{shownHere === 'on' ? t('push.stateOn') : t('push.stateOff')}</span>
         </span>
         {offered && (shownHere === 'off' || shownHere === 'on') && (
-          <button type="button" className={'nc-btn ' + (shownHere === 'on' ? 'nc-btn-ghost' : 'nc-btn-accent')} disabled={busy} onClick={() => toggle(shownHere !== 'on')} data-testid="push-toggle">
+          <button type="button" className={'nt-btn ' + (shownHere === 'on' ? 'nt-btn-ghost' : 'nt-btn-accent')} disabled={busy} onClick={() => toggle(shownHere !== 'on')} data-testid="push-toggle">
             {shownHere === 'on' ? t('push.off') : t('push.on')}
           </button>
         )}
@@ -523,7 +523,7 @@ function BrowserPush({ channel, busy, run, push }: { channel: NotifyChannel; bus
               </span>
               <button
                 type="button"
-                className="nc-btn nc-btn-ghost text-bad-500"
+                className="nt-btn nt-btn-ghost text-bad-500"
                 disabled={busy}
                 aria-label={t('push.removeName', { name: name(entry) })}
                 onClick={() => (current ? toggle(false) : void run(() => api<NotifyState>(`/api/notify/browsers/${entry.id}`, { method: 'DELETE' })))}

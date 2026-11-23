@@ -1,7 +1,8 @@
 /**
- * The operator's part of the settings, as in nexlore: accounts (with every space and the invitation mail), sign-in
- * (in `SignInCards.tsx`: password, public address, second factor, the sign-in providers and authentik), files,
- * backups, languages and the log. Everything here is the server's; it applies to all.
+ * The operator's part of the settings, the cards of the group "Server" (`SettingsAreas.tsx` picks them, as nexnotes'):
+ * General (files, the switch for API tokens, the iPhone app and invitations, languages), Sign-in (in
+ * `SignInCards.tsx`), Mail, Storage and backups, Accounts (with every API token) and the Log. Everything here is the
+ * server's; it applies to all.
  */
 import { Download, Files, Globe, History, Info, KeyRound, Mail, RotateCcw, ShieldCheck, Smartphone, Trash2, Upload, Users } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -296,10 +297,24 @@ export function AccountsCard() {
   )
 }
 
-/** The switch for API tokens, and every token there is: whose, which level, how many spaces, when it was used; blocked
- * for good on request (every way out needs a latch). Never the token itself. As nexcanvas' and nexbrand's. A token of a
+/** The switch for API tokens, under General as nexnotes' switch "API": what it lets accounts do, what switching off does. */
+export function ApiTokensSwitchCard({ server }: { server: Server }) {
+  const { t } = useTranslation()
+  const s = server.settings
+  if (!s) return null
+  return (
+    <Card id="api-tokens" icon={KeyRound} title={t('server.apiTokens.title')} text={t('server.apiTokens.text')}>
+      <Toggle label={t('server.apiTokens.allow')} hint={t('server.apiTokens.allowHint')} checked={s.api_tokens_allowed} onChange={(api_tokens_allowed) => void server.save({ api_tokens_allowed })} />
+      <p className="text-xs text-mist-500">{t('server.apiTokens.offHint')}</p>
+      <Feedback problem={server.problem} done={server.done} />
+    </Card>
+  )
+}
+
+/** Every token there is, under Accounts as nexnotes' "API tokens of all accounts": whose, which level, how many spaces,
+ * when it was used; blocked for good on request (every way out needs a latch). Never the token itself. A token of a
  * blocked account is marked: it answers like none until the account is let in again. */
-export function ApiTokensCard({ server }: { server: Server }) {
+export function AllApiTokensCard() {
   const { t, i18n } = useTranslation()
   const { busy, problem, run } = useAction()
   const [tokens, setTokens] = useState<AnyApiToken[] | null>(null)
@@ -308,11 +323,13 @@ export function ApiTokensCard({ server }: { server: Server }) {
     apiTokensApi.every().then(setTokens, () => setTokens(null))
   }, [])
   useEffect(load, [load])
-  const s = server.settings
-  if (!s) return null
   return (
-    <Card id="api-tokens" icon={KeyRound} title={t('server.apiTokens.title')} text={t('server.apiTokens.text')}>
-      <Toggle label={t('server.apiTokens.allow')} hint={t('server.apiTokens.allowHint')} checked={s.api_tokens_allowed} onChange={(api_tokens_allowed) => void server.save({ api_tokens_allowed })} />
+    <Card id="all-api-tokens" icon={KeyRound} title={t('server.apiTokens.allTitle')} text={t('server.apiTokens.allText')}>
+      {tokens !== null && tokens.length === 0 && (
+        <p className="text-sm text-mist-500" data-testid="all-api-tokens-none">
+          {t('server.apiTokens.none')}
+        </p>
+      )}
       {tokens && tokens.length > 0 && (
         <div className="nc-scroll overflow-x-auto">
           <table className="w-full text-left text-sm text-mist-200" data-testid="admin-api-tokens">
@@ -356,8 +373,7 @@ export function ApiTokensCard({ server }: { server: Server }) {
           </table>
         </div>
       )}
-      <p className="text-xs text-mist-500">{t('server.apiTokens.offHint')}</p>
-      <Feedback problem={problem ?? server.problem} done={server.done} />
+      <Feedback problem={problem} />
       {blocking && (
         <Confirm
           title={t('server.apiTokens.blockTitle', { name: blocking.name, account: blocking.account_display })}
@@ -754,7 +770,7 @@ export function LogCard() {
           <label className="block text-sm">
             <span className="text-xs font-medium text-mist-400">{t('server.detail')}</span>
             <select
-              className="mt-1 h-9 w-56 rounded-lg border border-ink-700 bg-ink-850 px-2 text-sm text-mist-100"
+              className="nt-field mt-1 w-56 px-2"
               value={mode.mode}
               disabled={mode.fixed_by_env}
               onChange={(e) => void action.run(async () => setMode(await api<LogMode>('/api/logs/level', { method: 'PUT', body: { mode: e.target.value, minutes: e.target.value === 'detailed' || e.target.value === 'trace' ? 60 : 0 } })))}
@@ -767,7 +783,7 @@ export function LogCard() {
             </select>
           </label>
         )}
-        <a href="/api/logs/download" className="inline-flex items-center gap-1.5 rounded-full border border-ink-700 px-3.5 py-1.5 text-sm text-mist-300 hover:bg-ink-850">
+        <a href="/api/logs/download" className="nt-btn nt-btn-ghost">
           <Download className="h-4 w-4" strokeWidth={1.8} />
           {t('server.download')}
         </a>

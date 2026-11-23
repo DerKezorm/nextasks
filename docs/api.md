@@ -8,8 +8,8 @@ change that would break a program goes to `/api/v2` beside it. Programs ignore f
 
 ## Switching it on
 
-API tokens are off until the operator switches them on, under **Settings → Server → API**. Then every account makes
-its own tokens under **My account → Connections**:
+API tokens are off until the operator switches them on, under **Settings → Server → General**. Then every account makes
+its own tokens under **Settings → My account → Connections**:
 
 - A token never does more than its account, and never sees more than the spaces chosen for it. "Every space I may see,
   later ones too" has to be picked on purpose.

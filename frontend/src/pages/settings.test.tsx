@@ -1,0 +1,183 @@
+// The sidebar and the settings as nexnotes', against the fake server: "+ New task" and the search under the logo, the
+// account with the way to the settings at the foot (chosen while they are open), no account menu, no light/dark or
+// keys button there; the settings in areas under `/settings/<area>` with the groups "My account" and, for the
+// operator only, "Server"; the addresses of before lead to their area; the width of the sidebar is dragged and kept.
+import { act } from 'react'
+import { afterEach, describe, expect, it } from 'vitest'
+
+import { forgetPrefs } from '../lib/devicePref'
+import { smallWorld } from '../test/fakeServer'
+import { button, choose, click, mount, press, settle, unmount, where } from '../test/harness'
+
+afterEach(async () => {
+  await unmount()
+  forgetPrefs()
+})
+
+const sidebar = (page: HTMLElement) => page.querySelector('aside[data-testid="sidebar"]') as HTMLElement
+
+describe('the sidebar', () => {
+  it('has "+ New task" and the search under the logo, and the page head neither', async () => {
+    const { server, home } = smallWorld()
+    const page = await mount(server, `/lists/${home}`)
+    const places = sidebar(page).querySelector('[data-testid="sidebar-places"]')!
+    expect(places.firstElementChild?.querySelector('[data-testid="new-reminder"]')?.textContent).toBe('New task')
+    const search = places.querySelector('[data-testid="sidebar-search"]')!
+    expect(search.getAttribute('href')).toBe('/search')
+    expect(search.querySelector('[data-testid="search-key"]')?.textContent).toBe('Ctrl K')
+    const head = page.querySelector('main header')!
+    expect(head.querySelector('a[href="/search"]')).toBeNull()
+    expect(head.querySelector('[data-testid="new-reminder"]')).toBeNull()
+    // The button makes the task where the page's old button did: in the list shown.
+    await click(sidebar(page).querySelector('[data-testid="new-reminder"]'))
+    expect(where.path).toContain('reminder=new')
+    expect(page.querySelector('[data-testid="detail"]')?.getAttribute('data-draft')).toBe('true')
+  })
+
+  it('ends with the account and the way to the settings, chosen while they are open, without menu, theme or keys', async () => {
+    const { server } = smallWorld()
+    const page = await mount(server, '/today')
+    const foot = sidebar(page).querySelector('[data-testid="sidebar-account"]')!
+    expect(foot.getAttribute('href')).toBe('/settings')
+    expect(foot.querySelector('span.truncate')?.textContent).toBe('Robin · Settings')
+    expect(foot.className).not.toContain('nt-chosen')
+    expect(button(page, 'Account of Robin')).toBeUndefined()
+    expect(sidebar(page).querySelector('[role="radiogroup"], [aria-label="Keyboard shortcuts"]')).toBeNull()
+    await click(foot)
+    expect(where.path).toBe('/settings')
+    expect(sidebar(page).querySelector('[data-testid="sidebar-account"]')?.className).toContain('nt-chosen')
+    await click(page.querySelector('[data-testid="settings-nav-appearance"]'))
+    expect(where.path).toBe('/settings/appearance')
+    expect(sidebar(page).querySelector('[data-testid="sidebar-account"]')?.className).toContain('nt-chosen')
+  })
+
+  it('is as wide as one sets it with the keys, kept for the account on this device, a double click back to 260', async () => {
+    const { server, robin } = smallWorld()
+    const page = await mount(server, '/today')
+    const handle = page.querySelector('[data-testid="column-handle-sidebar"]')!
+    expect(handle.getAttribute('aria-valuenow')).toBe('260')
+    expect([handle.getAttribute('aria-valuemin'), handle.getAttribute('aria-valuemax')]).toEqual(['200', '440'])
+    await press(handle, 'ArrowRight')
+    expect(sidebar(page).style.width).toBe('276px')
+    expect(localStorage.getItem(`nextasks.column.sidebar.${robin}`)).toBe('276')
+    await press(handle, 'End')
+    expect(handle.getAttribute('aria-valuenow')).toBe('440')
+    await press(handle, 'Home')
+    expect(handle.getAttribute('aria-valuenow')).toBe('200')
+    await act(async () => void handle.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })))
+    await settle()
+    expect(sidebar(page).style.width).toBe('260px')
+    expect(localStorage.getItem(`nextasks.column.sidebar.${robin}`)).toBeNull()
+  })
+})
+
+describe('the settings', () => {
+  it('show the operator both groups and "About nextasks" apart at the end', async () => {
+    const { server } = smallWorld()
+    const page = await mount(server, '/settings')
+    const nav = page.querySelector('[data-testid="settings-nav"]')!
+    expect(nav.textContent).toContain('Robin')
+    expect([...nav.querySelectorAll('p[id^="settings-group-"]')].map((head) => head.textContent)).toEqual(['My account', 'Server'])
+    expect([...nav.querySelectorAll('ul a')].map((entry) => entry.textContent)).toEqual([
+      'Profile',
+      'Security',
+      'Appearance',
+      'Connections',
+      'Notifications',
+      'General',
+      'Sign-in',
+      'Mail',
+      'Storage and backups',
+      'Accounts',
+      'Log',
+    ])
+    expect(nav.querySelector('[data-testid="settings-nav-about"]')?.textContent).toBe('About nextasks')
+    expect(nav.querySelector('[data-testid="settings-nav-profile"]')?.getAttribute('aria-current')).toBe('page')
+  })
+
+  it('show a member only "My account", and lead a server address to the profile', async () => {
+    const { server, alex } = smallWorld()
+    server.session = alex
+    const page = await mount(server, '/settings/general')
+    expect(where.path).toBe('/settings')
+    const nav = page.querySelector('[data-testid="settings-nav"]')!
+    expect([...nav.querySelectorAll('p[id^="settings-group-"]')].map((head) => head.textContent)).toEqual(['My account'])
+    expect(nav.querySelector('[data-testid="settings-nav-general"]')).toBeNull()
+    expect([...page.querySelectorAll('[data-testid="settings-jump"] option')].map((option) => option.getAttribute('value'))).toEqual([
+      'profile',
+      'security',
+      'appearance',
+      'connections',
+      'notifications',
+      'about',
+    ])
+    for (const area of ['sign-in', 'mail', 'storage', 'accounts', 'log']) {
+      await unmount()
+      await mount(server, `/settings/${area}`)
+      expect(where.path).toBe('/settings')
+    }
+  })
+
+  it('lead the addresses of before to their area', async () => {
+    const { server } = smallWorld()
+    const cases: [string, string][] = [
+      ['/account', '/settings/profile'],
+      ['/account?tab=notifications', '/settings/notifications'],
+      ['/account?tab=connections', '/settings/connections'],
+      ['/account?linked=pocket', '/settings/security?linked=pocket'],
+      ['/about', '/settings/about'],
+      ['/settings?tab=looks', '/settings/appearance'],
+      ['/settings?tab=server&sub=backups', '/settings/storage'],
+      ['/settings?tab=server&sub=app', '/settings/general'],
+      ['/settings?tab=server&sub=api', '/settings/general'],
+    ]
+    for (const [before, now] of cases) {
+      await mount(server, before)
+      expect(where.path).toBe(now)
+      await unmount()
+    }
+  })
+
+  it('have the profile with name, role, the language for every device, and "Sign out" at its end', async () => {
+    const { server, robin } = smallWorld()
+    const page = await mount(server, '/settings/profile')
+    const area = page.querySelector('[data-testid="settings-area-profile"]')!
+    expect(area.querySelector('h1')?.textContent).toBe('Profile')
+    expect(area.querySelector('#profile')?.textContent).toContain('Role: Operator')
+    expect(area.querySelector('#profile')?.textContent).toContain('(on all your devices)')
+    const language = area.querySelector('[data-testid="language-select"]') as HTMLSelectElement
+    expect(language.options[0].textContent).toBe('As the browser')
+    await choose(language, 'de')
+    expect(server.accounts.get(robin)?.language).toBe('de')
+    const cards = [...area.querySelectorAll('section[id]')].map((card) => card.id)
+    expect(cards.at(-1)).toBe('sign-out')
+    await click(area.querySelector('[data-testid="sign-out"]'))
+    expect(server.session).toBeNull()
+    expect(where.path).toMatch(/^\/login/)
+  })
+
+  it('put light, dark and system under Appearance, with the keys there too', async () => {
+    const { server } = smallWorld()
+    const page = await mount(server, '/settings/appearance')
+    const looks = page.querySelector('#looks')!
+    expect([...looks.querySelectorAll('[role="radio"]')].map((choice) => choice.textContent)).toEqual(['Light', 'Dark', 'As the system'])
+    await click(button(looks, 'Light'))
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    await click(button(looks, 'Dark'))
+    expect(document.documentElement.getAttribute('data-theme')).toBeNull()
+    await click(page.querySelector('[data-testid="keys-open"]'))
+    expect(document.querySelector('[role="dialog"]')?.getAttribute('aria-label')).toBe('Keyboard shortcuts')
+  })
+
+  it('draw every switch as a box in a row, never a sliding switch', async () => {
+    const { server } = smallWorld()
+    const page = await mount(server, '/settings/general')
+    const switches = [...page.querySelectorAll('input[role="switch"]')] as HTMLInputElement[]
+    expect(switches.length).toBeGreaterThan(3)
+    expect(switches.every((entry) => entry.type === 'checkbox' && entry.closest('label') !== null)).toBe(true)
+    expect(page.querySelector('.nt-switch')).toBeNull()
+    expect(page.querySelector('#api-tokens')?.textContent).toContain('Accounts may create API tokens')
+    expect(page.querySelector('#app')).not.toBeNull()
+    expect(page.querySelector('#languages')).not.toBeNull()
+  })
+})

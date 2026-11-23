@@ -111,13 +111,13 @@ describe('the own look (docs "Aussehen")', () => {
     expect(page.querySelector('[data-testid^="tile-count-"]')).toBeNull()
   })
 
-  it('heads a list with its plaque and the title in the colour of text, and offers "New task"', async () => {
+  it('heads a list with its plaque and the title in the colour of text, and offers "New task" in the sidebar', async () => {
     const { server, home } = world()
     const page = await mount(server, `/lists/${home}`)
     const head = page.querySelector('main header')!
     expect(head.querySelector('[data-plaque]')).not.toBeNull()
     expect((head.querySelector('h1') as HTMLElement).style.color).toBe('')
-    expect(page.querySelector('[data-testid="new-reminder"]')?.textContent).toBe('New task')
+    expect(page.querySelector('aside [data-testid="new-reminder"]')?.textContent).toBe('New task')
     expect(page.textContent).not.toMatch(/reminder/i)
   })
 })
@@ -573,9 +573,9 @@ describe('hiding a space (space_pref)', () => {
     expect(reminder(server, 'Call the plumber')?.data.list_id).toBe(home)
   })
 
-  it('is switched in the settings, one switch per space', async () => {
+  it('is switched in the settings (Appearance), one switch per space', async () => {
     const { server, family, robin } = world()
-    const page = await mount(server, '/settings')
+    const page = await mount(server, '/settings/appearance')
     const toggle = page.querySelector<HTMLInputElement>('#spaces input[aria-label="Family"]')!
     expect(toggle.checked).toBe(true)
     await click(toggle)
@@ -710,7 +710,7 @@ describe('spaces and people', () => {
 
   it('switches the iPhone app and invitations off for the operator', async () => {
     const { server } = world()
-    const page = await mount(server, '/settings?tab=server&sub=app')
+    const page = await mount(server, '/settings/general')
     const toggle = (label: string) => [...page.querySelectorAll('label')].find((l) => l.textContent?.startsWith(label))?.querySelector('input')
     await click(toggle('Invitations to spaces'))
     expect(server.settings.invites_enabled).toBe(false)
@@ -720,7 +720,7 @@ describe('spaces and people', () => {
 
   it('invites a new account into nextasks without promising a space it cannot choose', async () => {
     const { server } = world()
-    const page = await mount(server, '/settings?tab=server&sub=accounts')
+    const page = await mount(server, '/settings/accounts')
     const card = page.querySelector('#invite')
     expect(card?.textContent).toContain('without a space yet')
     expect([...(card?.querySelectorAll('label') ?? [])].map((l) => l.textContent)).not.toContain('Space')
@@ -730,7 +730,7 @@ describe('spaces and people', () => {
   it('pairs an iPhone with a QR code and shows it among the devices', async () => {
     const { server } = world()
     server.settings.public_url = 'https://tasks.example.com'
-    const page = await mount(server, '/account?tab=connections')
+    const page = await mount(server, '/settings/connections')
     await click(page.querySelector('[data-testid="pair-start"]'))
     expect(page.querySelector('[data-testid="pair-code"]')?.textContent).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/)
     expect(page.querySelector('[data-testid="pairing"] img')?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/)
@@ -803,7 +803,7 @@ describe('own filters and the sidebar overview (filter, tile_pref)', () => {
   it('switches collections and filters with the eyes of the settings; a hidden filter stays there', async () => {
     const { server, robin } = world()
     const secret = server.addFilter(robin, 'Secret', {}, { hidden: true })
-    const page = await mount(server, '/settings')
+    const page = await mount(server, '/settings/appearance')
     const card = page.querySelector('#sidebar')!
     expect([...card.querySelectorAll('[data-testid^="pref-tile-"][data-testid$="-eye"]')]).toHaveLength(6)
     const eye = card.querySelector('[data-testid="pref-tile-today-eye"]')!
@@ -877,7 +877,7 @@ describe('own filters and the sidebar overview (filter, tile_pref)', () => {
   it('offers neither filters nor the eyes when the server does not know them', async () => {
     const { server } = world()
     server.features = server.features.filter((word) => word !== 'filters')
-    const page = await mount(server, '/settings')
+    const page = await mount(server, '/settings/appearance')
     expect(page.querySelector('[data-testid="new-filter"]')).toBeNull()
     expect(page.querySelector('#sidebar')).toBeNull()
     expect(page.querySelector('#spaces')).not.toBeNull()

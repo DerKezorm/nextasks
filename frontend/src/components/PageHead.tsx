@@ -1,9 +1,11 @@
 /**
  * The head of the middle column (docs "Aussehen", "Web"): the title in the text's colour, bold, a grey line below it,
- * on a list its plaque in front. On the right the search, what the page adds (view, menu) and "+ New task". On a phone
- * a way back to the overview comes first.
+ * on a list its plaque in front, on the right what the page adds (view, menu). "+ New task" and the search stand in the
+ * sidebar, as in nexnotes; the page tells it where a new task goes (`target`, N does the same). On a phone, where the
+ * sidebar is a page of its own, a way back to the overview comes first, and "+ New task" is a large round button at
+ * the bottom right, as nexnotes' "New note" there.
  */
-import { ChevronLeft, Plus, Search } from 'lucide-react'
+import { ChevronLeft, Plus } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -11,7 +13,7 @@ import { Link } from 'react-router-dom'
 import type { NewTarget } from './DetailPane'
 import { useShell } from './Shell'
 
-export function PageHead({ id, title, sub, plaque, children, newTask = true, search = true, target }: { id: string; title: string; sub?: ReactNode; plaque?: ReactNode; children?: ReactNode; newTask?: boolean; search?: boolean; target?: NewTarget | null }) {
+export function PageHead({ id, title, sub, plaque, children, newTask = true, target }: { id: string; title: string; sub?: ReactNode; plaque?: ReactNode; children?: ReactNode; newTask?: boolean; target?: NewTarget | null }) {
   const { t } = useTranslation()
   const shell = useShell()
   // N anywhere on the page makes the same new task as the button.
@@ -32,20 +34,19 @@ export function PageHead({ id, title, sub, plaque, children, newTask = true, sea
           </h1>
           {sub && <p className="text-[13.5px] text-mist-500 sm:truncate">{sub}</p>}
         </div>
-        {search && (
-          <Link to="/search" className="nc-btn nc-btn-ghost px-2.5 font-normal sm:px-3" aria-label={t('search.title')} title={`${t('search.title')} (${t('keys.ctrl')} K)`}>
-            <Search className="h-4 w-4" aria-hidden />
-            <span className="hidden lg:inline">{t('search.title')}</span>
-          </Link>
-        )}
         {children}
-        {newTask && (
-          <button type="button" onClick={() => shell.newTask(target ?? undefined)} className="nc-btn nc-btn-accent px-2.5 sm:px-3.5" title={t('keys.new')} aria-label={t('reminder.new')} data-testid="new-reminder">
-            <Plus className="h-4 w-4" strokeWidth={2.4} aria-hidden />
-            <span className="hidden sm:inline">{t('reminder.new')}</span>
-          </button>
-        )}
       </div>
+      {newTask && (
+        <button
+          type="button"
+          onClick={() => shell.newTask(target ?? undefined)}
+          aria-label={t('reminder.new')}
+          data-testid="phone-new-reminder"
+          className="nt-safe-bottom fixed right-4 bottom-7 z-20 flex h-14 w-14 items-center justify-center rounded-[18px] bg-accent-500 text-on-accent shadow-lg md:hidden"
+        >
+          <Plus className="h-[22px] w-[22px]" strokeWidth={2.6} aria-hidden />
+        </button>
+      )}
     </header>
   )
 }

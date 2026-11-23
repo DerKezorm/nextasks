@@ -917,7 +917,7 @@ export class FakeServer {
     if (path === '/api/accounts') return { status: 200, body: [...this.accounts.values()].map((a) => ({ ...this.oldMe(a), locked: false, created_at: this.iso(), last_seen_at: null })) }
     if (path === '/api/invites' || path === '/api/backups') return { status: 200, body: [] }
     if (path === '/api/logs') return { status: 200, body: { entries: [], level: 'info' } }
-    if (path === '/api/about') return { status: 200, body: { version: 'dev' } }
+    if (path === '/api/about') return { status: 200, body: { version: 'dev', license: 'AGPL-3.0', repo_url: 'https://github.com/example/nextasks', releases_url: 'https://github.com/example/nextasks/releases', project_url: '' } }
     if (path === '/api/me/whats-new/seen') return { status: 200, body: this.oldMe(me) }
     if (path === '/api/app-devices' && method === 'GET') return { status: 200, body: this.devices.filter((d) => d.account === me.id).map(({ account: _a, ...d }) => d) }
     const device = path.match(/^\/api\/app-devices\/([^/]+)$/)

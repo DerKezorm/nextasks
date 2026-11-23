@@ -26,12 +26,6 @@ export function storedMode(): Mode {
   }
 }
 
-/** The mode as it shows now: the system's when that was chosen. */
-export function storedTheme(): Theme {
-  const mode = storedMode()
-  return mode === 'system' ? systemTheme() : mode
-}
-
 function paint(theme: Theme): void {
   const root = document.documentElement
   if (theme === 'light') root.setAttribute('data-theme', 'light')
@@ -48,10 +42,6 @@ export function applyMode(mode: Mode): void {
   } catch {
     // Then the choice only holds until the next reload.
   }
-}
-
-export function applyTheme(theme: Theme): void {
-  applyMode(theme)
 }
 
 /** While the mode is the system's, the page changes along when the system does. Once, at the start. */

@@ -147,6 +147,16 @@ export async function changeLanguage(code: string, remember = true): Promise<boo
   return true
 }
 
+/** "As the browser" (the account's language left empty): this browser forgets its own choice and speaks its language. */
+export async function followBrowser(): Promise<void> {
+  try {
+    localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // Nothing kept, nothing to forget.
+  }
+  await changeLanguage(browserLanguage(), false)
+}
+
 /** The English texts as a file to translate, with the `_meta` entry the server reads the name from. */
 export function templateFile(): Blob {
   const template = { _meta: { name: 'Name of the language in itself, for example Español' }, ...en }

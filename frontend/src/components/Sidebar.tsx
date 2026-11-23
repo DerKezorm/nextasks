@@ -4,30 +4,34 @@
  * "Filters", each with its plaque and, for open tasks, its number; one block per space with a small head (its
  * symbol, its name in capitals, the members of a shared one) and its lists, each a row with its plaque. Lists and
  * spaces are sorted by dragging; a task dropped on a list moves there. Spaces one hid wait folded under "Hidden spaces
- * (n)" to be shown again. At the bottom: new list, new space, new filter, the trash, how the sync stands, and the account with
- * light/dark and the keys. On a phone the same is a page of its own.
+ * (n)" to be shown again. At the bottom: new list, new space, new filter, the trash, how the sync stands. As in nexnotes,
+ * "+ New task" and the search stand under the logo, the account with the way to the settings at the foot (on the chosen
+ * ground while the settings are open), and the column is as wide as one drags it (`ColumnHandle`, `lib/columns.ts`).
+ * On a phone the same is a page of its own, without the handle.
  */
-import { ChevronDown, ChevronRight, CloudOff, Eye, EyeOff, FolderPlus, FunnelPlus, Keyboard, ListPlus, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react'
+import { ChevronDown, ChevronRight, CloudOff, Eye, EyeOff, FolderPlus, FunnelPlus, ListPlus, MoreHorizontal, Pencil, Plus, Search, Settings, Trash2, Users } from 'lucide-react'
 import { createElement, useState, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 
 import { moveList, moveReminder, moveSpace, setSpaceHidden, siblingsAt } from '../lib/actions'
+import { useColumnWidth } from '../lib/columns'
 import { localDay } from '../lib/due'
 import { dragging, draggedReminder, DRAG_LIST, DRAG_SPACE } from '../lib/drag'
 import { iconFor } from '../lib/look'
 import { TILE_LOOK } from '../lib/tileLook'
+import { useAuth } from '../state/auth'
 import { useEngine, useFiltersOffered, useSyncState, useView } from '../state/sync'
 import { filterCount, shownTiles, tileCount } from '../sync/tiles'
 import type { Filter, List, Space } from '../sync/types'
-import { AccountMenu } from './AccountMenu'
+import { Avatar } from './Avatar'
 import { Badge } from './Badge'
+import { ColumnHandle } from './ColumnHandle'
 import { Logo } from './Logo'
 import { useFilterMenu, useHideSpace, useListMenu, useSpaceMenu } from './Menus'
 import { AvatarStack } from './People'
 import { Popover } from './Popover'
 import { useShell } from './Shell'
-import { ThemeSwitcher } from './ThemeSwitcher'
 
 /** A row of the sidebar; the chosen one on a light petrol ground with petrol text. */
 const row = (active: boolean) =>
@@ -35,11 +39,19 @@ const row = (active: boolean) =>
 
 export function Sidebar() {
   const { t } = useTranslation()
+  const [width] = useColumnWidth('sidebar')
   return (
-    <aside className="nc-scroll hidden w-64 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-ink-700 bg-ink-900 md:flex" aria-label={t('sidebar.label')}>
-      <SidebarBody />
-    </aside>
+    <div className="relative hidden shrink-0 md:flex">
+      <aside style={{ width }} className="flex flex-col overflow-hidden border-r border-ink-700 bg-ink-900" aria-label={t('sidebar.label')} data-testid="sidebar">
+        <SidebarBody />
+      </aside>
+      <ColumnHandle column="sidebar" />
+    </div>
   )
+}
+
+function isMac(): boolean {
+  return typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
 }
 
 export function SidebarBody() {
@@ -50,65 +62,107 @@ export function SidebarBody() {
   const filtersOffered = useFiltersOffered()
   const today = localDay()
   return (
-    <div className="flex min-h-full flex-col px-2.5 pt-3 pb-2">
-      <Link to="/today" className="mb-3 flex items-center gap-2.5 self-start rounded-lg px-1.5 py-1" aria-label={t('app.home')}>
-        <Logo className="h-7 w-7" />
-        <span className="text-lg font-bold tracking-tight text-mist-100">
-          NEX<span className="text-accent-500">TASKS</span>
-        </span>
-      </Link>
-
-      <nav aria-label={t('tiles.label')} className="space-y-px">
-        {shownTiles(view).map((tile) => {
-          const count = sync.loaded ? tileCount(view, tile, today) : null
-          return (
-            <NavLink key={tile} to={`/${tile}`} data-testid={`tile-${tile}`} className={({ isActive }) => row(isActive)}>
-              {createElement(TILE_LOOK[tile].icon, { className: 'h-[18px] w-[18px] shrink-0 text-accent-400', strokeWidth: 2, 'aria-hidden': true })}
-              <span className="min-w-0 flex-1 truncate">{t(`tiles.${tile}`)}</span>
-              {count ? (
-                <span className="text-[12.5px] font-normal text-mist-600 tabular-nums" data-testid={`tile-count-${tile}`}>
-                  {count}
-                </span>
-              ) : null}
-            </NavLink>
-          )
-        })}
-      </nav>
-
-      {filtersOffered && view.shownFilters.length > 0 && <Filters />}
-
-      <div className="mt-2" data-testid="spaces">
-        {view.shownSpaces.map((space) => (
-          <SpaceBlock key={space.id} space={space} index={view.spaces.indexOf(space)} />
-        ))}
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="px-2.5 pt-3">
+        <Link to="/today" className="mb-3 flex items-center gap-2.5 self-start rounded-lg px-1.5 py-1" aria-label={t('app.home')}>
+          <Logo className="h-7 w-7" />
+          <span className="text-lg font-bold tracking-tight text-mist-100">
+            NEX<span className="text-accent-500">TASKS</span>
+          </span>
+        </Link>
       </div>
-      {view.hiddenSpaces.length > 0 && <HiddenSpaces />}
-
-      <div className="mt-auto space-y-px pt-4">
-        <button type="button" onClick={() => shell.newList()} className={row(false) + ' w-full text-left'}>
-          <ListPlus className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('sidebar.newList')}
-        </button>
-        <button type="button" onClick={() => shell.newSpace()} className={row(false) + ' w-full text-left'}>
-          <FolderPlus className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('sidebar.newSpace')}
-        </button>
-        {filtersOffered && (
-          <button type="button" onClick={() => shell.newFilter()} className={row(false) + ' w-full text-left'} data-testid="new-filter">
-            <FunnelPlus className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('filter.new')}
+      <div className="nc-scroll flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-2.5 pb-2" data-testid="sidebar-places">
+        {/* "+ New task" and the search, as nexnotes' "+ New note" and its field "Search". */}
+        <div className="flex flex-col gap-1 pb-2">
+          <button type="button" className="nt-btn nt-btn-accent w-full" onClick={() => shell.newTask()} title={`${t('keys.new')} (N)`} data-testid="new-reminder">
+            <Plus className="h-4 w-4" strokeWidth={2.4} aria-hidden />
+            {t('reminder.new')}
           </button>
-        )}
-        <NavLink to="/trash" className={({ isActive }) => row(isActive)}>
-          <Trash2 className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('trash.title')}
+        </div>
+        <NavLink
+          to="/search"
+          data-testid="sidebar-search"
+          aria-keyshortcuts={isMac() ? 'Meta+K /' : 'Control+K /'}
+          className={({ isActive }) =>
+            'mb-2 flex h-9 items-center gap-2 rounded-[9px] border px-2.5 text-[13.5px] ' +
+            (isActive ? 'border-accent-500 text-accent-400' : 'border-ink-700 text-mist-500 hover:bg-ink-800 hover:text-mist-100')
+          }
+        >
+          <Search className="h-[15px] w-[15px]" strokeWidth={2} aria-hidden />
+          <span className="flex-1">{t('search.field')}</span>
+          <kbd className="hidden md:inline" data-testid="search-key">
+            {isMac() ? '⌘ K' : t('search.key')}
+          </kbd>
         </NavLink>
-        <SyncLine />
-        <div className="mt-2 flex items-center gap-2 border-t border-ink-700 px-1 pt-3">
-          <AccountMenu up />
-          <span className="flex-1" />
-          <button type="button" onClick={() => shell.openKeys()} className="hidden rounded-lg p-1.5 text-mist-500 hover:bg-ink-800 hover:text-mist-100 lg:block" aria-label={t('keys.title')} title={t('keys.title')}>
-            <Keyboard className="h-4 w-4" />
+
+        <nav aria-label={t('tiles.label')} className="space-y-px">
+          {shownTiles(view).map((tile) => {
+            const count = sync.loaded ? tileCount(view, tile, today) : null
+            return (
+              <NavLink key={tile} to={`/${tile}`} data-testid={`tile-${tile}`} className={({ isActive }) => row(isActive)}>
+                {createElement(TILE_LOOK[tile].icon, { className: 'h-[18px] w-[18px] shrink-0 text-accent-400', strokeWidth: 2, 'aria-hidden': true })}
+                <span className="min-w-0 flex-1 truncate">{t(`tiles.${tile}`)}</span>
+                {count ? (
+                  <span className="text-[12.5px] font-normal text-mist-600 tabular-nums" data-testid={`tile-count-${tile}`}>
+                    {count}
+                  </span>
+                ) : null}
+              </NavLink>
+            )
+          })}
+        </nav>
+
+        {filtersOffered && view.shownFilters.length > 0 && <Filters />}
+
+        <div className="mt-2" data-testid="spaces">
+          {view.shownSpaces.map((space) => (
+            <SpaceBlock key={space.id} space={space} index={view.spaces.indexOf(space)} />
+          ))}
+        </div>
+        {view.hiddenSpaces.length > 0 && <HiddenSpaces />}
+
+        <div className="mt-auto space-y-px pt-4">
+          <button type="button" onClick={() => shell.newList()} className={row(false) + ' w-full text-left'}>
+            <ListPlus className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('sidebar.newList')}
           </button>
-          <ThemeSwitcher />
+          <button type="button" onClick={() => shell.newSpace()} className={row(false) + ' w-full text-left'}>
+            <FolderPlus className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('sidebar.newSpace')}
+          </button>
+          {filtersOffered && (
+            <button type="button" onClick={() => shell.newFilter()} className={row(false) + ' w-full text-left'} data-testid="new-filter">
+              <FunnelPlus className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('filter.new')}
+            </button>
+          )}
+          <NavLink to="/trash" className={({ isActive }) => row(isActive)}>
+            <Trash2 className="h-[18px] w-[18px] text-mist-500" aria-hidden /> {t('trash.title')}
+          </NavLink>
+          <SyncLine />
         </div>
       </div>
+      <AccountLine />
+    </div>
+  )
+}
+
+/** The foot of the sidebar, as nexnotes': the account, and the way to the settings, on the chosen ground while they are open. */
+function AccountLine() {
+  const { t } = useTranslation()
+  const { me } = useAuth()
+  const shown = me?.display_name || me?.name || ''
+  const person = me ? { id: me.id, name: me.name, display_name: me.display_name, avatar: me.avatar } : { id: 0, name: '', avatar: null }
+  return (
+    <div className="border-t border-ink-700 p-2">
+      <NavLink
+        to="/settings"
+        data-testid="sidebar-account"
+        className={({ isActive }) => 'flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-sm transition-colors ' + (isActive ? 'nt-chosen' : 'text-mist-300 hover:bg-ink-800 hover:text-mist-100')}
+      >
+        <Avatar person={person} className="h-7 w-7 text-xs" />
+        <span className="min-w-0 flex-1 truncate" title={`${shown} · ${t('settings.title')}`}>
+          {shown} · {t('settings.title')}
+        </span>
+        <Settings className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden />
+      </NavLink>
     </div>
   )
 }

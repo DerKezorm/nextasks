@@ -51,7 +51,7 @@ function Line({ label, text, copied, onCopy }: { label: string; text: string; co
     <div className="mt-2">
       <div className="mb-1 flex items-center gap-2 text-xs text-mist-400">
         <span className="flex-1">{label}</span>
-        <button type="button" onClick={onCopy} aria-label={t('apiTokens.copyNamed', { what: label })} className="rounded-full border border-ink-700 px-2 py-0.5 text-[11px] text-mist-300 hover:bg-ink-850">
+        <button type="button" onClick={onCopy} aria-label={t('apiTokens.copyNamed', { what: label })} className="nt-btn nt-btn-ghost h-7 px-2 text-[11px] font-medium">
           {copied ? t('common.copied') : t('common.copy')}
         </button>
       </div>
@@ -98,7 +98,7 @@ export function ApiTokens() {
         <p className="text-sm text-mist-500" data-testid="api-tokens-off">
           {t('apiTokens.off')}{' '}
           {me?.role === 'operator' && (
-            <Link to="/settings?tab=server&sub=api" className="text-accent-400 hover:underline">
+            <Link to="/settings/general#api-tokens" className="text-accent-400 hover:underline">
               {t('apiTokens.offOperator')}
             </Link>
           )}
@@ -158,7 +158,7 @@ export function ApiTokens() {
           <p className="font-semibold text-mist-100">{t('apiTokens.shownOnce', { name: shown.name })}</p>
           <div className="mt-2 flex items-center gap-2">
             <code className="min-w-0 flex-1 truncate rounded-lg bg-ink-950 px-2 py-1.5 font-mono text-xs text-mist-200">{shown.secret}</code>
-            <button type="button" onClick={() => copy('token', shown.secret)} className="shrink-0 rounded-full bg-accent-500 px-3 py-1 text-xs font-semibold text-on-accent">
+            <button type="button" onClick={() => copy('token', shown.secret)} className="nt-btn nt-btn-accent h-8 shrink-0 px-3 text-xs">
               {copied === 'token' ? t('common.copied') : t('common.copy')}
             </button>
           </div>
@@ -229,7 +229,7 @@ export function ApiTokens() {
         </details>
       )}
       {!making ? (
-        <button type="button" onClick={() => setMaking(true)} className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-ink-700 px-3 py-1.5 text-sm text-mist-200 hover:bg-ink-850">
+        <button type="button" onClick={() => setMaking(true)} className="nt-btn nt-btn-ghost mt-3">
           <Plus className="h-4 w-4" strokeWidth={1.8} /> {t('apiTokens.new')}
         </button>
       ) : (
@@ -306,10 +306,10 @@ export function ApiTokens() {
           </fieldset>
           <KeysWait />
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setMaking(false)} className="rounded-full px-3 py-1 text-sm text-mist-400">
+            <button type="button" onClick={() => setMaking(false)} className="nt-btn nt-btn-ghost">
               {t('common.cancel')}
             </button>
-            <button type="submit" disabled={!ready || busy} className="rounded-full bg-accent-500 px-3 py-1 text-sm font-semibold text-on-accent disabled:opacity-50">
+            <button type="submit" disabled={!ready || busy} className="nt-btn nt-btn-accent">
               {t('apiTokens.make')}
             </button>
           </div>

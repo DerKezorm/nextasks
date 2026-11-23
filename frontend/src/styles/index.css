@@ -160,6 +160,40 @@
     @apply border border-ink-700 bg-ink-850 text-mist-200 hover:bg-ink-800 hover:text-mist-100;
   }
 
+  /* The buttons, field and chosen row of nexnotes (its `.nn-btn`, `.nn-field`, `.nn-chosen`): the settings, the sidebar's
+     "+ New task" and the account at its foot look and feel the same in both apps; only the accent is petrol. */
+  .nt-btn {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-[9px] px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-ink-800 disabled:text-mist-600;
+  }
+
+  /* The one main action. */
+  .nt-btn-accent {
+    @apply bg-accent-500 text-on-accent hover:bg-accent-600;
+  }
+
+  /* Secondary: an edge, no ground. */
+  .nt-btn-ghost {
+    @apply border border-edge text-mist-200 hover:bg-ink-800 hover:text-mist-100;
+  }
+
+  /* Danger: only for deleting and what cannot be undone. */
+  .nt-btn-danger {
+    @apply bg-bad-500 text-on-bad hover:opacity-90;
+  }
+
+  .nt-field {
+    @apply h-10 w-full rounded-[9px] border border-edge bg-ink-900 px-3 text-sm text-mist-100 placeholder:text-mist-600 focus:border-accent-500 focus:outline-none;
+  }
+
+  .nt-field:focus {
+    box-shadow: 0 0 0 3px rgb(56 169 196 / 0.22);
+  }
+
+  /* The chosen row: the sidebar's, the settings' navigation, the account at the foot while the settings are open. */
+  .nt-chosen {
+    @apply bg-chosen text-accent-400;
+  }
+
   /* A small round label: due date, priority, kind of task. */
   .nt-chip {
     @apply inline-flex shrink-0 items-center gap-1 rounded-md border border-ink-700 px-2 py-0.5 text-[11px] font-medium text-mist-500;
@@ -202,24 +236,6 @@
   /* A sheet from below keeps its last entry above the home bar. */
   .nt-sheet {
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  }
-
-  /* A switch (cards of "Notifications" on a phone): a checkbox drawn as a pill, petrol when on. */
-  .nt-switch {
-    @apply relative h-6 w-10 shrink-0 cursor-pointer appearance-none rounded-full border border-ink-600 bg-ink-800 transition-colors disabled:cursor-not-allowed disabled:opacity-40;
-  }
-
-  .nt-switch::after {
-    @apply absolute top-0.5 left-0.5 h-[18px] w-[18px] rounded-full bg-white shadow transition-transform;
-    content: '';
-  }
-
-  .nt-switch:checked {
-    @apply border-petrol bg-petrol;
-  }
-
-  .nt-switch:checked::after {
-    @apply translate-x-4;
   }
 
   /* The priority as a word on a small plaque. */

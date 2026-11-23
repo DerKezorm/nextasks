@@ -1,33 +1,39 @@
-import { Moon, Sun } from 'lucide-react'
+import { Monitor, Moon, Sun } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { applyTheme, storedTheme, type Theme } from '../lib/theme'
+import { applyMode, storedMode, type Mode } from '../lib/theme'
 
-/** Light/dark as two small buttons. The choice stays in the browser. */
-export function ThemeSwitcher() {
+/** Light, dark or as the system, as nexnotes': the choice belongs to this device and stays here. */
+export function ThemeSwitcher({ withWords = false }: { withWords?: boolean }) {
   const { t } = useTranslation()
-  const [theme, setTheme] = useState<Theme>(storedTheme())
+  const [mode, setMode] = useState<Mode>(storedMode())
   const modes = [
-    { value: 'dark' as const, label: t('theme.dark'), Icon: Moon },
     { value: 'light' as const, label: t('theme.light'), Icon: Sun },
+    { value: 'dark' as const, label: t('theme.dark'), Icon: Moon },
+    { value: 'system' as const, label: t('theme.system'), Icon: Monitor },
   ]
   return (
-    <div className="flex items-center rounded-[9px] border border-ink-700 bg-ink-850 p-0.5" role="group" aria-label={t('theme.group')}>
+    <div className="inline-flex flex-wrap items-center gap-0.5 rounded-[9px] border border-ink-700 bg-ink-850 p-0.5" role="radiogroup" aria-label={t('theme.group')}>
       {modes.map(({ value, label, Icon }) => (
         <button
           key={value}
           type="button"
+          role="radio"
           onClick={() => {
-            applyTheme(value)
-            setTheme(value)
+            applyMode(value)
+            setMode(value)
           }}
-          aria-pressed={theme === value}
+          aria-checked={mode === value}
           title={label}
-          aria-label={label}
-          className={'rounded-[7px] p-1.5 transition-colors ' + (theme === value ? 'bg-chosen text-accent-400' : 'text-mist-500 hover:text-mist-100')}
+          aria-label={withWords ? undefined : label}
+          className={
+            'inline-flex items-center gap-1.5 rounded-[7px] px-2 py-1.5 text-sm transition-colors ' +
+            (mode === value ? 'bg-accent-500 font-semibold text-on-accent' : 'text-mist-500 hover:text-mist-100')
+          }
         >
-          <Icon className="h-3.5 w-3.5" strokeWidth={2.2} />
+          <Icon className="h-3.5 w-3.5" strokeWidth={2.2} aria-hidden />
+          {withWords && <span className="max-w-[9rem] truncate">{label}</span>}
         </button>
       ))}
     </div>

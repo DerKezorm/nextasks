@@ -31,7 +31,7 @@ export function Field({
           autoFocus={autoFocus}
           aria-describedby={hint ? hintId : undefined}
           onChange={(event) => onChange(event.target.value)}
-          className="mt-1 h-10 w-full rounded-lg border border-ink-700 bg-ink-850 px-3 text-sm text-mist-100 outline-none focus:border-accent-500"
+          className="nt-field mt-1"
         />
       </label>
       {hint && (
@@ -46,7 +46,7 @@ export function Field({
 export function Problem({ text }: { text: string | null }) {
   if (!text) return null
   return (
-    <p role="alert" className="rounded-lg border border-bad-500/30 bg-bad-500/10 px-3 py-2 text-sm text-bad-500">
+    <p role="alert" className="rounded-[9px] border border-bad-500/30 bg-bad-500/10 px-3 py-2 text-sm text-bad-500">
       {text}
     </p>
   )

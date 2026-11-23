@@ -1,6 +1,6 @@
 /**
- * The frame (docs "Aussehen", "Web"): the sidebar with logo, collections, spaces and the account; the page, which
- * carries its own head with "+ New task"; the detail of a task as a card in the middle over the blurred page
+ * The frame (docs "Aussehen", "Web"): the sidebar with logo, "+ New task", the search, collections, spaces and the
+ * account with the way to the settings (as nexnotes'); the page with its own head; the detail of a task as a card in the middle over the blurred page
  * (`?reminder=`, a click on the task) and, switched on and off by the small button of a row, as a column on the right
  * (`?pane=`). There is no bar across the top. Keys: N new task, / or Ctrl+K search, X tick off, F mark, Enter open,
  * Esc close, ? the list of keys; with a task open only X, F and Esc.
@@ -23,8 +23,10 @@ import { FilterDialog } from './FilterDialog'
 import { ListDialog, SpaceDialog } from './ThingDialogs'
 import { WhatsNewBanner } from './WhatsNew'
 
-/** Pages without a head of their own: on a phone they get the way back to the overview above them. */
-const PLAIN = ['/settings', '/account', '/about', '/trash']
+/** Pages without a head of their own (the settings with all their areas, the trash): on a phone they get the way back
+ * to the overview above them. */
+const PLAIN = ['/settings', '/trash']
+const plainPage = (path: string) => PLAIN.some((start) => path === start || path.startsWith(start + '/'))
 
 type Open = { kind: 'list'; list: string | null; space?: string } | { kind: 'space'; space: string | null } | { kind: 'filter'; filter: string | null } | { kind: 'members'; space: string } | { kind: 'keys' } | null
 
@@ -216,7 +218,7 @@ export function AppShell() {
               {t('sync.serverOld')}
             </p>
           )}
-          {PLAIN.includes(location.pathname) && (
+          {plainPage(location.pathname) && (
             <div className="shrink-0 border-b border-ink-700 bg-ink-900 px-4 pt-3 pb-1 md:hidden">
               <BackToOverview />
             </div>
@@ -265,6 +267,7 @@ function KeysDialog({ onClose }: { onClose: () => void }) {
     ['F', t('keys.flag')],
     ['Entf', t('keys.delete')],
     ['Esc', t('keys.close')],
+    ['?', t('keys.title')],
   ]
   return (
     <Dialog title={t('keys.title')} onClose={onClose}>

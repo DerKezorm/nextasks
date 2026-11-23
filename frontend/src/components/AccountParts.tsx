@@ -48,7 +48,7 @@ export function TimeZone() {
     <Section icon={Clock3} title={t('zone.title')}>
       <p className="mb-3 text-sm text-mist-400">{t('zone.text')}</p>
       <div className="flex flex-wrap items-center gap-2">
-        <select aria-label={t('zone.title')} className="rounded-lg border border-ink-700 bg-ink-850 px-2.5 py-1.5 text-sm text-mist-100" value={current} onChange={(e) => save(e.target.value)} data-testid="timezone">
+        <select aria-label={t('zone.title')} className="nt-field w-auto max-w-full px-2" value={current} onChange={(e) => save(e.target.value)} data-testid="timezone">
           {options.map((zone) => (
             <option key={zone} value={zone}>
               {zone}
@@ -56,7 +56,7 @@ export function TimeZone() {
           ))}
         </select>
         {browser && browser !== current && (
-          <button type="button" className="nc-btn nc-btn-ghost" onClick={() => save(browser)}>
+          <button type="button" className="nt-btn nt-btn-ghost" onClick={() => save(browser)}>
             {t('zone.useBrowser', { zone: browser })}
           </button>
         )}
@@ -116,7 +116,7 @@ export function AppDevices() {
     <Section icon={Smartphone} title={t('device.title')}>
       <p className="mb-3 text-sm text-mist-400">{t('device.text')}</p>
       {!pairing && (
-        <button type="button" className="nc-btn nc-btn-accent" onClick={() => void start()} data-testid="pair-start">
+        <button type="button" className="nt-btn nt-btn-accent" onClick={() => void start()} data-testid="pair-start">
           <QrCode className="h-4 w-4" /> {t('device.connect')}
         </button>
       )}
@@ -139,7 +139,7 @@ export function AppDevices() {
                 <p className="text-xs text-mist-500">{t('device.until', { when: moment(pairing.expires_at, i18n.language) })}</p>
               </>
             )}
-            <button type="button" className="nc-btn nc-btn-ghost" onClick={() => void stop()}>
+            <button type="button" className="nt-btn nt-btn-ghost" onClick={() => void stop()}>
               {state === 'waiting' ? t('common.cancel') : t('common.close')}
             </button>
           </div>
@@ -156,7 +156,7 @@ export function AppDevices() {
               <span className="block truncate text-mist-100">{device.name}</span>
               <span className="text-xs text-mist-500">{device.last_seen ? t('device.seen', { when: moment(device.last_seen, i18n.language) }) : t('device.since', { when: moment(device.created_at, i18n.language) })}</span>
             </span>
-            <button type="button" className="nc-btn nc-btn-ghost text-bad-500" aria-label={t('device.removeName', { name: device.name })} onClick={() => void api(`/api/app-devices/${device.id}`, { method: 'DELETE' }).then(load, (error) => setProblem(errorText(codeOf(error))))}>
+            <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium text-bad-500" aria-label={t('device.removeName', { name: device.name })} onClick={() => void api(`/api/app-devices/${device.id}`, { method: 'DELETE' }).then(load, (error) => setProblem(errorText(codeOf(error))))}>
               <Trash2 className="h-3.5 w-3.5" /> {t('device.remove')}
             </button>
           </li>

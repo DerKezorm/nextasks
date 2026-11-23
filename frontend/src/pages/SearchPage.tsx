@@ -31,7 +31,7 @@ export function SearchPage() {
   return (
     <main className="nc-scroll min-w-0 flex-1 overflow-y-auto">
       <div className="px-4 py-5 sm:px-7 sm:py-6">
-        <PageHead id="search-title" title={t('search.title')} search={false} />
+        <PageHead id="search-title" title={t('search.title')} />
         <div className="mb-2 flex items-center gap-2 rounded-xl border border-ink-700 bg-ink-850 px-3 focus-within:border-accent-500">
           <Search className="h-4 w-4 text-mist-500" aria-hidden />
           <input autoFocus value={query} onChange={(e) => set(e.target.value, withDone)} placeholder={t('search.placeholder')} aria-label={t('search.placeholder')} data-testid="search-field" className="min-w-0 flex-1 bg-transparent py-2 text-sm text-mist-100 placeholder:text-mist-600 focus:outline-none" />

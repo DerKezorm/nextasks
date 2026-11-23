@@ -1,5 +1,5 @@
-// nextasks as an installed app, against the fake server: "Install as app" in the account menu and under My account
-// only where the browser offers it, the hint Share › Add to Home Screen on iPhone and iPad, nothing in the installed
+// nextasks as an installed app, against the fake server: "Install as app" under Settings › Profile only where the
+// browser offers it, the hint Share › Add to Home Screen on iPhone and iPad, nothing in the installed
 // app, and the line about a new version.
 import { afterEach, describe, expect, it } from 'vitest'
 
@@ -12,35 +12,30 @@ afterEach(async () => {
   setPwaState({ update: false, installable: false, standalone: false, ios: false })
 })
 
-async function menu(page: HTMLElement) {
-  await click(button(page, 'Account of Robin'))
-  return page
-}
-
 describe('installing as an app', () => {
-  it('is offered in the account menu and under My account when the browser offers it', async () => {
+  it('is offered under Settings › Profile when the browser offers it', async () => {
     setPwaState({ installable: true })
-    const page = await menu(await mount(smallWorld().server, '/account'))
+    const page = await mount(smallWorld().server, '/settings/profile')
     expect(button(page, 'Install as app')).toBeDefined()
     expect(page.querySelector('[data-testid="install"]')?.textContent).toContain('Install as app')
   })
 
   it('is a hint on iPhone and iPad, where only Share › Add to Home Screen installs', async () => {
     setPwaState({ ios: true })
-    const page = await menu(await mount(smallWorld().server, '/account'))
+    const page = await mount(smallWorld().server, '/settings/profile')
     expect(button(page, 'Install as app')).toBeUndefined()
     const hints = [...page.querySelectorAll('[data-testid="install-ios"]')].map((hint) => hint.textContent?.trim())
-    expect(hints).toEqual(['On iPhone and iPad: Share › Add to Home Screen.', 'On iPhone and iPad: Share › Add to Home Screen.'])
+    expect(hints).toEqual(['On iPhone and iPad: Share › Add to Home Screen.'])
   })
 
   it('is not there in the installed app, nor where the browser offers nothing', async () => {
     setPwaState({ installable: true, ios: true, standalone: true })
-    let page = await menu(await mount(smallWorld().server, '/account'))
-    expect(page.querySelector('[data-testid="install-menu"], [data-testid="install"], [data-testid="install-ios"]')).toBeNull()
+    let page = await mount(smallWorld().server, '/settings/profile')
+    expect(page.querySelector('[data-testid="install"], [data-testid="install-ios"]')).toBeNull()
     await unmount()
     setPwaState({ installable: false, ios: false, standalone: false })
-    page = await menu(await mount(smallWorld().server, '/account'))
-    expect(page.querySelector('[data-testid="install-menu"], [data-testid="install"], [data-testid="install-ios"]')).toBeNull()
+    page = await mount(smallWorld().server, '/settings/profile')
+    expect(page.querySelector('[data-testid="install"], [data-testid="install-ios"]')).toBeNull()
   })
 
   it('knows iPhone and iPad, also an iPad that asks for the desktop page', () => {

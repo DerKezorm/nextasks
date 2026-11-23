@@ -1,6 +1,6 @@
 /**
  * Every shipped text is asked for somewhere, numbers count right, and English is English (Prüfgang H1, H3, H5, H10).
- * "Download template" (Settings, General) hands every key to translators: a text no page shows is work for nothing,
+ * "Download template" (Settings, Server, General) hands every key to translators: a text no page shows is work for nothing,
  * and a sentence of another app (a vault, a canvas, notes) told them nextasks had it.
  *
  * A key counts as asked for when the code names it, or names its start in a built key (`notices.${kind}`,

@@ -1,7 +1,7 @@
 // "Notifications" in the own account, against the fake server: one table, a column per channel the server lists (mail,
 // browser, iPhone/iPad) with its state; without a mail server mail is greyed with the reason, the address is confirmed
 // by a link before mail can be turned on, the browsers and the app carry what they carried before, choices and times
-// go to the server, a narrow screen gets cards with switches, a link from a mail confirms or unsubscribes, and
+// go to the server, a narrow screen gets cards with boxes, a link from a mail confirms or unsubscribes, and
 // managers invite into a space by mail.
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -41,7 +41,7 @@ describe('notifications', () => {
 
   it('carry on the browsers and the app what came there before, greyed until there is one, and switch it per channel', async () => {
     const { server, robin } = smallWorld()
-    const page = await mount(server, '/account?tab=notifications')
+    const page = await mount(server, '/settings/notifications')
     for (const event of ['assigned', 'due', 'changed']) {
       expect(box(page, `route-${event}-webpush`).checked).toBe(true)
       expect(box(page, `route-${event}-app`).checked).toBe(true)
@@ -51,7 +51,7 @@ describe('notifications', () => {
 
     server.devices.push({ id: 'phone', account: robin, name: 'iPhone', created_at: '2026-11-07T08:00:00Z', last_seen: null })
     await unmount()
-    const again = await mount(server, '/account?tab=notifications')
+    const again = await mount(server, '/settings/notifications')
     expect(again.querySelector('[data-testid="channel-app"]')?.textContent).toContain('1 device paired')
     expect(box(again, 'route-assigned-app').disabled).toBe(false)
     await click(box(again, 'route-assigned-app'))
@@ -62,20 +62,21 @@ describe('notifications', () => {
     expect(box(again, 'route-daily-webpush').disabled).toBe(true)
   })
 
-  it('become cards with three labelled switches per row on a narrow screen', async () => {
+  it('become cards with three labelled boxes per row on a narrow screen, boxes as every switch of the settings', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('max-width'), media: query, addEventListener: () => undefined, removeEventListener: () => undefined }))
     const { server } = smallWorld()
-    const page = await mount(server, '/account?tab=notifications')
+    const page = await mount(server, '/settings/notifications')
     expect(page.querySelector('[data-testid="routes"]')).toBeNull()
     const card = page.querySelector('[data-testid="route-cards"] [data-testid="row-assigned"]')!
-    const switches = [...card.querySelectorAll('input[role="switch"]')]
+    expect(card.querySelector('input[role="switch"], .nt-switch')).toBeNull()
+    const switches = [...card.querySelectorAll('input[type="checkbox"]')]
     expect(switches).toHaveLength(3)
     expect(switches.map((entry) => entry.closest('label')?.textContent)).toEqual(['Mail', 'Browser', 'iPhone/iPad'])
   })
 
   it('turn on mail only once the address is confirmed, then save choices and times', async () => {
     const { server, robin } = withMail()
-    const page = await mount(server, '/account?tab=notifications')
+    const page = await mount(server, '/settings/notifications')
     const daily = box(page, 'route-daily-mail')
     expect(daily.checked).toBe(false)
     expect(daily.disabled).toBe(true)
@@ -88,7 +89,7 @@ describe('notifications', () => {
 
     server.confirmMail(server.mails.at(-1)!.token!)
     await unmount()
-    const again = await mount(server, '/account?tab=notifications')
+    const again = await mount(server, '/settings/notifications')
     expect(again.querySelector('[data-testid="mail-address"]')?.textContent).toContain('robin@example.test')
     await click(again.querySelector('[data-testid="route-daily-mail"]'))
     expect(server.notifyOf(robin).routes.daily).toEqual(['mail'])
@@ -102,7 +103,7 @@ describe('notifications', () => {
     const { server, robin } = smallWorld()
     server.webpush.push({ id: 7, account: robin, endpoint: 'https://push.example.com/a', agent: 'Mozilla/5.0 (Windows NT 10.0) Chrome/141.0', since: '2026-11-01T09:00:00Z' })
     server.webpush.push({ id: 8, account: robin, endpoint: 'https://push.example.com/b', agent: 'Mozilla/5.0 (Android 15; Mobile) Firefox/144.0', since: '2026-11-02T09:00:00Z' })
-    const page = await mount(server, '/account?tab=notifications')
+    const page = await mount(server, '/settings/notifications')
     const rows = [...page.querySelectorAll('[data-testid="browsers"] li')]
     expect(rows.map((row) => row.querySelector('span span')?.textContent)).toEqual(['Chrome on Windows', 'Firefox on Android'])
     expect(page.querySelector('[data-testid="channel-webpush"]')?.textContent).toContain('2 browsers')
@@ -122,7 +123,7 @@ describe('notifications', () => {
     })
     try {
       const { server } = smallWorld()
-      const page = await mount(server, '/account?tab=notifications')
+      const page = await mount(server, '/settings/notifications')
       const head = page.querySelector('[data-testid="channel-webpush"]')!
       expect(head.querySelector('[data-testid="push-toggle-head"]')?.textContent).toBe('Turn on here')
       expect(page.querySelector('[data-testid="push-toggle"]')).not.toBeNull()
@@ -134,7 +135,7 @@ describe('notifications', () => {
   it('offer the address the sign-in provider knows', async () => {
     const { server, robin } = withMail()
     server.notifyOf(robin).suggestion = 'robin@example.test'
-    const page = await mount(server, '/account?tab=notifications')
+    const page = await mount(server, '/settings/notifications')
     expect(page.querySelector('[data-testid="mail-suggestion"]')?.textContent).toContain('robin@example.test')
     await click(button(page.querySelector('[data-testid="mail-suggestion"]')!, 'Confirm this address'))
     expect(server.mails.at(-1)).toMatchObject({ to: 'robin@example.test', kind: 'confirm' })

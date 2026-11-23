@@ -13,7 +13,9 @@
     "placeholder": "Titel, Notiz, Schlagwort oder Link",
     "withDone": "Auch Erledigte",
     "found_one": "Ein Treffer",
-    "found_other": "{{count}} Treffer"
+    "found_other": "{{count}} Treffer",
+    "field": "Suchen",
+    "key": "Strg K"
   },
   "common": {
     "cancel": "Abbrechen",
@@ -23,11 +25,7 @@
     "save": "Speichern"
   },
   "account": {
-    "menu": "Konto von {{name}}",
-    "operator": "Betreiber",
-    "mine": "Mein Konto",
-    "language": "Sprache",
-    "signOut": "Abmelden"
+    "operator": "Betreiber"
   },
   "members": {
     "title": "Mitglieder",
@@ -64,33 +62,60 @@
     "title": "Einstellungen",
     "saved": "Gespeichert.",
     "ownPassword": "Dein Passwort",
-    "tabs": {
-      "general": "Allgemein",
-      "looks": "Aussehen",
+    "jump": "Seite der Einstellungen",
+    "groups": {
+      "account": "Mein Konto",
       "server": "Server"
     },
-    "parts": {
-      "accounts": "Konten",
-      "signin": "Anmeldung",
-      "files": "Dateien",
-      "backups": "Sicherung",
-      "languages": "Sprachen",
-      "log": "Log",
-      "api": "API",
-      "app": "iPhone-App"
-    },
-    "language": {
-      "title": "Sprache",
-      "text": "Englisch und Deutsch bringt nextasks mit. Weitere lädst du unter Server, Sprachen hoch; was einer Datei fehlt, erscheint auf Englisch.",
-      "textMember": "Englisch und Deutsch bringt nextasks mit; weitere Sprachen kann der Betreiber ergänzen.",
-      "choose": "Sprache der Oberfläche",
-      "added": "vom Betreiber ergänzt",
-      "template": "Vorlage herunterladen",
-      "templateHint": "Die englischen Texte als Datei zum Übersetzen. Unter Server, Sprachen mit einem Code wie es oder pt-BR hochladen."
-    },
-    "looks": {
-      "title": "Hell oder dunkel",
-      "text": "Gilt in diesem Browser."
+    "areas": {
+      "profile": {
+        "title": "Profil",
+        "text": "Bild, Name, Sprache und Zeitzone deines Kontos."
+      },
+      "security": {
+        "title": "Sicherheit",
+        "text": "Anmeldung, Passwort, zweiter Faktor und deine anderen Browser."
+      },
+      "appearance": {
+        "title": "Darstellung",
+        "text": "Wie nextasks auf diesem Gerät aussieht, was die Seitenleiste zeigt, und die Tastenkürzel."
+      },
+      "connections": {
+        "title": "Verbindungen",
+        "text": "Die iPhone-App, Programme und Dienste, die mit deinen Aufgaben arbeiten."
+      },
+      "notifications": {
+        "title": "Benachrichtigungen",
+        "text": "Was dich auf welchem Weg erreicht: Mail, dieser Browser, iPhone und iPad."
+      },
+      "general": {
+        "title": "Allgemein",
+        "text": "Dateien, Funktionen für alle Konten, die iPhone-App und eigene Sprachen."
+      },
+      "signIn": {
+        "title": "Anmeldung",
+        "text": "Wie sich alle anmelden: Passwort, öffentliche Adresse, zweiter Faktor und Anbieter."
+      },
+      "mail": {
+        "title": "Mail",
+        "text": "Der Mailserver, über den nextasks Einladungen, Berichte und Benachrichtigungen verschickt."
+      },
+      "storage": {
+        "title": "Speicher und Sicherung",
+        "text": "Die Sicherungen des Servers: wann, wie viele, herunterladen und zurückspielen."
+      },
+      "accounts": {
+        "title": "Konten",
+        "text": "Wer nextasks nutzt, mit Rolle, offene Einladungen und die API-Token aller Konten."
+      },
+      "log": {
+        "title": "Log",
+        "text": "Was der Server mitschreibt, zum Nachsehen bei Fehlern."
+      },
+      "about": {
+        "title": "Über nextasks",
+        "text": "Version, Lizenz, Herkunft und ob es eine neuere Version gibt."
+      }
     }
   },
   "server": {
@@ -131,7 +156,7 @@
     "stripLocation": "Ort und Gerät aus Fotos entfernen",
     "stripLocationHint": "Handys schreiben in jedes Foto, wo und womit es entstand. Ab Werk an.",
     "mail": "Mail",
-    "mailHint": "Für Einladungen, zum Bestätigen von Mailadressen und für die Berichte und Benachrichtigungen, die jede Person unter Mein Konto wählt. Ohne Server reicht der Link zum Kopieren.",
+    "mailHint": "Für Einladungen, zum Bestätigen von Mailadressen und für die Berichte und Benachrichtigungen, die jede Person unter Einstellungen, Benachrichtigungen wählt. Ohne Server reicht der Link zum Kopieren.",
     "smtpHost": "Server",
     "smtpSecurity": "Verschlüsselung",
     "smtpUser": "Benutzer",
@@ -240,7 +265,7 @@
     "texts_other": "{{count}} Texte",
     "remove": "Entfernen",
     "languageCode": "Sprachcode",
-    "languageAdded": "Sprache hinzugefügt. Sie erscheint nach dem Neuladen im Kontomenü.",
+    "languageAdded": "Sprache hinzugefügt. Sie erscheint nach dem Neuladen unter Einstellungen, Profil.",
     "allLevels": "Alle Stufen",
     "logSearch": "Enthält …",
     "refresh": "Aktualisieren",
@@ -268,7 +293,7 @@
       "title": "API-Token",
       "text": "Damit verbinden Konten nextasks mit Programmen: nexmail macht Mails zu Aufgaben, nexdeck zeigt eine Karte mit den fälligen Aufgaben, dazu Home Assistant, n8n oder eigene Skripte. Ein Token kann nie mehr als sein Konto, und nur in seinen Bereichen. Ab Werk aus.",
       "allow": "Konten dürfen API-Token anlegen",
-      "allowHint": "Jedes Konto legt eigene Token unter Mein Konto, Verbindungen an.",
+      "allowHint": "Jedes Konto legt eigene Token unter Einstellungen, Verbindungen an.",
       "account": "Konto",
       "token": "Token",
       "level": "Stufe",
@@ -283,7 +308,10 @@
       "blockNamed": "Token {{name}} von {{account}} sperren",
       "blockTitle": "Token „{{name}}“ von {{account}} sperren?",
       "blockText": "Das Token antwortet danach wie keines, für immer. Das Konto sieht es als „vom Betreiber gesperrt“ und kann ein neues anlegen, solange API-Token eingeschaltet sind.",
-      "offHint": "Schaltest du API-Token ab, antwortet jedes Token mit 401. Die Token bleiben stehen und gehen wieder, wenn du einschaltest. Token gesperrter oder gelöschter Konten gelten nie."
+      "offHint": "Schaltest du API-Token ab, antwortet jedes Token mit 401. Die Token bleiben stehen und gehen wieder, wenn du einschaltest. Token gesperrter oder gelöschter Konten gelten nie.",
+      "allTitle": "API-Token aller Konten",
+      "allText": "Je Token Konto, Name, Stufe, Bereiche und letzte Nutzung. Nie das Token selbst.",
+      "none": "Noch kein Konto hat ein API-Token angelegt."
     },
     "providers": {
       "order": "{{name}} verschieben (Pfeiltasten hoch und runter)",
@@ -511,7 +539,6 @@
     "noFilters": "Noch kein eigener Filter."
   },
   "about": {
-    "menu": "Über nextasks",
     "subtitle": "Aufgaben für Familie und kleine Gruppen, auf dem eigenen Server.",
     "version": "Version",
     "whatsNew": "Was ist neu",
@@ -540,20 +567,12 @@
     }
   },
   "me": {
-    "title": "Mein Konto",
-    "tabs": {
-      "profile": "Profil",
-      "security": "Sicherheit",
-      "connections": "Verbindungen",
-      "notifications": "Benachrichtigungen"
-    },
     "profile": {
       "displayName": "Anzeigename",
       "displayHint": "So sehen dich andere. Leer zeigt deinen Anmeldenamen {{name}}; mit ihm meldest du dich weiter an.",
       "displaySave": "Speichern",
       "displaySaved": "Anzeigename gespeichert.",
       "name": "Anmeldename",
-      "role": "Rolle",
       "email": "E-Mail",
       "upload": "Bild hochladen",
       "change": "Anderes Bild",
@@ -561,7 +580,9 @@
       "saved": "Bild gespeichert.",
       "removed": "Bild entfernt.",
       "hint": "Ein Foto vom Handy oder von der Kamera. Es wird quadratisch zugeschnitten, und von der Datei bleibt nur das Bild: kein Ort, kein Gerät.",
-      "displayHintPassword": "So sehen dich andere. Leer zeigt deinen Anmeldenamen {{name}}; mit ihm meldest du dich weiter an."
+      "displayHintPassword": "So sehen dich andere. Leer zeigt deinen Anmeldenamen {{name}}; mit ihm meldest du dich weiter an.",
+      "title": "Profil",
+      "roleLine": "Rolle: {{role}}"
     },
     "password": {
       "title": "Passwort",
@@ -570,10 +591,10 @@
       "submit": "Passwort ändern",
       "done": "Passwort geändert. Andere Browser müssen sich neu anmelden.",
       "again": "Passwort noch einmal",
-      "mismatch": "Die beiden Passwörter sind nicht gleich."
+      "mismatch": "Die beiden Passwörter sind nicht gleich.",
+      "change": "Ändern"
     },
     "sessions": {
-      "title": "Andere Browser",
       "text": "Meldet dich überall ab außer hier, etwa nach einem verlorenen Handy.",
       "submit": "Überall sonst abmelden",
       "done": "Alle anderen Browser sind abgemeldet."
@@ -586,7 +607,25 @@
     "keysWait": "Wirkt erst, wenn du einen zweiten Faktor einrichtest.",
     "keysWaitLink": "Zweiten Faktor einrichten",
     "linkedTo": "Dein Konto ist mit {{name}} verknüpft.",
-    "unlinkedFrom": "Nicht mehr mit {{name}} verknüpft."
+    "unlinkedFrom": "Nicht mehr mit {{name}} verknüpft.",
+    "security": {
+      "title": "Anmeldung und Sicherheit"
+    },
+    "signOut": {
+      "title": "Abmelden",
+      "text": "Beendet deine Sitzung in diesem Browser. Deine Aufgaben bleiben, wie sie sind.",
+      "provider": "Bei deinem Anmeldeanbieter bleibst du angemeldet; nur nextasks meldet dich ab.",
+      "button": "Abmelden"
+    },
+    "looks": {
+      "title": "Aussehen",
+      "appearance": "Darstellung",
+      "appearanceHint": "(nur auf diesem Gerät)",
+      "language": "Sprache",
+      "languageHint": "(gilt auf allen deinen Geräten)",
+      "browser": "Wie der Browser",
+      "byOperator": "(vom Betreiber)"
+    }
   },
   "twofactor": {
     "title": "Zweiter Faktor",
@@ -654,7 +693,9 @@
     "del": "Entf",
     "close": "Details schließen",
     "quick": "Schnelleingabe",
-    "shift": "Umschalt"
+    "shift": "Umschalt",
+    "text": "Die Übersicht öffnet überall auch die Taste ?.",
+    "show": "Tastenkürzel zeigen"
   },
   "people": {
     "former": "Ehemaliges Mitglied",
@@ -707,7 +748,7 @@
     "delete": "Löschen",
     "deleteNamed": "Token {{name}} löschen",
     "off": "Der Betreiber hat API-Token nicht eingeschaltet. Frag ihn, wenn du nextasks mit nexmail, nexdeck oder n8n verbinden willst.",
-    "offOperator": "Einschalten unter Einstellungen, Server, API.",
+    "offOperator": "Einschalten unter Einstellungen, Allgemein.",
     "whatItDoes": "Was die API kann",
     "whatItDoesText": "Jede Anfrage trägt das Token in der Kopfzeile Authorization: Bearer, die Antworten sind JSON. Lesen: Bereiche, Listen, Aufgaben und die Zahlen für ein Dashboard. Mit „Lesen und schreiben“ zusätzlich Aufgaben anlegen, ändern, abhaken, wieder öffnen und in den Papierkorb legen; alle Geräte sehen das sofort. Endgültig löschen, Mitglieder und Rechte gehen über die API nie.",
     "docs": "Ganze Beschreibung der API",
@@ -1497,5 +1538,9 @@
     "linkAddress": "Adresse des Links",
     "linkSet": "Verlinken",
     "picture": "Bild einfügen"
+  },
+  "columns": {
+    "sidebar": "Breite der Seitenleiste",
+    "hint": "Ziehen oder Pfeiltasten ändern die Breite, Doppelklick setzt sie zurück."
   }
 }

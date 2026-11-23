@@ -4,13 +4,11 @@ import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-rou
 
 import { AppShell } from './components/AppShell'
 import { SidebarBody } from './components/Sidebar'
-import { AboutPage } from './pages/AboutPage'
-import { AccountPage } from './pages/AccountPage'
 import { AppConnectPage, ConfirmEmailPage, InvitePage, LoginPage, SetupPage, UnsubscribePage } from './pages/AuthPages'
 import { FilterPage } from './pages/FilterPage'
 import { ListPage } from './pages/ListPage'
 import { SearchPage } from './pages/SearchPage'
-import { SettingsPage } from './pages/SettingsPage'
+import { FormerAboutAddress, FormerAccountAddress, SettingsPage } from './pages/SettingsPage'
 import { TilePage } from './pages/TilePage'
 import { TrashPage } from './pages/TrashPage'
 import { OfflinePage } from './components/AppInstall'
@@ -19,7 +17,8 @@ import { SyncProvider, useSyncState, useView } from './state/sync'
 import { shownTiles, TILES } from './sync/tiles'
 
 /** Everything behind the sign-in: without an account the page goes to the sign-in, and comes back after. An account
- * that still has to set up its second factor (the operator requires one) reaches its own account page only. */
+ * that still has to set up its second factor (the operator requires one) reaches Settings › Security only (and the
+ * address of before, which leads there). */
 function SignedIn({ children }: { children: ReactNode }) {
   const { status, me, ended, refresh } = useAuth()
   const location = useLocation()
@@ -27,7 +26,7 @@ function SignedIn({ children }: { children: ReactNode }) {
   if (status === 'offline') return <OfflinePage retry={() => void refresh()} />
   if (status === 'setup') return <Navigate to="/setup" replace />
   if (status === 'signedOut') return <Navigate to={`/login?next=${encodeURIComponent(location.pathname + location.search)}${ended ? '&ended=1' : ''}`} replace />
-  if (me?.second_factor_setup_required && location.pathname !== '/account') return <Navigate to="/account?tab=security" replace />
+  if (me?.second_factor_setup_required && location.pathname !== '/settings/security' && location.pathname !== '/account') return <Navigate to="/settings/security" replace />
   return <SyncProvider key={me?.id}>{children}</SyncProvider>
 }
 
@@ -59,7 +58,7 @@ function Home() {
   const space = params.get('space')
   if (!space && phone)
     return (
-      <main className="nc-scroll min-w-0 flex-1 overflow-y-auto bg-ink-900" aria-label={t('overview.title')}>
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-ink-900" aria-label={t('overview.title')}>
         <SidebarBody />
       </main>
     )
@@ -111,8 +110,9 @@ export default function App() {
         <Route path="search" element={<SearchPage />} />
         <Route path="trash" element={<TrashPage />} />
         <Route path="settings" element={<SettingsPage />} />
-        <Route path="account" element={<AccountPage />} />
-        <Route path="about" element={<AboutPage />} />
+        <Route path="settings/:area" element={<SettingsPage />} />
+        <Route path="account" element={<FormerAccountAddress />} />
+        <Route path="about" element={<FormerAboutAddress />} />
         <Route path="*" element={<Navigate to="/today" replace />} />
       </Route>
     </Routes>

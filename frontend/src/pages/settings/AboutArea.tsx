@@ -1,6 +1,6 @@
 /**
- * About nextasks, as nexlore's (pages/AboutPage.tsx): version, licence, where it comes from, whether a newer one is
- * out, and what it is built with. Reached from the account menu, like there.
+ * Settings › About nextasks, as nexnotes' (`pages/settings/AboutArea.tsx` there): version, licence, where it comes
+ * from, what is new, whether a newer one is out, and what it is built with. The last entry of the settings' navigation.
  *
  * The switch for the daily check stands here, where its answer shows, and the page says what goes out: the question
  * to GitHub is the one call nextasks makes by itself. Every account sees the answer; switching and asking now belong
@@ -10,13 +10,13 @@ import { BookOpen, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { api, ApiError } from '../api/client'
-import { Logo } from '../components/Logo'
-import { WhatsNewWindow } from '../components/WhatsNew'
-import { useWhatsNew } from '../lib/whatsNew'
-import { useAuth } from '../state/auth'
-import { Button, Card, Feedback, Toggle } from './settings/ui'
-import { moment } from '../lib/time'
+import { api, ApiError } from '../../api/client'
+import { Logo } from '../../components/Logo'
+import { WhatsNewWindow } from '../../components/WhatsNew'
+import { useWhatsNew } from '../../lib/whatsNew'
+import { useAuth } from '../../state/auth'
+import { Button, Card, Feedback, Toggle } from './ui'
+import { moment } from '../../lib/time'
 
 type About = { version: string; license: string; repo_url: string; releases_url: string; project_url: string }
 type Updates = { update_check: boolean; checked: boolean; latest: string | null; newer: boolean; checked_at: string | null; release_url: string | null }
@@ -56,7 +56,7 @@ function code(error: unknown): string {
   return error instanceof ApiError ? error.code : 'internal_error'
 }
 
-export function AboutPage() {
+export function AboutArea() {
   const { t, i18n } = useTranslation()
   const { me } = useAuth()
   const operator = me?.role === 'operator'
@@ -99,22 +99,24 @@ export function AboutPage() {
 
   const latest = updates?.latest?.replace(/^v/, '')
   return (
-    <main className="nc-scroll min-w-0 flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-2xl space-y-6 px-4 py-8 sm:px-6">
-        <div className="flex items-center gap-3">
-          <Logo className="h-10 w-10" />
+    <div className="space-y-6" data-testid="about-area">
+      <Feedback problem={problem} />
+      <section aria-labelledby="about-facts-title" className="rounded-[12px] border border-ink-700 bg-ink-850 p-5">
+        <div className="mb-2 flex items-center gap-3">
+          <Logo className="h-9 w-9" />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-mist-100">nextasks</h1>
+            <h2 id="about-facts-title" className="text-lg font-bold tracking-tight text-mist-100">
+              NEX<span className="text-accent-500">TASKS</span>
+            </h2>
             <p className="text-sm text-mist-500">{t('about.subtitle')}</p>
           </div>
         </div>
-        <Feedback problem={problem} />
         {about && (
-          <dl className="rounded-2xl border border-ink-700 bg-ink-900 px-5 py-2" data-testid="about-facts">
+          <dl data-testid="about-facts">
             <Row label={t('about.version')}>
               <span className="flex flex-wrap items-center gap-2">
                 <span data-testid="about-version">{about.version}</span>
-                {updates?.newer && <span className="rounded-full bg-accent-500/15 px-2 py-0.5 text-xs font-semibold text-accent-400">{t('about.newer', { version: latest })}</span>}
+                {updates?.newer && <span className="nt-chosen rounded-full px-2 py-0.5 text-xs font-semibold">{t('about.newer', { version: latest })}</span>}
               </span>
             </Row>
             {entry && me && (
@@ -143,51 +145,51 @@ export function AboutPage() {
             </Row>
           </dl>
         )}
+      </section>
 
-        <Card icon={RefreshCw} title={t('about.updates.title')} text={t('about.updates.text')} id="about-updates">
-          {operator && updates && <Toggle label={t('about.updates.daily')} hint={t('about.updates.dailyHint')} checked={updates.update_check} onChange={(on) => void switchCheck(on)} />}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm" aria-live="polite">
-            {operator && (
-              <Button onClick={() => void checkNow()} busy={busy}>
-                {t('about.updates.now')}
-              </Button>
+      <Card icon={RefreshCw} title={t('about.updates.title')} text={t('about.updates.text')} id="about-updates">
+        {operator && updates && <Toggle label={t('about.updates.daily')} hint={t('about.updates.dailyHint')} checked={updates.update_check} onChange={(on) => void switchCheck(on)} />}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm" aria-live="polite">
+          {operator && (
+            <Button onClick={() => void checkNow()} busy={busy}>
+              {t('about.updates.now')}
+            </Button>
+          )}
+          <span data-testid="about-update-state" className="text-mist-400">
+            {!updates || !updates.checked ? (
+              updates && !updates.update_check ? t('about.updates.off') : t('about.updates.notYet')
+            ) : updates.newer ? (
+              <>
+                {t('about.newer', { version: latest })}
+                {updates.release_url && (
+                  <>
+                    {' · '}
+                    <Out href={updates.release_url}>{t('about.updates.toRelease')}</Out>
+                  </>
+                )}
+              </>
+            ) : updates.latest ? (
+              t('about.updates.current')
+            ) : (
+              t('about.updates.none')
             )}
-            <span data-testid="about-update-state" className="text-mist-400">
-              {!updates || !updates.checked ? (
-                updates && !updates.update_check ? t('about.updates.off') : t('about.updates.notYet')
-              ) : updates.newer ? (
-                <>
-                  {t('about.newer', { version: latest })}
-                  {updates.release_url && (
-                    <>
-                      {' · '}
-                      <Out href={updates.release_url}>{t('about.updates.toRelease')}</Out>
-                    </>
-                  )}
-                </>
-              ) : updates.latest ? (
-                t('about.updates.current')
-              ) : (
-                t('about.updates.none')
-              )}
-            </span>
-            {updates?.checked_at && <span className="text-xs text-mist-500">{t('about.updates.checkedAt', { when: moment(updates.checked_at, i18n.language) })}</span>}
-          </div>
-          <p className="text-xs leading-relaxed text-mist-500">{t('about.updates.whatGoesOut')}</p>
-        </Card>
+          </span>
+          {updates?.checked_at && <span className="text-xs text-mist-500">{t('about.updates.checkedAt', { when: moment(updates.checked_at, i18n.language) })}</span>}
+        </div>
+        <p className="text-xs leading-relaxed text-mist-500">{t('about.updates.whatGoesOut')}</p>
+      </Card>
 
-        <Card icon={BookOpen} title={t('about.builtWith')}>
-          <ul className="flex flex-wrap gap-x-3 gap-y-1.5 text-sm">
-            {PARTS.map((part) => (
-              <li key={part.name}>
-                <Out href={part.url}>{part.name}</Out>
-                <span className="ml-1 text-xs text-mist-500">({part.licence})</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
+      <Card icon={BookOpen} title={t('about.builtWith')}>
+        <ul className="flex flex-wrap gap-x-3 gap-y-1.5 text-sm">
+          {PARTS.map((part) => (
+            <li key={part.name}>
+              <Out href={part.url}>{part.name}</Out>
+              <span className="ml-1 text-xs text-mist-500">({part.licence})</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
       {reading && entry && me && <WhatsNewWindow version={me.version} entry={entry} onClose={() => setReading(false)} />}
-    </main>
+    </div>
   )
 }

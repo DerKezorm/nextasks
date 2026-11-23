@@ -570,7 +570,7 @@ export function ConfirmEmailPage() {
           {t('confirmEmail.done', { email })}
         </p>
       )}
-      <Link to="/account?tab=notifications" className="nc-btn nc-btn-ghost mt-4 flex h-10 w-full items-center justify-center">
+      <Link to="/settings/notifications" className="nc-btn nc-btn-ghost mt-4 flex h-10 w-full items-center justify-center">
         {t('confirmEmail.toSettings')}
       </Link>
     </AuthFrame>
@@ -624,7 +624,7 @@ export function UnsubscribePage() {
           {t('unsubscribe.done')}
         </p>
       )}
-      <Link to="/account?tab=notifications" className="nc-btn nc-btn-ghost mt-4 flex h-10 w-full items-center justify-center">
+      <Link to="/settings/notifications" className="nc-btn nc-btn-ghost mt-4 flex h-10 w-full items-center justify-center">
         {t('unsubscribe.toSettings')}
       </Link>
     </AuthFrame>

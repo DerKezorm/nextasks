@@ -13,7 +13,9 @@
     "placeholder": "Title, notes, tag or link",
     "withDone": "Include completed",
     "found_one": "One result",
-    "found_other": "{{count}} results"
+    "found_other": "{{count}} results",
+    "field": "Search",
+    "key": "Ctrl K"
   },
   "common": {
     "cancel": "Cancel",
@@ -23,11 +25,7 @@
     "save": "Save"
   },
   "account": {
-    "menu": "Account of {{name}}",
-    "operator": "Operator",
-    "mine": "My account",
-    "language": "Language",
-    "signOut": "Sign out"
+    "operator": "Operator"
   },
   "members": {
     "title": "Members",
@@ -64,33 +62,60 @@
     "title": "Settings",
     "saved": "Saved.",
     "ownPassword": "Your password",
-    "tabs": {
-      "general": "General",
-      "looks": "Look",
+    "jump": "Settings page",
+    "groups": {
+      "account": "My account",
       "server": "Server"
     },
-    "parts": {
-      "accounts": "Accounts",
-      "signin": "Sign-in",
-      "files": "Files",
-      "backups": "Backup",
-      "languages": "Languages",
-      "log": "Log",
-      "api": "API",
-      "app": "iPhone app"
-    },
-    "language": {
-      "title": "Language",
-      "text": "nextasks brings English and German. Upload more under Server, Languages; whatever a file lacks shows in English.",
-      "textMember": "nextasks brings English and German; the operator can add more languages.",
-      "choose": "Language of the interface",
-      "added": "added by the operator",
-      "template": "Download template",
-      "templateHint": "The English texts as a file to translate. Upload it under Server, Languages with a code such as es or pt-BR."
-    },
-    "looks": {
-      "title": "Light or dark",
-      "text": "Applies in this browser."
+    "areas": {
+      "profile": {
+        "title": "Profile",
+        "text": "Picture, name, language and time zone of your account."
+      },
+      "security": {
+        "title": "Security",
+        "text": "Sign-in, password, second factor and your other browsers."
+      },
+      "appearance": {
+        "title": "Appearance",
+        "text": "How nextasks looks on this device, what the sidebar shows, and the keyboard shortcuts."
+      },
+      "connections": {
+        "title": "Connections",
+        "text": "The iPhone app, programs and services that work with your tasks."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "text": "What reaches you which way: mail, this browser, iPhone and iPad."
+      },
+      "general": {
+        "title": "General",
+        "text": "Files, features for every account, the iPhone app and added languages."
+      },
+      "signIn": {
+        "title": "Sign-in",
+        "text": "How everyone signs in: password, public address, second factor and providers."
+      },
+      "mail": {
+        "title": "Mail",
+        "text": "The mail server nextasks sends invitations, reports and notifications through."
+      },
+      "storage": {
+        "title": "Storage and backups",
+        "text": "The backups of the server: when, how many, download and restore."
+      },
+      "accounts": {
+        "title": "Accounts",
+        "text": "Who uses nextasks, with role, open invitations and the API tokens of all accounts."
+      },
+      "log": {
+        "title": "Log",
+        "text": "What the server writes down, to look into problems."
+      },
+      "about": {
+        "title": "About nextasks",
+        "text": "Version, licence, where it comes from and whether a newer version is out."
+      }
     }
   },
   "server": {
@@ -131,7 +156,7 @@
     "stripLocation": "Remove location and device from photos",
     "stripLocationHint": "Phones write into every photo where it was taken and with what. On by default.",
     "mail": "Mail",
-    "mailHint": "For invitations, for confirming mail addresses, and for the reports and notifications each person chooses under My account. Without a server, the link to copy is enough.",
+    "mailHint": "For invitations, for confirming mail addresses, and for the reports and notifications each person chooses under Settings, Notifications. Without a server, the link to copy is enough.",
     "smtpHost": "Server",
     "smtpSecurity": "Encryption",
     "smtpUser": "User",
@@ -240,7 +265,7 @@
     "texts_other": "{{count}} texts",
     "remove": "Remove",
     "languageCode": "Language code",
-    "languageAdded": "Language added. It shows in the account menu after reloading.",
+    "languageAdded": "Language added. It shows under Settings, Profile after reloading.",
     "allLevels": "All levels",
     "logSearch": "Containing …",
     "refresh": "Refresh",
@@ -268,7 +293,7 @@
       "title": "API tokens",
       "text": "Accounts connect nextasks with programs this way: nexmail turns mails into tasks, nexdeck shows a card with the tasks due, and Home Assistant, n8n or scripts of your own. A token never does more than its account, and only in its spaces. Off by default.",
       "allow": "Accounts may create API tokens",
-      "allowHint": "Every account creates its own tokens under My account, Connections.",
+      "allowHint": "Every account creates its own tokens under Settings, Connections.",
       "account": "Account",
       "token": "Token",
       "level": "Level",
@@ -283,7 +308,10 @@
       "blockNamed": "Block token {{name}} of {{account}}",
       "blockTitle": "Block the token “{{name}}” of {{account}}?",
       "blockText": "The token then answers like none, for good. The account sees it as “blocked by the operator” and may create a new one while API tokens are on.",
-      "offHint": "Switch API tokens off and every token answers 401. The tokens stay and work again when you switch them on. Tokens of blocked or deleted accounts never count."
+      "offHint": "Switch API tokens off and every token answers 401. The tokens stay and work again when you switch them on. Tokens of blocked or deleted accounts never count.",
+      "allTitle": "API tokens of all accounts",
+      "allText": "Per token the account, name, level, spaces and last use. Never the token itself.",
+      "none": "No account has made an API token yet."
     },
     "providers": {
       "order": "Move {{name}} (arrow keys up and down)",
@@ -511,7 +539,6 @@
     "noFilters": "No filter of your own yet."
   },
   "about": {
-    "menu": "About nextasks",
     "subtitle": "Tasks for families and small groups, on your own server.",
     "version": "Version",
     "whatsNew": "What's new",
@@ -540,20 +567,12 @@
     }
   },
   "me": {
-    "title": "My account",
-    "tabs": {
-      "profile": "Profile",
-      "security": "Security",
-      "connections": "Connections",
-      "notifications": "Notifications"
-    },
     "profile": {
       "displayName": "Display name",
       "displayHint": "How others see you. Empty shows your sign-in name {{name}}; you still sign in with it.",
       "displaySave": "Save",
       "displaySaved": "Display name saved.",
       "name": "Sign-in name",
-      "role": "Role",
       "email": "Email",
       "upload": "Upload a picture",
       "change": "Another picture",
@@ -561,7 +580,9 @@
       "saved": "Picture saved.",
       "removed": "Picture removed.",
       "hint": "A photo from your phone or camera. It is cut to a square, and nothing of the file but the picture is kept: no place, no device.",
-      "displayHintPassword": "How others see you. Empty shows your sign-in name {{name}}; you still sign in with it."
+      "displayHintPassword": "How others see you. Empty shows your sign-in name {{name}}; you still sign in with it.",
+      "title": "Profile",
+      "roleLine": "Role: {{role}}"
     },
     "password": {
       "title": "Password",
@@ -570,10 +591,10 @@
       "submit": "Change password",
       "done": "Password changed. Other browsers have to sign in again.",
       "again": "Password again",
-      "mismatch": "The two passwords are not the same."
+      "mismatch": "The two passwords are not the same.",
+      "change": "Change"
     },
     "sessions": {
-      "title": "Other browsers",
       "text": "Signs you out everywhere except here, for example after losing a phone.",
       "submit": "Sign out everywhere else",
       "done": "Every other browser is signed out."
@@ -586,7 +607,25 @@
     "keysWait": "Works only once you set up a second factor.",
     "keysWaitLink": "Set up a second factor",
     "linkedTo": "Your account is linked to {{name}}.",
-    "unlinkedFrom": "No longer linked to {{name}}."
+    "unlinkedFrom": "No longer linked to {{name}}.",
+    "security": {
+      "title": "Sign-in and security"
+    },
+    "signOut": {
+      "title": "Sign out",
+      "text": "Ends your session in this browser. Your tasks stay as they are.",
+      "provider": "You stay signed in with your sign-in provider; only nextasks signs you out.",
+      "button": "Sign out"
+    },
+    "looks": {
+      "title": "Look",
+      "appearance": "Appearance",
+      "appearanceHint": "(on this device only)",
+      "language": "Language",
+      "languageHint": "(on all your devices)",
+      "browser": "As the browser",
+      "byOperator": "(by the operator)"
+    }
   },
   "twofactor": {
     "title": "Second factor",
@@ -654,7 +693,9 @@
     "del": "Del",
     "close": "Close details",
     "quick": "Quick entry",
-    "shift": "Shift"
+    "shift": "Shift",
+    "text": "The key ? opens the list anywhere too.",
+    "show": "Show keyboard shortcuts"
   },
   "people": {
     "former": "Former member",
@@ -707,7 +748,7 @@
     "delete": "Delete",
     "deleteNamed": "Delete token {{name}}",
     "off": "The operator has not switched API tokens on. Ask them if you want to connect nextasks with nexmail, nexdeck or n8n.",
-    "offOperator": "Switch them on under Settings, Server, API.",
+    "offOperator": "Switch them on under Settings, General.",
     "whatItDoes": "What the API does",
     "whatItDoesText": "Every request carries the token in the header Authorization: Bearer, the answers are JSON. Reading: spaces, lists, tasks and the numbers for a dashboard. With “Read and write” also creating, changing, ticking off, reopening and trashing tasks; every device sees it at once. Deleting for good, members and rights are never touched through the API.",
     "docs": "Full description of the API",
@@ -1497,5 +1538,9 @@
     "linkAddress": "Address of the link",
     "linkSet": "Link it",
     "picture": "Insert picture"
+  },
+  "columns": {
+    "sidebar": "Width of the sidebar",
+    "hint": "Drag or use the arrow keys to change the width; double-click to reset it."
   }
 }

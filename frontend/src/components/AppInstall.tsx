@@ -1,6 +1,6 @@
 /**
  * nextasks as an installed app (`lib/pwa.ts`): the line "New version – reload" when a new version waits, the entry
- * "Install as app" in the account menu and under My account when the browser offers it, and on iPhone and iPad the
+ * "Install as app" under Settings › Profile when the browser offers it, and on iPhone and iPad the
  * hint "Share › Add to Home Screen". In the installed app none of it shows but the new version.
  */
 import { Download, RefreshCw, Share, WifiOff } from 'lucide-react'
@@ -26,35 +26,7 @@ export function UpdateBanner() {
   )
 }
 
-/** The entry in the account menu: a button where the browser offers to install, the hint on iPhone and iPad. */
-export function InstallMenuItem({ className, onDone }: { className: string; onDone: () => void }) {
-  const { t } = useTranslation()
-  const { installable, ios, standalone } = usePwa()
-  if (standalone) return null
-  if (installable)
-    return (
-      <button
-        type="button"
-        className={className}
-        data-testid="install-menu"
-        onClick={() => {
-          onDone()
-          void install()
-        }}
-      >
-        <Download className="h-4 w-4" strokeWidth={1.8} /> {t('pwa.install')}
-      </button>
-    )
-  if (ios)
-    return (
-      <p className="flex items-start gap-2 px-3 py-2 text-xs text-mist-500" data-testid="install-ios">
-        <Share className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden /> {t('pwa.iosHint')}
-      </p>
-    )
-  return null
-}
-
-/** Under My account: what installing gives, and the button or the hint. Nothing when there is nothing to do. */
+/** Settings › Profile: what installing gives, and the button or the hint. Nothing when there is nothing to do. */
 export function InstallSection() {
   const { t } = useTranslation()
   const { installable, ios, standalone } = usePwa()
@@ -66,7 +38,7 @@ export function InstallSection() {
       {installable && (
         <button
           type="button"
-          className="nc-btn nc-btn-accent"
+          className="nt-btn nt-btn-accent"
           data-testid="install"
           onClick={() => {
             setAsked(true)
@@ -95,7 +67,7 @@ export function OfflinePage({ retry }: { retry: () => void }) {
       <Logo withWordmark />
       <WifiOff className="h-8 w-8 text-mist-500" aria-hidden />
       <p className="max-w-sm text-sm text-mist-300">{t('pwa.offline')}</p>
-      <button type="button" className="nc-btn nc-btn-ghost" onClick={retry}>
+      <button type="button" className="nt-btn nt-btn-ghost" onClick={retry}>
         {t('pwa.retry')}
       </button>
     </div>
