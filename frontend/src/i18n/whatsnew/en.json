@@ -1,4 +1,18 @@
 {
+  "0.4.3": {
+    "lead": "A fix in the notifications.",
+    "sections": [
+      {
+        "title": "The weekly report reads again",
+        "where": "Settings › Notifications",
+        "body": "Next to its weekday and time, a report's description got so narrow that nearly every word had a line of its own. When room is short, the fields now go below it."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "The pictures in the README now show the new look."
+    ]
+  },
   "0.4.2": {
     "lead": "Asks before removing, plus a few touches.",
     "sections": [

@@ -1,4 +1,18 @@
 {
+  "0.4.3": {
+    "lead": "Eine Korrektur in den Benachrichtigungen.",
+    "sections": [
+      {
+        "title": "Wochenbericht wieder lesbar",
+        "where": "Einstellungen › Benachrichtigungen",
+        "body": "Die Beschreibung eines Berichts stand neben Wochentag und Uhrzeit so schmal, dass fast jedes Wort eine eigene Zeile hatte. Wird es eng, stehen die Felder jetzt darunter."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Die Bilder im README zeigen jetzt das neue Aussehen."
+    ]
+  },
   "0.4.2": {
     "lead": "Mehr Sicherheit vor dem Entfernen und ein paar Feinheiten.",
     "sections": [
