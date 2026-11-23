@@ -240,7 +240,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
               }}
               aria-label={t('detail.delete')}
               title={t('detail.delete')}
-              className="nt-icon-btn hover:text-bad-500"
+              className="nt-icon-btn not-disabled:hover:text-bad-500"
             >
               <Trash2 className="h-4 w-4" />
             </button>

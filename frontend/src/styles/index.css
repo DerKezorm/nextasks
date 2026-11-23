@@ -143,12 +143,12 @@
   }
 
   .nt-menu-item {
-    @apply flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-mist-200 outline-none hover:bg-ink-800 hover:text-mist-100 focus-visible:bg-ink-800 focus-visible:text-mist-100 disabled:opacity-40;
+    @apply flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-mist-200 outline-none not-disabled:hover:bg-ink-800 not-disabled:hover:text-mist-100 focus-visible:bg-ink-800 focus-visible:text-mist-100 disabled:opacity-40;
   }
 
   /* An entry that deletes: red text, the hover stays neutral. */
   .nt-menu-danger {
-    @apply text-bad-500 hover:text-bad-500 focus-visible:text-bad-500;
+    @apply text-bad-500 not-disabled:hover:text-bad-500 focus-visible:text-bad-500;
   }
 
   /* A line between groups of entries, indented as in nexnotes. */
@@ -157,7 +157,9 @@
   }
 
   /* The buttons, field and chosen row of nexnotes (its `.nn-btn`, `.nn-field`, `.nn-chosen`): every button of the app
-     looks and feels the same in both apps; only the accent is petrol. */
+     looks and feels the same in both apps; only the accent is petrol. A locked button stays grey in every state: each
+     variant's hover is `not-disabled:hover:`, else `.nt-btn-accent:hover` (same weight, later) would beat
+     `.nt-btn:disabled` and paint a locked button petrol under the pointer. */
   .nt-btn {
     @apply inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:border-transparent disabled:bg-ink-800 disabled:text-mist-600;
     border-radius: var(--radius-button);
@@ -165,12 +167,12 @@
 
   /* The one main action. */
   .nt-btn-accent {
-    @apply bg-accent-500 text-on-accent hover:bg-accent-600;
+    @apply bg-accent-500 text-on-accent not-disabled:hover:bg-accent-600;
   }
 
   /* Secondary: an edge, no ground. */
   .nt-btn-ghost {
-    @apply border border-edge text-mist-200 hover:bg-ink-800 hover:text-mist-100;
+    @apply border border-edge text-mist-200 not-disabled:hover:bg-ink-800 not-disabled:hover:text-mist-100;
   }
 
   /* A picture over the whole page (a picture of a note), as nexnotes' .nn-viewer: covering in both modes, nothing of
@@ -186,17 +188,17 @@
 
   /* Danger: only for deleting and what cannot be undone. */
   .nt-btn-danger {
-    @apply bg-bad-500 text-on-bad hover:opacity-90;
+    @apply bg-bad-500 text-on-bad not-disabled:hover:opacity-90;
   }
 
   /* Quiet: text in the accent colour. */
   .nt-btn-quiet {
-    @apply h-auto px-0 text-accent-400 hover:underline disabled:bg-transparent;
+    @apply h-auto px-0 text-accent-400 not-disabled:hover:underline disabled:bg-transparent;
   }
 
   /* A button with only a symbol: 32 px, its menu open on the accent's wash. */
   .nt-icon-btn {
-    @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-mist-500 transition-colors hover:bg-ink-800 hover:text-mist-100 disabled:cursor-not-allowed disabled:opacity-40 aria-expanded:bg-accent-wash aria-expanded:text-accent-400 aria-pressed:bg-accent-wash aria-pressed:text-accent-400;
+    @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-mist-500 transition-colors not-disabled:hover:bg-ink-800 not-disabled:hover:text-mist-100 disabled:cursor-not-allowed disabled:opacity-40 aria-expanded:bg-accent-wash aria-expanded:text-accent-400 aria-pressed:bg-accent-wash aria-pressed:text-accent-400;
   }
 
   /* A field: 40 px, 9 px corners, petrol edge and ring in focus. */
@@ -216,7 +218,7 @@
 
   /* A chip to switch on and off (nexnotes' search filters): round, petrol on the wash when on. */
   .nt-toggle {
-    @apply inline-flex h-[34px] max-w-full items-center gap-1.5 rounded-full border border-edge px-3 text-[13px] text-mist-100 hover:bg-ink-800 aria-checked:border-accent-500 aria-checked:bg-accent-wash aria-checked:text-accent-400 aria-pressed:border-accent-500 aria-pressed:bg-accent-wash aria-pressed:text-accent-400;
+    @apply inline-flex h-[34px] max-w-full items-center gap-1.5 rounded-full border border-edge px-3 text-[13px] text-mist-100 not-disabled:hover:bg-ink-800 aria-checked:border-accent-500 aria-checked:bg-accent-wash aria-checked:text-accent-400 aria-pressed:border-accent-500 aria-pressed:bg-accent-wash aria-pressed:text-accent-400;
   }
 
   /* The same chip as a label round a checkbox or radio. */

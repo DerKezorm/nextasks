@@ -161,7 +161,7 @@ export function Button({
   disabled?: boolean
   label?: string
 }) {
-  const look = accent ? 'nt-btn-accent' : danger ? 'nt-btn-ghost hover:border-bad-500/50 hover:text-bad-500' : 'nt-btn-ghost'
+  const look = accent ? 'nt-btn-accent' : danger ? 'nt-btn-ghost not-disabled:hover:border-bad-500/50 not-disabled:hover:text-bad-500' : 'nt-btn-ghost'
   return (
     <button
       type={type}

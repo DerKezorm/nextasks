@@ -523,7 +523,7 @@ function BrowserPush({ channel, busy, run, push }: { channel: NotifyChannel; bus
               </span>
               <button
                 type="button"
-                className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium hover:border-bad-500/50 hover:text-bad-500"
+                className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium not-disabled:hover:border-bad-500/50 not-disabled:hover:text-bad-500"
                 disabled={busy}
                 aria-label={t('push.removeName', { name: name(entry) })}
                 onClick={() => (current ? toggle(false) : void run(() => api<NotifyState>(`/api/notify/browsers/${entry.id}`, { method: 'DELETE' })))}

@@ -197,7 +197,7 @@ function SectionHeader({ section, index, count, board = false }: { section: Sect
         </form>
       )}
       {count !== undefined && (board ? <span className="text-xs text-mist-500 tabular-nums">{count}</span> : <span className="shrink-0 text-[11px] font-medium text-mist-600 tabular-nums">· {count}</span>)}
-      <button type="button" className={'nt-icon-btn h-7 w-7 opacity-0 group-hover:opacity-100 hover:text-bad-500 focus:opacity-100 ' + (board ? '' : 'ml-auto')} aria-label={t('list.deleteSection', { name: section.name })} onClick={remove}>
+      <button type="button" className={'nt-icon-btn h-7 w-7 opacity-0 group-hover:opacity-100 not-disabled:hover:text-bad-500 focus:opacity-100 ' + (board ? '' : 'ml-auto')} aria-label={t('list.deleteSection', { name: section.name })} onClick={remove}>
         <Trash2 className="h-4 w-4" strokeWidth={1.8} />
       </button>
     </div>

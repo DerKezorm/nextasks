@@ -96,7 +96,7 @@ export function MembersDialog({ spaceId, onClose }: { spaceId: string; onClose: 
                     type="button"
                     disabled={busy}
                     aria-label={t('members.removeName', { name: personName(person, t) })}
-                    className="nt-icon-btn hover:text-bad-500"
+                    className="nt-icon-btn not-disabled:hover:text-bad-500"
                     onClick={() => void run(() => engine.call('DELETE', `/spaces/${spaceId}/members/${m.account_id}`))}
                   >
                     <UserMinus className="h-4 w-4" />

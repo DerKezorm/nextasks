@@ -79,7 +79,7 @@ export function DayNav({ items, today, paging }: { items: Reminder[]; today: str
       <button type="button" className="nt-icon-btn" disabled={paging.start === 0} onClick={() => paging.setStart(steps.back)} aria-label={t('tiles.earlier')} title={t('tiles.earlier')}>
         <ChevronLeft className="h-4 w-4" aria-hidden />
       </button>
-      <button type="button" className="h-8 rounded-lg px-2.5 text-[13px] font-semibold text-mist-300 hover:bg-ink-800 hover:text-mist-100 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent" disabled={paging.start === 0} onClick={() => paging.setStart(0)} title={t('tiles.toToday')}>
+      <button type="button" className="h-8 rounded-lg px-2.5 text-[13px] font-semibold text-mist-300 not-disabled:hover:bg-ink-800 not-disabled:hover:text-mist-100 disabled:cursor-default disabled:opacity-40" disabled={paging.start === 0} onClick={() => paging.setStart(0)} title={t('tiles.toToday')}>
         {t('due.today')}
       </button>
       <button type="button" className="nt-icon-btn" onClick={() => paging.setStart(steps.forward)} aria-label={t('tiles.later')} title={t('tiles.later')}>
