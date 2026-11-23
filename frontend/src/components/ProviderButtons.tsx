@@ -53,7 +53,7 @@ export function ProviderButtons({
             key={provider.slug}
             type="button"
             onClick={() => window.location.assign(startAddress(provider.slug, { invite, next }))}
-            className="flex h-10 w-full items-center justify-center rounded-full border border-ink-700 text-sm font-medium hover:bg-ink-850"
+            className="nt-btn nt-btn-ghost w-full"
           >
             {invite ? t('oidc.invite.button', { name: provider.label }) : t('oidc.login.button', { name: provider.label })}
           </button>

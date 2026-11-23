@@ -21,13 +21,13 @@ import { safeNext, useAuth } from '../state/auth'
 
 function AuthFrame({ title, text, children }: { title: string; text?: string; children: ReactNode }) {
   return (
-    <div className="nt-safe nc-scroll flex min-h-dvh flex-col overflow-y-auto">
+    <div className="nt-safe nt-scroll flex min-h-dvh flex-col overflow-y-auto">
       <header className="flex items-center justify-between px-5 py-4">
         <Logo withWordmark />
         <ThemeSwitcher />
       </header>
-      <main className="flex flex-1 items-start justify-center px-4 pt-[8vh] pb-10">
-        <div className="w-full max-w-sm rounded-2xl border border-ink-700 bg-ink-900 p-6 shadow-xl">
+      <main className="flex flex-1 items-start justify-center px-4 pt-[6vh] pb-10">
+        <div className="w-full max-w-sm rounded-[16px] border border-ink-700 bg-ink-850 p-6 shadow-xl shadow-black/20">
           <h1 className="text-xl font-bold tracking-tight">{title}</h1>
           {text && <p className="mt-1 text-sm text-mist-500">{text}</p>}
           <div className="mt-5">{children}</div>
@@ -58,7 +58,7 @@ function Field({ label, value, onChange, type = 'text', autoComplete, autoFocus 
           autoFocus={autoFocus}
           aria-describedby={hint ? hintId : undefined}
           onChange={(event) => onChange(event.target.value)}
-          className="mt-1 h-10 w-full rounded-lg border border-edge bg-ink-850 px-3 text-sm outline-none focus:border-accent-500"
+          className="nt-field mt-1"
         />
       </label>
       {hint && (
@@ -72,7 +72,7 @@ function Field({ label, value, onChange, type = 'text', autoComplete, autoFocus 
 
 function Primary({ children, busy = false }: { children: ReactNode; busy?: boolean }) {
   return (
-    <button type="submit" disabled={busy} className="h-10 w-full rounded-full bg-accent-500 px-4 text-sm font-semibold text-on-accent hover:bg-accent-600 disabled:opacity-50">
+    <button type="submit" disabled={busy} className="nt-btn nt-btn-accent w-full">
       {children}
     </button>
   )
@@ -83,7 +83,7 @@ function Primary({ children, busy = false }: { children: ReactNode; busy?: boole
 function Problem({ code, returned = false }: { code: string | null; returned?: boolean }) {
   if (!code) return null
   return (
-    <p role="alert" className="rounded-lg border border-bad-500/30 bg-bad-500/10 px-3 py-2 text-sm text-bad-500">
+    <p role="alert" className="nt-problem">
       {returned ? returnErrorText(code) : errorText(code)}
     </p>
   )
@@ -226,7 +226,7 @@ export function LoginPage() {
   const passwordShown = methods.password || providers.length === 0 || operatorWay
   return (
     <AuthFrame title={t('auth.login.title')} text={t('auth.login.text')}>
-      {ended && <p className="mb-4 rounded-xl border border-warn-500/30 bg-warn-500/10 px-3 py-2 text-xs text-mist-200">{t('auth.login.ended')}</p>}
+      {ended && <p role="status" className="mb-4 rounded-[9px] border border-warn-500/30 bg-warn-500/10 px-3 py-2 text-sm text-warn-500">{t('auth.login.ended')}</p>}
       {passwordShown ? (
         <form
           className="space-y-4"
@@ -299,7 +299,7 @@ function LegacyInvite({ token }: { token: string }) {
     // A link for a new account, opened by somebody signed in already: there is nothing to join (F2).
     return (
       <AuthFrame title={t('auth.invite.title')} text={t('auth.invite.haveAccount', { name: state.signed_in_as })}>
-        <Link to="/" className="nc-btn nc-btn-accent flex h-10 w-full items-center justify-center">
+        <Link to="/" className="nt-btn nt-btn-accent flex w-full">
           {t('auth.invite.toApp')}
         </Link>
       </AuthFrame>
@@ -313,7 +313,7 @@ function LegacyInvite({ token }: { token: string }) {
         <button
           type="button"
           disabled={busy}
-          className="h-10 w-full rounded-full bg-accent-500 px-4 text-sm font-semibold text-on-accent hover:bg-accent-600 disabled:opacity-50"
+          className="nt-btn nt-btn-accent w-full"
           onClick={async () => {
             // Once: a second click while the first is under way would only meet the used link.
             if (busy) return
@@ -374,7 +374,7 @@ function LegacyInvite({ token }: { token: string }) {
 function BackLink() {
   const { t } = useTranslation()
   return (
-    <Link to="/login" className="nc-btn nc-btn-ghost mt-4 flex h-10 w-full items-center justify-center">
+    <Link to="/login" className="nt-btn nt-btn-ghost mt-4 flex w-full">
       {t('auth.backToLogin')}
     </Link>
   )
@@ -447,11 +447,11 @@ export function InvitePage() {
       <AuthFrame title={t('join.title')} text={text}>
         <Problem code={problem} />
         {invite.already_member ? (
-          <Link to="/" className="nc-btn nc-btn-accent flex h-10 w-full items-center justify-center">
+          <Link to="/" className="nt-btn nt-btn-accent flex w-full">
             {t('join.already')}
           </Link>
         ) : (
-          <button type="button" disabled={busy} onClick={() => void accept()} className="h-10 w-full rounded-full bg-accent-500 px-4 text-sm font-semibold text-on-accent hover:bg-accent-600 disabled:opacity-50">
+          <button type="button" disabled={busy} onClick={() => void accept()} className="nt-btn nt-btn-accent w-full">
             {t('join.accept')}
           </button>
         )}
@@ -506,7 +506,7 @@ export function AppConnectPage() {
         type="button"
         disabled={busy}
         data-testid="app-connect"
-        className="h-10 w-full rounded-full bg-accent-500 px-4 text-sm font-semibold text-on-accent hover:bg-accent-600 disabled:opacity-50"
+        className="nt-btn nt-btn-accent w-full"
         onClick={async () => {
           setBusy(true)
           setProblem(null)
@@ -566,11 +566,11 @@ export function ConfirmEmailPage() {
       <Problem code={problem} />
       {!problem && !email && <p className="text-sm text-mist-400">{t('confirmEmail.busy')}</p>}
       {email && (
-        <p role="status" className="rounded-lg border border-ok-500/30 bg-ok-500/10 px-3 py-2 text-sm text-ok-500" data-testid="confirmed">
+        <p role="status" className="rounded-[9px] border border-ok-500/30 bg-ok-500/10 px-3 py-2 text-sm text-ok-500" data-testid="confirmed">
           {t('confirmEmail.done', { email })}
         </p>
       )}
-      <Link to="/settings/notifications" className="nc-btn nc-btn-ghost mt-4 flex h-10 w-full items-center justify-center">
+      <Link to="/settings/notifications" className="nt-btn nt-btn-ghost mt-4 flex w-full">
         {t('confirmEmail.toSettings')}
       </Link>
     </AuthFrame>
@@ -605,7 +605,7 @@ export function UnsubscribePage() {
               type="button"
               disabled={busy}
               data-testid="unsubscribe"
-              className="mt-4 h-10 w-full rounded-full bg-accent-500 px-4 text-sm font-semibold text-on-accent hover:bg-accent-600 disabled:opacity-50"
+              className="nt-btn nt-btn-accent mt-4 w-full"
               onClick={() => {
                 setBusy(true)
                 api(path, { method: 'POST' }).then(
@@ -620,11 +620,11 @@ export function UnsubscribePage() {
         </>
       )}
       {done && (
-        <p role="status" className="rounded-lg border border-ok-500/30 bg-ok-500/10 px-3 py-2 text-sm text-ok-500">
+        <p role="status" className="rounded-[9px] border border-ok-500/30 bg-ok-500/10 px-3 py-2 text-sm text-ok-500">
           {t('unsubscribe.done')}
         </p>
       )}
-      <Link to="/settings/notifications" className="nc-btn nc-btn-ghost mt-4 flex h-10 w-full items-center justify-center">
+      <Link to="/settings/notifications" className="nt-btn nt-btn-ghost mt-4 flex w-full">
         {t('unsubscribe.toSettings')}
       </Link>
     </AuthFrame>
