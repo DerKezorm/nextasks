@@ -1,4 +1,24 @@
 {
+  "0.4.2": {
+    "lead": "Mehr Sicherheit vor dem Entfernen und ein paar Feinheiten.",
+    "sections": [
+      {
+        "title": "Erst fragen, dann entfernen",
+        "where": "Anhänge einer Aufgabe, Mitglieder eines Bereichs",
+        "body": "Bevor ein Anhang endgültig entfernt wird oder jemand einen Bereich verlassen muss, fragt nextasks jetzt nach. Esc schließt dabei nur die Frage, der Dialog dahinter bleibt offen."
+      },
+      {
+        "title": "Bereiche mit Symbol",
+        "where": "Seitenleiste",
+        "body": "Jeder Bereich zeigt in der Seitenleiste wieder sein Symbol vor dem Namen."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Ein gesperrter Knopf bleibt grau, auch wenn die Maus darüber steht.",
+      "Was in den Einstellungen geklappt hat, meldet eine grüne Zeile statt eines Kastens."
+    ]
+  },
   "0.4.1": {
     "lead": "Geräte verwaltest du jetzt an einem Ort, und Bilder öffnen sich ungestört.",
     "sections": [

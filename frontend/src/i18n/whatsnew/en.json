@@ -1,4 +1,24 @@
 {
+  "0.4.2": {
+    "lead": "Asks before removing, plus a few touches.",
+    "sections": [
+      {
+        "title": "Asks first, then removes",
+        "where": "A task's attachments, a space's members",
+        "body": "Before an attachment is removed for good or someone is taken out of a space, nextasks now asks. Esc closes only the question; the dialog behind it stays open."
+      },
+      {
+        "title": "Spaces with their symbol",
+        "where": "Sidebar",
+        "body": "Each space shows its symbol in front of its name in the sidebar again."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "A locked button stays grey even with the pointer over it.",
+      "What worked in the settings is now confirmed by a green line instead of a box."
+    ]
+  },
   "0.4.1": {
     "lead": "Your devices are in one place now, and pictures open undisturbed.",
     "sections": [
