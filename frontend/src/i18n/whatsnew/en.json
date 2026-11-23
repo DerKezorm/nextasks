@@ -1,4 +1,36 @@
 {
+  "0.4.0": {
+    "lead": "nextasks now looks like the other nex apps, and Scheduled can show its days as columns.",
+    "sections": [
+      {
+        "title": "Scheduled as columns",
+        "where": "Scheduled, the sliders icon at the top right",
+        "body": "Switch between list and columns. In columns every day from today gets a column of its own, as many as fit side by side, with anything overdue in front. Drag a task to another day to move it; its time stays. The “+” under a column adds a task for that day. Each device remembers your choice."
+      },
+      {
+        "title": "Settings in one place",
+        "where": "Your name at the bottom of the sidebar",
+        "body": "The menu above your name is gone. Clicking your name opens the settings: “My account” with profile, security, appearance, connections and notifications, “Server” for operators, and “About nextasks” at the bottom. Language and sign out are in the profile, light and dark under appearance."
+      },
+      {
+        "title": "New task and search in the sidebar",
+        "where": "Sidebar",
+        "body": "“+ New task” and the search now sit at the top of the sidebar. Drag its right edge to make the sidebar wider or narrower; a double click resets it."
+      },
+      {
+        "title": "A calmer look",
+        "where": "Everywhere",
+        "body": "Buttons, fields, menus, dialogs and notices look like those of the other nex apps. Lists carry a small symbol in their colour instead of a coloured tile. Before a list, a space or a filter is deleted, a dialog of its own asks first."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "Bring a deleted task back right from the notice at the bottom with “Undo”.",
+      "New lists and filters come from the “+” in the head of a space or of the filters, a new space from a space’s “…” menu.",
+      "An unknown address or a deleted list now shows a note with the way to the start page instead of quietly jumping to Today.",
+      "Old bookmarks and links to My account and the settings lead to the new place."
+    ]
+  },
   "0.3.2": {
     "lead": "The nextasks mark now has a dark version.",
     "sections": [

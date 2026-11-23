@@ -1,4 +1,36 @@
 {
+  "0.4.0": {
+    "lead": "nextasks sieht jetzt aus wie die anderen nex-Apps, und „Geplant“ zeigt die Tage auf Wunsch als Spalten.",
+    "sections": [
+      {
+        "title": "Geplant als Spalten",
+        "where": "Geplant, Regler-Symbol oben rechts",
+        "body": "Schalte zwischen Liste und Spalten um. In den Spalten bekommt jeder Tag ab heute eine eigene Spalte, so viele wie nebeneinander passen; Überfälliges steht vorne. Zieh eine Aufgabe auf einen anderen Tag, um sie zu verschieben, die Uhrzeit bleibt. Mit dem „+“ unter einer Spalte legst du eine Aufgabe für diesen Tag an. Jedes Gerät merkt sich deine Wahl."
+      },
+      {
+        "title": "Einstellungen an einem Ort",
+        "where": "Dein Name unten in der Seitenleiste",
+        "body": "Das Menü über deinem Namen ist weg. Ein Klick auf deinen Namen öffnet die Einstellungen: „Mein Konto“ mit Profil, Sicherheit, Darstellung, Verbindungen und Benachrichtigungen, für Betreiber „Server“ und ganz unten „Über nextasks“. Sprache und Abmelden findest du im Profil, Hell und Dunkel unter Darstellung."
+      },
+      {
+        "title": "Neue Aufgabe und Suche in der Seitenleiste",
+        "where": "Seitenleiste",
+        "body": "„+ Neue Aufgabe“ und die Suche stehen jetzt oben in der Seitenleiste. Am rechten Rand ziehst du die Seitenleiste breiter oder schmaler, ein Doppelklick setzt sie zurück."
+      },
+      {
+        "title": "Ein ruhigeres Aussehen",
+        "where": "Überall",
+        "body": "Knöpfe, Felder, Menüs, Dialoge und Meldungen sehen aus wie in den anderen nex-Apps. Listen tragen ein kleines Symbol in ihrer Farbe statt einer farbigen Kachel. Bevor eine Liste, ein Bereich oder ein Filter gelöscht wird, fragt ein eigener Dialog nach."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Eine gelöschte Aufgabe holst du direkt aus der Meldung unten mit „Rückgängig“ zurück.",
+      "Neue Listen und Filter legst du über das „+“ im Kopf eines Bereichs oder der Filter an, einen neuen Bereich über das „…“-Menü eines Bereichs.",
+      "Eine unbekannte Adresse oder eine gelöschte Liste zeigt jetzt einen Hinweis mit dem Weg zur Startseite, statt still zu „Heute“ zu springen.",
+      "Alte Lesezeichen und Links auf „Mein Konto“ und die Einstellungen führen an die neue Stelle."
+    ]
+  },
   "0.3.2": {
     "lead": "Das Zeichen von nextasks hat jetzt eine dunkle Fassung.",
     "sections": [
