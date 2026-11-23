@@ -1,4 +1,24 @@
 {
+  "0.4.1": {
+    "lead": "Your devices are in one place now, and pictures open undisturbed.",
+    "sections": [
+      {
+        "title": "Devices under Connections",
+        "where": "Settings › Connections",
+        "body": "Your connected iPhones and iPads now come first, each with when it last checked in. “Disconnect” asks first. “Connect iPhone or iPad” opens the QR code; without a camera, the address and a code do it."
+      },
+      {
+        "title": "Pictures over the whole page",
+        "where": "A task's note",
+        "body": "A picture from a note now covers the whole page, with a bar on top showing its name and “Close”. Clicking the picture or pressing Esc closes it too."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "The bottom of the sidebar shows just your name and the gear.",
+      "Field borders are a touch stronger in light mode."
+    ]
+  },
   "0.4.0": {
     "lead": "nextasks now looks like the other nex apps, and Scheduled can show its days as columns.",
     "sections": [

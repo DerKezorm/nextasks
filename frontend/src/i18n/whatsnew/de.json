@@ -1,4 +1,24 @@
 {
+  "0.4.1": {
+    "lead": "Geräte verwaltest du jetzt an einem Ort, und Bilder öffnen sich ungestört.",
+    "sections": [
+      {
+        "title": "Geräte unter Verbindungen",
+        "where": "Einstellungen › Verbindungen",
+        "body": "Ganz oben stehen jetzt deine verbundenen iPhones und iPads, jedes mit dem Zeitpunkt, zu dem es sich zuletzt gemeldet hat. „Trennen“ fragt vorher nach. „iPhone oder iPad verbinden“ öffnet den QR-Code, ohne Kamera geht es mit Adresse und Code."
+      },
+      {
+        "title": "Bilder über der ganzen Seite",
+        "where": "Notiz einer Aufgabe",
+        "body": "Ein Bild aus einer Notiz deckt jetzt die ganze Seite ab, oben mit einer Leiste mit Namen und „Schließen“. Klick aufs Bild oder Esc schließt es ebenfalls."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Unten in der Seitenleiste stehen nur noch dein Name und das Zahnrad.",
+      "Ränder von Feldern sind im hellen Modus eine Spur kräftiger."
+    ]
+  },
   "0.4.0": {
     "lead": "nextasks sieht jetzt aus wie die anderen nex-Apps, und „Geplant“ zeigt die Tage auf Wunsch als Spalten.",
     "sections": [
