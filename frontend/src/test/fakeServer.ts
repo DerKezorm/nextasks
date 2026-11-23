@@ -929,6 +929,8 @@ export class FakeServer {
       return { status: 204 }
     }
     if (path === '/api/app-pairing' && method === 'POST') {
+      // As `services/devices.py` `prepare`: the app switched off first, then pairing.
+      if (!this.settings.app_enabled) return error(403, 'app_disabled')
       if (!this.settings.app_pairing_allowed) return error(403, 'app_pairing_disabled')
       const address = String(this.settings.public_url || body.address || '')
       if (!address) return error(422, 'app_address_missing')

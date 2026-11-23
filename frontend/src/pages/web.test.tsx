@@ -775,13 +775,15 @@ describe('spaces and people', () => {
     const { server } = world()
     server.settings.public_url = 'https://tasks.example.com'
     const page = await mount(server, '/settings/connections')
-    await click(page.querySelector('[data-testid="pair-start"]'))
-    expect(page.querySelector('[data-testid="pair-code"]')?.textContent).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/)
-    expect(page.querySelector('[data-testid="pairing"] img')?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/)
+    await click(page.querySelector('[data-testid="devices-connect"]'))
+    expect(document.querySelector('[data-testid="devices-code"]')?.textContent).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/)
+    expect(document.querySelector('[data-testid="devices-qr"]')?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/)
     server.connectPairing([...server.pairings.keys()][0], 'Test phone')
     await new Promise((resolve) => setTimeout(resolve, 2200))
     await settle()
-    expect(page.querySelector('[data-testid="devices"]')?.textContent).toContain('Test phone')
+    // Taken: the dialog closes itself, the phone stands among the devices.
+    expect(document.querySelector('[data-testid="devices-connect-dialog"]')).toBeNull()
+    expect(page.querySelector('[data-testid="devices-list"]')?.textContent).toContain('Test phone')
   })
 })
 

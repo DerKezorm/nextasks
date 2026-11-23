@@ -3,9 +3,9 @@
  * and the account page before, only sorted by subject. The cards themselves stay in their files (`AccountTab`,
  * `LookCards`, `ServerCards`, `SignInCards`, `AboutArea`, `components/…`); an area only picks them.
  */
-import { AppDevices } from '../../components/AccountParts'
 import { ApiTokens } from '../../components/ApiTokens'
 import { NotificationsPart } from '../../components/Notifications'
+import { DevicesSection } from '../../devices/DevicesSection'
 import { AboutArea } from './AboutArea'
 import { AccountTab } from './AccountTab'
 import type { AreaSlug } from './areas'
@@ -25,7 +25,8 @@ export function AreaContent({ area }: { area: AreaSlug }) {
     case 'connections':
       return (
         <div className="space-y-6">
-          <AppDevices />
+          {/* "Geräte" first, before the keys, as in nexnotes. */}
+          <DevicesSection />
           <ApiTokens />
         </div>
       )

@@ -1386,23 +1386,6 @@
     "useBrowser": "{{zone}} übernehmen",
     "saved": "Gespeichert."
   },
-  "device": {
-    "title": "iPhone-App",
-    "text": "Verbinde die nextasks-App auf deinem iPhone oder iPad mit diesem Server.",
-    "connect": "iPhone-App verbinden",
-    "qr": "QR-Code zum Verbinden",
-    "scan": "Scanne den Code in der App unter „Server verbinden“.",
-    "orCode": "Oder gib diesen Code ein:",
-    "until": "Gültig bis {{when}}",
-    "done": "Verbunden.",
-    "expired": "Der Code ist abgelaufen.",
-    "list": "Angemeldete Geräte",
-    "none": "Noch kein Gerät verbunden.",
-    "seen": "zuletzt {{when}}",
-    "since": "verbunden {{when}}",
-    "remove": "Trennen",
-    "removeName": "{{name}} trennen"
-  },
   "push": {
     "title": "Browser",
     "text": "Mitteilungen kommen auch, wenn nextasks geschlossen ist. Was kommt, stellst du oben in der Tabelle ein.",
@@ -1576,5 +1559,30 @@
     "list": "Diese Liste gibt es nicht (mehr), oder du siehst sie nicht.",
     "filter": "Diesen Filter gibt es nicht (mehr).",
     "home": "Zur Startseite"
+  },
+  "devices": {
+    "section": {
+      "title": "Geräte",
+      "text": "iPhone und iPad mit der nextasks-App.",
+      "none": "Noch kein Gerät verbunden.",
+      "connect": "iPhone oder iPad verbinden",
+      "lastSeen": "zuletzt {{when}}",
+      "neverSeen": "noch nicht gemeldet",
+      "disconnect": "Trennen",
+      "disconnectName": "„{{name}}“ trennen",
+      "disconnectTitle": "„{{name}}“ trennen?",
+      "disconnectText": "Das Gerät kommt ab sofort nicht mehr an deine Aufgaben. Um es wieder zu verbinden, scannst du einen neuen Code."
+    },
+    "connect": {
+      "title": "iPhone oder iPad verbinden",
+      "qr": "QR-Code zum Verbinden",
+      "valid": "Gilt 10 Minuten",
+      "renew": "neu erzeugen",
+      "expired": "Der Code ist abgelaufen.",
+      "step1": "nextasks auf dem iPhone oder iPad öffnen.",
+      "step2": "„Server verbinden“ tippen und den Code scannen.",
+      "step3": "Fertig. Deine Aufgaben laden, und die Anmeldung wandert über deine Apple-ID auf deine anderen Geräte.",
+      "noCamera": "Ohne Kamera: In der App unter „Code“ die Adresse <b>{{host}}</b> und den Code <code>{{code}}</code> eingeben."
+    }
   }
 }

@@ -1386,23 +1386,6 @@
     "useBrowser": "Use {{zone}}",
     "saved": "Saved."
   },
-  "device": {
-    "title": "iPhone app",
-    "text": "Connect the nextasks app on your iPhone or iPad with this server.",
-    "connect": "Connect the iPhone app",
-    "qr": "QR code to connect",
-    "scan": "Scan the code in the app under “Connect server”.",
-    "orCode": "Or enter this code:",
-    "until": "Valid until {{when}}",
-    "done": "Connected.",
-    "expired": "The code has expired.",
-    "list": "Devices signed in",
-    "none": "No device connected yet.",
-    "seen": "last seen {{when}}",
-    "since": "connected {{when}}",
-    "remove": "Disconnect",
-    "removeName": "Disconnect {{name}}"
-  },
   "push": {
     "title": "Browser",
     "text": "Notifications arrive also while nextasks is closed. What arrives is chosen in the table above.",
@@ -1576,5 +1559,30 @@
     "list": "This list does not exist (any more), or you cannot see it.",
     "filter": "This filter does not exist (any more).",
     "home": "To the start page"
+  },
+  "devices": {
+    "section": {
+      "title": "Devices",
+      "text": "iPhone and iPad with the nextasks app.",
+      "none": "No device connected yet.",
+      "connect": "Connect iPhone or iPad",
+      "lastSeen": "last seen {{when}}",
+      "neverSeen": "not seen yet",
+      "disconnect": "Disconnect",
+      "disconnectName": "Disconnect “{{name}}”",
+      "disconnectTitle": "Disconnect “{{name}}”?",
+      "disconnectText": "From now on the device cannot reach your tasks. To connect it again, scan a new code."
+    },
+    "connect": {
+      "title": "Connect iPhone or iPad",
+      "qr": "QR code to connect",
+      "valid": "Valid for 10 minutes",
+      "renew": "new code",
+      "expired": "The code has expired.",
+      "step1": "Open nextasks on the iPhone or iPad.",
+      "step2": "Tap “Connect a server” and scan the code.",
+      "step3": "Done. Your tasks load, and the sign-in travels to your other devices through your Apple ID.",
+      "noCamera": "Without a camera: in the app under “Code”, enter the address <b>{{host}}</b> and the code <code>{{code}}</code>."
+    }
   }
 }
