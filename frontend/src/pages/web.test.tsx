@@ -429,6 +429,44 @@ describe('the note as Markdown', () => {
     expect(page.querySelector('[data-testid="attachments"]')?.textContent ?? '').not.toContain('meter.png')
   })
 
+  it('opens a picture of the note over the whole page, covering the app, with a bar of its own', async () => {
+    const { server, home } = world()
+    const id = reminder(server, 'Mine')!.id
+    const page = await mount(server, `/lists/${home}?reminder=${id}`)
+    await noteEditor(page)
+    const made = URL.createObjectURL
+    URL.createObjectURL = () => 'blob:meter'
+    try {
+      const input = page.querySelector<HTMLInputElement>('[data-testid="note-picture"]')!
+      const file = new File([new Uint8Array([137, 80, 78, 71])], 'meter.png', { type: 'image/png' })
+      Object.defineProperty(input, 'files', { value: [file], configurable: true })
+      await act(async () => void input.dispatchEvent(new Event('change', { bubbles: true })))
+      await settle()
+      const picture = (await noteEditor(page)).dom.querySelector<HTMLImageElement>('img[data-attachment]')!
+      expect(picture.getAttribute('src')).toBe('blob:meter')
+      await click(picture)
+      const viewer = document.querySelector('[data-testid="picture-viewer"]')!
+      expect(viewer.getAttribute('role')).toBe('dialog')
+      expect(viewer.getAttribute('aria-label')).toBe('meter')
+      // Over the page, not inside the editor; covering, nothing half-transparent.
+      expect(viewer.parentElement).toBe(document.body)
+      expect(viewer.classList.contains('nt-viewer')).toBe(true)
+      expect(viewer.className).not.toMatch(/\/\d+|bg-black|bg-scrim/)
+      const bar = viewer.querySelector('[data-testid="viewer-bar"]')!
+      expect(bar.classList.contains('nt-viewer-bar')).toBe(true)
+      expect(bar.textContent).toBe('meter')
+      expect(viewer.querySelector('img')?.getAttribute('src')).toBe('blob:meter')
+      expect(document.activeElement).toBe(bar.querySelector('button'))
+      await act(async () => void window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })))
+      expect(document.querySelector('[data-testid="picture-viewer"]')).toBeNull()
+      await click(picture)
+      await click(document.querySelector('[data-testid="viewer-bar"] button'))
+      expect(document.querySelector('[data-testid="picture-viewer"]')).toBeNull()
+    } finally {
+      URL.createObjectURL = made
+    }
+  })
+
   it('never loads a picture from another address, it shows as a link', async () => {
     const { server, home } = world()
     const id = server.addReminder(home, 'Logo', { notes: 'Look: ![Logo](https://tracker.example.com/pixel.png)' })

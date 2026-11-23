@@ -67,7 +67,7 @@
   --color-ink-800: #eef2f3;
   --color-ink-700: #e3e8ea;
   --color-ink-600: #c3ccd0;
-  --color-edge: #8a979e;
+  --color-edge: #89969d; /* 3:1 to white; #8a979e stood at 2.9996 */
 
   --color-mist-100: #15202b;
   --color-mist-200: #26323b;
@@ -171,6 +171,17 @@
   /* Secondary: an edge, no ground. */
   .nt-btn-ghost {
     @apply border border-edge text-mist-200 hover:bg-ink-800 hover:text-mist-100;
+  }
+
+  /* A picture over the whole page (a picture of a note), as nexnotes' .nn-viewer: covering in both modes, nothing of
+     the app shows through; the bar on top has a ground of its own, its words and buttons at 4.5:1 and more (WCAG AA). */
+  .nt-viewer {
+    background-color: var(--color-ink-950);
+  }
+  .nt-viewer-bar {
+    background-color: var(--color-ink-900);
+    border-bottom: 1px solid var(--color-ink-700);
+    color: var(--color-mist-100);
   }
 
   /* Danger: only for deleting and what cannot be undone. */

@@ -6,7 +6,7 @@
  * A small bar above the field: bold, italic, strikethrough, heading, bullet list, numbered list, checklist, quote,
  * code, link, picture; the usual keys (Ctrl+B, Ctrl+I, …) and Markdown typed at the start of a line (`# `, `- `,
  * `[] `) do the same. A picture picked, pasted or dropped becomes an attachment of the task first, then
- * `![Name](attachment:<uuid>)` in the text; it shows inline, small, and larger on a click. Pictures from other
+ * `![Name](attachment:<uuid>)` in the text; it shows inline, small, and over the whole page on a click (`PictureViewer`). Pictures from other
  * addresses are never loaded: they show as a link. Saved a moment after typing stops and when the field is left.
  */
 import { defaultValueCtx, Editor, editorViewCtx, editorViewOptionsCtx, rootCtx, serializerCtx } from '@milkdown/kit/core'
@@ -38,6 +38,7 @@ import { APP_BASE } from '../sync/transport'
 import type { Reminder } from '../sync/types'
 import { NOTES_MAX, NOTES_WARN, SAVE_AFTER_MS } from '../lib/notes'
 import { noteSyntax, pictureView, taskTicks, toggleChecklist, type PictureHost } from '../lib/noteMilkdown'
+import { PictureViewer } from './PictureViewer'
 
 /** Pictures by attachment id: the file just picked (shown at once), else fetched from the server once. */
 const pictures = new Map<string, Promise<string | null>>()
@@ -302,11 +303,7 @@ export default function NoteEditor({ reminder, label, onSave, locked }: { remind
           if (chosen.length) uploadRef.current(chosen)
         }}
       />
-      {zoom && (
-        <div className="bg-scrim fixed inset-0 z-[80] grid place-items-center p-6" onPointerDown={() => setZoom(null)} onKeyDown={(e) => e.key === 'Escape' && (e.stopPropagation(), setZoom(null))} role="dialog" aria-modal="true" aria-label={zoom.name || t('detail.picture')}>
-          <img src={zoom.url} alt={zoom.name} className="max-h-[90vh] max-w-[92vw] rounded-xl shadow-2xl" />
-        </div>
-      )}
+      {zoom && <PictureViewer url={zoom.url} name={zoom.name} onClose={() => setZoom(null)} />}
     </div>
   )
 }
