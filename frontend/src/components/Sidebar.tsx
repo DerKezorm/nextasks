@@ -2,7 +2,7 @@
  * The left column (docs "Aussehen", "Web"), laid out as nexnotes' sidebar: logo and word mark; "+ New task" and the
  * search; the collections as rows (Today, Scheduled, All, Marked, Assigned to me, Done) with a petrol symbol and their
  * number, those one hid left out; the own filters under the head "Filters" with "+" for a new one; one part per space,
- * its head (the name in capitals, the members of a shared one, "…" and "+" for a new list) above its lists. A list or a
+ * its head (its symbol small and grey, the name in capitals, the members of a shared one, "…" and "+" for a new list) above its lists. A list or a
  * filter shows its symbol in its colour (nexnotes' `FolderMark`), its name and its number; under the pointer or with
  * the focus "…" takes the number's place and opens its menu. A new space is made from the menu of any space's head.
  * Lists and spaces are sorted by dragging; a task dropped on a list moves there. Spaces one hid wait folded under
@@ -19,6 +19,7 @@ import { moveList, moveReminder, moveSpace, setSpaceHidden, siblingsAt } from '.
 import { useColumnWidth } from '../lib/columns'
 import { localDay } from '../lib/due'
 import { dragging, draggedReminder, DRAG_LIST, DRAG_SPACE } from '../lib/drag'
+import { iconFor } from '../lib/look'
 import { TILE_LOOK } from '../lib/tileLook'
 import { useAuth } from '../state/auth'
 import { useEngine, useFiltersOffered, useSyncState, useView } from '../state/sync'
@@ -325,7 +326,8 @@ function SpaceBlock({ space, index }: { space: Space; index: number }) {
           else if (listId) moveList(engine, view, listId, space.id, lists.length)
         }}
       >
-        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="nt-side-head flex min-w-0 flex-1 items-center gap-1 py-1 text-left hover:text-mist-300">
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="nt-side-head flex min-w-0 flex-1 items-center gap-1.5 py-1 text-left hover:text-mist-300">
+          {createElement(iconFor(space.icon), { className: 'h-3.5 w-3.5 shrink-0', strokeWidth: 1.8, 'aria-hidden': true, 'data-space-icon': space.icon } as Parameters<typeof createElement>[1])}
           <span className="truncate">{space.name}</span>
           {open ? <ChevronDown className="h-3 w-3 shrink-0 opacity-0 group-hover/space:opacity-100" aria-hidden /> : <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />}
         </button>

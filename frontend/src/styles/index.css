@@ -257,7 +257,8 @@
     @apply text-[11px] font-semibold tracking-[0.08em] text-mist-600 uppercase;
   }
 
-  /* The head of a part of the sidebar (nexnotes' "Ordner"): 11 px, capitals, without a symbol. */
+  /* The head of a part of the sidebar (nexnotes' "Ordner"): 11 px, capitals, grey; a space's head leads with its
+     symbol at 14 px in the same grey. */
   .nt-side-head {
     @apply text-[11px] font-semibold tracking-[0.06em] text-mist-500 uppercase;
   }

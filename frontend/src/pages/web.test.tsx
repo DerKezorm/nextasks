@@ -121,6 +121,19 @@ describe('the own look (docs "Aussehen")', () => {
     expect(page.querySelector('aside [data-testid="new-reminder"]')?.textContent).toBe('New task')
     expect(page.textContent).not.toMatch(/reminder/i)
   })
+
+  it('leads the head of a space in the sidebar with its symbol, small and grey, before the name', async () => {
+    const { server, family } = world()
+    const page = await mount(server, '/today')
+    const head = page.querySelector(`aside [data-space="${family}"] button[aria-expanded]`)!
+    const symbol = head.querySelector('svg[data-space-icon]')!
+    expect(symbol.getAttribute('data-space-icon')).toBe('house')
+    expect(symbol.getAttribute('class')).toContain('h-3.5 w-3.5')
+    expect(symbol.getAttribute('stroke-width')).toBe('1.8')
+    expect(symbol.getAttribute('style')).toBeNull()
+    expect(head.firstElementChild).toBe(symbol)
+    expect(head.textContent).toBe('Family')
+  })
 })
 
 describe('making and ticking off', () => {
