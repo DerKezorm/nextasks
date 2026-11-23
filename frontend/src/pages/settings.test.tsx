@@ -39,7 +39,11 @@ describe('the sidebar', () => {
     const page = await mount(server, '/today')
     const foot = sidebar(page).querySelector('[data-testid="sidebar-account"]')!
     expect(foot.getAttribute('href')).toBe('/settings')
-    expect(foot.querySelector('span.truncate')?.textContent).toBe('Robin · Settings')
+    // Only the name shows; the gear says settings, the word stays for screen readers and the tooltip.
+    expect(foot.querySelector('span.truncate')?.textContent).toBe('Robin')
+    expect(foot.textContent).not.toContain('Settings')
+    expect(foot.getAttribute('aria-label')).toBe('Robin · Settings')
+    expect(foot.getAttribute('title')).toBe('Robin · Settings')
     expect(foot.className).not.toContain('nt-chosen')
     expect(button(page, 'Account of Robin')).toBeUndefined()
     expect(sidebar(page).querySelector('[role="radiogroup"], [aria-label="Keyboard shortcuts"]')).toBeNull()

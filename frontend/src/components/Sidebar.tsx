@@ -198,12 +198,13 @@ function AccountLine() {
       <NavLink
         to="/settings"
         data-testid="sidebar-account"
+        aria-label={`${shown} · ${t('settings.title')}`}
+        title={`${shown} · ${t('settings.title')}`}
         className={({ isActive }) => 'flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-sm transition-colors ' + (isActive ? 'nt-chosen' : 'text-mist-300 hover:bg-ink-800 hover:text-mist-100')}
       >
         <Avatar person={person} className="h-7 w-7 text-xs" />
-        <span className="min-w-0 flex-1 truncate" title={`${shown} · ${t('settings.title')}`}>
-          {shown} · {t('settings.title')}
-        </span>
+        {/* The gear says "settings"; the word stays only for screen readers and the tooltip, as in nexnotes. */}
+        <span className="min-w-0 flex-1 truncate">{shown}</span>
         <Settings className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden />
       </NavLink>
     </div>
