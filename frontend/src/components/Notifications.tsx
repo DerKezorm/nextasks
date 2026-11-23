@@ -254,8 +254,10 @@ function RowLabel({ event, state, busy, schedule }: { event: string } & Pick<Row
   const report = state.reports.includes(event)
   const about = report ? t(`notify.${event}Text`) : event === 'changed' ? t('notify.changedHint', { label: t('list.notifyOn') }) : ''
   return (
-    <span className="flex min-w-0 flex-col gap-2 text-left lg:flex-row lg:items-center lg:gap-6">
-      <span className="min-w-0 flex-1">
+    // Wraps instead of squeezing: the line about the row keeps at least 14rem, else the time fields go below it (the
+    // weekly report's weekday and time took so much room that its text stood one word per line).
+    <span className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2 text-left">
+      <span className="min-w-56 flex-1 basis-56">
         <span className="block text-sm font-medium text-mist-100">{rowName(t, state, event)}</span>
         {about && <span className="block max-w-xl text-xs font-normal text-mist-500">{about}</span>}
       </span>
