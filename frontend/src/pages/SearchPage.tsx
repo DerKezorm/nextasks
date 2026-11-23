@@ -1,9 +1,10 @@
 /** Search over title, notes, tags and link of every task one sees; done ones on request. */
-import { Search } from 'lucide-react'
+import { Search, SearchX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 
-import { PageHead } from '../components/PageHead'
+import { EmptyState } from '../components/EmptyState'
+import { PageHead, TileIcon } from '../components/PageHead'
 import { ReminderGroup } from '../components/ReminderRow'
 import { search } from '../lib/actions'
 import { useView } from '../state/sync'
@@ -29,22 +30,19 @@ export function SearchPage() {
       { replace: true },
     )
   return (
-    <main className="nc-scroll min-w-0 flex-1 overflow-y-auto">
+    <main className="nt-scroll min-w-0 flex-1 overflow-y-auto">
       <div className="px-4 py-5 sm:px-7 sm:py-6">
-        <PageHead id="search-title" title={t('search.title')} />
-        <div className="mb-2 flex items-center gap-2 rounded-xl border border-ink-700 bg-ink-850 px-3 focus-within:border-accent-500">
-          <Search className="h-4 w-4 text-mist-500" aria-hidden />
-          <input autoFocus value={query} onChange={(e) => set(e.target.value, withDone)} placeholder={t('search.placeholder')} aria-label={t('search.placeholder')} data-testid="search-field" className="min-w-0 flex-1 bg-transparent py-2 text-sm text-mist-100 placeholder:text-mist-600 focus:outline-none" />
-        </div>
-        <label className="mb-4 flex items-center gap-2 text-xs text-mist-400">
-          <input type="checkbox" checked={withDone} onChange={(e) => set(query, e.target.checked)} className="accent-accent-500" /> {t('search.withDone')}
+        <PageHead id="search-title" title={t('search.title')} icon={<TileIcon icon={Search} />} />
+        <label className="relative mb-3 block">
+          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-mist-500" aria-hidden />
+          <input autoFocus value={query} onChange={(e) => set(e.target.value, withDone)} placeholder={t('search.placeholder')} aria-label={t('search.placeholder')} data-testid="search-field" className="nt-field pl-9" />
         </label>
-        {query.trim() && <p className="nt-sec mb-1.5 px-1">{t('search.found', { count: found.length })}</p>}
-        {found.length > 0 && (
-          <div className="nt-card overflow-hidden">
-            <ReminderGroup spot={null} items={found} showDone={withDone} showList only={new Set(found.map((r) => r.id))} />
-          </div>
-        )}
+        <label className="mb-4 flex items-center gap-2 px-1 text-sm text-mist-300">
+          <input type="checkbox" checked={withDone} onChange={(e) => set(query, e.target.checked)} className="h-4 w-4 accent-accent-500" /> {t('search.withDone')}
+        </label>
+        {query.trim() && <p className="nt-sec mb-1 px-3">{t('search.found', { count: found.length })}</p>}
+        {query.trim() && found.length === 0 && <EmptyState icon={SearchX} title={t('search.none')} text={t('search.noneText')} />}
+        {found.length > 0 && <ReminderGroup spot={null} items={found} showDone={withDone} showList only={new Set(found.map((r) => r.id))} />}
       </div>
     </main>
   )

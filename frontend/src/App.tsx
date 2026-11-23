@@ -12,6 +12,7 @@ import { FormerAboutAddress, FormerAccountAddress, SettingsPage } from './pages/
 import { TilePage } from './pages/TilePage'
 import { TrashPage } from './pages/TrashPage'
 import { OfflinePage } from './components/AppInstall'
+import { NotFound } from './components/NotFound'
 import { useAuth } from './state/auth'
 import { SyncProvider, useSyncState, useView } from './state/sync'
 import { shownTiles, TILES } from './sync/tiles'
@@ -113,7 +114,7 @@ export default function App() {
         <Route path="settings/:area" element={<SettingsPage />} />
         <Route path="account" element={<FormerAccountAddress />} />
         <Route path="about" element={<FormerAboutAddress />} />
-        <Route path="*" element={<Navigate to="/today" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   )

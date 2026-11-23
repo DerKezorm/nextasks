@@ -111,11 +111,12 @@ describe('the own look (docs "Aussehen")', () => {
     expect(page.querySelector('[data-testid^="tile-count-"]')).toBeNull()
   })
 
-  it('heads a list with its plaque and the title in the colour of text, and offers "New task" in the sidebar', async () => {
+  it('heads a list with its symbol on a tinted tile and the title in the colour of text, and offers "New task" in the sidebar', async () => {
     const { server, home } = world()
     const page = await mount(server, `/lists/${home}`)
     const head = page.querySelector('main header')!
-    expect(head.querySelector('[data-plaque]')).not.toBeNull()
+    expect(head.querySelector('[data-mark-tile] svg[data-mark]')).not.toBeNull()
+    expect(page.querySelector('[data-plaque]')).toBeNull()
     expect((head.querySelector('h1') as HTMLElement).style.color).toBe('')
     expect(page.querySelector('aside [data-testid="new-reminder"]')?.textContent).toBe('New task')
     expect(page.textContent).not.toMatch(/reminder/i)
@@ -153,7 +154,7 @@ describe('making and ticking off', () => {
     await click(button(page, 'Delete completed (one)'))
     expect(reminder(server, 'Done already')!.data.deleted_at).not.toBeNull()
     await click(page.querySelector('a[href="/trash"]'))
-    expect(page.querySelector('[data-testid="trash-reminders"]')?.textContent).toContain('Done already')
+    expect(page.querySelector('[data-testid="trash-list"]')?.textContent).toContain('Done already')
     await click(button(page, 'Restore “Done already”'))
     expect(reminder(server, 'Done already')!.data.deleted_at).toBeNull()
   })
@@ -525,6 +526,49 @@ describe('the context menu', () => {
   })
 })
 
+describe('deleting as in nexnotes', () => {
+  const rightClick = (el: Element) => act(async () => void el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 60 })))
+  const entry = (label: string) => [...document.querySelectorAll<HTMLButtonElement>('[data-testid="context-menu"] [role^="menuitem"]')].find((b) => b.dataset.entry === label)
+
+  it('puts a task into the trash at once and brings it back with "Undo" in the notice', async () => {
+    const { server, home } = world()
+    const page = await mount(server, `/lists/${home}`)
+    await rightClick(row(page, 'Mine')!)
+    await click(entry('Move to trash'))
+    expect(reminder(server, 'Mine')!.data.deleted_at).not.toBeNull()
+    const notice = document.querySelector('[data-testid="notice"]')!
+    expect(notice.textContent).toContain('“Mine” is in the trash.')
+    expect(notice.querySelector('button[aria-label]')).toBeNull()
+    await click(notice.querySelector('[data-testid="notice-undo"]'))
+    expect(reminder(server, 'Mine')!.data.deleted_at).toBeNull()
+    expect(document.querySelector('[data-testid="notice"]')).toBeNull()
+  })
+
+  it('asks before a list goes to the trash, and says where it goes', async () => {
+    const { server, home } = world()
+    const page = await mount(server, `/lists/${home}`)
+    await rightClick(page.querySelector(`aside a[href="/lists/${home}"]`)!)
+    await click(entry('Move to trash'))
+    const question = document.querySelector('[data-testid="confirm-dialog"]')!
+    expect(question.textContent).toContain('trash')
+    expect(question.textContent).not.toContain('This cannot be undone.')
+    expect(server.data('list', home)!.deleted_at).toBeFalsy()
+    await click(button(question as HTMLElement, 'Cancel'))
+    expect(server.data('list', home)!.deleted_at).toBeFalsy()
+    await rightClick(page.querySelector(`aside a[href="/lists/${home}"]`)!)
+    await click(entry('Move to trash'))
+    await click(document.querySelector('[data-testid="confirm-go"]'))
+    expect(server.data('list', home)!.deleted_at).toBeTruthy()
+    expect(where.path).toBe('/today')
+  })
+
+  it('says so for an address nextasks does not know, instead of showing another page', async () => {
+    const { server } = world()
+    const page = await mount(server, '/nowhere')
+    expect(page.querySelector('[data-testid="not-found"]')?.textContent).toContain('There is no such page in nextasks.')
+  })
+})
+
 describe('hiding a space (space_pref)', () => {
   const rightClick = (el: Element) => act(async () => void el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 60 })))
   const entry = (label: string) => [...document.querySelectorAll<HTMLButtonElement>('[data-testid="context-menu"] [role^="menuitem"]')].find((b) => b.dataset.entry === label)
@@ -589,7 +633,7 @@ describe('lists, sections and columns', () => {
   it('offers the entries of the list and space menus as menu items to a screen reader', async () => {
     const { server, home } = world()
     const page = await mount(server, `/lists/${home}`)
-    const entries = () => [...page.querySelectorAll('[role="menu"] > *')].map((item) => item.getAttribute('role'))
+    const entries = () => [...page.querySelectorAll('[role="menu"] > :not([role="separator"])')].map((item) => item.getAttribute('role'))
     await click(button(page, 'More about the list'))
     expect(entries().length).toBeGreaterThan(3)
     expect(entries().every((role) => role === 'menuitem' || role === 'menuitemcheckbox')).toBe(true)
@@ -793,8 +837,10 @@ describe('own filters and the sidebar overview (filter, tile_pref)', () => {
     expect(filterRow(page, 'Keep out')).toBeNull()
     await rightClick(filterRow(page, 'Away with it')!)
     await click(entry('Delete'))
-    expect(entry('Delete')?.textContent).toContain('Delete the filter for good')
-    await click(entry('Delete'))
+    const question = document.querySelector('[data-testid="confirm-dialog"]')!
+    expect(question.textContent).toContain('This cannot be undone.')
+    expect(server.rows.has(`filter:${robin}:${gone}`)).toBe(true)
+    await click(question.querySelector('[data-testid="confirm-go"]'))
     await settle()
     expect(server.rows.has(`filter:${robin}:${gone}`)).toBe(false)
     expect(where.path).toBe('/today')
@@ -835,7 +881,7 @@ describe('own filters and the sidebar overview (filter, tile_pref)', () => {
     await click(page.querySelector('[data-testid="new-filter"]'))
     const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
     expect(dialog.getAttribute('aria-label')).toBe('New filter')
-    await type(dialog.querySelector('input.nc-field'), 'Done at home today')
+    await type(dialog.querySelector('input.nt-field'), 'Done at home today')
     expect(dialog.querySelector('[data-testid="condition-done"]')).toBeNull()
     await click(dialog.querySelector('[data-testid="state-completed"]'))
     expect(dialog.querySelector('[data-testid="condition-due"]')).toBeNull()

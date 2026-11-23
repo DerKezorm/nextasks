@@ -4,11 +4,14 @@
  */
 import { useTranslation } from 'react-i18next'
 
-import { ListDot } from '../components/Badge'
-import { PageHead } from '../components/PageHead'
+import { EmptyState } from '../components/EmptyState'
+import { Mark } from '../components/Mark'
+import { PageHead, TileIcon } from '../components/PageHead'
 import { QuickEntry } from '../components/QuickEntry'
 import { ReminderGroup } from '../components/ReminderRow'
+import { useShell } from '../components/Shell'
 import { dayLabel, localDay, longDay } from '../lib/due'
+import { TILE_LOOK } from '../lib/tileLook'
 import { useView } from '../state/sync'
 import { groupByDay, tileItems, type Tile } from '../sync/tiles'
 import type { Data, Reminder } from '../sync/types'
@@ -23,6 +26,7 @@ export function tops(items: Reminder[]): Reminder[] {
 export function TilePage({ tile }: { tile: Tile }) {
   const { t, i18n } = useTranslation()
   const view = useView()
+  const shell = useShell()
   const today = localDay()
   const items = tileItems(view, tile, today)
   const only = new Set(items.map((r) => r.id))
@@ -38,14 +42,12 @@ export function TilePage({ tile }: { tile: Tile }) {
   if (tile === 'scheduled') {
     body = groupByDay(items).map(({ day, items: group }) => (
       <section key={day} className="mb-5" aria-label={longDay(day, i18n.language)}>
-        <h2 className={'nt-sec mb-1.5 flex items-baseline gap-2 px-1 ' + (day < today ? 'text-bad-500' : '')}>
+        <h2 className={'nt-sec mb-1 flex items-baseline gap-1.5 px-3 ' + (day < today ? 'text-late' : '')}>
           <span>{dayLabel(day, today, i18n.language, t)}</span>
-          <span className="font-semibold tracking-normal normal-case opacity-80">{longDay(day, i18n.language)}</span>
-          <span className="ml-auto tabular-nums">{group.length}</span>
+          <span className="font-medium tracking-normal normal-case">· {longDay(day, i18n.language)}</span>
+          <span className="font-medium tracking-normal normal-case tabular-nums">· {group.length}</span>
         </h2>
-        <div className="nt-card overflow-hidden">
-          <ReminderGroup spot={null} items={tops(group)} showDone={false} showList only={only} />
-        </div>
+        <ReminderGroup spot={null} items={tops(group)} showDone={false} showList only={only} />
       </section>
     ))
   } else if (tile === 'all' || tile === 'flagged') {
@@ -55,20 +57,18 @@ export function TilePage({ tile }: { tile: Tile }) {
       const group = items.filter((r) => r.list_id === listId)
       return (
         <section key={listId} className="mb-5" aria-label={list.name}>
-          <h2 className="nt-sec mb-1.5 flex items-center gap-2 px-1">
-            <ListDot color={list.color} /> <span className="truncate">{list.name}</span>
-            <span className="truncate font-semibold tracking-normal normal-case opacity-80">{view.space(list.space_id)?.name}</span>
-            <span className="ml-auto tabular-nums">{group.length}</span>
+          <h2 className="nt-sec mb-1 flex items-center gap-1.5 px-3">
+            <Mark color={list.color} icon={list.icon} size={12} /> <span className="truncate">{list.name}</span>
+            <span className="truncate font-medium tracking-normal normal-case">· {view.space(list.space_id)?.name}</span>
+            <span className="shrink-0 font-medium tracking-normal normal-case tabular-nums">· {group.length}</span>
           </h2>
-          <div className="nt-card overflow-hidden">
-            <ReminderGroup spot={null} items={tops(group)} showDone={false} only={only} />
-          </div>
+          <ReminderGroup spot={null} items={tops(group)} showDone={false} only={only} />
         </section>
       )
     })
   } else
     body = items.length > 0 && (
-      <div className="nt-card mb-5 overflow-hidden">
+      <div className="mb-5">
         <ReminderGroup spot={null} items={tops(items)} showDone={tile === 'done'} showList only={only} footer={quick} />
       </div>
     )
@@ -77,12 +77,14 @@ export function TilePage({ tile }: { tile: Tile }) {
   const apart = quick && (tile === 'scheduled' || tile === 'all' || tile === 'flagged' || items.length === 0)
 
   return (
-    <main className="nc-scroll min-w-0 flex-1 overflow-y-auto" aria-labelledby="tile-title">
+    <main className="nt-scroll min-w-0 flex-1 overflow-y-auto" aria-labelledby="tile-title">
       <div className="px-4 py-5 sm:px-7 sm:py-6">
-        <PageHead id="tile-title" target={target} title={t(`tiles.${tile}`)} sub={tile === 'done' ? t('tiles.subDone', { count: items.length }) : t('tiles.sub', { count: items.length })} />
-        {items.length === 0 && <p className="px-1 pb-4 text-sm text-mist-500">{t(`tiles.empty.${tile}`)}</p>}
+        <PageHead id="tile-title" target={target} title={t(`tiles.${tile}`)} count={tile === 'done' ? t('tiles.subDone', { count: items.length }) : t('list.open', { count: items.length })} sub={t('tiles.everywhere')} icon={<TileIcon icon={TILE_LOOK[tile].icon} />} />
+        {items.length === 0 && (
+          <EmptyState icon={TILE_LOOK[tile].icon} title={t(`tiles.empty.${tile}`)} text={tile === 'done' ? undefined : t('tiles.emptyText')} action={tile === 'done' || !target ? undefined : t('reminder.new')} onAction={() => shell.newTask(target ?? undefined)} />
+        )}
         {body}
-        {apart && <div className="nt-card overflow-hidden">{quick}</div>}
+        {apart && <div>{quick}</div>}
       </div>
     </main>
   )

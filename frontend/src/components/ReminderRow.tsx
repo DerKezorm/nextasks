@@ -5,16 +5,16 @@
  * before, after or onto a row (onto: becomes its subtask).
  */
 import { ChevronDown, ChevronRight, Clock, Link2, ListTree, MapPin, NotebookText, PanelRightClose, PanelRightOpen, Paperclip, Repeat } from 'lucide-react'
-import { useState, type DragEvent, type KeyboardEvent, type ReactNode } from 'react'
+import { useState, type CSSProperties, type DragEvent, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { moveReminder, siblingsAt, type Spot } from '../lib/actions'
+import { moveReminder, siblingsAt, trashReminder, type Spot } from '../lib/actions'
 import { dueLabel, localDay, localTime, overdue } from '../lib/due'
 import { picturedIn } from '../lib/notes'
 import { dragging, draggedReminder, DRAG_REMINDER } from '../lib/drag'
 import { useEngine, useView } from '../state/sync'
 import type { Reminder } from '../sync/types'
-import { ListDot } from './Badge'
+import { Mark } from './Mark'
 import { useTaskMenu } from './Menus'
 import { AvatarStack } from './People'
 import { useShell } from './Shell'
@@ -63,7 +63,7 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
     else if (event.key === 'Enter') shell.openReminder(reminder.id)
     else if (key === 'x') engine.toggle(reminder.id)
     else if (key === 'f') engine.put('reminder', reminder.id, { flagged: !reminder.flagged })
-    else if (event.key === 'Delete' || event.key === 'Backspace') engine.trash('reminder', reminder.id)
+    else if (event.key === 'Delete' || event.key === 'Backspace') trashReminder(engine, reminder, (title) => t('reminder.trashed', { title }))
     else return
     event.preventDefault()
   }
@@ -72,6 +72,7 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
     <div
       data-row
       data-reminder={reminder.id}
+      data-chosen={open || undefined}
       role="listitem"
       tabIndex={0}
       draggable
@@ -107,12 +108,13 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
         onDropZone(id, zone)
       }}
       className={
-        'group relative flex items-start gap-[11px] px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset ' +
-        (open ? 'bg-chosen ' : 'hover:bg-ink-800/60 ') +
+        'group relative flex items-start gap-[11px] rounded-[10px] px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset ' +
+        (open ? 'bg-accent-wash ' : 'hover:bg-ink-800 ') +
         (hint === 'into' ? 'ring-2 ring-accent-500 ring-inset ' : '')
       }
-      style={depth ? { paddingLeft: 12 + depth * 33 } : undefined}
+      style={depth ? ({ paddingLeft: 12 + depth * 33, '--row-indent': `${12 + depth * 33}px` } as CSSProperties) : undefined}
     >
+      {open && <span aria-hidden className="absolute top-2 bottom-2 left-0 w-[3px] rounded-r-[3px] bg-accent-500" data-testid="chosen-bar" />}
       {hint === 'before' && <span className="absolute inset-x-3 -top-px h-0.5 rounded bg-accent-500" />}
       {hint === 'after' && <span className="absolute inset-x-3 -bottom-px h-0.5 rounded bg-accent-500" />}
       <TickBox done={done} title={reminder.title} onToggle={() => engine.toggle(reminder.id)} className="mt-px" />
@@ -120,7 +122,7 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
         <span className={'block text-[15px] leading-snug break-words ' + (done ? 'text-mist-500 line-through' : 'text-mist-100')}>{reminder.title}</span>
         <span className="mt-[3px] flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[12.5px] text-mist-500 empty:hidden">
           {reminder.due_date && (
-            <span className={'inline-flex items-center gap-1 ' + (late ? 'font-semibold text-bad-500' : dueToday ? 'font-semibold text-accent-400' : '')} data-testid="due">
+            <span className={'inline-flex items-center gap-1 ' + (late ? 'font-semibold text-late' : dueToday ? 'font-semibold text-accent-400' : '')} data-testid="due">
               {late && <Clock className="h-[13px] w-[13px]" aria-hidden />}
               {dueLabel(reminder, today, i18n.language, t)}
             </span>
@@ -145,7 +147,7 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
           {reminder.url && <Link2 className="h-[13px] w-[13px]" aria-label={t('detail.url')} role="img" />}
           {showList && list && (
             <span className="inline-flex items-center gap-1.5">
-              <ListDot color={list.color} /> {list.name}
+              <Mark color={list.color} icon={list.icon} size={12} /> {list.name}
             </span>
           )}
           {reminder.tags.map((tag) => (
@@ -172,7 +174,7 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
           aria-label={t('reminder.paneToggleFor', { title: reminder.title })}
           title={t('reminder.paneToggle')}
           data-testid="pane-toggle"
-          className={'hidden rounded-md p-0.5 lg:block ' + (inPane ? 'bg-chosen text-accent-400' : 'text-mist-500 opacity-0 group-hover:opacity-100 hover:text-accent-400 focus:opacity-100')}
+          className={'hidden rounded-md p-0.5 lg:block ' + (inPane ? 'bg-accent-wash text-accent-400' : 'text-mist-500 opacity-0 group-hover:opacity-100 hover:text-accent-400 focus:opacity-100')}
         >
           {inPane ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
         </button>
@@ -187,7 +189,7 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
  * subtasks shown to those found (tiles, search). In a card the rows are parted by thin lines; on the board each task
  * with its subtasks is a card of its own.
  */
-export function ReminderGroup({ spot, items, showDone, showList = false, empty, only, board = false, footer }: { spot: Spot | null; items: Reminder[]; showDone: boolean; showList?: boolean; empty?: string; only?: Set<string>; board?: boolean; footer?: ReactNode }) {
+export function ReminderGroup({ spot, items, showDone, showList = false, only, board = false, footer }: { spot: Spot | null; items: Reminder[]; showDone: boolean; showList?: boolean; only?: Set<string>; board?: boolean; footer?: ReactNode }) {
   const engine = useEngine()
   const view = useView()
   const [folded, setFolded] = useState<Record<string, boolean>>({})
@@ -229,7 +231,6 @@ export function ReminderGroup({ spot, items, showDone, showList = false, empty, 
       }}
     >
       <div role="list" className={board ? 'nt-board flex flex-col gap-2' : 'nt-rows'}>
-        {items.length === 0 && empty && <p className="px-3 py-3 text-sm text-mist-600">{empty}</p>}
         {items.map((reminder) => {
           // In a tile or a search only the subtasks that belong there show under their parent.
           const children = view.childrenOf(reminder.id).filter((c) => !view.inTrash(c) && (showDone || !c.completed_at) && (!only || only.has(c.id)))
