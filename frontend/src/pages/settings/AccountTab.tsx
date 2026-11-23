@@ -13,7 +13,7 @@ import { api, ApiError, authApi, type Me, type MyProvider } from '../../api/clie
 import { TimeZone } from '../../components/AccountParts'
 import { InstallSection } from '../../components/AppInstall'
 import { Avatar } from '../../components/Avatar'
-import { Field, Problem } from '../../components/Field'
+import { Done, Field, Problem } from '../../components/Field'
 import { changeLanguage, followBrowser, languageOptions, type LanguageOption } from '../../i18n'
 import { copyText } from '../../lib/copy'
 import { errorText, returnErrorText } from '../../lib/errors'
@@ -88,7 +88,7 @@ export function AccountTab({ part }: { part: AccountPart }) {
     <div className="space-y-5">
       <div aria-live="polite">
         <Problem text={problem} />
-        {shownDone && <p className="rounded-[9px] border border-ok-500/30 bg-ok-500/10 px-3 py-2 text-sm text-ok-500">{shownDone}</p>}
+        <Done text={shownDone} />
       </div>
 
       {part === 'profile' && (

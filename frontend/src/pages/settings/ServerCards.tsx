@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 
 import { ApiError, api, apiTokensApi, oidcApi, passwordHeader, type AddressQuestion, type AnyApiToken, type Me } from '../../api/client'
 import { Avatar } from '../../components/Avatar'
+import { Done } from '../../components/Field'
 import { byLanguageName, forgetAddedLanguages, SHIPPED, templateFile } from '../../i18n'
 import { useAuth } from '../../state/auth'
 import { Button, Card, Confirm, CopyLink, Feedback, Input, saveAsFile, Select, Toggle, useAction } from './ui'
@@ -600,7 +601,7 @@ export function BackupsCard({ server }: { server: Server }) {
           {brief.usable ? t('server.checkOk', { tasks: t('server.backupTasks', { count: brief.tasks }), files: t('server.backupFiles', { count: brief.files }), add: t('server.backupFiles', { count: brief.would_add }), remove: t('server.backupFiles', { count: brief.would_remove }) }) : t('server.checkBad')}
         </div>
       )}
-      {uploaded && <p className="rounded-xl border border-ok-500/40 bg-ok-500/10 px-4 py-3 text-sm text-mist-200">{t('server.uploadedHint')}</p>}
+      <Done text={uploaded ? t('server.uploadedHint') : null} />
       {restarting && <p className="rounded-xl border border-warn-500/40 bg-warn-500/10 px-4 py-3 text-sm text-warn-500">{t('server.restarting')}</p>}
       <Feedback problem={action.problem} done={action.done} />
       {asking && (

@@ -74,6 +74,17 @@ describe('notifications', () => {
     expect(switches.map((entry) => entry.closest('label')?.textContent)).toEqual(['Mail', 'Browser', 'iPhone/iPad'])
   })
 
+  it('say "Saved." as nexnotes does: one green line, no box', async () => {
+    const { server, robin } = smallWorld()
+    server.devices.push({ id: 'phone', account: robin, name: 'iPhone', created_at: '2026-11-07T08:00:00Z', last_seen: null })
+    const page = await mount(server, '/settings/notifications')
+    await click(box(page, 'route-daily-app'))
+    const saved = page.querySelector('[data-testid="notifications"] [role="status"]') as HTMLElement
+    expect(saved.textContent).toBe('Saved.')
+    expect(saved.className).toContain('text-ok-500')
+    expect(saved.className).not.toMatch(/\b(?:border|bg-|rounded)/)
+  })
+
   it('turn on mail only once the address is confirmed, then save choices and times', async () => {
     const { server, robin } = withMail()
     const page = await mount(server, '/settings/notifications')

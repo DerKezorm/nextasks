@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { forgetPrefs } from '../lib/devicePref'
 import { smallWorld } from '../test/fakeServer'
-import { button, choose, click, mount, press, settle, unmount, where } from '../test/harness'
+import { button, choose, click, mount, press, settle, submit, type, unmount, where } from '../test/harness'
 
 afterEach(async () => {
   await unmount()
@@ -159,6 +159,19 @@ describe('the settings', () => {
     await click(area.querySelector('[data-testid="sign-out"]'))
     expect(server.session).toBeNull()
     expect(where.path).toMatch(/^\/login/)
+  })
+
+  it('say that the profile is saved in one green line, no box, as nexnotes', async () => {
+    const { server } = smallWorld()
+    const page = await mount(server, '/settings/profile')
+    const area = page.querySelector('[data-testid="settings-area-profile"]')!
+    const name = area.querySelector('input[autocomplete="name"]')
+    await type(name, 'Robin R.')
+    await submit(name!.closest('form'))
+    const saved = area.querySelector('[role="status"]') as HTMLElement
+    expect(saved.textContent).toBe('Display name saved.')
+    expect(saved.className).toContain('text-ok-500')
+    expect(saved.className).not.toMatch(/\b(?:border|bg-|rounded)/)
   })
 
   it('put light, dark and system under Appearance, with the keys there too', async () => {

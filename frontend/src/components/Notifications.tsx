@@ -22,6 +22,7 @@ import { disablePush, enablePush, ownEndpointMark, pushState, type PushState } f
 import { useAuth } from '../state/auth'
 import { useEngine, useSyncState } from '../state/sync'
 import { AppError } from '../sync/transport'
+import { Done } from './Field'
 import { Section } from './Section'
 
 export type Browser = { id: number; browser: string; system: string; since: string | null; last_ok_at: string | null; mark: string }
@@ -175,11 +176,7 @@ export function NotificationsPart() {
             {problem}
           </p>
         )}
-        {done && (
-          <p role="status" className="rounded-lg border border-ok-500/30 bg-ok-500/10 px-3 py-2 text-sm text-ok-500">
-            {done}
-          </p>
-        )}
+        <Done text={done} />
       </div>
 
       <Section icon={Zap} title={t('notify.tableTitle')}>

@@ -10,6 +10,7 @@ import { ApiError } from '../../api/client'
 import { errorText } from '../../lib/errors'
 import { copyText } from '../../lib/copy'
 import { Dialog } from '../../components/Dialog'
+import { Done } from '../../components/Field'
 
 /** A card with its symbol in a small box, a title and a line of explanation. */
 export function Card({ icon: Icon, title, text, children, id }: { icon: LucideIcon; title: string; text?: string; children: ReactNode; id?: string }) {
@@ -184,11 +185,7 @@ export function Feedback({ problem, done = null }: { problem: string | null; don
           {errorText(problem)}
         </p>
       )}
-      {done && (
-        <p role="status" className="text-sm text-ok-500">
-          {done}
-        </p>
-      )}
+      <Done text={done} />
     </div>
   )
 }
