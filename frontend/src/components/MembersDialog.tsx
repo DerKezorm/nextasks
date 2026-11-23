@@ -1,7 +1,7 @@
 /**
  * Who is in a space, and invitations into it (only with the network). Managers invite by link (and, with the
- * operator's mail server, by mail: `POST /api/spaces/{id}/invites`), change roles and remove; everybody may leave. The
- * last manager can neither go nor step down while others are there.
+ * operator's mail server, by mail: `POST /api/spaces/{id}/invites`), change roles and remove (after a question,
+ * `ConfirmDialog`); everybody may leave. The last manager can neither go nor step down while others are there.
  */
 import { Copy, Link2, Mail, UserMinus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
@@ -97,7 +97,14 @@ export function MembersDialog({ spaceId, onClose }: { spaceId: string; onClose: 
                     disabled={busy}
                     aria-label={t('members.removeName', { name: personName(person, t) })}
                     className="nt-icon-btn not-disabled:hover:text-bad-500"
-                    onClick={() => void run(() => engine.call('DELETE', `/spaces/${spaceId}/members/${m.account_id}`))}
+                    onClick={() =>
+                      shell.ask({
+                        title: t('members.removeTitle', { name: personName(person, t), space: space.name }),
+                        text: t('members.removeText', { name: personName(person, t) }),
+                        confirm: t('members.remove'),
+                        run: () => void run(() => engine.call('DELETE', `/spaces/${spaceId}/members/${m.account_id}`)),
+                      })
+                    }
                   >
                     <UserMinus className="h-4 w-4" />
                   </button>

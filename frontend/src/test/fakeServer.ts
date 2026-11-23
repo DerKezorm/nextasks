@@ -195,6 +195,12 @@ export class FakeServer {
     return id
   }
 
+  /** A file attached to a task, as if uploaded on another device. */
+  addAttachment(reminderId: string, name: string, by: number, id = uuid4()): string {
+    this.set('attachment', id, { reminder_id: reminderId, name, mime: 'text/plain', size: 12, hash: '0'.repeat(64), created_by: by, created_at: this.iso() })
+    return id
+  }
+
   addSection(listId: string, name: string, position: string, id = uuid4()): string {
     this.set('section', id, { list_id: listId, name, position })
     return id

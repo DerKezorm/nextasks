@@ -442,6 +442,26 @@ describe('the note as Markdown', () => {
     expect(page.querySelector('[data-testid="attachments"]')?.textContent ?? '').not.toContain('meter.png')
   })
 
+  it('asks before an attachment goes, in red that it is for good, and only removes it on "Remove"', async () => {
+    const { server, home, robin } = world()
+    const id = reminder(server, 'Mine')!.id
+    const file = server.addAttachment(id, 'receipt.txt', robin)
+    const page = await mount(server, `/lists/${home}?reminder=${id}`)
+    await click(page.querySelector('button[aria-label="Remove receipt.txt"]'))
+    const question = document.querySelector('[data-testid="confirm-dialog"]') as HTMLElement
+    expect(question.closest('[role="dialog"]')?.getAttribute('aria-label')).toBe('Remove “receipt.txt”?')
+    expect(question.textContent).toContain('This cannot be undone.')
+    await click(button(question, 'Cancel'))
+    await settle()
+    expect(server.rows.has(`attachment:${file}`)).toBe(true)
+    expect(page.querySelector('[data-testid="attachments"]')?.textContent).toContain('receipt.txt')
+    await click(page.querySelector('button[aria-label="Remove receipt.txt"]'))
+    await click(document.querySelector('[data-testid="confirm-go"]'))
+    await settle()
+    expect(server.rows.has(`attachment:${file}`)).toBe(false)
+    expect(page.querySelector('[data-testid="attachments"]')).toBeNull()
+  })
+
   it('opens a picture of the note over the whole page, covering the app, with a bar of its own', async () => {
     const { server, home } = world()
     const id = reminder(server, 'Mine')!.id
@@ -784,6 +804,26 @@ describe('spaces and people', () => {
     expect([...server.invites.values()]).toHaveLength(1)
     await choose(page.querySelector('select[aria-label="Role of Alex"]'), 'manager')
     expect(server.member(family, alex)!.data.role).toBe('manager')
+  })
+
+  it('asks before a member is removed, says they lose access at once, and keeps the members open', async () => {
+    const { server, family, alex } = world()
+    const page = await mount(server, '/today')
+    await click(page.querySelector(`[data-space="${family}"] button[aria-label="More about “Family”"]`))
+    await click(button(page, 'Members'))
+    await click(page.querySelector('button[aria-label="Remove Alex"]'))
+    const question = document.querySelector('[data-testid="confirm-dialog"]') as HTMLElement
+    expect(question.closest('[role="dialog"]')?.getAttribute('aria-label')).toBe('Remove Alex from “Family”?')
+    expect(question.textContent).toContain('Alex loses access to the space and its lists at once.')
+    await press(document.body, 'Escape')
+    expect(document.querySelector('[data-testid="confirm-dialog"]')).toBeNull()
+    expect(page.querySelector('[data-testid="members"]')).not.toBeNull()
+    expect(server.member(family, alex)).toBeTruthy()
+    await click(page.querySelector('button[aria-label="Remove Alex"]'))
+    await click(document.querySelector('[data-testid="confirm-go"]'))
+    await settle()
+    expect(server.member(family, alex)).toBeFalsy()
+    expect(page.querySelector('[data-testid="members"]')?.textContent).not.toContain('Alex')
   })
 
   it('takes an invitation without an account: name, password, and in the space', async () => {

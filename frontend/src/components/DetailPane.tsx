@@ -471,7 +471,11 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
                         <Download className="h-4 w-4" />
                       </button>
                     )}
-                    <button type="button" aria-label={t('detail.removeFile', { name: a.name })} className="rounded-md p-1 text-mist-500 hover:text-bad-500" onClick={() => engine.remove('attachment', a.id)}>
+                    <button type="button" aria-label={t('detail.removeFile', { name: a.name })} className="rounded-md p-1 text-mist-500 hover:text-bad-500"
+                      onClick={() =>
+                        shell.ask({ title: t('detail.removeFileTitle', { name: a.name }), text: t('detail.removeFileText'), final: true, confirm: t('detail.removeFileGo'), run: () => engine.remove('attachment', a.id) })
+                      }
+                    >
                       <X className="h-4 w-4" />
                     </button>
                   </li>

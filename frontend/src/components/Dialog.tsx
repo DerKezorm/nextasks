@@ -2,6 +2,9 @@ import { X } from 'lucide-react'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+/** The dialogs open now, the latest last: Escape closes only the one on top (a question over the members). */
+const opened: object[] = []
+
 /** A dialog over the page, as nexnotes': Escape and the scrim close it, focus starts inside and comes back afterwards.
  * A `footer` (the buttons) stays below the part that scrolls, so it is never under the window's edge (Prüfgang E15). */
 export function Dialog({ title, onClose, children, wide = false, medium = false, footer }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean; medium?: boolean; footer?: ReactNode }) {
@@ -14,10 +17,12 @@ export function Dialog({ title, onClose, children, wide = false, medium = false,
   }, [onClose])
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null
+    const me = {}
+    opened.push(me)
     const first = panel.current?.querySelector<HTMLElement>('input, textarea, select, button:not([data-close])')
     first?.focus()
     const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && opened.at(-1) === me) {
         e.stopPropagation()
         close.current()
       }
@@ -25,6 +30,7 @@ export function Dialog({ title, onClose, children, wide = false, medium = false,
     window.addEventListener('keydown', key, true)
     return () => {
       window.removeEventListener('keydown', key, true)
+      opened.splice(opened.indexOf(me), 1)
       before?.focus?.()
     }
   }, [])
