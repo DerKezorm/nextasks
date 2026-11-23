@@ -3,7 +3,9 @@
  * a list, a space, a section or an entry of the trash opens the entries that part offers. A card with rows, lines
  * between groups, submenus behind ▸ and the key on the right where there is one; at the edge of the window it turns
  * inwards. Up and down move, Enter or Space choose, right opens a submenu, left and Escape go back, the focus returns
- * to where it was. On a phone or after a long press it comes up from below as a sheet; a submenu then takes its place.
+ * to where it was. It looks like nexnotes' menu: a card on the ground of the cards, rows with rounded corners, indented lines
+ * between the groups, checks on the right. On a phone or after a long press it comes up from below as a sheet; a submenu then
+ * takes its place.
  * In a text field, or with text selected, the browser's own menu stays, so copying and pasting go on as before.
  */
 import { Check, ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react'
@@ -15,14 +17,12 @@ export interface MenuEntry {
   icon?: LucideIcon
   /** The key that does the same, shown on the right. */
   keys?: string
-  /** Red: it deletes. */
+  /** Red text: it deletes (what is gone for good asks first, `ConfirmDialog`). */
   danger?: boolean
-  /** A choice that is on or off (a check in front). */
+  /** A choice that is on or off (a check on the right, as in nexnotes). */
   checked?: boolean
   disabled?: boolean
-  /** A first choice turns the entry into this question; the second one does it. */
-  confirm?: string
-  /** Shows a small square in this colour in front (a list). */
+  /** The colour of a list or space: its symbol in it, or a small square without one. */
   color?: string
   run?: () => void
   items?: MenuItems
@@ -145,30 +145,29 @@ export function ContextMenuProvider({ children }: { children: ReactNode }) {
   )
 }
 
-/** The entries of one card (the menu or a submenu). */
+/** The entries of one card (the menu or a submenu), in the look of nexnotes' menu. */
 function Card({ items, onChoose, onBack, title, sheet, style, cardRef, level }: { items: MenuEntry[][]; onChoose: (entry: MenuEntry, row: HTMLElement) => void; onBack?: () => void; title?: string; sheet: boolean; style?: CSSProperties; cardRef?: Ref<HTMLDivElement>; level: number }) {
   const { t } = useTranslation()
-  const [asking, setAsking] = useState<MenuEntry | null>(null)
   return (
     <div
       ref={cardRef}
       role="menu"
       aria-label={title}
       data-level={level}
-      className={sheet ? 'nt-pop nt-sheet max-h-[75dvh] w-full overflow-y-auto rounded-t-2xl border-t border-ink-700 bg-ink-900 px-2 pt-2 shadow-2xl' : 'nt-menu fixed z-[70] max-h-[calc(100dvh-16px)] min-w-56 overflow-y-auto rounded-[10px] border border-ink-700 bg-ink-900 p-1 shadow-xl shadow-black/25'}
+      className={sheet ? 'nt-pop nt-sheet max-h-[75dvh] w-full overflow-y-auto rounded-t-2xl border-t border-ink-700 bg-ink-850 px-2 pt-2 shadow-2xl' : 'nt-menu fixed z-[70] max-h-[calc(100dvh-16px)] overflow-y-auto'}
       style={style}
       onContextMenu={(e) => e.preventDefault()}
     >
       {sheet && <span className="mx-auto mb-2 block h-1 w-10 rounded-full bg-ink-600" aria-hidden />}
       {onBack && (
-        <button type="button" role="menuitem" data-back className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-semibold text-accent-400 hover:bg-ink-800" onClick={onBack}>
+        <button type="button" role="menuitem" data-back className="nt-menu-item py-2 font-semibold text-accent-400 hover:text-accent-400" onClick={onBack}>
           <ChevronLeft className="h-4 w-4" aria-hidden /> {title ?? t('menu.back')}
         </button>
       )}
       {items.map((group, g) => (
-        <div key={g} role="group" className={g ? 'mt-1 border-t border-ink-700 pt-1' : ''}>
+        <div key={g} role="group">
+          {g > 0 && <div className="nt-menu-line" role="separator" />}
           {group.map((entry, n) => {
-            const question = asking === entry
             const checkable = entry.checked !== undefined
             return (
               <button
@@ -179,25 +178,17 @@ function Card({ items, onChoose, onBack, title, sheet, style, cardRef, level }: 
                 aria-haspopup={entry.items ? 'menu' : undefined}
                 disabled={entry.disabled}
                 data-entry={entry.label}
-                className={
-                  'flex w-full items-center gap-2.5 rounded-md px-2.5 text-left text-sm outline-none disabled:opacity-40 ' +
-                  (sheet ? 'py-2.5 ' : 'py-1.5 ') +
-                  (entry.danger || question ? 'text-bad-500 hover:bg-bad-500/10 focus:bg-bad-500/10 ' : 'text-mist-100 hover:bg-ink-800 focus:bg-ink-800 ') +
-                  (question ? 'font-semibold' : '')
-                }
-                onClick={(e) => {
-                  if (entry.confirm && !question) {
-                    setAsking(entry)
-                    return
-                  }
-                  onChoose(entry, e.currentTarget)
-                }}
+                className={'nt-menu-item focus:bg-ink-800 ' + (sheet ? 'py-2.5 ' : '') + (entry.danger ? 'nt-menu-danger' : 'focus:text-mist-100')}
+                onClick={(e) => onChoose(entry, e.currentTarget)}
               >
-                <span className="grid w-4 shrink-0 place-items-center text-mist-500" aria-hidden>
-                  {checkable ? entry.checked && <Check className="h-4 w-4 text-accent-400" /> : entry.color ? <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: entry.color }} /> : entry.icon && createElement(entry.icon, { className: 'h-4 w-4 ' + (entry.danger ? 'text-bad-500' : '') })}
-                </span>
-                <span className="min-w-0 flex-1 truncate">{question ? entry.confirm : entry.label}</span>
+                {(entry.icon || entry.color) && (
+                  <span className="grid w-4 shrink-0 place-items-center" aria-hidden>
+                    {entry.icon ? createElement(entry.icon, { className: 'h-4 w-4', strokeWidth: entry.color ? 2 : 1.8, style: entry.color ? { color: entry.color } : undefined }) : <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: entry.color }} />}
+                  </span>
+                )}
+                <span className="min-w-0 flex-1 truncate">{entry.label}</span>
                 {entry.keys && !sheet && <kbd className="ml-3">{entry.keys}</kbd>}
+                {checkable && <Check className={'h-4 w-4 shrink-0 text-accent-400 ' + (entry.checked ? '' : 'invisible')} aria-hidden />}
                 {entry.items && <ChevronRight className="h-4 w-4 shrink-0 text-mist-500" aria-hidden />}
               </button>
             )
@@ -310,7 +301,7 @@ function MenuView({ menu, onClose }: { menu: Open; onClose: (focusBack?: boolean
   if (menu.sheet) {
     const level = levels.length - 1
     return (
-      <div className="nt-veil fixed inset-0 z-[70] flex items-end" onKeyDown={onKey} data-testid="context-menu">
+      <div className="bg-scrim fixed inset-0 z-[70] flex items-end" onKeyDown={onKey} data-testid="context-menu">
         <Card
           cardRef={(el) => {
             cards.current[0] = el

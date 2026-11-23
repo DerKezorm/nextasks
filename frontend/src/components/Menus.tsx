@@ -2,20 +2,36 @@
  * What the context menu offers on a task, a list, a space and an own filter: the actions the web has elsewhere already (the "…"
  * menus, the detail, the dialogs), nothing the server could not do. A member sees no manager's entries.
  */
-import { Bell, Bookmark, CalendarDays, Check, ChevronsUp, Columns3, Eye, EyeOff, FolderInput, Link2, List as ListIcon, ListPlus, ListTree, LogOut, PanelRightOpen, Pencil, RotateCcw, SquareArrowOutUpRight, Trash2, UserPlus, Users } from 'lucide-react'
+import { Bell, Bookmark, CalendarDays, Check, ChevronsUp, Columns3, Eye, EyeOff, FolderInput, FolderPlus, Link2, List as ListIcon, ListPlus, ListTree, LogOut, PanelRightOpen, Pencil, RotateCcw, SquareArrowOutUpRight, Trash2, UserPlus, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { deleteFilter, moveList, moveReminder, setFilterHidden, setPref, setSpaceHidden, siblingsAt } from '../lib/actions'
+import { deleteFilter, moveList, moveReminder, setFilterHidden, setPref, setSpaceHidden, siblingsAt, trashReminder } from '../lib/actions'
 import { copyText } from '../lib/copy'
 import { localDay } from '../lib/due'
-import { colorOf } from '../lib/look'
+import { colorOf, iconFor } from '../lib/look'
 import { useEngine, useView } from '../state/sync'
 import { addDays } from '../sync/repeat'
 import type { Filter, List, Reminder, Space } from '../sync/types'
+import type { Question } from './ConfirmDialog'
 import { useContextMenu, type MenuItems } from './ContextMenu'
 import { personName } from './People'
 import { useShell } from './Shell'
+
+type T = (key: string, values?: Record<string, unknown>) => string
+
+/** The questions before deleting a list, a space, a filter: the same from the menus and from the dialogs. */
+export function askTrashList(list: List, t: T, run: () => void): Question {
+  return { title: t('list.deleteTitle', { name: list.name }), text: t('list.deleteText'), confirm: t('list.delete'), run }
+}
+
+export function askTrashSpace(space: Space, t: T, run: () => void): Question {
+  return { title: t('space.deleteTitle', { name: space.name }), text: t('space.deleteText'), confirm: t('space.delete'), run }
+}
+
+export function askDeleteFilter(filter: Filter, t: T, run: () => void): Question {
+  return { title: t('filter.deleteTitle', { name: filter.name }), text: t('filter.deleteText'), final: true, confirm: t('filter.delete'), run }
+}
 
 const wide = () => typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1024px)').matches
 
@@ -68,9 +84,10 @@ export function useTaskMenu(reminder: Reminder) {
           ...view.listsOf(s.id).map((l) => {
             const sections = reminder.parent_id ? [] : view.sectionsOf(l.id)
             const here = l.id === reminder.list_id
-            if (!sections.length) return { label: l.name, color: colorOf(l.color), disabled: here && !reminder.section_id, run: () => move({ list_id: l.id, section_id: null, parent_id: null }) }
+            if (!sections.length) return { label: l.name, icon: iconFor(l.icon), color: colorOf(l.color), disabled: here && !reminder.section_id, run: () => move({ list_id: l.id, section_id: null, parent_id: null }) }
             return {
               label: l.name,
+              icon: iconFor(l.icon),
               color: colorOf(l.color),
               items: [{ label: t('list.noSection'), checked: here && !reminder.section_id, run: () => move({ list_id: l.id, section_id: null, parent_id: null }) }, ...sections.map((sec) => ({ label: sec.name, checked: here && reminder.section_id === sec.id, run: () => move({ list_id: l.id, section_id: sec.id, parent_id: null }) }))],
             }
@@ -94,7 +111,7 @@ export function useTaskMenu(reminder: Reminder) {
         danger: true,
         keys: t('keys.del'),
         run: () => {
-          engine.trash('reminder', id)
+          trashReminder(engine, reminder, (title) => t('reminder.trashed', { title }))
           if (shell.selected === id) shell.closeReminder()
           if (shell.pane === id) shell.closePane()
         },
@@ -110,6 +127,7 @@ export function useListMenu(list: List) {
   const view = useView()
   const shell = useShell()
   const navigate = useNavigate()
+  const location = useLocation()
   return useContextMenu((): MenuItems => {
     const space = view.space(list.space_id)
     const pref = view.pref(list.id)
@@ -121,18 +139,12 @@ export function useListMenu(list: List) {
       { label: t(list.view === 'list' ? 'list.asColumns' : 'list.asList'), icon: list.view === 'list' ? Columns3 : ListIcon, run: () => engine.put('list', list.id, { view: list.view === 'list' ? 'columns' : 'list' }) },
       { label: t('list.showDone'), icon: Eye, checked: pref.show_completed, run: () => setPref(engine, list.id, { show_completed: !pref.show_completed }) },
       space && !space.private && { label: t('list.notifyOn'), icon: Bell, checked: pref.notify_changes, run: () => setPref(engine, list.id, { notify_changes: !pref.notify_changes }) },
-      others.length > 0 && { label: t('menu.moveToSpace'), icon: FolderInput, items: others.map((s) => ({ label: s.name, color: colorOf(s.color), run: () => moveList(engine, view, list.id, s.id, view.listsOf(s.id).length) })) },
+      others.length > 0 && { label: t('menu.moveToSpace'), icon: FolderInput, items: others.map((s) => ({ label: s.name, icon: iconFor(s.icon), color: colorOf(s.color), run: () => moveList(engine, view, list.id, s.id, view.listsOf(s.id).length) })) },
       'line',
-      {
-        label: t('list.delete'),
-        icon: Trash2,
-        danger: true,
-        confirm: t('list.deleteSure'),
-        run: () => {
-          engine.trash('list', list.id)
-          if (window.location.pathname === `/lists/${list.id}`) navigate('/today')
-        },
-      },
+      { label: t('list.delete'), icon: Trash2, danger: true, run: () => shell.ask(askTrashList(list, t, () => {
+        engine.trash('list', list.id)
+        if (location.pathname === `/lists/${list.id}`) navigate('/today')
+      })) },
     ]
   })
 }
@@ -161,6 +173,8 @@ export function useSpaceMenu(space: Space) {
     const manager = space.role === 'manager'
     return [
       { label: t('sidebar.newList'), icon: ListPlus, run: () => shell.newList(space.id) },
+      { label: t('sidebar.newSpace'), icon: FolderPlus, run: () => shell.newSpace() },
+      'line',
       manager && { label: t('menu.editSpace'), icon: Pencil, run: () => shell.editSpace(space.id) },
       { label: t('space.hide'), icon: EyeOff, run: () => hide(space.id) },
       !space.private && 'line',
@@ -173,11 +187,13 @@ export function useSpaceMenu(space: Space) {
           label: t('space.delete'),
           icon: Trash2,
           danger: true,
-          confirm: t('space.deleteSure'),
-          run: () => {
-            engine.trash('space', space.id)
-            navigate('/today')
-          },
+          run: () =>
+            shell.ask(
+              askTrashSpace(space, t, () => {
+                engine.trash('space', space.id)
+                navigate('/today')
+              }),
+            ),
         },
     ]
   })
@@ -189,6 +205,7 @@ export function useFilterMenu(filter: Filter) {
   const engine = useEngine()
   const shell = useShell()
   const navigate = useNavigate()
+  const location = useLocation()
   return useContextMenu((): MenuItems => [
     { label: t('menu.open'), icon: SquareArrowOutUpRight, run: () => navigate(`/filters/${filter.id}`) },
     { label: t('menu.editFilter'), icon: Pencil, run: () => shell.editFilter(filter.id) },
@@ -198,11 +215,13 @@ export function useFilterMenu(filter: Filter) {
       label: t('filter.delete'),
       icon: Trash2,
       danger: true,
-      confirm: t('filter.deleteSure'),
-      run: () => {
-        deleteFilter(engine, filter.id)
-        if (window.location.pathname === `/filters/${filter.id}`) navigate('/today')
-      },
+      run: () =>
+        shell.ask(
+          askDeleteFilter(filter, t, () => {
+            deleteFilter(engine, filter.id)
+            if (location.pathname === `/filters/${filter.id}`) navigate('/today')
+          }),
+        ),
     },
   ])
 }
