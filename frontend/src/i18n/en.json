@@ -793,7 +793,15 @@
     "subDone_one": "one completed task",
     "subDone_other": "{{count}} completed tasks",
     "everywhere": "From all spaces",
-    "emptyText": "Add new tasks with “New task”, or type them into the line below."
+    "emptyText": "Add new tasks with “New task”, or type them into the line below.",
+    "view": "View",
+    "asList": "List",
+    "asColumns": "Columns",
+    "overdue": "Overdue",
+    "earlier": "Earlier days",
+    "later": "Later days",
+    "toToday": "Back to today",
+    "addOn": "New task on {{day}}"
   },
   "filter": {
     "section": "Filters",

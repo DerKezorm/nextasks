@@ -12,7 +12,7 @@ import { Bookmark, CalendarDays, ChevronsUp, Clock, Download, FolderInput, Hash,
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { createReminder, moveReminder, siblingsAt, trashReminder, type Spot } from '../lib/actions'
+import { createReminder, dueChange, moveReminder, siblingsAt, trashReminder, type Spot } from '../lib/actions'
 import { describeRule, localDay } from '../lib/due'
 import { picturedIn } from '../lib/notes'
 import { moment } from '../lib/time'
@@ -130,7 +130,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
   const popup = mode === 'popup'
   const close = popup ? shell.closeReminder : shell.closePane
 
-  const setDue = (date: string | null, time: string | null) => put({ due_date: date, due_time: date ? time : null, repeat: date ? reminder.repeat : null, repeat_from: date ? reminder.repeat_from : 'due' })
+  const setDue = (date: string | null, time: string | null) => put(dueChange(reminder, date, time))
 
   // The card takes the focus when it opens (a new task: its title does), and the page behind it does not scroll.
   useEffect(() => {

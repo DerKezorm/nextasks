@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom'
 
@@ -13,6 +13,7 @@ import { TilePage } from './pages/TilePage'
 import { TrashPage } from './pages/TrashPage'
 import { OfflinePage } from './components/AppInstall'
 import { NotFound } from './components/NotFound'
+import { usePhone } from './lib/phone'
 import { useAuth } from './state/auth'
 import { SyncProvider, useSyncState, useView } from './state/sync'
 import { shownTiles, TILES } from './sync/tiles'
@@ -29,21 +30,6 @@ function SignedIn({ children }: { children: ReactNode }) {
   if (status === 'signedOut') return <Navigate to={`/login?next=${encodeURIComponent(location.pathname + location.search)}${ended ? '&ended=1' : ''}`} replace />
   if (me?.second_factor_setup_required && location.pathname !== '/settings/security' && location.pathname !== '/account') return <Navigate to="/settings/security" replace />
   return <SyncProvider key={me?.id}>{children}</SyncProvider>
-}
-
-const PHONE = '(max-width: 767px)'
-
-/** Whether the window is as narrow as a phone's, followed as it changes. */
-function usePhone(): boolean {
-  const [phone, setPhone] = useState(() => typeof window.matchMedia === 'function' && window.matchMedia(PHONE).matches)
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return
-    const query = window.matchMedia(PHONE)
-    const change = () => setPhone(query.matches)
-    query.addEventListener('change', change)
-    return () => query.removeEventListener('change', change)
-  }, [])
-  return phone
 }
 
 /**

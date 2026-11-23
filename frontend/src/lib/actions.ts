@@ -17,6 +17,21 @@ export interface Spot {
   parent_id: string | null
 }
 
+/**
+ * A new due date (and time) for a task, as the detail, the context menu and the day columns of "Scheduled" write it:
+ * the four fields under one clock together. A repeating task is one record whose date is its open occurrence: a new
+ * date moves that occurrence and keeps the rule; no date clears the time and the rule (as the server does).
+ */
+export function dueChange(reminder: Pick<Reminder, 'repeat' | 'repeat_from'>, date: string | null, time: string | null): Data {
+  return { due_date: date, due_time: date ? time : null, repeat: date ? reminder.repeat : null, repeat_from: date ? reminder.repeat_from : 'due' }
+}
+
+/** Moves a task to another day; its time, its repetition and everything else stay. */
+export function moveToDay(engine: SyncEngine, reminder: Reminder, day: string): void {
+  if (reminder.due_date === day) return
+  engine.put('reminder', reminder.id, dueChange(reminder, day, reminder.due_time))
+}
+
 /** The reminders that share a place (same list and section, or the same parent), in order. */
 export function siblingsAt(view: View, spot: Spot, without?: string): Reminder[] {
   return view.reminders
