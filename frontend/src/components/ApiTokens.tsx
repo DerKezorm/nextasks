@@ -55,7 +55,7 @@ function Line({ label, text, copied, onCopy }: { label: string; text: string; co
           {copied ? t('common.copied') : t('common.copy')}
         </button>
       </div>
-      <pre className="nc-scroll overflow-x-auto rounded-lg bg-ink-950 px-2 py-1.5 font-mono text-[11px] leading-5 whitespace-pre text-mist-200">{text}</pre>
+      <pre className="nt-scroll overflow-x-auto rounded-lg bg-ink-950 px-2 py-1.5 font-mono text-[11px] leading-5 whitespace-pre text-mist-200">{text}</pre>
     </div>
   )
 }
@@ -149,12 +149,12 @@ export function ApiTokens() {
     <Section id="api-tokens" icon={KeyRound} title={t('apiTokens.title')}>
       <p className="mb-4 text-sm text-mist-500">{t('apiTokens.text')}</p>
       {problem && (
-        <p role="alert" className="mb-3 rounded-lg border border-bad-500/30 bg-bad-500/10 px-3 py-2 text-sm text-bad-500">
+        <p role="alert" className="nt-problem mb-3">
           {problem}
         </p>
       )}
       {shown && (
-        <div className="mb-4 rounded-xl border border-accent-500/40 bg-accent-500/10 p-3 text-sm" data-testid="api-token-shown">
+        <div className="mb-4 rounded-[12px] border border-accent-500/40 bg-accent-500/10 p-3 text-sm" data-testid="api-token-shown">
           <p className="font-semibold text-mist-100">{t('apiTokens.shownOnce', { name: shown.name })}</p>
           <div className="mt-2 flex items-center gap-2">
             <code className="min-w-0 flex-1 truncate rounded-lg bg-ink-950 px-2 py-1.5 font-mono text-xs text-mist-200">{shown.secret}</code>
@@ -252,19 +252,19 @@ export function ApiTokens() {
             />
           </label>
           <fieldset className="space-y-2">
-            <legend className="text-sm text-mist-300">{t('apiTokens.level')}</legend>
+            <legend className="nt-legend">{t('apiTokens.level')}</legend>
             {(['read', 'write'] as const).map((value) => (
-              <label key={value} className="flex cursor-pointer items-start gap-2 text-sm text-mist-100">
-                <input type="radio" name="api-level" checked={level === value} onChange={() => setLevel(value)} className="mt-1" />
-                <span>
-                  {t(`apiTokens.levels.${value}`)}
-                  <span className="block text-xs text-mist-500">{t(`apiTokens.levels.${value}Hint`)}</span>
+              <label key={value} className="nt-option">
+                <input type="radio" name="api-level" checked={level === value} onChange={() => setLevel(value)} className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-accent-500)]" />
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-sm font-semibold text-mist-100">{t(`apiTokens.levels.${value}`)}</span>
+                  <span className="text-[12.5px] leading-snug text-mist-500">{t(`apiTokens.levels.${value}Hint`)}</span>
                 </span>
               </label>
             ))}
           </fieldset>
           <fieldset className="space-y-2">
-            <legend className="text-sm text-mist-300">{t('apiTokens.where')}</legend>
+            <legend className="nt-legend">{t('apiTokens.where')}</legend>
             <label className="flex cursor-pointer items-center gap-2 text-sm text-mist-100">
               <input type="radio" name="api-spaces" checked={chosen !== null} onChange={() => setChosen([])} />
               {t('apiTokens.someSpaces')}
@@ -277,7 +277,7 @@ export function ApiTokens() {
             {chosen !== null && (
               <div className="ml-6 flex flex-wrap gap-2">
                 {readable.map((item) => (
-                  <label key={item.id} className={'flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm ' + (chosen.includes(item.id) ? 'border-accent-500/60 bg-accent-500/10 text-mist-100' : 'border-ink-700 text-mist-300')}>
+                  <label key={item.id} className="nt-pick">
                     <input
                       type="checkbox"
                       checked={chosen.includes(item.id)}
@@ -294,10 +294,10 @@ export function ApiTokens() {
             </label>
           </fieldset>
           <fieldset>
-            <legend className="mb-2 text-sm text-mist-300">{t('apiTokens.lifetime')}</legend>
+            <legend className="nt-legend">{t('apiTokens.lifetime')}</legend>
             <div className="flex flex-wrap gap-2">
               {LIFETIMES.map((option) => (
-                <label key={String(option)} className={'flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm ' + (days === option ? 'border-accent-500/60 bg-accent-500/10 text-mist-100' : 'border-ink-700 text-mist-300')}>
+                <label key={String(option)} className="nt-pick">
                   <input type="radio" name="api-days" checked={days === option} onChange={() => setDays(option)} />
                   {option === null ? t('apiTokens.lifetimeNever') : t(`apiTokens.lifetimeDays.${option}`)}
                 </label>

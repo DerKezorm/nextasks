@@ -31,11 +31,11 @@ export function WhatsNewWindow({ version, entry, onClose }: { version: string; e
       onClick={(event) => {
         if (event.target === dialog.current) onClose()
       }}
-      className="m-auto max-h-[min(44rem,calc(100dvh-2rem))] w-[min(40rem,calc(100vw-2rem))] rounded-2xl border border-ink-700 bg-ink-900 p-0 text-mist-200 shadow-2xl backdrop:bg-scrim"
+      className="m-auto max-h-[min(44rem,calc(100dvh-2rem))] w-[min(40rem,calc(100vw-2rem))] rounded-[16px] border border-ink-700 bg-ink-850 p-0 text-mist-200 shadow-2xl shadow-black/50 backdrop:bg-scrim"
     >
       <div className="flex max-h-[inherit] flex-col">
         <div className="flex items-start gap-3 border-b border-ink-700 px-5 py-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-500/12 text-accent-400">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-wash text-accent-400">
             <Sparkles className="h-4 w-4" strokeWidth={1.8} />
           </span>
           <div className="min-w-0 flex-1">
@@ -44,11 +44,11 @@ export function WhatsNewWindow({ version, entry, onClose }: { version: string; e
             </h2>
             <p className="mt-1 text-sm text-mist-400">{entry.lead}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label={t('common.close')} className="rounded-lg p-1 text-mist-400 hover:bg-ink-850 hover:text-mist-100">
+          <button type="button" onClick={onClose} aria-label={t('common.close')} className="rounded-full p-1.5 text-mist-500 hover:bg-ink-800 hover:text-mist-100">
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="nc-scroll min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
+        <div className="nt-scroll min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
           {entry.sections.map((part) => (
             <section key={part.title}>
               <h3 className="font-semibold text-mist-100">{part.title}</h3>
@@ -73,8 +73,8 @@ export function WhatsNewWindow({ version, entry, onClose }: { version: string; e
             </section>
           )}
         </div>
-        <div className="flex justify-end border-t border-ink-700 px-5 py-3">
-          <button type="button" onClick={onClose} className="rounded-full bg-accent-500 px-4 py-1.5 text-sm font-semibold text-on-accent hover:bg-accent-600">
+        <div className="flex justify-end gap-2 px-5 pt-1 pb-5">
+          <button type="button" onClick={onClose} className="nt-btn nt-btn-accent">
             {t('whatsNew.done')}
           </button>
         </div>
@@ -103,7 +103,7 @@ export function WhatsNewBanner() {
       <div className="flex shrink-0 items-center gap-3 border-b border-accent-500/30 bg-accent-500/10 px-4 py-2 text-sm" role="status" data-testid="whats-new-banner">
         <Sparkles className="h-4 w-4 shrink-0 text-accent-400" strokeWidth={1.8} />
         <span className="min-w-0 flex-1">{t('whatsNew.banner', { version: me.version })}</span>
-        <button type="button" onClick={() => setOpen(true)} className="rounded-full bg-accent-500 px-3 py-1 text-xs font-semibold text-on-accent hover:bg-accent-600">
+        <button type="button" onClick={() => setOpen(true)} className="nt-btn nt-btn-accent h-8 px-3 text-xs">
           {t('whatsNew.show')}
         </button>
         <button type="button" onClick={putAway} aria-label={t('whatsNew.putAway')} title={t('whatsNew.putAway')} className="rounded p-0.5 text-mist-400 hover:text-mist-100">

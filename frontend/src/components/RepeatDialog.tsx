@@ -2,7 +2,7 @@
  * Repetition as a dialog in words, not RRULE text: how often, on which days, counted from the due date or from
  * completing, and when it ends. It writes exactly the subset of the data model ("Wiederholung").
  */
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { describeRule } from '../lib/due'
@@ -62,8 +62,20 @@ export function RepeatDialog({ value, due, onSave, onClose }: { value: RepeatVal
   const valid = text === null || parseRule(text, from) !== null
   const sentence = text ? describeRule(text, from, i18n.language, t) : t('repeat.never')
   const unit = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', YEARLY: 'year' }[freq]
-  const field = 'rounded-lg border border-ink-700 bg-ink-850 px-2 py-1.5 text-sm text-mist-100'
-  const label = 'text-xs font-medium text-mist-500'
+  const field = 'nt-field h-9 w-auto px-2'
+  const label = 'text-sm font-medium text-mist-100'
+  const option = (checked: boolean, choose: () => void, title: string, text?: string, extra?: ReactNode) => (
+    <label className="nt-option">
+      <input type="radio" checked={checked} onChange={choose} className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-accent-500)]" />
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-mist-100">
+          {title}
+          {extra}
+        </span>
+        {text && <span className="text-[12.5px] leading-snug text-mist-500">{text}</span>}
+      </span>
+    </label>
+  )
 
   return (
     <Dialog title={t('repeat.title')} onClose={onClose} medium>
@@ -86,14 +98,12 @@ export function RepeatDialog({ value, due, onSave, onClose }: { value: RepeatVal
               <input type="number" min={1} max={99} value={interval} onChange={(e) => setInterval(Number(e.target.value))} className={field + ' w-20'} aria-label={t('repeat.everyLabel')} />
               <span className="text-mist-300">{t(`repeat.unit.${unit}`, { count: interval })}</span>
             </label>
-            <fieldset className="flex flex-wrap items-center gap-3">
-              <legend className={label + ' float-left w-24'}>{t('repeat.from')}</legend>
-              <label className="flex items-center gap-1.5 text-mist-200">
-                <input type="radio" checked={from === 'due'} onChange={() => setFrom('due')} className="accent-accent-500" /> {t('repeat.fromDue')}
-              </label>
-              <label className="flex items-center gap-1.5 text-mist-200">
-                <input type="radio" checked={from === 'completion'} onChange={() => setFrom('completion')} className="accent-accent-500" /> {t('repeat.fromCompletion')}
-              </label>
+            <fieldset>
+              <legend className="nt-legend">{t('repeat.from')}</legend>
+              <div className="flex flex-col gap-2" role="radiogroup" aria-label={t('repeat.from')}>
+                {option(from === 'due', () => setFrom('due'), t('repeat.fromDueTitle'), t('repeat.fromDueText'))}
+                {option(from === 'completion', () => setFrom('completion'), t('repeat.fromCompletionTitle'), t('repeat.fromCompletionText'))}
+              </div>
             </fieldset>
             {from === 'due' && freq === 'WEEKLY' && (
               <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('repeat.days')}>
@@ -104,7 +114,7 @@ export function RepeatDialog({ value, due, onSave, onClose }: { value: RepeatVal
                     aria-pressed={days.includes(day)}
                     aria-label={dayName(day, i18n.language, 'long')}
                     onClick={() => setDays((list) => (list.includes(day) ? list.filter((x) => x !== day) : [...list, day]))}
-                    className={'h-9 w-11 rounded-full border text-xs font-semibold ' + (days.includes(day) ? 'border-accent-500 bg-accent-500 text-on-accent' : 'border-ink-700 text-mist-300 hover:bg-ink-800')}
+                    className="nt-toggle w-11 justify-center px-0 text-xs font-semibold"
                   >
                     {dayName(day, i18n.language, 'short')}
                   </button>
@@ -112,28 +122,30 @@ export function RepeatDialog({ value, due, onSave, onClose }: { value: RepeatVal
               </div>
             )}
             {from === 'due' && freq === 'MONTHLY' && (
-              <div className="space-y-2">
-                <label className="flex flex-wrap items-center gap-2 text-mist-200">
-                  <input type="radio" checked={monthly === 'day'} onChange={() => setMonthly('day')} className="accent-accent-500" /> {t('repeat.onTheDay')}
-                  <DaySelect value={monthDay} onChange={setMonthDay} className={field} />
-                </label>
-                <label className="flex flex-wrap items-center gap-2 text-mist-200">
-                  <input type="radio" checked={monthly === 'nth'} onChange={() => setMonthly('nth')} className="accent-accent-500" /> {t('repeat.onThe')}
-                  <select className={field} value={nth} onChange={(e) => setNth(Number(e.target.value))} aria-label={t('repeat.which')}>
-                    {[1, 2, 3, 4, -1].map((n) => (
-                      <option key={n} value={n}>
-                        {t(`repeat.nth.${n === -1 ? 'last' : n}`)}
-                      </option>
-                    ))}
-                  </select>
-                  <select className={field} value={nthDay} onChange={(e) => setNthDay(e.target.value as Weekday)} aria-label={t('repeat.weekday')}>
-                    {WEEKDAYS.map((day) => (
-                      <option key={day} value={day}>
-                        {dayName(day, i18n.language, 'long')}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              <div className="flex flex-col gap-2" role="radiogroup">
+                {option(monthly === 'day', () => setMonthly('day'), t('repeat.onTheDay'), undefined, <DaySelect value={monthDay} onChange={setMonthDay} className={field} />)}
+                {option(
+                  monthly === 'nth',
+                  () => setMonthly('nth'),
+                  t('repeat.onThe'),
+                  undefined,
+                  <>
+                    <select className={field} value={nth} onChange={(e) => setNth(Number(e.target.value))} aria-label={t('repeat.which')}>
+                      {[1, 2, 3, 4, -1].map((n) => (
+                        <option key={n} value={n}>
+                          {t(`repeat.nth.${n === -1 ? 'last' : n}`)}
+                        </option>
+                      ))}
+                    </select>
+                    <select className={field} value={nthDay} onChange={(e) => setNthDay(e.target.value as Weekday)} aria-label={t('repeat.weekday')}>
+                      {WEEKDAYS.map((day) => (
+                        <option key={day} value={day}>
+                          {dayName(day, i18n.language, 'long')}
+                        </option>
+                      ))}
+                    </select>
+                  </>,
+                )}
               </div>
             )}
             {from === 'due' && freq === 'YEARLY' && (
@@ -149,33 +161,35 @@ export function RepeatDialog({ value, due, onSave, onClose }: { value: RepeatVal
                 </select>
               </label>
             )}
-            <fieldset className="space-y-2">
-              <legend className={label}>{t('repeat.end')}</legend>
-              <label className="flex items-center gap-2 text-mist-200">
-                <input type="radio" checked={end === 'never'} onChange={() => setEnd('never')} className="accent-accent-500" /> {t('repeat.endNever')}
-              </label>
-              <label className="flex flex-wrap items-center gap-2 text-mist-200">
-                <input type="radio" checked={end === 'count'} onChange={() => setEnd('count')} className="accent-accent-500" /> {t('repeat.endAfter')}
-                <input type="number" min={1} max={999} value={count} onChange={(e) => (setCount(Number(e.target.value)), setEnd('count'))} className={field + ' w-20'} aria-label={t('repeat.endAfter')} />
-                {t('repeat.endTimes', { count })}
-              </label>
-              <label className="flex flex-wrap items-center gap-2 text-mist-200">
-                <input type="radio" checked={end === 'until'} onChange={() => setEnd('until')} className="accent-accent-500" /> {t('repeat.endOn')}
-                <input type="date" value={until} min={due} onChange={(e) => (setUntil(e.target.value), setEnd('until'))} className={field} aria-label={t('repeat.endOn')} />
-              </label>
+            <fieldset>
+              <legend className="nt-legend">{t('repeat.end')}</legend>
+              <div className="flex flex-col gap-2" role="radiogroup" aria-label={t('repeat.end')}>
+                {option(end === 'never', () => setEnd('never'), t('repeat.endNever'))}
+                {option(
+                  end === 'count',
+                  () => setEnd('count'),
+                  t('repeat.endAfter'),
+                  undefined,
+                  <>
+                    <input type="number" min={1} max={999} value={count} onChange={(e) => (setCount(Number(e.target.value)), setEnd('count'))} className={field + ' w-20'} aria-label={t('repeat.endAfter')} />
+                    <span className="font-normal">{t('repeat.endTimes', { count })}</span>
+                  </>,
+                )}
+                {option(end === 'until', () => setEnd('until'), t('repeat.endOn'), undefined, <input type="date" value={until} min={due} onChange={(e) => (setUntil(e.target.value), setEnd('until'))} className={field} aria-label={t('repeat.endOn')} />)}
+              </div>
             </fieldset>
           </>
         )}
-        <p className="rounded-xl border border-ink-700 bg-ink-850 px-3 py-2 text-mist-200" data-testid="repeat-sentence" aria-live="polite">
+        <p className="rounded-[10px] border border-ink-700 bg-ink-900 px-3 py-2.5 text-mist-200" data-testid="repeat-sentence" aria-live="polite">
           {sentence}
         </p>
         <div className="flex justify-end gap-2">
-          <button type="button" className="nc-btn nc-btn-ghost" onClick={onClose}>
+          <button type="button" className="nt-btn nt-btn-ghost" onClick={onClose}>
             {t('common.cancel')}
           </button>
           <button
             type="button"
-            className="nc-btn nc-btn-accent"
+            className="nt-btn nt-btn-accent"
             disabled={!valid}
             onClick={() => {
               onSave({ repeat: text, repeat_from: text ? from : 'due' })

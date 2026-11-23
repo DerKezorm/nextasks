@@ -148,7 +148,7 @@ export function AppDevices() {
       {problem && <p className="mt-2 text-sm text-bad-500">{problem}</p>}
       <h3 className="mt-5 mb-2 text-sm font-semibold text-mist-100">{t('device.list')}</h3>
       {devices?.length === 0 && <p className="text-sm text-mist-500">{t('device.none')}</p>}
-      <ul className="divide-y divide-ink-700 rounded-xl border border-ink-700 empty:hidden" data-testid="devices">
+      <ul className="divide-y divide-ink-700 rounded-[12px] border border-ink-700 empty:hidden" data-testid="devices">
         {(devices ?? []).map((device) => (
           <li key={device.id} className="flex items-center gap-3 px-3 py-2.5 text-sm">
             <Smartphone className="h-4 w-4 text-mist-500" aria-hidden />
@@ -156,7 +156,7 @@ export function AppDevices() {
               <span className="block truncate text-mist-100">{device.name}</span>
               <span className="text-xs text-mist-500">{device.last_seen ? t('device.seen', { when: moment(device.last_seen, i18n.language) }) : t('device.since', { when: moment(device.created_at, i18n.language) })}</span>
             </span>
-            <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium text-bad-500" aria-label={t('device.removeName', { name: device.name })} onClick={() => void api(`/api/app-devices/${device.id}`, { method: 'DELETE' }).then(load, (error) => setProblem(errorText(codeOf(error))))}>
+            <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium hover:border-bad-500/50 hover:text-bad-500" aria-label={t('device.removeName', { name: device.name })} onClick={() => void api(`/api/app-devices/${device.id}`, { method: 'DELETE' }).then(load, (error) => setProblem(errorText(codeOf(error))))}>
               <Trash2 className="h-3.5 w-3.5" /> {t('device.remove')}
             </button>
           </li>

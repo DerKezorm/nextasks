@@ -25,7 +25,7 @@ export function SettingsPage() {
   if (!area) return null
   const title = t(`settings.areas.${area.key}.title`)
   return (
-    <main className="nc-scroll @container min-w-0 flex-1 overflow-y-auto">
+    <main className="nt-scroll @container min-w-0 flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         <div className="flex flex-col gap-5 @min-[700px]:flex-row @min-[700px]:items-start @min-[700px]:gap-8">
           <SettingsNav me={me} current={area.slug} />

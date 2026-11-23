@@ -331,7 +331,7 @@ export function AllApiTokensCard() {
         </p>
       )}
       {tokens && tokens.length > 0 && (
-        <div className="nc-scroll overflow-x-auto">
+        <div className="nt-scroll overflow-x-auto">
           <table className="w-full text-left text-sm text-mist-200" data-testid="admin-api-tokens">
             <thead className="text-xs text-mist-500">
               <tr>
@@ -757,7 +757,7 @@ export function LogCard() {
         <Input label={t('server.logSearch')} value={words} onChange={setWords} className="min-w-40 flex-1" />
         <Button onClick={load}>{t('server.refresh')}</Button>
       </div>
-      <div className="nc-scroll max-h-[28rem] overflow-auto rounded-xl border border-ink-700 bg-ink-950 p-3 font-mono text-[11px] leading-5" role="log">
+      <div className="nt-scroll max-h-[28rem] overflow-auto rounded-xl border border-ink-700 bg-ink-950 p-3 font-mono text-[11px] leading-5" role="log">
         {lines?.length === 0 && <p className="text-mist-500">{t('server.logEmpty')}</p>}
         {lines?.map((line, index) => (
           <div key={index} className={'break-words whitespace-pre-wrap ' + tone(line)}>

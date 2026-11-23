@@ -9,7 +9,7 @@ export function Section({ icon: Icon, title, text, children, id }: { icon: Lucid
   return (
     <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className="rounded-[12px] border border-ink-700 bg-ink-850 p-5">
       <div className="mb-4 flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-500/12 text-accent-400">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-wash text-accent-400">
           <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden />
         </span>
         <div>

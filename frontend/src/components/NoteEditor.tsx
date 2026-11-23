@@ -274,7 +274,7 @@ export default function NoteEditor({ reminder, label, onSave, locked }: { remind
         >
           <Link2 className="h-4 w-4 text-mist-500" aria-hidden />
           <input autoFocus value={linking} onChange={(e) => setLinking(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && (e.stopPropagation(), setLinking(null))} aria-label={t('notes.linkAddress')} className="min-w-0 flex-1 bg-transparent text-sm text-mist-100 focus:outline-none" />
-          <button type="submit" className="nc-btn nc-btn-accent px-2.5 py-1 text-xs">
+          <button type="submit" className="nt-btn nt-btn-accent h-7 px-2.5 text-xs">
             {t('notes.linkSet')}
           </button>
         </form>
@@ -303,7 +303,7 @@ export default function NoteEditor({ reminder, label, onSave, locked }: { remind
         }}
       />
       {zoom && (
-        <div className="nt-veil fixed inset-0 z-[80] grid place-items-center p-6" onPointerDown={() => setZoom(null)} onKeyDown={(e) => e.key === 'Escape' && (e.stopPropagation(), setZoom(null))} role="dialog" aria-modal="true" aria-label={zoom.name || t('detail.picture')}>
+        <div className="bg-scrim fixed inset-0 z-[80] grid place-items-center p-6" onPointerDown={() => setZoom(null)} onKeyDown={(e) => e.key === 'Escape' && (e.stopPropagation(), setZoom(null))} role="dialog" aria-modal="true" aria-label={zoom.name || t('detail.picture')}>
           <img src={zoom.url} alt={zoom.name} className="max-h-[90vh] max-w-[92vw] rounded-xl shadow-2xl" />
         </div>
       )}

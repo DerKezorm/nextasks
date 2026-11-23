@@ -12,7 +12,7 @@ import { Bookmark, CalendarDays, ChevronsUp, Clock, Download, FolderInput, Hash,
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { createReminder, moveReminder, siblingsAt, type Spot } from '../lib/actions'
+import { createReminder, moveReminder, siblingsAt, trashReminder, type Spot } from '../lib/actions'
 import { describeRule, localDay } from '../lib/due'
 import { picturedIn } from '../lib/notes'
 import { moment } from '../lib/time'
@@ -20,7 +20,7 @@ import { useEngine, useView } from '../state/sync'
 import { cleanTags } from '../sync/fields'
 import { APP_BASE } from '../sync/transport'
 import type { Attachment, Data, Reminder } from '../sync/types'
-import { Badge } from './Badge'
+import { Mark } from './Mark'
 import { NotesField } from './NotesField'
 import { personName, PersonAvatar } from './People'
 import { RepeatDialog } from './RepeatDialog'
@@ -216,36 +216,36 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
       className={
         '@container ' +
         (popup
-          ? 'nt-pop nc-scroll flex max-h-[90dvh] w-full flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-ink-700 bg-ink-900 shadow-2xl shadow-black/40 outline-none sm:max-h-[88vh] sm:w-[min(960px,92vw)] sm:rounded-2xl'
-          : 'nc-scroll hidden w-[340px] shrink-0 flex-col overflow-y-auto border-l border-ink-700 bg-ink-900 lg:flex')
+          ? 'nt-pop nt-scroll flex max-h-[90dvh] w-full flex-col overflow-y-auto overscroll-contain rounded-t-2xl border border-ink-700 bg-ink-850 shadow-2xl shadow-black/50 outline-none sm:max-h-[88vh] sm:w-[min(960px,92vw)] sm:rounded-[16px]'
+          : 'nt-scroll hidden w-[340px] shrink-0 flex-col overflow-y-auto border-l border-ink-700 bg-ink-900 lg:flex')
       }
       onKeyDown={onKey}
     >
-      <div className="sticky top-0 z-10 bg-ink-900/95 px-5 pt-2 pb-2 backdrop-blur sm:pt-4">
+      <div className={'sticky top-0 z-10 px-5 pt-2 pb-2 sm:pt-4 ' + (popup ? 'bg-ink-850' : 'bg-ink-900')}>
         {popup && <span className="mx-auto mb-2 block h-1 w-10 rounded-full bg-ink-600 sm:hidden" aria-hidden />}
         <div className="flex items-center gap-2">
-          {list && <Badge color={list.color} icon={list.icon} size="xs" />}
+          {list && <Mark color={list.color} icon={list.icon} />}
           <span className="min-w-0 flex-1 truncate text-[13px] text-mist-500">
             {space?.name} · {list?.name}
           </span>
-          <button type="button" onClick={() => put({ flagged: !reminder.flagged })} aria-pressed={reminder.flagged} aria-label={t('detail.flag')} title={t('detail.flag')} className={'rounded-lg p-1.5 ' + (reminder.flagged ? 'text-petrol' : 'text-mist-500 hover:bg-ink-800 hover:text-mist-100')}>
+          <button type="button" onClick={() => put({ flagged: !reminder.flagged })} aria-pressed={reminder.flagged} aria-label={t('detail.flag')} title={t('detail.flag')} className="nt-icon-btn">
             <Bookmark className={'h-4 w-4 ' + (reminder.flagged ? 'fill-current' : '')} />
           </button>
           {!draft && (
             <button
               type="button"
               onClick={() => {
-                engine.trash('reminder', reminder.id)
+                trashReminder(engine, reminder, (title) => t('reminder.trashed', { title }))
                 close()
               }}
               aria-label={t('detail.delete')}
               title={t('detail.delete')}
-              className="rounded-lg p-1.5 text-mist-500 hover:bg-bad-500/10 hover:text-bad-500"
+              className="nt-icon-btn hover:text-bad-500"
             >
               <Trash2 className="h-4 w-4" />
             </button>
           )}
-          <button type="button" onClick={close} aria-label={t('common.close')} className="rounded-lg p-1.5 text-mist-500 hover:bg-ink-800 hover:text-mist-100">
+          <button type="button" onClick={close} aria-label={t('common.close')} className="nt-icon-btn">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -276,19 +276,19 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
         <div data-part="fields" className="min-w-0 border-ink-700 pb-3 @min-[860px]:border-l @min-[860px]:pl-6">
           <Row icon={CalendarDays} label={t('detail.due')}>
             <div className="flex flex-wrap items-center gap-2">
-              <input type="date" value={reminder.due_date ?? ''} onChange={(e) => setDue(e.target.value || null, reminder.due_time)} aria-label={t('detail.date')} className="rounded-lg border border-ink-700 bg-ink-850 px-2 py-1 text-sm text-mist-100" />
+              <input type="date" value={reminder.due_date ?? ''} onChange={(e) => setDue(e.target.value || null, reminder.due_time)} aria-label={t('detail.date')} className="nt-field h-9 w-auto px-2" />
               {reminder.due_date ? (
                 <>
                   <span className="flex items-center gap-1.5">
                     <Clock className="h-4 w-4 text-mist-500" aria-hidden />
-                    <input type="time" value={reminder.due_time ?? ''} onChange={(e) => setDue(reminder.due_date, e.target.value || null)} aria-label={t('detail.time')} className="rounded-lg border border-ink-700 bg-ink-850 px-2 py-1 text-sm text-mist-100" />
+                    <input type="time" value={reminder.due_time ?? ''} onChange={(e) => setDue(reminder.due_date, e.target.value || null)} aria-label={t('detail.time')} className="nt-field h-9 w-auto px-2" />
                   </span>
-                  <button type="button" className="text-xs text-mist-500 hover:text-mist-100" onClick={() => setDue(null, null)}>
+                  <button type="button" className="nt-btn-quiet text-xs text-mist-500" onClick={() => setDue(null, null)}>
                     {t('detail.noDate')}
                   </button>
                 </>
               ) : (
-                <button type="button" className="text-xs font-medium text-accent-400 hover:underline" onClick={() => setDue(localDay(), null)}>
+                <button type="button" className="nt-btn-quiet text-xs font-medium" onClick={() => setDue(localDay(), null)}>
                   {t('detail.today')}
                 </button>
               )}
@@ -321,7 +321,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
           )}
 
           <Row icon={ChevronsUp} label={t('detail.priority')}>
-            <div className="flex rounded-[9px] bg-ink-800 p-0.5" role="radiogroup" aria-label={t('detail.priority')}>
+            <div className="flex rounded-[9px] border border-ink-700 bg-ink-900 p-[3px]" role="radiogroup" aria-label={t('detail.priority')}>
               {[0, 1, 2, 3].map((p) => {
                 const on = reminder.priority === p
                 return (
@@ -331,7 +331,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
                     role="radio"
                     aria-checked={on}
                     onClick={() => put({ priority: p })}
-                    className={'flex-1 rounded-[7px] px-1.5 py-1 text-xs font-medium ' + (on ? (p ? 'font-bold text-white' : 'bg-ink-850 text-mist-100 shadow-sm') : 'text-mist-500 hover:text-mist-100')}
+                    className={'flex-1 rounded-md px-1.5 py-[5px] text-xs ' + (on ? (p ? 'font-bold text-white' : 'bg-accent-wash font-semibold text-accent-400') : 'text-mist-500 hover:text-mist-100')}
                     style={on && p ? { background: `var(--color-prio-${p})` } : undefined}
                   >
                     {t(`priority.${p}`)}
@@ -353,7 +353,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
                       type="button"
                       aria-pressed={on}
                       onClick={() => put({ assignees: on ? reminder.assignees.filter((id) => id !== m.account_id) : [...reminder.assignees, m.account_id] })}
-                      className={'flex items-center gap-1.5 rounded-full border py-0.5 pr-2.5 pl-0.5 text-xs ' + (on ? 'border-accent-500 bg-chosen font-semibold text-accent-400' : 'border-ink-700 text-mist-400 hover:bg-ink-800')}
+                      className="nt-toggle h-8 pr-3 pl-1 text-xs aria-pressed:font-semibold"
                     >
                       <PersonAvatar id={m.account_id} person={person} className="h-5 w-5 text-[10px]" />
                       {personName(person, t)}
@@ -367,7 +367,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
 
           <Row icon={FolderInput} label={t('detail.where')}>
             <div className="flex flex-wrap gap-2">
-              <select aria-label={t('detail.list')} className="max-w-full rounded-lg border border-ink-700 bg-ink-850 px-2 py-1 text-sm text-mist-100" value={reminder.list_id} onChange={(e) => move({ list_id: e.target.value, section_id: null, parent_id: null })}>
+              <select aria-label={t('detail.list')} className="nt-field h-9 w-auto max-w-full px-2" value={reminder.list_id} onChange={(e) => move({ list_id: e.target.value, section_id: null, parent_id: null })}>
                 {view.spaces.filter((s) => !view.isHidden(s.id) || s.id === view.list(reminder.list_id)?.space_id).map((s) => (
                   <optgroup key={s.id} label={s.name}>
                     {view.listsOf(s.id).map((l) => (
@@ -381,7 +381,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
               {!reminder.parent_id && view.sectionsOf(reminder.list_id).length > 0 && (
                 <select
                   aria-label={t('detail.section')}
-                  className="max-w-full rounded-lg border border-ink-700 bg-ink-850 px-2 py-1 text-sm text-mist-100"
+                  className="nt-field h-9 w-auto max-w-full px-2"
                   value={reminder.section_id ?? ''}
                   onChange={(e) => move({ list_id: reminder.list_id, section_id: e.target.value || null, parent_id: null })}
                 >
@@ -414,7 +414,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
                   setTag('')
                 }}
               >
-                <input value={tag} onChange={(e) => setTag(e.target.value)} placeholder={t('detail.addTag')} aria-label={t('detail.addTag')} className="w-28 rounded-md border border-ink-700 bg-transparent px-2 py-0.5 text-xs text-mist-100 placeholder:text-mist-500 focus:border-accent-500 focus:outline-none" />
+                <input value={tag} onChange={(e) => setTag(e.target.value)} placeholder={t('detail.addTag')} aria-label={t('detail.addTag')} className="nt-field h-8 w-36 text-xs" />
               </form>
             </div>
           </Row>
@@ -497,7 +497,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
       </div>
 
       {problem && (
-        <p role="alert" className="mx-5 mb-2 rounded-lg border border-bad-500/30 bg-bad-500/10 px-3 py-2 text-sm text-bad-500">
+        <p role="alert" className="nt-problem mx-5 mb-2">
           {problem}
         </p>
       )}
@@ -526,7 +526,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
   )
   if (!popup) return card
   return (
-    <div className="nt-veil fixed inset-0 z-40 flex items-end justify-center sm:items-center sm:p-6" onPointerDown={(e) => e.target === e.currentTarget && close()} data-testid="detail-veil">
+    <div className="bg-scrim fixed inset-0 z-40 flex items-end justify-center sm:items-center sm:p-6" onPointerDown={(e) => e.target === e.currentTarget && close()} data-testid="detail-veil">
       {card}
     </div>
   )

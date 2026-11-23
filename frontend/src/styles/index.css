@@ -3,8 +3,8 @@
 /* nextasks' own calm ground (docs "Aussehen", principle 9): blue-grey tones, petrol as the one accent. */
 @theme {
   --color-ink-950: #0f1417; /* page background */
-  --color-ink-900: #172026; /* sidebar, detail, dialogs */
-  --color-ink-850: #172026; /* cards */
+  --color-ink-900: #131a1f; /* sidebar, the detail as a column */
+  --color-ink-850: #172026; /* cards, dialogs, menus: a step above the sidebar, as in nexnotes */
   --color-ink-800: #1d282f; /* soft ground, hover */
   --color-ink-700: #26323a; /* border */
   --color-ink-600: #3a4952;
@@ -15,18 +15,18 @@
   --color-mist-300: #bccacf;
   --color-mist-400: #a5b3ba;
   --color-mist-500: #8d9ba4; /* dimmed text */
-  --color-mist-600: #8d9ba4; /* small text: 4.5:1 on every ground */
+  --color-mist-600: #83919a; /* small text: 4.5:1 on every ground */
 
   --color-accent-300: #8fd6e6;
   --color-accent-400: #5cc3db; /* petrol for text on dark */
   --color-accent-500: #38a9c4; /* main accent */
-  --color-accent-600: #5cc3db; /* a filled button under the pointer */
+  --color-accent-600: #2f95ae; /* a filled button under the pointer: darker, as in nexnotes */
   --color-accent-700: #0b5c70;
+  /* The chosen row, an open menu's button, an active chip: petrol shining through, on any ground. */
+  --color-accent-wash: rgb(56 169 196 / 0.16);
 
   /* Petrol as it is, for marks without text on them: a ticked box, the symbols of the collections. */
   --color-petrol: #38a9c4;
-  /* The chosen row of the sidebar. */
-  --color-chosen: #123440;
   /* The edge of an empty tick box. */
   --color-box: #6f8089;
 
@@ -35,13 +35,20 @@
   --color-on-bad: #2a0a10;
 
   --color-ok-500: #4ade80;
-  --color-warn-500: #fbbf24;
-  --color-bad-500: #f0716c;
+  /* Warnings in orange, errors as in nexnotes. */
+  --color-warn-500: #fb923c;
+  --color-bad-500: #fb7185;
+  /* Overdue (docs "Aussehen", principle 7): red, as agreed with the iPhone app; not the colour of an error. */
+  --color-late: #f0716c;
 
   --color-scrim: rgb(6 10 12 / 0.85);
 
   --font-sans: 'Inter Variable', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono Variable', 'Cascadia Mono', 'Cascadia Code', Consolas, 'DejaVu Sans Mono', monospace;
+
+  --radius-button: 9px;
+  --radius-tile: 12px;
+  --radius-dialog: 16px;
 }
 
 /* The priority plaques: low grey, medium amber, high red (white text). Outside @theme, as only inline styles read
@@ -67,25 +74,26 @@
   --color-mist-300: #37444d;
   --color-mist-400: #4b5861;
   --color-mist-500: #5e6b74;
-  --color-mist-600: #5a6770; /* small counters 4.5:1 also on a chosen row's tint (Prüfgang G7) */
+  --color-mist-600: #62707a; /* small counters 4.5:1 also on the accent's wash (Prüfgang G7) */
 
-  /* Darker petrol for text and for filled buttons, so white text on it stays readable. */
+  /* Petrol stays petrol on buttons; as text a little darker, 4.5:1 on white and on the wash. */
   --color-accent-300: #155f73;
-  --color-accent-400: #1f7f99;
+  --color-accent-400: #1a7590;
   --color-accent-500: #1f7f99;
   --color-accent-600: #196a80;
   --color-accent-700: #104f60;
+  --color-accent-wash: rgb(56 169 196 / 0.13);
 
-  --color-chosen: #e6f4f8;
   --color-box: #9fb0b8;
 
   --color-on-accent: #ffffff;
   --color-on-bad: #ffffff;
 
-  /* Status text 4.5 to 1 or more on white and on its own tint, as in nexbrand (Prüfgang G7). */
+  /* Status text 4.5 to 1 or more on white and on its own tint, as in nexnotes. */
   --color-ok-500: #166534;
-  --color-warn-500: #92400e;
-  --color-bad-500: #c0392f;
+  --color-warn-500: #b45309;
+  --color-bad-500: #b91c3c;
+  --color-late: #c0392f;
 
   --color-prio-1: #7d8b93;
 
@@ -120,50 +128,39 @@
 }
 
 @layer components {
-  .nc-scroll {
+  .nt-scroll {
     scrollbar-width: thin;
     scrollbar-color: var(--color-ink-600) transparent;
   }
 
-  /* Floating bits over content: a little glass, as on nexcanvas' board. */
-  .nc-float {
-    @apply rounded-2xl border border-ink-700 shadow-lg shadow-black/30;
-    background: color-mix(in srgb, var(--color-ink-850) 90%, transparent);
-    backdrop-filter: blur(12px);
-  }
-
-  :root[data-theme='light'] .nc-float {
-    @apply shadow-black/10;
-  }
-
-  .nc-menu {
+  /* The one menu of the app (nexnotes' `.nn-menu`): the "…" menus, the context menu, the chips' choices. */
+  .nt-menu {
     @apply z-50 min-w-48 rounded-xl border border-ink-700 bg-ink-850 p-1 shadow-xl shadow-black/40;
   }
 
-  .nc-menu-item {
-    @apply flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-mist-200 hover:bg-ink-800 hover:text-mist-100 disabled:opacity-40;
+  :root[data-theme='light'] .nt-menu {
+    @apply shadow-black/10;
   }
 
-  .nc-field {
-    @apply w-full rounded-lg border border-edge bg-ink-900 px-3 py-2 text-sm text-mist-100 placeholder:text-mist-600 focus:border-accent-500 focus:outline-none;
+  .nt-menu-item {
+    @apply flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-mist-200 outline-none hover:bg-ink-800 hover:text-mist-100 focus-visible:bg-ink-800 focus-visible:text-mist-100 disabled:opacity-40;
   }
 
-  .nc-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-[9px] px-3.5 py-1.5 text-sm font-semibold transition-colors disabled:opacity-40;
+  /* An entry that deletes: red text, the hover stays neutral. */
+  .nt-menu-danger {
+    @apply text-bad-500 hover:text-bad-500 focus-visible:text-bad-500;
   }
 
-  .nc-btn-accent {
-    @apply bg-accent-500 text-on-accent hover:bg-accent-600;
+  /* A line between groups of entries, indented as in nexnotes. */
+  .nt-menu-line {
+    @apply mx-2 my-1 h-px bg-ink-700;
   }
 
-  .nc-btn-ghost {
-    @apply border border-ink-700 bg-ink-850 text-mist-200 hover:bg-ink-800 hover:text-mist-100;
-  }
-
-  /* The buttons, field and chosen row of nexnotes (its `.nn-btn`, `.nn-field`, `.nn-chosen`): the settings, the sidebar's
-     "+ New task" and the account at its foot look and feel the same in both apps; only the accent is petrol. */
+  /* The buttons, field and chosen row of nexnotes (its `.nn-btn`, `.nn-field`, `.nn-chosen`): every button of the app
+     looks and feels the same in both apps; only the accent is petrol. */
   .nt-btn {
-    @apply inline-flex h-10 items-center justify-center gap-2 rounded-[9px] px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-ink-800 disabled:text-mist-600;
+    @apply inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:border-transparent disabled:bg-ink-800 disabled:text-mist-600;
+    border-radius: var(--radius-button);
   }
 
   /* The one main action. */
@@ -181,17 +178,75 @@
     @apply bg-bad-500 text-on-bad hover:opacity-90;
   }
 
+  /* Quiet: text in the accent colour. */
+  .nt-btn-quiet {
+    @apply h-auto px-0 text-accent-400 hover:underline disabled:bg-transparent;
+  }
+
+  /* A button with only a symbol: 32 px, its menu open on the accent's wash. */
+  .nt-icon-btn {
+    @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-mist-500 transition-colors hover:bg-ink-800 hover:text-mist-100 disabled:cursor-not-allowed disabled:opacity-40 aria-expanded:bg-accent-wash aria-expanded:text-accent-400 aria-pressed:bg-accent-wash aria-pressed:text-accent-400;
+  }
+
+  /* A field: 40 px, 9 px corners, petrol edge and ring in focus. */
   .nt-field {
-    @apply h-10 w-full rounded-[9px] border border-edge bg-ink-900 px-3 text-sm text-mist-100 placeholder:text-mist-600 focus:border-accent-500 focus:outline-none;
+    @apply h-10 w-full border border-edge bg-ink-900 px-3 text-sm text-mist-100 placeholder:text-mist-600 focus:border-accent-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60;
+    border-radius: var(--radius-button);
   }
 
   .nt-field:focus {
     box-shadow: 0 0 0 3px rgb(56 169 196 / 0.22);
   }
 
+  /* The name of a group of fields: small, capitals, grey (nexnotes' legends). */
+  .nt-legend {
+    @apply mb-2 text-xs font-semibold tracking-wide text-mist-500 uppercase;
+  }
+
+  /* A chip to switch on and off (nexnotes' search filters): round, petrol on the wash when on. */
+  .nt-toggle {
+    @apply inline-flex h-[34px] max-w-full items-center gap-1.5 rounded-full border border-edge px-3 text-[13px] text-mist-100 hover:bg-ink-800 aria-checked:border-accent-500 aria-checked:bg-accent-wash aria-checked:text-accent-400 aria-pressed:border-accent-500 aria-pressed:bg-accent-wash aria-pressed:text-accent-400;
+  }
+
+  /* The same chip as a label round a checkbox or radio. */
+  .nt-pick {
+    @apply inline-flex h-[34px] max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-edge px-3 text-[13px] text-mist-100 hover:bg-ink-800 has-[input:checked]:border-accent-500 has-[input:checked]:bg-accent-wash has-[input:checked]:text-accent-400;
+  }
+
+  .nt-pick input {
+    accent-color: var(--color-accent-500);
+  }
+
+  /* A choice as a card (nexnotes' export dialog): a radio, a title and a line below. */
+  .nt-option {
+    @apply flex cursor-pointer items-start gap-3 rounded-[12px] border border-ink-700 px-3.5 py-3 hover:bg-ink-800 has-[input:checked]:border-accent-500 has-[input:checked]:bg-accent-wash;
+  }
+
+  /* A card with a thin edge: settings, the board's tasks, the detail's subtasks. */
+  .nt-card {
+    @apply border border-ink-700 bg-ink-850;
+    border-radius: var(--radius-tile);
+  }
+
   /* The chosen row: the sidebar's, the settings' navigation, the account at the foot while the settings are open. */
   .nt-chosen {
-    @apply bg-chosen text-accent-400;
+    @apply text-accent-400;
+    background: var(--color-accent-wash);
+  }
+
+  /* What went wrong, as a red box inside a page or a dialog. */
+  .nt-problem {
+    @apply rounded-[9px] border border-bad-500/30 bg-bad-500/10 px-3 py-2 text-sm text-bad-500;
+  }
+
+  /* A head between groups of rows (nexnotes' list groups): small, capitals, grey, spaced out. */
+  .nt-sec {
+    @apply text-[11px] font-semibold tracking-[0.08em] text-mist-600 uppercase;
+  }
+
+  /* The head of a part of the sidebar (nexnotes' "Ordner"): 11 px, capitals, without a symbol. */
+  .nt-side-head {
+    @apply text-[11px] font-semibold tracking-[0.06em] text-mist-500 uppercase;
   }
 
   /* A small round label: due date, priority, kind of task. */
@@ -211,16 +266,6 @@
 
   .nt-box-sm {
     @apply h-[18px] w-[18px] rounded-[6px];
-  }
-
-  /* A white card with a thin edge: the rows of a list, the board's columns. */
-  .nt-card {
-    @apply rounded-xl border border-ink-700 bg-ink-850;
-  }
-
-  /* A section head: small, capitals, grey, spaced out. */
-  .nt-sec {
-    @apply text-xs font-bold tracking-[0.06em] text-mist-500 uppercase;
   }
 
   /* The installed app on a phone runs up to the edges (viewport-fit=cover): the notch, the rounded corners and the
@@ -244,11 +289,32 @@
   }
 }
 
-/* Thin lines between the rows of a card, and between a task and its subtasks on a board card. */
-.nt-rows > * + * > [data-row]:first-child,
-.nt-rows [data-row] + [data-row],
-.nt-board [data-row] + [data-row],
+/* Lines between the rows of a list, as between nexnotes' rows: indented, not above the first row, gone on the row under
+   the pointer and on the chosen one. The line before the quick entry below rows, too. On a board card the subtasks keep a
+   plain line under their task. */
+.nt-rows [data-row]::before,
+.nt-group > .nt-rows:not(:empty) + *::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--row-indent, 12px);
+  right: 12px;
+  height: 1px;
+  background: var(--color-ink-700);
+  pointer-events: none;
+}
+
 .nt-group > .nt-rows:not(:empty) + * {
+  position: relative;
+}
+
+.nt-rows > :first-child > [data-row]:first-child::before,
+.nt-rows [data-row]:hover::before,
+.nt-rows [data-row][data-chosen]::before {
+  display: none;
+}
+
+.nt-board [data-row] + [data-row] {
   border-top: 1px solid var(--color-ink-700);
 }
 
@@ -419,44 +485,11 @@
   outline: 2px solid var(--color-petrol);
 }
 
-/* The ground behind an open task: the page softly blurred and a little darker. */
-.nt-veil {
-  background: rgb(4 8 10 / 0.45);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  animation: nt-fade 160ms ease-out;
-}
-
-:root[data-theme='light'] .nt-veil {
-  background: rgb(21 32 43 / 0.22);
-}
-
-/* The card of an open task comes up a little; on a phone the sheet slides in from below. */
-.nt-pop {
-  animation: nt-sheet 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-@media (min-width: 640px) {
+/* As in nexnotes, dialogs, menus and the card of an open task stand there at once, over a plain scrim. Only on a
+   phone the sheet of an open task or of a menu still slides in from below, as it always did. */
+@media (max-width: 639px) {
   .nt-pop {
-    animation: nt-pop 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-}
-
-/* A context menu fades in quickly. */
-.nt-menu {
-  animation: nt-fade 90ms ease-out;
-}
-
-@keyframes nt-fade {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes nt-pop {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    animation: nt-sheet 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }
 
@@ -468,9 +501,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nt-veil,
-  .nt-pop,
-  .nt-menu {
+  .nt-pop {
     animation: none;
   }
 }
