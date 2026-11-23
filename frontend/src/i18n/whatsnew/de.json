@@ -1,4 +1,18 @@
 {
+  "0.5.0": {
+    "lead": "Listen, Bereiche und Filter bekommen jede Farbe, die du willst.",
+    "sections": [
+      {
+        "title": "Eigene Farbe",
+        "where": "Liste, Bereich oder Filter bearbeiten › Farbe",
+        "body": "Neben den festen Farben wählst du jetzt jede andere: mit dem Farbwähler deines Systems oder als #rrggbb. Die zuletzt benutzten stehen auf diesem Gerät gleich daneben. Ist eine Farbe sehr hell oder sehr dunkel, hellt nextasks sie beim Anzeigen so weit auf oder dunkelt sie ab, dass sie im hellen und im dunklen Modus lesbar bleibt."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Die iPhone-App zeigt eigene Farben vorerst in Blau, bis sie ein Update bekommt. Bearbeiten geht dort wie gewohnt."
+    ]
+  },
   "0.4.3": {
     "lead": "Eine Korrektur in den Benachrichtigungen.",
     "sections": [

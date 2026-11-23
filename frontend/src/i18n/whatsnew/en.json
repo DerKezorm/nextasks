@@ -1,4 +1,18 @@
 {
+  "0.5.0": {
+    "lead": "Lists, spaces and filters take any colour you like.",
+    "sections": [
+      {
+        "title": "Your own colour",
+        "where": "Edit a list, space or filter › Colour",
+        "body": "Next to the fixed colours you can now pick any other: with your system's colour picker or as #rrggbb. The ones you used last stay right beside them on this device. A very light or very dark colour is drawn just lighter or darker enough to read in light and dark mode."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "The iPhone app shows own colours in blue until it gets an update. Editing works there as before."
+    ]
+  },
   "0.4.3": {
     "lead": "A fix in the notifications.",
     "sections": [
