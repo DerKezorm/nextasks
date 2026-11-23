@@ -6,7 +6,7 @@ import { Bell, Bookmark, CalendarDays, Check, ChevronsUp, Columns3, Eye, EyeOff,
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { deleteFilter, moveList, moveReminder, setFilterHidden, setPref, setSpaceHidden, siblingsAt, trashReminder } from '../lib/actions'
+import { deleteFilter, dueChange, moveList, moveReminder, setFilterHidden, setPref, setSpaceHidden, siblingsAt, trashReminder } from '../lib/actions'
 import { copyText } from '../lib/copy'
 import { localDay } from '../lib/due'
 import { colorOf, iconFor } from '../lib/look'
@@ -47,7 +47,7 @@ export function useTaskMenu(reminder: Reminder) {
     const space = list ? view.space(list.space_id) : undefined
     const members = space && !space.private ? view.membersOf(space.id) : []
     const put = (fields: Record<string, unknown>) => engine.put('reminder', id, fields)
-    const due = (date: string | null) => put({ due_date: date, due_time: date ? reminder.due_time : null, repeat: date ? reminder.repeat : null, repeat_from: date ? reminder.repeat_from : 'due' })
+    const due = (date: string | null) => put(dueChange(reminder, date, reminder.due_time))
     const today = localDay()
     const move = (spot: { list_id: string; section_id: string | null; parent_id: null }) => moveReminder(engine, view, id, spot, siblingsAt(view, spot, id).length)
     return [
