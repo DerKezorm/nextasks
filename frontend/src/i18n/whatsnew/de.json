@@ -1,4 +1,18 @@
 {
+  "0.5.1": {
+    "lead": "Eine Korrektur in der Seitenleiste.",
+    "sections": [
+      {
+        "title": "Bereiche in ihrer Farbe",
+        "where": "Seitenleiste",
+        "body": "Das Symbol vor dem Namen eines Bereichs war grau. Jetzt trägt es die Farbe des Bereichs, auch eine eigene."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Eine sehr helle oder sehr dunkle Bereichsfarbe bleibt dort im hellen und im dunklen Modus lesbar."
+    ]
+  },
   "0.5.0": {
     "lead": "Listen, Bereiche und Filter bekommen jede Farbe, die du willst.",
     "sections": [

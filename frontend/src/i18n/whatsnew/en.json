@@ -1,4 +1,18 @@
 {
+  "0.5.1": {
+    "lead": "A fix in the sidebar.",
+    "sections": [
+      {
+        "title": "Spaces in their colour",
+        "where": "Sidebar",
+        "body": "The symbol before a space's name was grey. It now carries the space's colour, own colours included."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "A very light or very dark space colour stays readable there in light and dark mode."
+    ]
+  },
   "0.5.0": {
     "lead": "Lists, spaces and filters take any colour you like.",
     "sections": [
