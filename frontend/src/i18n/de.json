@@ -793,7 +793,15 @@
     "subDone_one": "eine erledigte Aufgabe",
     "subDone_other": "{{count}} erledigte Aufgaben",
     "everywhere": "Aus allen Bereichen",
-    "emptyText": "Neue Aufgaben legst du mit „Neue Aufgabe“ an oder schreibst sie unten in die Zeile."
+    "emptyText": "Neue Aufgaben legst du mit „Neue Aufgabe“ an oder schreibst sie unten in die Zeile.",
+    "view": "Ansicht",
+    "asList": "Liste",
+    "asColumns": "Spalten",
+    "overdue": "Überfällig",
+    "earlier": "Frühere Tage",
+    "later": "Spätere Tage",
+    "toToday": "Zurück zu heute",
+    "addOn": "Neue Aufgabe am {{day}}"
   },
   "filter": {
     "section": "Filter",

@@ -1,16 +1,20 @@
 /**
- * The collections' pages: Today, Scheduled (by day), All (by space and list), Marked, Assigned to me, Done. A new
- * task typed here goes into the first list of "Private" and takes what the collection stands for (today, marked).
+ * The collections' pages: Today, Scheduled (by day, as a list or as day columns), All (by space and list), Marked,
+ * Assigned to me, Done. A new task typed here goes into the first list of "Private" and takes what the collection
+ * stands for (today, marked). The day columns are for wide windows; on a phone "Scheduled" is always the list.
  */
 import { useTranslation } from 'react-i18next'
 
+import { DayBoard, DayNav, ScheduledViewMenu } from '../components/DayBoard'
 import { EmptyState } from '../components/EmptyState'
 import { Mark } from '../components/Mark'
 import { PageHead, TileIcon } from '../components/PageHead'
 import { QuickEntry } from '../components/QuickEntry'
 import { ReminderGroup } from '../components/ReminderRow'
 import { useShell } from '../components/Shell'
+import { useDayPaging, useScheduledLook } from '../lib/dayColumns'
 import { dayLabel, localDay, longDay } from '../lib/due'
+import { usePhone } from '../lib/phone'
 import { TILE_LOOK } from '../lib/tileLook'
 import { useView } from '../state/sync'
 import { groupByDay, tileItems, type Tile } from '../sync/tiles'
@@ -27,8 +31,13 @@ export function TilePage({ tile }: { tile: Tile }) {
   const { t, i18n } = useTranslation()
   const view = useView()
   const shell = useShell()
+  const phone = usePhone()
+  const [look, setLook] = useScheduledLook()
+  const paging = useDayPaging(tile)
   const today = localDay()
   const items = tileItems(view, tile, today)
+  const switchable = tile === 'scheduled' && !phone
+  const columns = switchable && look === 'columns'
   const only = new Set(items.map((r) => r.id))
   const defaults: Data | null = tile === 'today' || tile === 'scheduled' ? { due_date: today, due_time: null, repeat: null, repeat_from: 'due' } : tile === 'flagged' ? { flagged: true } : tile === 'all' ? {} : null
   // "+ New task" goes where the quick entry goes, with what the collection stands for (me only where others are).
@@ -39,7 +48,8 @@ export function TilePage({ tile }: { tile: Tile }) {
   const quick = defaults && <QuickEntry spot={null} defaults={defaults} label={t('quick.placeholderPrivate', { list: first?.name ?? '' })} />
 
   let body
-  if (tile === 'scheduled') {
+  if (columns) body = <DayBoard items={items} today={today} paging={paging} />
+  else if (tile === 'scheduled') {
     body = groupByDay(items).map(({ day, items: group }) => (
       <section key={day} className="mb-5" aria-label={longDay(day, i18n.language)}>
         <h2 className={'nt-sec mb-1 flex items-baseline gap-1.5 px-3 ' + (day < today ? 'text-late' : '')}>
@@ -74,13 +84,20 @@ export function TilePage({ tile }: { tile: Tile }) {
     )
 
   // Grouped pages and an empty one keep the quick entry in a card of its own below.
-  const apart = quick && (tile === 'scheduled' || tile === 'all' || tile === 'flagged' || items.length === 0)
+  const apart = quick && !columns && (tile === 'scheduled' || tile === 'all' || tile === 'flagged' || items.length === 0)
 
   return (
     <main className="nt-scroll min-w-0 flex-1 overflow-y-auto" aria-labelledby="tile-title">
       <div className="px-4 py-5 sm:px-7 sm:py-6">
-        <PageHead id="tile-title" target={target} title={t(`tiles.${tile}`)} count={tile === 'done' ? t('tiles.subDone', { count: items.length }) : t('list.open', { count: items.length })} sub={t('tiles.everywhere')} icon={<TileIcon icon={TILE_LOOK[tile].icon} />} />
-        {items.length === 0 && (
+        <PageHead id="tile-title" target={target} title={t(`tiles.${tile}`)} count={tile === 'done' ? t('tiles.subDone', { count: items.length }) : t('list.open', { count: items.length })} sub={t('tiles.everywhere')} icon={<TileIcon icon={TILE_LOOK[tile].icon} />}>
+          {switchable && (
+            <>
+              {columns && <DayNav items={items} today={today} paging={paging} />}
+              <ScheduledViewMenu look={look} onLook={setLook} />
+            </>
+          )}
+        </PageHead>
+        {items.length === 0 && !columns && (
           <EmptyState icon={TILE_LOOK[tile].icon} title={t(`tiles.empty.${tile}`)} text={tile === 'done' ? undefined : t('tiles.emptyText')} action={tile === 'done' || !target ? undefined : t('reminder.new')} onAction={() => shell.newTask(target ?? undefined)} />
         )}
         {body}
