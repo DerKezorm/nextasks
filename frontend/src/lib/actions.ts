@@ -8,6 +8,7 @@ import { DONE_WORDS, DUE_WORDS, TILE_IDS, type Rules, type Tile } from '../sync/
 import type { Data, FilterRules, Reminder } from '../sync/types'
 import { uuid4 } from '../sync/uuid'
 import type { View } from '../sync/view'
+import { showNotice } from './notice'
 import { plainNotes } from './notes'
 
 export interface Spot {
@@ -93,10 +94,18 @@ export function moveSpace(engine: SyncEngine, view: View, spaceId: string, index
 }
 
 /** "Delete completed" of a list: every done reminder into the trash, each on its own. */
-export function clearCompleted(engine: SyncEngine, view: View, listId: string): number {
+/** Puts the completed ones of a list into the trash; the notice says how many, with "Undo" for ten seconds. */
+export function clearCompleted(engine: SyncEngine, view: View, listId: string, say: (count: number) => string): number {
   const done = view.live.filter((r) => r.list_id === listId && r.completed_at)
   for (const r of done) engine.trash('reminder', r.id)
+  if (done.length) showNotice({ text: say(done.length), undo: () => done.forEach((r) => engine.trash('reminder', r.id, true)) })
   return done.length
+}
+
+/** A task into the trash, as nexnotes a note: the notice at the bottom brings it back for ten seconds. */
+export function trashReminder(engine: SyncEngine, reminder: Pick<Reminder, 'id' | 'title'>, say: (title: string) => string): void {
+  engine.trash('reminder', reminder.id)
+  showNotice({ text: say(reminder.title), undo: () => engine.trash('reminder', reminder.id, true) })
 }
 
 export function setPref(engine: SyncEngine, listId: string, change: { show_completed?: boolean; notify_changes?: boolean }): void {

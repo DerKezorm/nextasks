@@ -5,17 +5,19 @@
  * (`?pane=`). There is no bar across the top. Keys: N new task, / or Ctrl+K search, X tick off, F mark, Enter open,
  * Esc close, ? the list of keys; with a task open only X, F and Esc.
  */
-import { X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
+import { hideNotice, showNotice } from '../lib/notice'
 import { useEngine, useSyncState, useView } from '../state/sync'
 import { UpdateBanner } from './AppInstall'
+import { ConfirmDialog, type Question } from './ConfirmDialog'
 import { ContextMenuProvider } from './ContextMenu'
 import { DetailPane, NewTaskDetail, type NewTarget } from './DetailPane'
 import { Dialog } from './Dialog'
 import { MembersDialog } from './MembersDialog'
+import { NoticeHost } from './NoticeHost'
 import { BackToOverview } from './PageHead'
 import { ShellContext, type Shell } from './Shell'
 import { Sidebar } from './Sidebar'
@@ -44,6 +46,7 @@ export function AppShell() {
   const [params, setParams] = useSearchParams()
   const location = useLocation()
   const [dialog, setDialog] = useState<Open>(null)
+  const [question, setQuestion] = useState<Question | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const quick = useRef<(() => void) | null>(null)
   const pageTarget = useRef<NewTarget | null>(null)
@@ -131,6 +134,7 @@ export function AppShell() {
       members: (space) => setDialog({ kind: 'members', space }),
       newFilter: () => setDialog({ kind: 'filter', filter: null }),
       editFilter: (filter) => setDialog({ kind: 'filter', filter }),
+      ask: setQuestion,
     }),
     [opened, pane, selected, openReminder, showPopup, closeReminder, togglePane, closePane, navigate],
   )
@@ -159,7 +163,7 @@ export function AppShell() {
         navigate('/search')
         return
       }
-      if (typing(e.target) || e.ctrlKey || e.metaKey || e.altKey || dialog) return
+      if (typing(e.target) || e.ctrlKey || e.metaKey || e.altKey || dialog || question) return
       const shown = opened ?? pane
       if (shown && !['escape', 'x', 'f'].includes(e.key.toLowerCase())) return
       if (e.key === '/') {
@@ -189,14 +193,17 @@ export function AppShell() {
     }
     window.addEventListener('keydown', key)
     return () => window.removeEventListener('keydown', key)
-  }, [navigate, dialog, opened, pane, closeReminder, closePane, engine, view, shell])
+  }, [navigate, dialog, question, opened, pane, closeReminder, closePane, engine, view, shell])
 
-  // Notices fade after a while.
+  // What the sync has to say goes to the one notice at the bottom, as nexnotes' notices; the newest wins.
   useEffect(() => {
-    if (!sync.notices.length) return
-    const timer = setTimeout(() => engine.dismiss(sync.notices[0].id), 7000)
-    return () => clearTimeout(timer)
-  }, [sync.notices, engine])
+    const latest = sync.notices.at(-1)
+    if (!latest) return
+    showNotice({ text: t(`notice.${latest.code}`, { defaultValue: t('notice.invalid'), ...latest.values }) })
+    for (const notice of sync.notices) engine.dismiss(notice.id)
+  }, [sync.notices, engine, t])
+  // A notice of this account does not stay for the next one.
+  useEffect(() => hideNotice, [])
 
   const reminder = opened && opened !== 'new' ? view.reminder(opened) : undefined
   const paneReminder = pane && pane !== 'new' ? view.reminder(pane) : undefined
@@ -237,18 +244,8 @@ export function AppShell() {
       {dialog?.kind === 'filter' && <FilterDialog filterId={dialog.filter} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'members' && <MembersDialog spaceId={dialog.space} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'keys' && <KeysDialog onClose={() => setDialog(null)} />}
-      {sync.notices.length > 0 && (
-        <div className="nt-safe-bottom pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4 sm:items-end sm:px-6" aria-live="polite">
-          {sync.notices.slice(-3).map((notice) => (
-            <div key={notice.id} role="status" data-testid="notice" className="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border border-ink-700 bg-ink-900 px-4 py-3 text-sm text-mist-200 shadow-2xl shadow-black/40">
-              <span className="min-w-0 flex-1">{t(`notice.${notice.code}`, { defaultValue: t('notice.invalid'), ...notice.values })}</span>
-              <button type="button" onClick={() => engine.dismiss(notice.id)} aria-label={t('common.close')} className="-m-1 rounded-full p-1 hover:bg-ink-800">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      {question && <ConfirmDialog question={question} onClose={() => setQuestion(null)} />}
+      <NoticeHost />
       </ContextMenuProvider>
     </ShellContext.Provider>
   )

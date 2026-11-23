@@ -173,7 +173,7 @@ describe('inviting into a space', () => {
     await type(form!.querySelector('input'), 'sam@example.test')
     await submit(form!.querySelector('input'))
     expect(server.mails.at(-1)).toMatchObject({ to: 'sam@example.test', kind: 'invite' })
-    expect(form!.textContent).toContain('Invitation sent to sam@example.test.')
+    expect(document.querySelector('[data-testid="notice"]')?.textContent).toContain('Invitation sent to sam@example.test.')
   })
 
   it('offers no mail without a mail server', async () => {
