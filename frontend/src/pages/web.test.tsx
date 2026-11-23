@@ -4,10 +4,14 @@ import { act } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { localDay } from '../lib/due'
+import { colorOf } from '../lib/look'
 import { addDays } from '../sync/repeat'
 import { TILE_IDS } from '../sync/tiles'
 import { FakeServer, smallWorld } from '../test/fakeServer'
 import { blur, button, choose, click, drag, focus, mount, press, row, settle, submit, titles, type, unmount, where } from '../test/harness'
+
+/** `#rrggbb` as the DOM gives a colour back. */
+const hexToRgb = (hex: string) => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(', ')})`
 
 afterEach(unmount)
 
@@ -122,7 +126,7 @@ describe('the own look (docs "Aussehen")', () => {
     expect(page.textContent).not.toMatch(/reminder/i)
   })
 
-  it('leads the head of a space in the sidebar with its symbol, small and grey, before the name', async () => {
+  it('leads the head of a space in the sidebar with its symbol, small and in its colour, before the name', async () => {
     const { server, family } = world()
     const page = await mount(server, '/today')
     const head = page.querySelector(`aside [data-space="${family}"] button[aria-expanded]`)!
@@ -130,7 +134,7 @@ describe('the own look (docs "Aussehen")', () => {
     expect(symbol.getAttribute('data-space-icon')).toBe('house')
     expect(symbol.getAttribute('class')).toContain('h-3.5 w-3.5')
     expect(symbol.getAttribute('stroke-width')).toBe('1.8')
-    expect(symbol.getAttribute('style')).toBeNull()
+    expect((symbol as SVGElement).style.color).toBe(hexToRgb(colorOf(server.data('space', family)!.color as string)))
     expect(head.firstElementChild).toBe(symbol)
     expect(head.textContent).toBe('Family')
   })

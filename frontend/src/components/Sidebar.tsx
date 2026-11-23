@@ -19,7 +19,7 @@ import { moveList, moveReminder, moveSpace, setSpaceHidden, siblingsAt } from '.
 import { useColumnWidth } from '../lib/columns'
 import { localDay } from '../lib/due'
 import { dragging, draggedReminder, DRAG_LIST, DRAG_SPACE } from '../lib/drag'
-import { iconFor } from '../lib/look'
+import { colorOf, iconFor } from '../lib/look'
 import { TILE_LOOK } from '../lib/tileLook'
 import { useAuth } from '../state/auth'
 import { useEngine, useFiltersOffered, useSyncState, useView } from '../state/sync'
@@ -327,7 +327,7 @@ function SpaceBlock({ space, index }: { space: Space; index: number }) {
         }}
       >
         <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="nt-side-head flex min-w-0 flex-1 items-center gap-1.5 py-1 text-left hover:text-mist-300">
-          {createElement(iconFor(space.icon), { className: 'h-3.5 w-3.5 shrink-0', strokeWidth: 1.8, 'aria-hidden': true, 'data-space-icon': space.icon } as Parameters<typeof createElement>[1])}
+          {createElement(iconFor(space.icon), { className: 'h-3.5 w-3.5 shrink-0', strokeWidth: 1.8, style: { color: colorOf(space.color) }, 'aria-hidden': true, 'data-space-icon': space.icon } as Parameters<typeof createElement>[1])}
           <span className="truncate">{space.name}</span>
           {open ? <ChevronDown className="h-3 w-3 shrink-0 opacity-0 group-hover/space:opacity-100" aria-hidden /> : <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />}
         </button>
