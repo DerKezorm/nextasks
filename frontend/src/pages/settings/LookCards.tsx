@@ -8,7 +8,7 @@ import { createElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
-import { Badge } from '../../components/Badge'
+import { Mark } from '../../components/Mark'
 import { useShell } from '../../components/Shell'
 import { ThemeSwitcher } from '../../components/ThemeSwitcher'
 import { setFilterHidden, setSpaceHidden, setTileHidden } from '../../lib/actions'
@@ -111,7 +111,7 @@ function SidebarCard() {
         <EyeRow
           key={filter.id}
           testId={`pref-filter-${filter.name}`}
-          sign={<Badge color={filter.color} icon={filter.icon} size="sm" />}
+          sign={<Mark color={filter.color} icon={filter.icon} size={18} />}
           label={filter.name}
           name={
             <Link to={`/filters/${filter.id}`} className="hover:underline">
@@ -121,7 +121,7 @@ function SidebarCard() {
           hidden={filter.hidden}
           onHidden={(hidden) => setFilterHidden(engine, filter.id, hidden)}
         >
-          <button type="button" onClick={() => shell.editFilter(filter.id)} className="rounded-[9px] p-1.5 text-mist-500 hover:bg-ink-800 hover:text-mist-100" aria-label={t('filter.editNamed', { name: filter.name })} title={t('filter.editNamed', { name: filter.name })} data-testid={`pref-filter-${filter.name}-edit`}>
+          <button type="button" onClick={() => shell.editFilter(filter.id)} className="nt-icon-btn" aria-label={t('filter.editNamed', { name: filter.name })} title={t('filter.editNamed', { name: filter.name })} data-testid={`pref-filter-${filter.name}-edit`}>
             <Pencil className="h-4 w-4" aria-hidden />
           </button>
         </EyeRow>
