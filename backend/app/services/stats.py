@@ -422,7 +422,7 @@ SENTENCES: dict[str, dict[str, str]] = {
         "open_one": "„{a}“ ist seit {da} Tagen offen. Verschieben oder streichen?",
         "open_two": "„{a}“ ist seit {da} Tagen offen, „{b}“ seit {db}. Verschieben oder streichen?",
         "emptied_one": "„{list}“ wurde einmal ganz abgehakt.", "emptied": "„{list}“ wurde {n}-mal ganz abgehakt.",
-        "frequent": "Am häufigsten: {titles}.", "deleted_list": "eine gelöschte Liste",
+        "frequent": "Am häufigsten: {titles}.",
     },
     "en": {
         "count_one": "1 task done", "count": "{n} tasks done",
@@ -438,7 +438,7 @@ SENTENCES: dict[str, dict[str, str]] = {
         "open_two": "“{a}” has been open for {da} days, “{b}” for {db}. Move them or drop them?",
         "emptied_one": "“{list}” was ticked off completely once.",
         "emptied": "“{list}” was ticked off completely {n} times.",
-        "frequent": "Most often: {titles}.", "deleted_list": "a deleted list",
+        "frequent": "Most often: {titles}.",
     },
 }
 
@@ -467,16 +467,14 @@ def sentences(facts: dict[str, Any], *, alone: bool, language: str, names: dict[
         day = WEEKDAY_NAMES.get(language, WEEKDAY_NAMES["en"])[strongest["weekday"]]
         out.append(words["strongest_mine" if alone else "strongest"].format(day=day, n=strongest["count"]))
 
-    def list_name(brief: dict[str, Any]) -> str:
-        return brief["name"] or words["deleted_list"]
-
+    # A list gone for good has no name to quote: its sentences are left out.
     if not alone:
-        for entry in facts["lists"][:2]:
+        for entry in [entry for entry in facts["lists"] if entry["list"]["name"]][:2]:
             top = entry["people"][0] if entry["people"] else None
             if (top and top["id"] is not None and entry["count"] >= 3 and len(entry["people"]) > 1
                     and top["count"] * 2 > entry["count"]):
                 out.append(words["took"].format(name=names.get(top["id"], ""), k=top["count"], n=entry["count"],
-                                                list=list_name(entry["list"])))
+                                                list=entry["list"]["name"]))
         for entry in facts["steady"][:1]:
             out.append(words["steady"].format(title=entry["title"], name=names.get(entry["person"], "")))
     long_open = facts["long_open"]
@@ -485,9 +483,9 @@ def sentences(facts: dict[str, Any], *, alone: bool, language: str, names: dict[
     elif len(long_open) > 1:
         out.append(words["open_two"].format(a=long_open[0]["title"], da=long_open[0]["days"],
                                             b=long_open[1]["title"], db=long_open[1]["days"]))
-    for entry in facts["emptied"][:1]:
+    for entry in [entry for entry in facts["emptied"] if entry["list"]["name"]][:1]:
         key = "emptied_one" if entry["times"] == 1 else "emptied"
-        out.append(words[key].format(list=list_name(entry["list"]), n=entry["times"]))
+        out.append(words[key].format(list=entry["list"]["name"], n=entry["times"]))
     if facts["frequent"]:
         out.append(words["frequent"].format(titles=", ".join(entry["title"] for entry in facts["frequent"][:3])))
     return out
