@@ -331,8 +331,9 @@ def _emptied(data: Data, first: date, last: date) -> list[dict[str, Any]]:
     its making until it was done or put in the bin."""
     events: dict[str, list[tuple[datetime, int, bool]]] = defaultdict(list)
     for item in data.done:
-        if item.row.created_at:
-            events[item.row.list_id].append((data.scope.local(item.row.created_at), 1, False))
+        # Never made after it was done (a clock that was off, a task brought in already done).
+        made = min(data.scope.local(item.row.created_at), item.at) if item.row.created_at else item.at
+        events[item.row.list_id].append((made, 1, False))
         events[item.row.list_id].append((item.at, -1, True))
     for row in data.open:
         events[row.list_id].append((data.scope.local(row.created_at), 1, False))
@@ -390,7 +391,9 @@ def week_facts(data: Data) -> dict[str, Any]:
         key=lambda entry: -entry["days"])
     titles: dict[str, list[Done]] = defaultdict(list)
     for item in week:
-        titles[title_key(item.row.title)].append(item)
+        # What is bought or done again by choice: a repeating task comes back by its rule anyway.
+        if item.row.series_id is None:
+            titles[title_key(item.row.title)].append(item)
     frequent = sorted(({"title": plain_title(items[-1].row.title), "count": len(items)}
                        for items in titles.values() if len(items) >= 2), key=lambda entry: -entry["count"])
     return {
