@@ -25,6 +25,7 @@ from ..models import (
     AppPairing,
     Attachment,
     ChangeBundle,
+    Completion,
     CursorTime,
     Gone,
     Hidden,
@@ -109,6 +110,8 @@ def purge_space(db: Session, space: Space) -> None:
         hashes |= more
     space_id = space.id
     db.delete(space)
+    # The record of its completions goes with it (``services/completions.py``): nobody counts a space that is gone.
+    db.execute(delete(Completion).where(Completion.space_id == space_id))
     db.flush()
     _tomb(db, items, space_id)
     for digest in hashes:

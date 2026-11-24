@@ -724,6 +724,40 @@ class AssignedLog(Base):
     by_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
+# --- The record of completions ---------------------------------------------------------------------------------------
+
+
+class Completion(Base):
+    """One completion of a reminder, for the review (``services/completions.py``, ``services/stats.py``). Written
+    whenever a reminder becomes done, whichever way it came (``/api/app/1``, ``/api/v1``), and taken away when it is
+    opened again: one row per reminder at most. It outlives the reminder (bin, "delete completed", gone for good); it
+    goes with its space. Never sent to the app: ``/api/app/1`` knows nothing of it."""
+
+    __tablename__ = "completions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reminder_id: Mapped[str] = mapped_column(ID, unique=True)
+    #: The repeating reminder this completion belongs to: the original's id for its completed copies and for the
+    #: original itself when its rule ended; None for a reminder that never repeated.
+    series_id: Mapped[str | None] = mapped_column(ID, nullable=True, index=True)
+    space_id: Mapped[str] = mapped_column(ID, index=True)
+    list_id: Mapped[str] = mapped_column(ID, index=True)
+    section_id: Mapped[str | None] = mapped_column(ID, nullable=True)
+    #: Set for a subtask: the review counts tasks, not their steps.
+    parent_id: Mapped[str | None] = mapped_column(ID, nullable=True)
+    #: The title when it was completed.
+    title: Mapped[str] = mapped_column(String(500))
+    completed_at: Mapped[str] = mapped_column(STAMP, index=True)
+    completed_by: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: The due date (and time) of the occurrence that was completed.
+    due_date: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    due_time: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    created_at: Mapped[str | None] = mapped_column(STAMP, nullable=True)
+    #: Done on or before its due day, in the time zone of whoever completed it; None without a due date.
+    on_time: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    logged_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow)
+
+
 Index("reminders_due", Reminder.due_date, Reminder.due_time)
 Index("hidden_account_cursor", Hidden.account_id, Hidden.cursor)
 
@@ -746,6 +780,7 @@ __all__ = [
     "AuthSession",
     "Base",
     "ChangeBundle",
+    "Completion",
     "CursorTime",
     "ExternalRef",
     "Gone",
