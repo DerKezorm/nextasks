@@ -64,7 +64,9 @@
     "label": "Seitenleiste",
     "newList": "Neue Liste",
     "newSpace": "Neuer Bereich",
-    "noLists": "Noch keine Liste. Neue Liste anlegen"
+    "noLists": "Noch keine Liste. Neue Liste anlegen",
+    "overdue_one": "eine überfällig",
+    "overdue_other": "{{count}} überfällig"
   },
   "settings": {
     "title": "Einstellungen",
@@ -786,17 +788,16 @@
     "assigned": "Mir zugewiesen",
     "done": "Erledigt",
     "empty": {
-      "today": "Heute ist nichts fällig.",
-      "scheduled": "Keine Aufgabe mit Datum.",
-      "all": "Keine offenen Aufgaben.",
-      "flagged": "Nichts markiert.",
-      "assigned": "Dir ist nichts zugewiesen.",
-      "done": "Noch nichts erledigt."
+      "today": "Für heute ist alles erledigt",
+      "scheduled": "Keine Aufgabe mit Datum",
+      "all": "Keine offenen Aufgaben",
+      "flagged": "Nichts markiert",
+      "assigned": "Dir ist nichts zugewiesen",
+      "done": "Noch nichts erledigt"
     },
     "subDone_one": "eine erledigte Aufgabe",
     "subDone_other": "{{count}} erledigte Aufgaben",
     "everywhere": "Aus allen Bereichen",
-    "emptyText": "Neue Aufgaben legst du mit „Neue Aufgabe“ an oder schreibst sie unten in die Zeile.",
     "view": "Ansicht",
     "asList": "Liste",
     "asColumns": "Spalten",
@@ -804,7 +805,18 @@
     "earlier": "Frühere Tage",
     "later": "Spätere Tage",
     "toToday": "Zurück zu heute",
-    "addOn": "Neue Aufgabe am {{day}}"
+    "addOn": "Neue Aufgabe am {{day}}",
+    "tomorrow_one": "Morgen ist eine Aufgabe fällig.",
+    "tomorrow_other": "Morgen sind {{count}} Aufgaben fällig.",
+    "tomorrowNone": "Auch morgen ist noch nichts fällig.",
+    "emptyLine": {
+      "scheduled": "Gib einer Aufgabe ein Datum, dann steht sie hier, nach Tagen geordnet.",
+      "all": "Alles erledigt. Neue Aufgaben schreibst du unten in die Zeile.",
+      "flagged": "Markieren geht mit F oder mit dem Lesezeichen an der Zeile.",
+      "assigned": "Aufgaben, die dir jemand zuweist, stehen hier.",
+      "done": "Was du abhakst, steht hier, das Neueste oben."
+    },
+    "openList": "„{{name}}“ öffnen"
   },
   "filter": {
     "section": "Filter",
@@ -1233,10 +1245,11 @@
     "deleteText": "Die Liste kommt mit allen Aufgaben in den Papierkorb. Dort bleibt sie 30 Tage und lässt sich wiederherstellen.",
     "deleteAsk": "In den Papierkorb …",
     "emptyTitle": "Noch keine Aufgaben in „{{name}}“",
-    "emptyText": "Leg die erste mit „Neue Aufgabe“ an oder schreib sie unten in die Zeile.",
+    "emptyText": "Schreib deine erste Aufgabe unten in die Zeile, Enter legt sie an.",
     "menuNamed": "Mehr zu „{{name}}“",
     "deleteSectionTitle": "Abschnitt „{{name}}“ löschen?",
-    "deleteSectionText": "Der Abschnitt wird endgültig gelöscht. Seine Aufgaben bleiben in der Liste, ohne Abschnitt."
+    "deleteSectionText": "Der Abschnitt wird endgültig gelöscht. Seine Aufgaben bleiben in der Liste, ohne Abschnitt.",
+    "emptyShared": "Was du hier einträgst, sehen alle in „{{space}}“. Schreib die erste Aufgabe unten in die Zeile."
   },
   "reminder": {
     "new": "Neue Aufgabe",
@@ -1595,5 +1608,11 @@
       "step3": "Fertig. Deine Aufgaben laden, und die Anmeldung wandert über deine Apple-ID auf deine anderen Geräte.",
       "noCamera": "Ohne Kamera: In der App unter „Code“ die Adresse <b>{{host}}</b> und den Code <code>{{code}}</code> eingeben."
     }
+  },
+  "row": {
+    "date": "Datum",
+    "assign": "Zuständige",
+    "pickDate": "Datum wählen",
+    "setDate": "Setzen"
   }
 }

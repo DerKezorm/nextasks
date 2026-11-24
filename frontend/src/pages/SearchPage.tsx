@@ -33,16 +33,18 @@ export function SearchPage() {
     <main className="nt-scroll min-w-0 flex-1 overflow-y-auto">
       <div className="px-4 py-5 sm:px-7 sm:py-6">
         <PageHead id="search-title" title={t('search.title')} icon={<TileIcon icon={Search} />} />
-        <label className="relative mb-3 block">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-mist-500" aria-hidden />
-          <input autoFocus value={query} onChange={(e) => set(e.target.value, withDone)} placeholder={t('search.placeholder')} aria-label={t('search.placeholder')} data-testid="search-field" className="nt-field pl-9" />
-        </label>
-        <label className="mb-4 flex items-center gap-2 px-1 text-sm text-mist-300">
-          <input type="checkbox" checked={withDone} onChange={(e) => set(query, e.target.checked)} className="h-4 w-4 accent-accent-500" /> {t('search.withDone')}
-        </label>
-        {query.trim() && <p className="nt-sec mb-1 px-3">{t('search.found', { count: found.length })}</p>}
-        {query.trim() && found.length === 0 && <EmptyState icon={SearchX} title={t('search.none')} text={t('search.noneText')} />}
-        {found.length > 0 && <ReminderGroup spot={null} items={found} showDone={withDone} showList only={new Set(found.map((r) => r.id))} />}
+        <div className="nt-read">
+          <label className="relative mb-3 block">
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-mist-500" aria-hidden />
+            <input autoFocus value={query} onChange={(e) => set(e.target.value, withDone)} placeholder={t('search.placeholder')} aria-label={t('search.placeholder')} data-testid="search-field" className="nt-field pl-9" />
+          </label>
+          <label className="mb-4 flex items-center gap-2 px-1 text-sm text-mist-300">
+            <input type="checkbox" checked={withDone} onChange={(e) => set(query, e.target.checked)} className="h-4 w-4 accent-accent-500" /> {t('search.withDone')}
+          </label>
+          {query.trim() && <p className="nt-sec mb-1 px-3">{t('search.found', { count: found.length })}</p>}
+          {query.trim() && found.length === 0 && <EmptyState icon={SearchX} title={t('search.none')} text={t('search.noneText')} />}
+          {found.length > 0 && <ReminderGroup spot={null} items={found} showDone={withDone} showList only={new Set(found.map((r) => r.id))} />}
+        </div>
       </div>
     </main>
   )

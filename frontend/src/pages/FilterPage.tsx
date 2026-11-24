@@ -1,5 +1,5 @@
 /**
- * The page of an own filter: its plaque and name, the tasks it finds in one card as a collection shows them (open ones
+ * The page of an own filter: its plaque and name, the tasks it finds in one card in the reading column as a collection shows them (open ones
  * by due date, then completed ones newest first), and a button to change it. "+ New task" goes into the list the
  * filter names when it names exactly one, else where the quick entry goes. A filter one hid opens all the same.
  */
@@ -7,7 +7,7 @@ import { Filter as FilterIcon, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 
-import { EmptyState } from '../components/EmptyState'
+import { QuietEmpty } from '../components/EmptyState'
 import { MarkTile } from '../components/Mark'
 import { NotFound } from '../components/NotFound'
 import { PageHead } from '../components/PageHead'
@@ -43,13 +43,13 @@ export function FilterPage() {
             <Pencil className="h-4 w-4" strokeWidth={1.8} aria-hidden />
           </button>
         </PageHead>
-        {items.length === 0 ? (
-          <EmptyState icon={FilterIcon} title={t('filter.empty')} text={t('filter.emptyText')} />
-        ) : (
-          <div className="mb-5">
+        <div className="nt-read">
+          {items.length === 0 ? (
+            <QuietEmpty icon={FilterIcon} title={t('filter.empty')} text={t('filter.emptyText')} />
+          ) : (
             <ReminderGroup spot={null} items={tops(items)} showDone={rules.state !== 'open'} showList only={only} />
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </main>
   )

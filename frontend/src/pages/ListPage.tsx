@@ -1,7 +1,9 @@
 /**
- * One list, as a card of rows with sections or as columns (one per section, "Without section" first when there are
- * such). The head carries the list's plaque, the switch between list and columns and the menu: edit, view, show
- * completed, delete completed, notify on changes, new section.
+ * One list, as cards of rows in a column one reads at a glance (the tasks without section first, then a card per
+ * section with its head inside) or as columns (one per section, "Without section" first when there are such), which
+ * grow with the window and keep their heads at the top while they scroll. The head carries the list's plaque, the
+ * switch between list and columns and the menu: edit, view, show completed, delete completed, notify on changes, new
+ * section. An empty list says so in a line and leads to the quick entry.
  */
 import { Bell, Check, Columns3, Eye, EyeOff, List as ListIcon, ListChecks, MoreHorizontal, Pencil, Plus, Trash2, Users, type LucideIcon } from 'lucide-react'
 import { createElement, useState, type DragEvent } from 'react'
@@ -16,9 +18,10 @@ import { ReminderGroup } from '../components/ReminderRow'
 import { useShell } from '../components/Shell'
 import { dragging, draggedReminder, DRAG_SECTION } from '../lib/drag'
 import { clearCompleted, createSection, moveSection, setPref, type Spot } from '../lib/actions'
-import { EmptyState } from '../components/EmptyState'
+import { QuietEmpty } from '../components/EmptyState'
 import { MarkTile } from '../components/Mark'
 import { NotFound } from '../components/NotFound'
+import { isShared } from '../lib/shared'
 import { useEngine, useSyncState, useView } from '../state/sync'
 import { byPosition } from '../sync/position'
 import type { List, Reminder, Section } from '../sync/types'
@@ -53,10 +56,13 @@ function ListBody({ list }: { list: List }) {
   const switchView = () => engine.put('list', list.id, { view: list.view === 'list' ? 'columns' : 'list' })
   const target = { spot: { list_id: list.id, section_id: null, parent_id: null }, defaults: {} }
   const symbol = (icon: LucideIcon) => createElement(icon, { className: 'h-4 w-4', strokeWidth: 1.8, 'aria-hidden': true })
+  const board = list.view === 'columns'
+  const empty = !sections.length && !loose.length
 
   return (
-    <main className="nt-scroll min-w-0 flex-1 overflow-y-auto" aria-labelledby="list-title">
-      <div className="px-4 py-5 sm:px-7 sm:py-6">
+    // The columns scroll in a box of their own below the head, so their heads can stay at its top.
+    <main className={'min-w-0 flex-1 ' + (board ? 'flex flex-col overflow-hidden' : 'nt-scroll overflow-y-auto')} aria-labelledby="list-title">
+      <div className={'px-4 py-5 sm:px-7 sm:py-6 ' + (board ? 'flex min-h-0 flex-1 flex-col pb-0 sm:pb-0' : '')}>
         <PageHead id="list-title" target={target} title={list.name} count={t('list.open', { count: open })} sub={space?.name} icon={<MarkTile color={list.color} icon={list.icon} />}>
           <button type="button" className="nt-icon-btn hidden sm:inline-flex" onClick={switchView} aria-label={t(list.view === 'list' ? 'list.asColumns' : 'list.asList')} title={t(list.view === 'list' ? 'list.asColumns' : 'list.asList')}>
             {symbol(list.view === 'list' ? Columns3 : ListIcon)}
@@ -103,12 +109,16 @@ function ListBody({ list }: { list: List }) {
           </p>
         )}
 
-        {list.view === 'columns' ? (
+        {board ? (
           <Columns list={list} sections={sections} top={top} loose={loose} showDone={showDone} />
         ) : (
-          <div className="space-y-5">
-            {!sections.length && !loose.length && <EmptyState icon={ListChecks} title={t('list.emptyTitle', { name: list.name })} text={t('list.emptyText')} action={t('reminder.new')} onAction={() => shell.newTask(target)} />}
-            <ReminderGroup spot={{ list_id: list.id, section_id: null, parent_id: null }} items={loose} showDone={showDone} footer={<QuickEntry spot={{ list_id: list.id, section_id: null, parent_id: null }} />} />
+          <div className="nt-read space-y-4">
+            {empty && (
+              <QuietEmpty icon={ListChecks} title={t('list.emptyTitle', { name: list.name })} text={isShared(view, space) ? t('list.emptyShared', { space: space?.name ?? '' }) : t('list.emptyText')} />
+            )}
+            <div className={empty ? 'rounded-[13px] ring-2 ring-accent-500/35' : undefined}>
+              <ReminderGroup spot={{ list_id: list.id, section_id: null, parent_id: null }} items={loose} showDone={showDone} footer={<QuickEntry spot={{ list_id: list.id, section_id: null, parent_id: null }} />} />
+            </div>
             {sections.map((section, index) => (
               <SectionBlock key={section.id} section={section} index={index} items={top.filter((r) => r.section_id === section.id)} showDone={showDone} />
             ))}
@@ -117,7 +127,7 @@ function ListBody({ list }: { list: List }) {
 
         {naming !== null && (
           <form
-            className="mt-4 flex gap-2"
+            className="nt-read mt-4 flex gap-2"
             onSubmit={(e) => {
               e.preventDefault()
               if (naming.trim()) createSection(engine, view, list.id, naming)
@@ -158,7 +168,7 @@ function SectionHeader({ section, index, count, board = false }: { section: Sect
     <div
       {...menu}
       data-section-id={section.id}
-      className={'group flex items-center gap-1.5 rounded-md ' + (board ? 'px-1 ' : 'px-3 ') + (over ? 'bg-accent-wash' : '')}
+      className={'group flex items-center gap-1.5 ' + (board ? 'rounded-md px-1 ' : 'nt-card-head ') + (over ? 'bg-accent-wash' : '')}
       draggable
       onDragStart={(e) => {
         dragging.section = section.id
@@ -196,7 +206,7 @@ function SectionHeader({ section, index, count, board = false }: { section: Sect
           <input autoFocus value={name} maxLength={80} onChange={(e) => setName(e.target.value)} onBlur={(e) => e.currentTarget.form?.requestSubmit()} onKeyDown={(e) => e.key === 'Escape' && setName(null)} aria-label={t('list.renameSection')} className="nt-field h-8" />
         </form>
       )}
-      {count !== undefined && (board ? <span className="text-xs text-mist-500 tabular-nums">{count}</span> : <span className="shrink-0 text-[11px] font-medium text-mist-600 tabular-nums">· {count}</span>)}
+      {count !== undefined && (board ? <span className="text-xs text-mist-500 tabular-nums">{count}</span> : <span className="shrink-0 text-[11px] font-semibold text-mist-600 tabular-nums">{count}</span>)}
       <button type="button" className={'nt-icon-btn h-7 w-7 opacity-0 group-hover:opacity-100 not-disabled:hover:text-bad-500 focus:opacity-100 ' + (board ? '' : 'ml-auto')} aria-label={t('list.deleteSection', { name: section.name })} onClick={remove}>
         <Trash2 className="h-4 w-4" strokeWidth={1.8} />
       </button>
@@ -209,8 +219,7 @@ function SectionBlock({ section, index, items, showDone }: { section: Section; i
   const spot: Spot = { list_id: section.list_id, section_id: section.id, parent_id: null }
   return (
     <section aria-label={section.name}>
-      <SectionHeader section={section} index={index} count={items.filter((r) => !r.completed_at).length} />
-      <ReminderGroup spot={spot} items={items} showDone={showDone} footer={<QuickEntry spot={spot} register={false} label={t('reminder.new')} />} />
+      <ReminderGroup spot={spot} items={items} showDone={showDone} head={<SectionHeader section={section} index={index} count={items.filter((r) => !r.completed_at).length} />} footer={<QuickEntry spot={spot} register={false} label={t('reminder.new')} />} />
     </section>
   )
 }
@@ -220,19 +229,22 @@ function Columns({ list, sections, top, loose, showDone }: { list: List; section
   const columns: { section: Section | null; items: Reminder[] }[] = [...(loose.length ? [{ section: null, items: loose }] : []), ...sections.map((s) => ({ section: s, items: top.filter((r) => r.section_id === s.id) }))]
   if (!columns.length) columns.push({ section: null, items: [] })
   return (
-    <div className="nt-scroll flex items-start gap-3.5 overflow-x-auto pb-4" data-testid="columns">
+    <div className="nt-scroll -mx-4 flex min-h-0 flex-1 items-start gap-3.5 overflow-auto px-4 pb-4 sm:-mx-7 sm:px-7" data-testid="columns">
       {columns.map(({ section, items }, index) => {
         const spot: Spot = { list_id: list.id, section_id: section?.id ?? null, parent_id: null }
         return (
-          <section key={section?.id ?? 'loose'} aria-label={section?.name ?? t('list.noSection')} className="flex w-72 shrink-0 flex-col rounded-[12px] border border-ink-700 bg-ink-900 p-2" onDragOver={(e: DragEvent) => draggedReminder(e) && e.preventDefault()}>
-            {section ? (
-              <SectionHeader section={section} index={index - (loose.length ? 1 : 0)} count={items.filter((r) => !r.completed_at).length} board />
-            ) : (
-              <div className="flex items-center gap-2 px-1 py-1 text-[15px] font-bold text-mist-100">
-                <span className="flex-1">{t('list.noSection')}</span>
-                <span className="text-xs font-normal text-mist-500 tabular-nums">{items.filter((r) => !r.completed_at).length}</span>
-              </div>
-            )}
+          <section key={section?.id ?? 'loose'} aria-label={section?.name ?? t('list.noSection')} className="flex max-w-[420px] min-w-[280px] flex-[1_0_280px] flex-col rounded-[12px] border border-ink-700 bg-ink-900 px-2 pb-2" onDragOver={(e: DragEvent) => draggedReminder(e) && e.preventDefault()}>
+            {/* The head stays at the top of the box while the column scrolls. */}
+            <div className="sticky top-0 z-[1] -mx-2 rounded-t-[12px] bg-ink-900 px-2 pt-2" data-testid="column-head">
+              {section ? (
+                <SectionHeader section={section} index={index - (loose.length ? 1 : 0)} count={items.filter((r) => !r.completed_at).length} board />
+              ) : (
+                <div className="flex items-center gap-2 px-1 py-1 text-[15px] font-bold text-mist-100">
+                  <span className="flex-1">{t('list.noSection')}</span>
+                  <span className="text-xs font-normal text-mist-500 tabular-nums">{items.filter((r) => !r.completed_at).length}</span>
+                </div>
+              )}
+            </div>
             <div className="mt-1.5 flex flex-1 flex-col">
               <ReminderGroup spot={spot} items={items} showDone={showDone} board footer={<QuickEntry spot={spot} register={index === 0} label={t('reminder.new')} />} />
             </div>

@@ -64,7 +64,9 @@
     "label": "Sidebar",
     "newList": "New list",
     "newSpace": "New space",
-    "noLists": "No list yet. Add a list"
+    "noLists": "No list yet. Add a list",
+    "overdue_one": "one overdue",
+    "overdue_other": "{{count}} overdue"
   },
   "settings": {
     "title": "Settings",
@@ -786,17 +788,16 @@
     "assigned": "Assigned to me",
     "done": "Completed",
     "empty": {
-      "today": "Nothing due today.",
-      "scheduled": "No tasks with a date.",
-      "all": "No open tasks.",
-      "flagged": "Nothing marked.",
-      "assigned": "Nothing is assigned to you.",
-      "done": "Nothing completed yet."
+      "today": "All done for today",
+      "scheduled": "No task with a date",
+      "all": "No open tasks",
+      "flagged": "Nothing marked",
+      "assigned": "Nothing is assigned to you",
+      "done": "Nothing done yet"
     },
     "subDone_one": "one completed task",
     "subDone_other": "{{count}} completed tasks",
     "everywhere": "From all spaces",
-    "emptyText": "Add new tasks with “New task”, or type them into the line below.",
     "view": "View",
     "asList": "List",
     "asColumns": "Columns",
@@ -804,7 +805,18 @@
     "earlier": "Earlier days",
     "later": "Later days",
     "toToday": "Back to today",
-    "addOn": "New task on {{day}}"
+    "addOn": "New task on {{day}}",
+    "tomorrow_one": "One task is due tomorrow.",
+    "tomorrow_other": "{{count}} tasks are due tomorrow.",
+    "tomorrowNone": "Nothing is due tomorrow either.",
+    "emptyLine": {
+      "scheduled": "Tasks with a date show here, day by day.",
+      "all": "All done. Type new tasks in the line below.",
+      "flagged": "Mark a task with F or with the bookmark on its row.",
+      "assigned": "Tasks someone assigns to you show here.",
+      "done": "What you tick off shows here, the latest first."
+    },
+    "openList": "Open “{{name}}”"
   },
   "filter": {
     "section": "Filters",
@@ -1233,10 +1245,11 @@
     "deleteText": "The list goes to the trash with all its tasks. It stays there for 30 days and can be restored.",
     "deleteAsk": "Move to trash …",
     "emptyTitle": "No tasks in “{{name}}” yet",
-    "emptyText": "Add the first one with “New task”, or type it into the line below.",
+    "emptyText": "Type your first task in the line below, Enter adds it.",
     "menuNamed": "More about “{{name}}”",
     "deleteSectionTitle": "Delete the section “{{name}}”?",
-    "deleteSectionText": "The section is deleted for good. Its tasks stay in the list, without a section."
+    "deleteSectionText": "The section is deleted for good. Its tasks stay in the list, without a section.",
+    "emptyShared": "Everyone in “{{space}}” sees what you add here. Type the first task in the line below."
   },
   "reminder": {
     "new": "New task",
@@ -1595,5 +1608,11 @@
       "step3": "Done. Your tasks load, and the sign-in travels to your other devices through your Apple ID.",
       "noCamera": "Without a camera: in the app under “Code”, enter the address <b>{{host}}</b> and the code <code>{{code}}</code>."
     }
+  },
+  "row": {
+    "date": "Date",
+    "assign": "Assignees",
+    "pickDate": "Pick a date",
+    "setDate": "Set"
   }
 }

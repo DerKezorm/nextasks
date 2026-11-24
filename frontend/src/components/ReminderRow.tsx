@@ -1,8 +1,9 @@
 /**
  * One task as a row (docs "Aussehen", principles 3, 5 to 7): the tick box, the title, a line with due date (overdue
  * red with a clock, today petrol), repetition, place, subtasks, files, list and tags; on the right the priority as a
- * word, the bookmark of a marked one and the people it is assigned to. Rows can be dragged; a group of rows takes drops
- * before, after or onto a row (onto: becomes its subtask).
+ * word, the bookmark of a marked one and the people it is assigned to (only in a shared space). Under the pointer the
+ * small buttons for date, assignees and mark (`RowActions`). Rows can be dragged; a group of rows takes drops before,
+ * after or onto a row (onto: becomes its subtask).
  */
 import { ChevronDown, ChevronRight, Clock, Link2, ListTree, MapPin, NotebookText, PanelRightClose, PanelRightOpen, Paperclip, Repeat } from 'lucide-react'
 import { useState, type CSSProperties, type DragEvent, type KeyboardEvent, type ReactNode } from 'react'
@@ -11,12 +12,14 @@ import { useTranslation } from 'react-i18next'
 import { moveReminder, siblingsAt, trashReminder, type Spot } from '../lib/actions'
 import { dueLabel, localDay, localTime, overdue } from '../lib/due'
 import { picturedIn } from '../lib/notes'
+import { isSharedList } from '../lib/shared'
 import { dragging, draggedReminder, DRAG_REMINDER } from '../lib/drag'
 import { useEngine, useView } from '../state/sync'
 import type { Reminder } from '../sync/types'
 import { Mark } from './Mark'
 import { useTaskMenu } from './Menus'
 import { AvatarStack } from './People'
+import { RowActions } from './RowActions'
 import { useShell } from './Shell'
 import { MarkedSign, PriorityPlaque, TickBox } from './TaskParts'
 
@@ -36,7 +39,7 @@ function stepFocus(from: HTMLElement, by: number): void {
   rows[at + by]?.focus()
 }
 
-export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone, folded, onFold, childCount = 0 }: { reminder: Reminder; showList?: boolean; depth?: number; onDropZone?: (dragged: string, zone: Zone) => void; folded?: boolean; onFold?: () => void; childCount?: number }) {
+export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone, folded, onFold, childCount = 0, actions = true }: { reminder: Reminder; showList?: boolean; depth?: number; onDropZone?: (dragged: string, zone: Zone) => void; folded?: boolean; onFold?: () => void; childCount?: number; actions?: boolean }) {
   const { t, i18n } = useTranslation()
   const engine = useEngine()
   const view = useView()
@@ -54,6 +57,8 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
   const open = shell.selected === reminder.id
   const inPane = shell.pane === reminder.id
   const menu = useTaskMenu(reminder)
+  // Alone in a space nobody needs to see who a task is for.
+  const shared = isSharedList(view, reminder.list_id)
 
   const onKey = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return
@@ -159,9 +164,14 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
         </span>
       </button>
       <span className="flex shrink-0 items-center gap-1.5 pt-0.5">
+        {actions && !done && <RowActions reminder={reminder} />}
         <PriorityPlaque priority={reminder.priority} />
-        {reminder.flagged && <MarkedSign />}
-        <AvatarStack ids={reminder.assignees} people={view.people} />
+        {reminder.flagged && (
+          <span className={actions && !done ? 'nt-row-still' : undefined}>
+            <MarkedSign />
+          </span>
+        )}
+        {shared && <AvatarStack ids={reminder.assignees} people={view.people} />}
         {onFold && childCount > 0 && (
           <button type="button" onClick={onFold} aria-expanded={!folded} aria-label={t(folded ? 'reminder.showSubtasks' : 'reminder.hideSubtasks')} className="rounded-md p-0.5 text-mist-500 hover:text-mist-100">
             {folded ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -189,7 +199,7 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
  * subtasks shown to those found (tiles, search). In a card the rows are parted by thin lines; on the board each task
  * with its subtasks is a card of its own.
  */
-export function ReminderGroup({ spot, items, showDone, showList = false, only, board = false, footer }: { spot: Spot | null; items: Reminder[]; showDone: boolean; showList?: boolean; only?: Set<string>; board?: boolean; footer?: ReactNode }) {
+export function ReminderGroup({ spot, items, showDone, showList = false, only, board = false, footer, head }: { spot: Spot | null; items: Reminder[]; showDone: boolean; showList?: boolean; only?: Set<string>; board?: boolean; footer?: ReactNode; head?: ReactNode }) {
   const engine = useEngine()
   const view = useView()
   const [folded, setFolded] = useState<Record<string, boolean>>({})
@@ -230,6 +240,7 @@ export function ReminderGroup({ spot, items, showDone, showList = false, only, b
         moveReminder(engine, view, id, spot, siblingsAt(view, spot, id).length)
       }}
     >
+      {head}
       <div role="list" className={board ? 'nt-board flex flex-col gap-2' : 'nt-rows'}>
         {items.map((reminder) => {
           // In a tile or a search only the subtasks that belong there show under their parent.
@@ -244,9 +255,10 @@ export function ReminderGroup({ spot, items, showDone, showList = false, only, b
                 folded={shut}
                 childCount={children.length}
                 onFold={() => setFolded((f) => ({ ...f, [reminder.id]: !shut }))}
+                actions={!board}
               />
               {!shut &&
-                children.map((child) => <ReminderRow key={child.id} reminder={child} depth={1} showList={false} onDropZone={(dragged, zone) => drop(child, dragged, zone)} />)}
+                children.map((child) => <ReminderRow key={child.id} reminder={child} depth={1} showList={false} actions={!board} onDropZone={(dragged, zone) => drop(child, dragged, zone)} />)}
             </div>
           )
         })}
