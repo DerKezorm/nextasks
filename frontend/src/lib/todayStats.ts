@@ -34,7 +34,8 @@ export function useTodayStats(signature: string): TodayStats | null {
     const timer = setTimeout(
       () => {
         api<TodayStats>('/api/stats')
-          .then((answer) => alive && setStats(answer))
+          // An answer without the parts this page reads (an older server, a partial answer) counts as none.
+          .then((answer) => alive && setStats(complete(answer) ? answer : null))
           .catch(() => undefined)
       },
       stats ? STATS_WAIT_MS : 0,
@@ -47,6 +48,16 @@ export function useTodayStats(signature: string): TodayStats | null {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature])
   return stats
+}
+
+function complete(answer: TodayStats | null | undefined): answer is TodayStats {
+  return (
+    !!answer &&
+    Array.isArray(answer.today?.people) &&
+    Array.isArray(answer.people) &&
+    typeof answer.streak?.current === 'number' &&
+    Array.isArray(answer.heatmap?.days)
+  )
 }
 
 /** The last seven days (today last) of the heatmap: done per day. */
