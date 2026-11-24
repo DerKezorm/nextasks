@@ -563,8 +563,14 @@ def _year_block(data: Data, year: int, done: list[Done]) -> dict[str, Any]:
         if scope.local(row.created_at).year == year:
             made.add(row.id)
     top = by_list.most_common(1)
+    # The longest run of days inside the year (the record of all time may lie in another one).
+    runs = _runs({item.day for item in done})
+    run = max(runs, key=lambda pair: ((pair[1] - pair[0]).days, pair[1]), default=None)
     return {
         "year": year,
+        "days": daily_counts(done, date(year, 1, 1), date(year, 12, 31)),
+        "longest_streak": {"days": (run[1] - run[0]).days + 1, "from": run[0].isoformat(), "to": run[1].isoformat()}
+        if run else None,
         "months": [months.get(month, 0) for month in range(1, 13)],
         "best_month": best(months),
         "weekdays": [weekdays.get(day, 0) for day in range(7)],
