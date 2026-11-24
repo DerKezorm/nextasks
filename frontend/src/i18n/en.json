@@ -899,7 +899,7 @@
       "dates": "Dates",
       "dropDates": "Without dates, no task due",
       "keepDates": "Keep dates and repetitions",
-      "hint": "Sections and tasks come along, all open. Files and the history of done ones stay with the old list.",
+      "hint": "Sections and tasks come along, all open. Files stay with the old list.",
       "go": "Copy"
     },
     "reopen": {
@@ -921,7 +921,10 @@
     "hide": "Hide on this device",
     "hidden": "“Someday” is hidden on this device. Bring it back in Settings under Sidebar.",
     "device": "on this device only",
-    "moved": "“{{title}}” now waits under Someday."
+    "moved": "“{{title}}” now waits under Someday.",
+    "leaveOut": "Leave “{{name}}” out here (on this device)",
+    "leftOut": "Left out here:",
+    "takeIn": "Show “{{name}}” here again"
   },
   "sweep": {
     "title": "Look back",

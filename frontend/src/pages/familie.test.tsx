@@ -145,6 +145,8 @@ describe('templates, copies and all open again', () => {
     expect(sections.map((s) => s.data.name)).toEqual(['Clothes', 'Bathroom', 'Tech', 'Papers'])
     expect(reminders(server, 'Toothbrush')[0].data.section_id).toBe(sections[1].id)
     expect(titles(page)).toContain('Socks')
+    // Nothing of it is put off: "Someday" leaves it out on this device.
+    expect(localStorage.getItem('nextasks.someday-lists.1')).toContain(list.id)
   })
 
   it('makes a weekly clean whose tasks come back every week', async () => {
@@ -209,6 +211,20 @@ describe('Someday', () => {
     const tiles = [...page.querySelectorAll('aside nav a')].map((a) => a.getAttribute('data-testid'))
     expect(tiles.indexOf('tile-someday')).toBe(tiles.indexOf('tile-all') + 1)
     expect(page.querySelector('[data-testid="tile-count-someday"]')?.textContent).toBe('2')
+  })
+
+  it('leaves a list out on this device, and takes it in again', async () => {
+    const { server, home, privateList } = smallWorld()
+    server.addReminder(home, 'Paint the shed')
+    server.addReminder(privateList, 'Learn Spanish')
+    const page = await mount(server, '/someday')
+    const card = page.querySelector('section[aria-label="Home"]')!
+    await click(card.querySelector('[data-testid="someday-leave-out"]'))
+    expect(titles(page)).toEqual(['Learn Spanish'])
+    expect(page.querySelector('[data-testid="tile-count-someday"]')?.textContent).toBe('1')
+    expect(localStorage.getItem('nextasks.someday-lists.1')).toContain(home)
+    await click(button(page, 'Show “Home” here again'))
+    expect(titles(page)).toEqual(['Learn Spanish', 'Paint the shed'])
   })
 
   it('takes a date away from the menu of a row, with "Undo"', async () => {

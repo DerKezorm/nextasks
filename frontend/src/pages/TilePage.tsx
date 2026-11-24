@@ -7,7 +7,7 @@
  * list.
  */
 import { ArrowRight } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 
@@ -26,7 +26,7 @@ import { TILE_LOOK } from '../lib/tileLook'
 import { useView } from '../state/sync'
 import { addDays } from '../sync/repeat'
 import { groupByDay, tileItems, type Tile } from '../sync/tiles'
-import type { Data, Reminder } from '../sync/types'
+import type { Data, List, Reminder } from '../sync/types'
 
 /** "26 November": the date of a day without its weekday. */
 function shortDate(day: string, language: string): string {
@@ -151,7 +151,7 @@ export function TilePage({ tile }: { tile: Tile }) {
 }
 
 /** Tasks in a card per list, with its plaque, its space and the way to the list (All, Marked, Someday). */
-export function ListCards({ items, only }: { items: Reminder[]; only: Set<string> }) {
+export function ListCards({ items, only, extra }: { items: Reminder[]; only: Set<string>; extra?: (list: List) => ReactNode }) {
   const { t } = useTranslation()
   const view = useView()
   const lists = [...new Set(items.map((r) => r.list_id))]
@@ -169,9 +169,12 @@ export function ListCards({ items, only }: { items: Reminder[]; only: Set<string
             <CardHead
               count={group.length}
               action={
-                <Link to={`/lists/${list.id}`} className="nt-icon-btn h-7 w-7" aria-label={t('tiles.openList', { name: list.name })} title={t('tiles.openList', { name: list.name })}>
-                  <ArrowRight className="h-4 w-4" strokeWidth={1.9} aria-hidden />
-                </Link>
+                <>
+                  {extra?.(list)}
+                  <Link to={`/lists/${list.id}`} className="nt-icon-btn h-7 w-7" aria-label={t('tiles.openList', { name: list.name })} title={t('tiles.openList', { name: list.name })}>
+                    <ArrowRight className="h-4 w-4" strokeWidth={1.9} aria-hidden />
+                  </Link>
+                </>
               }
             >
               <span className="self-center">

@@ -23,7 +23,7 @@ import { localDay, localTime, overdue } from '../lib/due'
 import { dragging, draggedReminder, DRAG_LIST, DRAG_SPACE } from '../lib/drag'
 import { colorOf, iconFor } from '../lib/look'
 import { isShared } from '../lib/shared'
-import { SOMEDAY_ICON, somedayItems, useSomedayShown } from '../lib/someday'
+import { SOMEDAY_ICON, somedayItems, useSomedayLists, useSomedayShown } from '../lib/someday'
 import { showNotice } from '../lib/notice'
 import { useFold } from '../lib/sidebarFold'
 import { TILE_LOOK } from '../lib/tileLook'
@@ -239,6 +239,7 @@ function SomedayRow() {
   const view = useView()
   const sync = useSyncState()
   const [shown, setShown] = useSomedayShown()
+  const [leftOut] = useSomedayLists()
   const menu = useContextMenu(() => [
     {
       label: t('someday.hide'),
@@ -250,7 +251,7 @@ function SomedayRow() {
     },
   ])
   if (!shown) return null
-  const count = sync.loaded ? somedayItems(view).length : 0
+  const count = sync.loaded ? somedayItems(view, leftOut).length : 0
   return (
     <NavLink {...menu} to="/someday" data-testid="tile-someday" className={({ isActive }) => row(isActive, true)}>
       {({ isActive }) => (

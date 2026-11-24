@@ -899,7 +899,7 @@
       "dates": "Daten",
       "dropDates": "Ohne Daten, alle Aufgaben ohne Fälligkeit",
       "keepDates": "Daten und Wiederholungen behalten",
-      "hint": "Abschnitte und Aufgaben kommen mit, alle offen. Dateien und Erledigte-Verlauf bleiben in der alten Liste.",
+      "hint": "Abschnitte und Aufgaben kommen mit, alle offen. Dateien bleiben in der alten Liste.",
       "go": "Kopieren"
     },
     "reopen": {
@@ -921,7 +921,10 @@
     "hide": "Auf diesem Gerät ausblenden",
     "hidden": "„Irgendwann“ ist auf diesem Gerät ausgeblendet. Zurück holst du es in den Einstellungen unter Seitenleiste.",
     "device": "nur auf diesem Gerät",
-    "moved": "„{{title}}“ wartet jetzt unter Irgendwann."
+    "moved": "„{{title}}“ wartet jetzt unter Irgendwann.",
+    "leaveOut": "„{{name}}“ hier nicht zeigen (auf diesem Gerät)",
+    "leftOut": "Hier ausgelassen:",
+    "takeIn": "„{{name}}“ hier wieder zeigen"
   },
   "sweep": {
     "title": "Rückschau",

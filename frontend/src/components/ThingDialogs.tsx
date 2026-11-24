@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { createList, createSpace, moveList } from '../lib/actions'
 import { localDay } from '../lib/due'
 import { colorOf, iconFor } from '../lib/look'
+import { useSomedayLists } from '../lib/someday'
 import { copyList, fillList, TEMPLATE_KINDS, TEMPLATES, type TemplateKind } from '../lib/templates'
 import { keyAtEnd } from '../sync/position'
 import { useEngine, useView } from '../state/sync'
@@ -114,6 +115,7 @@ export function ListDialog({ listId, spaceId, onClose }: { listId: string | null
   const [icon, setIcon] = useState(list?.icon ?? 'list')
   const [space, setSpace] = useState(list?.space_id ?? spaceId ?? view.defaultList?.space_id ?? view.shownSpaces[0]?.id ?? '')
   const [kind, setKind] = useState<TemplateKind>('empty')
+  const [, leaveOut] = useSomedayLists()
   const shell = useShell()
   const valid = textLength(name.trim()) >= 1 && textLength(name.trim()) <= 80 && !!space
   // A template gives its name and look, unless one wrote a name of one's own.
@@ -142,6 +144,8 @@ export function ListDialog({ listId, spaceId, onClose }: { listId: string | null
     } else {
       const id = createList(engine, view, space, name, color, icon)
       fillList(engine, id, kind, t, localDay())
+      // A list one ticks off as a whole has nothing put off: "Someday" leaves it out on this device.
+      if (kind === 'shopping' || kind === 'packing') leaveOut(id, true)
       onClose()
       navigate(`/lists/${id}`)
     }

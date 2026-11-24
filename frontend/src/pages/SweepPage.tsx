@@ -107,6 +107,8 @@ export function SweepPage() {
   const list = reminder ? view.list(reminder.list_id) : undefined
   const space = list ? view.space(list.space_id) : undefined
   const shared = reminder ? isSharedList(view, reminder.list_id) : false
+  // Days overdue as this page reckons today (the date may have moved since the server answered).
+  const late = reminder?.due_date && reminder.due_date < today ? Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${reminder.due_date}T12:00:00Z`)) / 86_400_000) : 0
 
   const buttons: { choice: Choice; icon: LucideIcon; label: string; key: string; disabled?: boolean; hint?: string; tone?: string }[] = [
     { choice: 'kept', icon: Bookmark, label: t('sweep.keep'), key: t('sweep.keyKeep') },
@@ -137,8 +139,9 @@ export function SweepPage() {
                   {list && <Plaque color={list.color} icon={list.icon} size={18} />}
                   <span className="min-w-0 truncate font-semibold text-mist-300">{list?.name}</span>
                   {space && <span className="min-w-0 truncate">· {space.name}</span>}
-                  <span className="ml-auto shrink-0 font-semibold text-mist-300" data-testid="sweep-age">
-                    {t('sweep.age', { count: task.age_days })}
+                  {/* What brings it here: overdue, else how long it has been open. */}
+                  <span className={'ml-auto shrink-0 font-semibold ' + (late ? 'text-late' : 'text-mist-300')} data-testid="sweep-age">
+                    {late ? t('sweep.late', { count: late }) : t('sweep.age', { count: task.age_days })}
                   </span>
                 </div>
                 <button type="button" className="mt-3 block w-full text-left text-[21px] leading-snug font-bold text-mist-100 hover:text-accent-400" onClick={() => shell.openReminder(reminder.id)}>
@@ -148,10 +151,7 @@ export function SweepPage() {
                   {t('sweep.changed', { day: shortDate(addDays(today, -task.unchanged_days), i18n.language) })}
                   {' · '}
                   {reminder.due_date ? (
-                    <span className={reminder.due_date < today ? 'font-semibold text-late' : undefined}>
-                      {t('sweep.due', { day: shortDate(reminder.due_date, i18n.language) })}
-                      {reminder.due_date < today && ` · ${t('sweep.late', { count: Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${reminder.due_date}T12:00:00Z`)) / 86_400_000) })}`}
-                    </span>
+<span className={late ? 'text-late' : undefined}>{t('sweep.due', { day: shortDate(reminder.due_date, i18n.language) })}</span>
                   ) : (
                     t('sweep.noDue')
                   )}
