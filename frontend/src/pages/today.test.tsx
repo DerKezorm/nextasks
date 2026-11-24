@@ -79,8 +79,10 @@ describe('Today', () => {
     // Tomorrow on the right, not among the rows.
     expect(page.querySelector('[data-testid="today-tomorrow"]')?.textContent).toContain('Tomorrow bins · 19:00')
     expect(row(page, 'Tomorrow bins')).toBeUndefined()
-    // 1 of 3 due today done (the overdue one besides).
-    expect(page.querySelector('[data-testid="progress-line"]')?.textContent).toBe('1 of 4 done')
+    // 1 of 4 due today done, 3 of them still open and the overdue one besides: the 4 open of the head.
+    expect(page.querySelector('[data-testid="progress-line"]')?.textContent).toBe('1 of 4 for today done')
+    expect(page.querySelector('[data-testid="today-progress"]')?.textContent).toContain('3 still open · plus one overdue')
+    expect(page.querySelector('header')?.textContent).toContain('4 open tasks, one of them overdue')
   })
 
   it('moves every overdue task to today at once', async () => {

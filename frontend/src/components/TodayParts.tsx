@@ -134,7 +134,8 @@ export function ProgressCard({ due, done, overdue, streak }: { due: number; done
   const share = due ? done / due : 0
   const radius = 23
   const round = 2 * Math.PI * radius
-  const more = [overdue ? t('today.progress.overdue', { count: overdue }) : '', streak ? t('today.progress.streak', { count: streak }) : ''].filter(Boolean).join(' · ')
+  const left = due - done
+  const more = [left && done ? t('today.progress.left', { count: left }) : '', overdue ? t('today.progress.overdue', { count: overdue }) : '', streak ? t('today.progress.streak', { count: streak }) : ''].filter(Boolean).join(' · ')
   return (
     <RailCard testid="today-progress">
       <div className="flex items-center gap-3">

@@ -116,6 +116,10 @@ export function TodayPage() {
   }
 
   const overdueOpen = cards.overdue.filter((r) => !r.completed_at).length
+  // The head and the ring count the same: tasks as rows (a subtask under its task counts with it). The head all that
+  // is open on the page, the ring today's; the overdue ones are named in both, so the numbers add up.
+  const openRows = topRows(cards.all, cards.all).filter((r) => !r.completed_at).length
+  const headCount = t('list.open', { count: openRows }) + (progress.overdue ? ', ' + t('today.openLate', { count: progress.overdue }) : '')
   const timedTops = topRows(cards.timed, cards.all)
   const nowAt = nowIndex(timedTops, time)
   const quick = <QuickEntry spot={null} defaults={{ due_date: today, due_time: null, repeat: null, repeat_from: 'due' }} label={t('today.quick', { list: first?.name ?? '' })} />
@@ -202,7 +206,7 @@ export function TodayPage() {
             id="tile-title"
             target={target}
             title={t('tiles.today')}
-            count={t('list.open', { count: cards.open })}
+            count={headCount}
             sub={t('today.sub', { day: longDay(today, i18n.language) })}
             icon={
               <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[8px] bg-petrol text-white" data-plaque>

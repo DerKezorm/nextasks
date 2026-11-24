@@ -1910,6 +1910,8 @@
     "quick": "New task for today in “{{list}}”",
     "doneBy": "done by {{name}}, {{time}}",
     "doneAt": "done at {{time}}",
+    "openLate_one": "one of them overdue",
+    "openLate_other": "{{count}} of them overdue",
     "time": {
       "now": "now",
       "inMinutes": "in {{n}} min",
@@ -1933,7 +1935,9 @@
       "dropHint": "Click to open the day in Scheduled. Drop a task here to move it to this day."
     },
     "progress": {
-      "done": "{{done}} of {{due}} done",
+      "done": "{{done}} of {{due}} for today done",
+      "left_one": "one still open",
+      "left_other": "{{count}} still open",
       "nothingDue": "Nothing is due today",
       "ring": "{{percent}} percent done",
       "overdue_one": "plus one overdue",

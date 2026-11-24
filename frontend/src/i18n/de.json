@@ -1910,6 +1910,8 @@
     "quick": "Neue Aufgabe für heute in „{{list}}“",
     "doneBy": "erledigt von {{name}}, {{time}}",
     "doneAt": "erledigt um {{time}}",
+    "openLate_one": "eine davon überfällig",
+    "openLate_other": "{{count}} davon überfällig",
     "time": {
       "now": "jetzt",
       "inMinutes": "in {{n}} Min.",
@@ -1933,7 +1935,9 @@
       "dropHint": "Klicken öffnet den Tag in „Geplant“. Eine Aufgabe hierher ziehen legt sie auf diesen Tag."
     },
     "progress": {
-      "done": "{{done}} von {{due}} geschafft",
+      "done": "{{done}} von {{due}} für heute geschafft",
+      "left_one": "noch eine offen",
+      "left_other": "noch {{count}} offen",
       "nothingDue": "Heute ist nichts fällig",
       "ring": "{{percent}} Prozent geschafft",
       "overdue_one": "dazu eine überfällig",
