@@ -118,6 +118,21 @@ def test_the_pulse_tells_on_time_late_and_skipped_occurrences() -> None:
     assert [(slot["due_date"], slot["status"]) for slot in series["slots"]] == [
         (start, "on_time"), (ago(4)[1], "skipped"), (ago(3)[1], "skipped"), (later, "late")]
     assert series["next"] == {"due_date": ago(1)[1], "due_time": None, "overdue": True}
+    assert series["rotation"] == [], "alone, nobody takes turns"
+
+
+def test_the_pulse_names_who_takes_turns_and_the_records_the_first_day() -> None:
+    anna_account, anna = person("anna")
+    ben_account, ben = person("ben")
+    chores = make_list(anna, shared_space(anna, ben), "Chores")
+    start = ago(3)[1]
+    task = make_reminder(anna, chores, "Bins out", due_date=start, repeat="FREQ=DAILY",
+                         rotation=[ben_account.id, anna_account.id])
+    done(ben, task, 3, occurrence=start)
+    found = read(anna)
+    [series] = found["pulse"]
+    assert series["rotation"] == [ben_account.id, anna_account.id]
+    assert found["records"]["first"] == start
 
 
 def test_the_week_in_sentences_compares_people_in_a_family() -> None:

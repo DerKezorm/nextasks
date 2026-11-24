@@ -293,6 +293,7 @@ class World:
             "url": row.url, "due_date": row.due_date, "due_time": task.due_time, "repeat": task.repeat,
             "flagged": bool(row.flagged), "priority": int(row.priority or 0), "tags": list(row.tags or []),
             "assignees": [self.person(person) for person in (row.assignees or [])],
+            "rotation": [self.person(person) for person in (row.rotation or [])],
             "completed": row.completed_at is not None, "completed_at": row.completed_at,
             "completed_by": self.person(row.completed_by) if row.completed_at is not None else None,
             "trashed": task.trashed_at is not None, "trashed_at": task.trashed_at,

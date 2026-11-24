@@ -34,7 +34,7 @@ from ..models import (
     TaskList,
     utcnow,
 )
-from . import cursor
+from . import cursor, rotation
 
 logger = logging.getLogger("nextasks.spaces")
 
@@ -197,16 +197,26 @@ def drop_assignees(db: Session, space_id: str, gone: set[int], *, now_ms: int, e
     rows = list(only) if only is not None else list(db.scalars(select(Reminder).where(Reminder.space_id == space_id)))
     changed = []
     for row in rows:
-        current = list(row.assignees or [])
-        kept = [] if everyone else [person for person in current if person not in gone]
-        if kept != current:
-            row.assignees = kept
-            clock = dict(row.clock or {})
-            clock["assignees"] = max(now_ms, int(clock.get("assignees", 0)))
-            row.clock = clock
+        out = set(row.assignees or []) | set(row.rotation or []) if everyone else gone
+        if _take_out(row, out, now_ms, private=everyone):
             changed.append(row)
     restamp(db, changed)
     return changed
+
+
+def _take_out(row: Reminder, gone: set[int], now_ms: int, *, private: bool) -> bool:
+    """``gone`` out of ``assignees`` and ``rotation``, written by the server with the clock ``now``; whose turn it was
+    passes on (``rotation.without``). Returns whether anything changed."""
+    current = list(row.assignees or [])
+    turn = list(row.rotation or [])
+    kept_turn, kept = rotation.without(turn, current, gone, rotation.active(turn, row.repeat, row.due_date, private))
+    if kept != current:
+        row.assignees = kept
+        rotation.bump(row, "assignees", now_ms)
+    if kept_turn != turn:
+        row.rotation = kept_turn
+        rotation.bump(row, "rotation", now_ms)
+    return kept != current or kept_turn != turn
 
 
 def ensure_private(db: Session, account: Account) -> Space:
@@ -262,14 +272,10 @@ def _assignee_rule(db: Session, new_space: str) -> tuple[set[int], bool]:
 
 
 def _filter_assignees(rows: list[Reminder], members: set[int], private: bool, now_ms: int) -> None:
+    """Into another space: who is no member there falls out of ``assignees`` and ``rotation`` (in "Private" all)."""
     for row in rows:
-        current = list(row.assignees or [])
-        kept = [] if private else [person for person in current if person in members]
-        if kept != current:
-            row.assignees = kept
-            clock = dict(row.clock or {})
-            clock["assignees"] = max(now_ms, int(clock.get("assignees", 0)))
-            row.clock = clock
+        people = set(row.assignees or []) | set(row.rotation or [])
+        _take_out(row, people if private else people - members, now_ms, private=private)
 
 
 def move_list(db: Session, list_row: TaskList, old_space: str, now_ms: int) -> None:

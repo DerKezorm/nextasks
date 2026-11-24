@@ -76,6 +76,7 @@ CHECKS: dict[str, Any] = {
     "flagged": lambda value: False if value is None else records.CHECKS["reminder"]["flagged"](value),
     "tags": lambda value: [] if value is None else records.CHECKS["reminder"]["tags"](value),
     "assignees": lambda value: [] if value is None else records.CHECKS["reminder"]["assignees"](value),
+    "rotation": lambda value: [] if value is None else records.CHECKS["reminder"]["rotation"](value),
     "list_id": records.uuid_or_none,
     "section_id": records.uuid_or_none,
     "parent_id": records.uuid_or_none,
@@ -172,13 +173,13 @@ def _key_at_end(db: Session, list_id: str, section_id: str | None, parent_id: st
     return fractional.key_between(last, None)
 
 
-def _assignees(db: Session, space_id: str, wanted: list[int]) -> list[int]:
-    """Only in shared spaces, only members: anything else is refused, not struck quietly."""
+def _assignees(db: Session, space_id: str, wanted: list[int], name: str = "assignees") -> list[int]:
+    """Only in shared spaces, only members: anything else is refused, not struck quietly (``rotation`` alike)."""
     if not wanted:
         return []
     space = db.get(Space, space_id)
     if space is None or space.private or not set(wanted) <= set(spaces.member_ids(db, space_id)):
-        raise invalid("assignees")
+        raise invalid(name)
     return wanted
 
 
@@ -255,6 +256,7 @@ def create(caller: sync.Caller, sight: Sight, body: dict[str, Any], default_list
         if body.get("due_time") is not None and body.get("due_date") is None:
             raise invalid("due_time")
         assignees = _assignees(db, target.space_id, body.get("assignees") or [])
+        turn = _assignees(db, target.space_id, body.get("rotation") or [], "rotation")
         task_id = str(uuid.uuid4())
         fields: dict[str, Any] = {
             "list_id": target.id, "section_id": section_id, "parent_id": parent.id if parent else None,
@@ -266,6 +268,8 @@ def create(caller: sync.Caller, sight: Sight, body: dict[str, Any], default_list
                 fields[name] = body[name]
         if assignees:
             fields["assignees"] = assignees
+        if turn:
+            fields["rotation"] = turn
         if body.get("due_date") is not None:
             fields.update(due_date=body["due_date"], due_time=body.get("due_time"), repeat=None, repeat_from="due")
         _put(change, None, task_id, fields)
@@ -328,6 +332,8 @@ def change_task(caller: sync.Caller, sight: Sight, task_id: str, body: dict[str,
                           position=_key_at_end(db, row.list_id, section_id, None, row.id))
         if "assignees" in body and body["assignees"] != list(row.assignees or []):
             fields["assignees"] = _assignees(db, target.space_id, body["assignees"])
+        if "rotation" in body and body["rotation"] != list(row.rotation or []):
+            fields["rotation"] = _assignees(db, target.space_id, body["rotation"], "rotation")
         if trashed is False and row.deleted_at is not None:
             fields["deleted_at"] = None
         if completed is False and row.completed_at is not None:

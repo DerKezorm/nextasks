@@ -41,7 +41,7 @@ logger = logging.getLogger("nextasks.api")
 router = APIRouter(prefix="/api/v1", tags=["api v1"])
 
 #: What this server's ``/api/v1`` offers; a program asks for a word before it uses it.
-FEATURES = ["tasks", "dashboard", "external_ref", "members", "stats"]
+FEATURES = ["tasks", "dashboard", "external_ref", "members", "stats", "rotation"]
 MAX_IDS = 200
 DEFAULT_LIMIT = 100
 MAX_LIMIT = 500
@@ -207,6 +207,9 @@ class TaskOut(BaseModel):
     priority: int
     tags: list[str]
     assignees: list[Person]
+    #: Taking turns: the people in the order of their turn (``assignees`` holds whose turn it is); empty is off. Works
+    #: only on a repeating task in a shared space.
+    rotation: list[Person]
     completed: bool
     completed_at: str | None = None
     completed_by: Person | None = None
@@ -260,6 +263,7 @@ class TaskIn(BaseModel):
     flagged: Any = None
     tags: Any = None
     assignees: Any = None
+    rotation: Any = None
     external_ref: Any = None
 
 
@@ -276,6 +280,7 @@ class TaskChange(BaseModel):
     flagged: Any = None
     tags: Any = None
     assignees: Any = None
+    rotation: Any = None
     list_id: Any = None
     section_id: Any = None
     completed: Any = None

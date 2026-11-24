@@ -54,11 +54,12 @@ family, plus `"fields"` inside `detail` for `422 invalid_input`.
 ```json
 { "name": "robin", "display_name": "Robin", "level": "write", "time_zone": "Europe/Berlin",
   "spaces": [{"id": "…", "name": "Familie"}], "version": "0.1.0",
-  "features": ["tasks", "dashboard", "external_ref", "members", "stats"] }
+  "features": ["tasks", "dashboard", "external_ref", "members", "stats", "rotation"] }
 ```
 
 `features` names what this server's `/api/v1` offers; a program asks for a feature before it uses it. `members`: the
-server has `GET /api/v1/spaces/{id}/members`. `stats`: the server has `GET /api/v1/stats/summary`.
+server has `GET /api/v1/spaces/{id}/members`. `stats`: the server has `GET /api/v1/stats/summary`. `rotation`: tasks
+read and take `rotation` (taking turns, see below).
 
 ## Spaces and lists
 
@@ -96,6 +97,7 @@ A task as `/api/v1` shows it:
   "due_date": "2026-11-08", "due_time": "09:00", "repeat": null,
   "flagged": false, "priority": 0, "tags": ["einkauf"],
   "assignees": [{"id": 12, "name": "mara", "display_name": "Mara"}],
+  "rotation": [],
   "completed": false, "completed_at": null, "completed_by": null,
   "trashed": false, "trashed_at": null,
   "subtasks": {"open": 1, "total": 2},
@@ -109,6 +111,12 @@ A task as `/api/v1` shows it:
 - `priority`: 0 none, 1 low, 2 medium, 3 high. `repeat`: the rule, as in the interface, or null.
 - `assignees` and `completed_by` name accounts as `{"id", "name", "display_name"}`; an account deleted since, or one
   that shares no space with the token's account any more, has `name` and `display_name` null (a former member).
+- `rotation` ("taking turns", "Reihum"): the people who take turns, in their order, named like `assignees`; empty
+  when nobody does. It counts only on a repeating task in a shared space; then `assignees` holds exactly whose turn it
+  is. When the task is ticked off (here, in the interface or in the app), the one after whoever ticked it off is in
+  charge (someone outside the rotation moves it one step on); the completed copy keeps whose turn it was. A date passed
+  over without ticking off keeps the turn. Someone leaving the space falls out of it; was it their turn, the next one
+  takes it.
 - `trashed`: the task is in the bin, on its own or with its parent, list or space; `trashed_at` says since when.
 - `updated_at`: when the server last got a change of it.
 - `link` opens the task in the web interface; it needs the operator's public address and is null without it.
@@ -148,7 +156,7 @@ good answers `404 not_found`, a trashed one comes with `trashed: true`.
 ```json
 { "list_id": "…", "title": "Antwort an Fenja", "notes": "…", "url": "https://…",
   "due_date": "2026-11-08", "due_time": "09:00", "priority": 2, "flagged": false, "tags": ["mail"],
-  "assignees": [12], "section_id": null, "parent_id": null,
+  "assignees": [12], "rotation": [], "section_id": null, "parent_id": null,
   "external_ref": "nexmail:<message-id>" }
 ```
 
@@ -163,13 +171,14 @@ own world, best with its name first. When the task is gone for good, its key goe
 new task; so it does when the account does not see the task any more (it left the space). A task the account sees,
 but in a space this token does not, answers `409 conflict`.
 
-`assignees` only in shared spaces and only members; `notes` follow the rules of the interface (Markdown, at most
-20 000 characters; images only as attachments, which the API does not upload).
+`assignees` and `rotation` (account ids, in the order of the turn) only in shared spaces and only members; `notes`
+follow the rules of the interface (Markdown, at most 20 000 characters; images only as attachments, which the API does
+not upload).
 
 ### `PATCH /api/v1/tasks/{id}` (write)
 
-Any of `title`, `notes`, `url`, `due_date`, `due_time`, `priority`, `flagged`, `tags`, `assignees`, `list_id`,
-`section_id`, and:
+Any of `title`, `notes`, `url`, `due_date`, `due_time`, `priority`, `flagged`, `tags`, `assignees`, `rotation`,
+`list_id`, `section_id`, and:
 
 - `"completed": true` ticks the task off, `false` opens it again. A repeating task works as in the interface: the
   task keeps its id and moves on to its next due date, open (its subtasks open again); the occurrence ticked off

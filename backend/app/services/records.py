@@ -19,7 +19,7 @@ from typing import Annotated, Any
 
 from pydantic import PlainSerializer
 
-from . import fractional, gleichstand, position, wiederholung
+from . import fractional, gleichstand, position, rotation, wiederholung
 
 UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
@@ -73,7 +73,7 @@ CLOCKED: dict[str, tuple[str, ...]] = {
     "reminder": (
         "list_id", "section_id", "parent_id", "position", "title", "notes", "url", "due_date", "due_time", "repeat",
         "repeat_from", "location", "flagged", "priority", "tags", "assignees", "completed_at", "completed_by",
-        "deleted_at",
+        "deleted_at", "rotation",
     ),
     "list_pref": ("show_completed", "notify_changes"),
     "space_pref": ("hidden",),
@@ -101,7 +101,7 @@ DEFAULTS: dict[str, dict[str, Any]] = {
     "reminder": {
         "section_id": None, "parent_id": None, "notes": "", "url": None, "due_date": None, "due_time": None,
         "repeat": None, "repeat_from": "due", "location": None, "flagged": False, "priority": 0, "tags": [],
-        "assignees": [], "completed_at": None, "completed_by": None, "deleted_at": None,
+        "assignees": [], "completed_at": None, "completed_by": None, "deleted_at": None, "rotation": [],
     },
     "list_pref": {"show_completed": False, "notify_changes": False},
     "space_pref": {"hidden": False},
@@ -360,7 +360,7 @@ CHECKS: dict[str, dict[str, Any]] = {
         "repeat": lambda v: None if v is None else str(v), "repeat_from": _repeat_from, "location": _location,
         "flagged": _bool, "priority": _priority, "tags": _tags, "assignees": _assignees,
         "completed_at": stamp_or_none, "completed_by": lambda v: v, "deleted_at": stamp_or_none,
-        "created_at": stamp,
+        "created_at": stamp, "rotation": rotation.clean,
     },
     "list_pref": {"show_completed": _bool, "notify_changes": _bool},
     "space_pref": {"hidden": _bool},
@@ -475,7 +475,7 @@ def data_of(kind: str, row: Any, *, role: str | None = None, own_member: bool = 
             "location": row.location, "flagged": row.flagged, "priority": row.priority, "tags": list(row.tags or []),
             "assignees": list(row.assignees or []), "completed_at": row.completed_at,
             "completed_by": row.completed_by, "created_by": row.created_by, "created_at": row.created_at,
-            "deleted_at": row.deleted_at,
+            "deleted_at": row.deleted_at, "rotation": list(row.rotation or []),
         }
     if kind == "attachment":
         return {"id": row.id, "reminder_id": row.reminder_id, "name": row.name, "mime": row.mime, "size": row.size,

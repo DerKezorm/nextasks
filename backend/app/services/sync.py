@@ -43,7 +43,18 @@ from ..models import (
 )
 
 # ``completions`` records every completion as the session flushes (its hook); imported here, where every write runs.
-from . import changes, clock, completions, cursor, files, gleichstand, records, spaces, wiederholung  # noqa: F401
+from . import (  # noqa: F401
+    changes,
+    clock,
+    completions,
+    cursor,
+    files,
+    gleichstand,
+    records,
+    rotation,
+    spaces,
+    wiederholung,
+)
 
 logger = logging.getLogger("nextasks.sync")
 
@@ -178,6 +189,11 @@ def _allowed_assignees(db: Session, space_id: str, wanted: list[int]) -> tuple[l
     return kept, [person for person in wanted if person not in members]
 
 
+def _is_private(db: Session, space_id: str) -> bool:
+    space = db.get(Space, space_id)
+    return space is None or space.private
+
+
 def _set_trash(row: Any, before: str | None) -> None:
     if row.deleted_at is not None and before is None:
         row.trashed_at = utcnow()
@@ -271,6 +287,7 @@ def _create(db: Session, caller: Caller, kind: str, item_id: str, incoming: reco
         target = _target_list(db, caller, data["list_id"])
         _check_parent(db, data["parent_id"], item_id)
         kept, dropped = _allowed_assignees(db, target.space_id, data["assignees"])
+        turn, _struck = _allowed_assignees(db, target.space_id, data["rotation"])
         created = incoming.created_at
         if created is None or records.ms(records.parse_stamp(created)) > now_ms + AHEAD_MS:
             created = _now_stamp()
@@ -279,15 +296,17 @@ def _create(db: Session, caller: Caller, kind: str, item_id: str, incoming: reco
             parent_id=data["parent_id"], position=data["position"], title=data["title"], notes=data["notes"],
             url=data["url"], due_date=data["due_date"], due_time=data["due_time"], repeat=data["repeat"],
             repeat_from=data["repeat_from"], location=data["location"], flagged=data["flagged"],
-            priority=data["priority"], tags=data["tags"], assignees=kept, completed_at=data["completed_at"],
+            priority=data["priority"], tags=data["tags"], assignees=kept, rotation=turn,
+            completed_at=data["completed_at"],
             # Moved over from elsewhere already done: whoever moved it is named.
             completed_by=caller.id if data["completed_at"] is not None else None,
             created_by=caller.id, created_at=created, deleted_at=data["deleted_at"], clock=clocks,
         )
         _set_trash(row, None)
+        rotation.settle(row, _is_private(db, target.space_id), now_ms)
         spaces.restamp(db, [row])
         db.add(row)
-        new = [person for person in kept if person != caller.id]
+        new = [person for person in (row.assignees or []) if person != caller.id]
         if new:
             events.assigned.append((item_id, new))
         if row.parent_id is None and row.completed_at is None:
@@ -382,6 +401,11 @@ def _update(db: Session, caller: Caller, kind: str, row: Any, incoming: records.
     if kind == "reminder" and "assignees" in taken:
         kept, dropped = _allowed_assignees(db, new_space, list(row.assignees or []))
         row.assignees = kept
+    if kind == "reminder" and "rotation" in taken:
+        row.rotation, _struck = _allowed_assignees(db, new_space, list(row.rotation or []))
+    if kind == "reminder":
+        # Whose turn it is stands in ``assignees`` alone; ``_filter_assignees`` keeps it so when the space changes.
+        rotation.settle(row, _is_private(db, new_space), now_ms, before_assignees)
     spaces.restamp(db, [row])
     db.flush()
     if kind == "list" and new_space != old_space:
@@ -523,8 +547,9 @@ def complete(db: Session, caller: Caller, op: dict[str, Any], events: Events) ->
             id=copy["id"], list_id=row.list_id, space_id=row.space_id, section_id=row.section_id, parent_id=None,
             position=row.position, title=row.title, notes=row.notes, url=row.url, due_date=copy["due_date"],
             due_time=row.due_time, repeat=None, repeat_from="due", location=row.location, flagged=row.flagged,
-            priority=row.priority, tags=list(row.tags or []), assignees=list(row.assignees or []), completed_at=at,
-            completed_by=caller.id, created_by=row.created_by, created_at=row.created_at, deleted_at=row.deleted_at,
+            priority=row.priority, tags=list(row.tags or []), assignees=list(row.assignees or []),
+            rotation=list(row.rotation or []), completed_at=at, completed_by=caller.id, created_by=row.created_by,
+            created_at=row.created_at, deleted_at=row.deleted_at,
             clock={key: at_ms for key in records.clock_keys("reminder")},
         )
         _set_trash(copy_row, None)
@@ -539,6 +564,8 @@ def complete(db: Session, caller: Caller, op: dict[str, Any], events: Events) ->
     # already stays (a clock never goes back, or an older change sent again would undo the moving on).
     clocks["due"] = max(at_ms, int(clocks.get("due", 0)))
     row.clock = clocks
+    if copy_row is not None:
+        _take_turns(db, row, caller.id, now_ms, events)
     changed = [copy_row, row] if copy_row is not None else [row]
     for sub in _subtasks(db, row):
         if sub.completed_at is not None:
@@ -554,6 +581,25 @@ def complete(db: Session, caller: Caller, op: dict[str, Any], events: Events) ->
     events.accounts.update(spaces.member_ids(db, row.space_id))
     return Outcome(True, kind="reminder", item_id=row.id, copy_id=plan["copy_id"],
                    values={"copy_id": plan["copy_id"], "next_due": plan["next_due"]})
+
+
+def _take_turns(db: Session, row: Reminder, by: int, now_ms: int, events: Events) -> None:
+    """After a completion that made a copy: the next one in the rotation is in charge of the original
+    (``services/rotation.py``). The copy keeps whose turn it was; the new one hears "assigned to you"."""
+    turn = list(row.rotation or [])
+    if not rotation.active(turn, row.repeat, row.due_date, _is_private(db, row.space_id)):
+        return
+    members = set(spaces.member_ids(db, row.space_id))
+    turn = [person for person in turn if person in members]
+    if not turn:
+        return
+    following = rotation.after_completion(turn, list(row.assignees or []), by)
+    if list(row.assignees or []) == [following]:
+        return
+    row.assignees = [following]
+    rotation.bump(row, "assignees", now_ms)
+    if following != by:
+        events.assigned.append((row.id, [following]))
 
 
 # --- position ---------------------------------------------------------------------------------------------------------

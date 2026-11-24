@@ -439,6 +439,8 @@ class Reminder(Base):
     priority: Mapped[int] = mapped_column(Integer, default=0)
     tags: Mapped[Any] = mapped_column(JSON, default=list)
     assignees: Mapped[Any] = mapped_column(JSON, default=list)
+    #: Taking turns (contract 0.9, ``services/rotation.py``): account ids in the order of the turn; empty is off.
+    rotation: Mapped[Any] = mapped_column(JSON, nullable=True, default=list)
     completed_at: Mapped[str | None] = mapped_column(STAMP, nullable=True)
     completed_by: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_by: Mapped[int | None] = mapped_column(Integer, nullable=True)

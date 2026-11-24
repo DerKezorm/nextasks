@@ -32,7 +32,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import Account, Completion, Member, Reminder, Section, Space, TaskList
-from . import clock, records, spaces, visibility, wiederholung
+from . import clock, records, rotation, spaces, visibility, wiederholung
 from .messages import WEEKDAY_NAMES
 
 HEATMAP_DAYS = 371
@@ -249,6 +249,8 @@ def records_of(done: list[Done], today: date) -> dict[str, Any]:
     upcoming = next((mark for mark in MILESTONES if mark > total), None)
     return {
         "total": total,
+        # The day of the first completion counted: with nothing before the period it says "since …".
+        "first": done[0].day.isoformat() if done else None,
         "best_day": {"date": best_day[0].isoformat(), "count": best_day[1]} if best_day else None,
         "best_week": {"from": best_week[0].isoformat(), "to": (best_week[0] + timedelta(days=6)).isoformat(),
                       "count": best_week[1]} if best_week else None,
@@ -285,6 +287,16 @@ def _occurrences_after(rule: str, start: str, before: str, limit: int) -> list[s
     return out[-limit:]
 
 
+def _turns(scope: Scope, row: Reminder) -> list[int | None]:
+    """Taking turns (``services/rotation.py``): the people in the order of their turn, while they are taken."""
+    space = next((item for item in scope.spaces if item.id == row.space_id), None)
+    members = scope.members.get(row.space_id, set())
+    turn = [person for person in (row.rotation or []) if person in members]
+    if space is None or not rotation.active(turn, row.repeat, row.due_date, space.private):
+        return []
+    return [scope.person(person) for person in turn]
+
+
 def pulse(data: Data) -> list[dict[str, Any]]:
     scope = data.scope
     by_series: dict[str, list[Done]] = defaultdict(list)
@@ -313,6 +325,7 @@ def pulse(data: Data) -> list[dict[str, Any]]:
         out.append({
             "series_id": original.id, "title": original.title, "list": _list_brief(data, original.list_id),
             "repeat": original.repeat, "repeat_from": original.repeat_from, "slots": slots[-PULSE_SLOTS:],
+            "rotation": _turns(scope, original),
             "next": {"due_date": original.due_date, "due_time": original.due_time,
                      "overdue": bool(original.due_date and original.due_date < scope.today.isoformat())},
             "_last": last_activity,
