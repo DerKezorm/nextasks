@@ -1,10 +1,10 @@
 /**
- * The collections' pages: Today, Scheduled (by day, as a list or as day columns), All (by space and list), Marked,
- * Assigned to me, Done. The tasks stand in cards in a column one reads at a glance: one card for the collection, or a
- * card per day (Scheduled) or per list (All, Marked) with its head inside. A new task typed here goes into the first
- * list of "Private" and takes what the collection stands for (today, marked). An empty collection says so in a quiet
- * line (Today: how many are due tomorrow). The day columns are for wide windows; on a phone "Scheduled" is always the
- * list.
+ * The collections' pages: Scheduled (by day, as a list or as day columns), All (by space and list), Marked, Assigned
+ * to me, Done ("Today" has a page of its own, `TodayPage`). The tasks stand in cards in a column one reads at a
+ * glance: one card for the collection, or a card per day (Scheduled) or per list (All, Marked) with its head inside. A
+ * new task typed here goes into the first list of "Private" and takes what the collection stands for (today,
+ * marked). An empty collection says so in a quiet line. The day columns are for wide windows; on a phone "Scheduled"
+ * is always the list.
  */
 import { ArrowRight } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
@@ -45,7 +45,7 @@ function daysFrom(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86_400_000)
 }
 
-export function TilePage({ tile }: { tile: Tile }) {
+export function TilePage({ tile }: { tile: Exclude<Tile, 'today'> }) {
   const { t, i18n } = useTranslation()
   const view = useView()
   const phone = usePhone()
@@ -72,11 +72,11 @@ export function TilePage({ tile }: { tile: Tile }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wanted, columns])
   const only = new Set(items.map((r) => r.id))
-  const defaults: Data | null = tile === 'today' || tile === 'scheduled' ? { due_date: today, due_time: null, repeat: null, repeat_from: 'due' } : tile === 'flagged' ? { flagged: true } : tile === 'all' ? {} : null
+  const defaults: Data | null = tile === 'scheduled' ? { due_date: today, due_time: null, repeat: null, repeat_from: 'due' } : tile === 'flagged' ? { flagged: true } : tile === 'all' ? {} : null
   // "+ New task" goes where the quick entry goes, with what the collection stands for (me only where others are).
   const first = view.defaultList
   const firstSpace = first ? view.space(first.space_id) : undefined
-  const startWith: Data = tile === 'today' || tile === 'scheduled' ? { due_date: today, due_time: null, repeat: null, repeat_from: 'due' } : tile === 'flagged' ? { flagged: true } : tile === 'assigned' && firstSpace && !firstSpace.private ? { assignees: [view.me] } : {}
+  const startWith: Data = tile === 'scheduled' ? { due_date: today, due_time: null, repeat: null, repeat_from: 'due' } : tile === 'flagged' ? { flagged: true } : tile === 'assigned' && firstSpace && !firstSpace.private ? { assignees: [view.me] } : {}
   const target = first ? { spot: { list_id: first.id, section_id: null, parent_id: null }, defaults: startWith } : null
   const quick = defaults && <QuickEntry spot={null} defaults={defaults} label={t('quick.placeholderPrivate', { list: first?.name ?? '' })} />
 
@@ -114,8 +114,6 @@ export function TilePage({ tile }: { tile: Tile }) {
 
   // Grouped pages and an empty one keep the quick entry in a card of its own below.
   const apart = quick && !columns && (tile === 'scheduled' || tile === 'all' || tile === 'flagged' || items.length === 0)
-  // Today without anything left: how many wait for tomorrow.
-  const tomorrow = tile === 'today' && items.length === 0 ? view.visible.filter((r) => !r.completed_at && r.due_date === addDays(today, 1)).length : 0
 
   return (
     // The day columns scroll in a box of their own below the head, so their heads can stay at its top.
@@ -135,11 +133,7 @@ export function TilePage({ tile }: { tile: Tile }) {
         ) : (
           <div className="nt-read space-y-4">
             {items.length === 0 && (
-              <QuietEmpty
-                icon={TILE_LOOK[tile].icon}
-                title={t(`tiles.empty.${tile}`)}
-                text={tile === 'today' ? (tomorrow ? t('tiles.tomorrow', { count: tomorrow }) : t('tiles.tomorrowNone')) : t(`tiles.emptyLine.${tile}`)}
-              />
+              <QuietEmpty icon={TILE_LOOK[tile].icon} title={t(`tiles.empty.${tile}`)} text={t(`tiles.emptyLine.${tile}`)} />
             )}
             {body}
             {apart && <div className="nt-group">{quick}</div>}
