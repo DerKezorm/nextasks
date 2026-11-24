@@ -13,6 +13,8 @@ export interface Question {
   final?: boolean
   /** The red button's word. */
   confirm: string
+  /** Nothing goes: the button in the accent's colour instead of red. */
+  calm?: boolean
   run: () => void
 }
 
@@ -29,7 +31,8 @@ export function ConfirmDialog({ question, onClose }: { question: Question; onClo
           </button>
           <button
             type="button"
-            className="nt-btn nt-btn-danger"
+            className={'nt-btn ' + (question.calm ? 'nt-btn-accent' : 'nt-btn-danger')}
+
             data-testid="confirm-go"
             onClick={() => {
               onClose()

@@ -818,6 +818,100 @@
     },
     "openList": "Open “{{name}}”"
   },
+  "shop": {
+    "often": "Often bought:",
+    "offered": "Suggestions",
+    "weekly": "every week",
+    "daily": "every day",
+    "daysAgo_one": "a day ago",
+    "daysAgo_other": "{{count}} days ago",
+    "add": "Add “{{title}}”",
+    "sorted": "Sorted into “{{section}}”",
+    "progress": "{{done}} of {{total}} done"
+  },
+  "templates": {
+    "label": "Start from",
+    "kinds": {
+      "empty": "Empty",
+      "shopping": "Groceries",
+      "packing": "Packing list",
+      "cleaning": "Weekly clean"
+    },
+    "names": {
+      "shopping": "Groceries",
+      "packing": "Packing list",
+      "cleaning": "Weekly clean"
+    },
+    "hints": {
+      "empty": "No sections",
+      "shopping": "Sections as in the shop",
+      "packing": "Clothes, bathroom, tech, papers",
+      "cleaning": "Every week, room by room"
+    },
+    "sections": {
+      "produce": "Fruit and veg",
+      "chilled": "Chilled",
+      "bread": "Bread",
+      "drugstore": "Toiletries",
+      "household": "Household",
+      "clothes": "Clothes",
+      "bathroom": "Bathroom",
+      "tech": "Tech",
+      "papers": "Papers",
+      "kitchen": "Kitchen",
+      "living": "Living room",
+      "bedroom": "Bedroom"
+    },
+    "items": {
+      "shirts": "T-shirts",
+      "trousers": "Trousers",
+      "underwear": "Underwear",
+      "socks": "Socks",
+      "pyjamas": "Pyjamas",
+      "jacket": "Jacket",
+      "toothbrush": "Toothbrush",
+      "toothpaste": "Toothpaste",
+      "shampoo": "Shampoo",
+      "deodorant": "Deodorant",
+      "sunCream": "Sun cream",
+      "phoneCharger": "Phone charger",
+      "headphones": "Headphones",
+      "powerBank": "Power bank",
+      "adapter": "Travel adapter",
+      "passport": "ID card or passport",
+      "tickets": "Tickets",
+      "healthCard": "Health insurance card",
+      "wallet": "Wallet",
+      "wipeSurfaces": "Wipe the worktops",
+      "cleanHob": "Clean the hob",
+      "emptyBins": "Empty the bins",
+      "cleanSink": "Clean the sink and toilet",
+      "cleanShower": "Clean the shower",
+      "changeTowels": "Change the towels",
+      "dust": "Dust",
+      "vacuum": "Vacuum",
+      "changeSheets": "Change the bed sheets"
+    },
+    "copy": {
+      "menu": "Copy list",
+      "title": "Copy “{{name}}”",
+      "name": "{{name}} (copy)",
+      "dates": "Dates",
+      "dropDates": "Without dates, no task due",
+      "keepDates": "Keep dates and repetitions",
+      "hint": "Sections and tasks come along, all open. Files and the history of done ones stay with the old list.",
+      "go": "Copy"
+    },
+    "reopen": {
+      "menu": "All open again",
+      "title": "Open “{{name}}” again?",
+      "text_one": "The done task becomes open again, for the next trip, say.",
+      "text_other": "All {{count}} done tasks become open again, for the next trip, say.",
+      "go": "Open all",
+      "done_one": "One task is open again.",
+      "done_other": "{{count}} tasks are open again."
+    }
+  },
   "filter": {
     "section": "Filters",
     "new": "New filter",

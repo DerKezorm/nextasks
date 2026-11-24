@@ -3,9 +3,13 @@
  * section with its head inside) or as columns (one per section, "Without section" first when there are such), which
  * grow with the window and keep their heads at the top while they scroll. The head carries the list's plaque, the
  * switch between list and columns and the menu: edit, view, show completed, delete completed, notify on changes, new
- * section. An empty list says so in a line and leads to the quick entry.
+ * section, copy the list, all open again. An empty list says so in a line and leads to the quick entry.
+ *
+ * Shopping help in every list: under the line for new tasks "Often bought" with what was done often and is not open
+ * now, a click adds it into the section it stood in last; a new task without a section goes there by its title.
+ * With the done tasks shown, a slim bar in the list's colour says how many of all are done.
  */
-import { Bell, Check, Columns3, Eye, EyeOff, List as ListIcon, ListChecks, MoreHorizontal, Pencil, Plus, Trash2, Users, type LucideIcon } from 'lucide-react'
+import { Bell, Check, Columns3, Copy, Eye, EyeOff, List as ListIcon, ListChecks, MoreHorizontal, Pencil, Plus, RotateCcw, Trash2, Users, type LucideIcon } from 'lucide-react'
 import { createElement, useState, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
@@ -13,15 +17,20 @@ import { useParams } from 'react-router-dom'
 import { useContextMenu, type MenuItems } from '../components/ContextMenu'
 import { PageHead } from '../components/PageHead'
 import { Popover } from '../components/Popover'
-import { QuickEntry } from '../components/QuickEntry'
+import { QuickEntry, type ShopHelp } from '../components/QuickEntry'
 import { ReminderGroup } from '../components/ReminderRow'
 import { useShell } from '../components/Shell'
+import { CopyListDialog } from '../components/ThingDialogs'
 import { dragging, draggedReminder, DRAG_SECTION } from '../lib/drag'
 import { clearCompleted, createSection, moveSection, setPref, type Spot } from '../lib/actions'
 import { QuietEmpty } from '../components/EmptyState'
 import { MarkTile } from '../components/Mark'
 import { NotFound } from '../components/NotFound'
+import { localDay } from '../lib/due'
+import { colorOf } from '../lib/look'
 import { isShared } from '../lib/shared'
+import { addSorted, placeFor, titleKey, useSuggestions, type Suggestion } from '../lib/shop'
+import { doneToReopen, reopenAll } from '../lib/templates'
 import { useEngine, useSyncState, useView } from '../state/sync'
 import { byPosition } from '../sync/position'
 import type { List, Reminder, Section } from '../sync/types'
@@ -47,12 +56,23 @@ function ListBody({ list }: { list: List }) {
   const pref = view.pref(list.id)
   const space = view.space(list.space_id)
   const [naming, setNaming] = useState<string | null>(null)
+  const [copying, setCopying] = useState(false)
   const showDone = pref.show_completed
   const sections = view.sectionsOf(list.id)
   const top = view.live.filter((r) => r.list_id === list.id && !r.parent_id && (showDone || !r.completed_at)).sort(byPosition)
   const loose = top.filter((r) => !r.section_id)
   const doneCount = view.live.filter((r) => r.list_id === list.id && r.completed_at).length
   const open = view.live.filter((r) => r.list_id === list.id && !r.completed_at).length
+  const reopenable = doneToReopen(view, list.id).length
+  const shop = useShop(list, doneCount)
+  const askReopen = () =>
+    shell.ask({
+      title: t('templates.reopen.title', { name: list.name }),
+      text: t('templates.reopen.text', { count: reopenable }),
+      confirm: t('templates.reopen.go'),
+      calm: true,
+      run: () => reopenAll(engine, view, list.id, (count) => t('templates.reopen.done', { count })),
+    })
   const switchView = () => engine.put('list', list.id, { view: list.view === 'list' ? 'columns' : 'list' })
   const target = { spot: { list_id: list.id, section_id: null, parent_id: null }, defaults: {} }
   const symbol = (icon: LucideIcon) => createElement(icon, { className: 'h-4 w-4', strokeWidth: 1.8, 'aria-hidden': true })
@@ -83,6 +103,13 @@ function ListBody({ list }: { list: List }) {
                 <button type="button" className="nt-menu-item" role="menuitem" onClick={() => (close(), setPref(engine, list.id, { show_completed: !showDone }))}>
                   {symbol(showDone ? EyeOff : Eye)} {t(showDone ? 'list.hideDone' : 'list.showDone')}
                 </button>
+                <div className="nt-menu-line" role="separator" />
+                <button type="button" className="nt-menu-item" role="menuitem" onClick={() => (close(), setCopying(true))} data-testid="copy-list-item">
+                  {symbol(Copy)} {t('templates.copy.menu')}
+                </button>
+                <button type="button" className="nt-menu-item" role="menuitem" disabled={!reopenable} onClick={() => (close(), askReopen())} data-testid="reopen-all-item">
+                  {symbol(RotateCcw)} {t('templates.reopen.menu')}
+                </button>
                 {space && !space.private && (
                   <>
                     <button type="button" className="nt-menu-item" role="menuitemcheckbox" aria-checked={pref.notify_changes} onClick={() => (close(), setPref(engine, list.id, { notify_changes: !pref.notify_changes }))}>
@@ -109,15 +136,34 @@ function ListBody({ list }: { list: List }) {
           </p>
         )}
 
+        {showDone && <Progress list={list} onClear={() => clearCompleted(engine, view, list.id, (count) => t('list.cleared', { count }))} />}
+
         {board ? (
-          <Columns list={list} sections={sections} top={top} loose={loose} showDone={showDone} />
+          <>
+            {shop.often.length > 0 && (
+              <div className="nt-group mb-3">
+                <Often list={list} suggestions={shop.often} help={shop.help} />
+              </div>
+            )}
+            <Columns list={list} sections={sections} top={top} loose={loose} showDone={showDone} shop={shop.help} />
+          </>
         ) : (
           <div className="nt-read space-y-4">
             {empty && (
               <QuietEmpty icon={ListChecks} title={t('list.emptyTitle', { name: list.name })} text={isShared(view, space) ? t('list.emptyShared', { space: space?.name ?? '' }) : t('list.emptyText')} />
             )}
             <div className={empty ? 'rounded-[13px] ring-2 ring-accent-500/35' : undefined}>
-              <ReminderGroup spot={{ list_id: list.id, section_id: null, parent_id: null }} items={loose} showDone={showDone} footer={<QuickEntry spot={{ list_id: list.id, section_id: null, parent_id: null }} />} />
+              <ReminderGroup
+                spot={{ list_id: list.id, section_id: null, parent_id: null }}
+                items={loose}
+                showDone={showDone}
+                footer={
+                  <>
+                    <QuickEntry spot={{ list_id: list.id, section_id: null, parent_id: null }} shop={shop.help} />
+                    {shop.often.length > 0 && <Often list={list} suggestions={shop.often} help={shop.help} />}
+                  </>
+                }
+              />
             </div>
             {sections.map((section, index) => (
               <SectionBlock key={section.id} section={section} index={index} items={top.filter((r) => r.section_id === section.id)} showDone={showDone} />
@@ -140,8 +186,77 @@ function ListBody({ list }: { list: List }) {
             </button>
           </form>
         )}
+        {copying && <CopyListDialog listId={list.id} onClose={() => setCopying(false)} />}
       </div>
     </main>
+  )
+}
+
+/** What the list's line knows for shopping: the suggestions not open now, and where a title goes. */
+function useShop(list: List, doneCount: number): { often: Suggestion[]; help: ShopHelp } {
+  const view = useView()
+  const found = useSuggestions(list.id, doneCount)
+  const sections = view.sectionsOf(list.id)
+  const openKeys = new Set(view.live.filter((r) => r.list_id === list.id && !r.completed_at).map((r) => titleKey(r.title)))
+  const often = (found?.suggestions ?? []).filter((s) => !openKeys.has(s.key))
+  const help: ShopHelp = { suggestions: often, place: (title) => placeFor(title, list.id, view.live, sections, found?.placement) }
+  return { often, help }
+}
+
+/** "Often bought:" with a button for each, small "every week" or "9 days ago" when it is due again. */
+function Often({ list, suggestions, help }: { list: List; suggestions: Suggestion[]; help: ShopHelp }) {
+  const { t } = useTranslation()
+  const engine = useEngine()
+  const view = useView()
+  const today = localDay()
+  const add = (suggestion: Suggestion) => {
+    const section = (suggestion.section_id ? view.section(suggestion.section_id) : undefined) ?? help.place(suggestion.title)
+    addSorted(engine, view, list.id, { title: suggestion.title }, section, (name) => t('shop.sorted', { section: name }))
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 border-t border-ink-700/60 px-3 py-2.5" data-testid="often">
+      <span className="mr-0.5 text-xs font-semibold text-mist-500">{t('shop.often')}</span>
+      {suggestions.slice(0, 8).map((suggestion) => {
+        const due = !!suggestion.expected && suggestion.expected <= today
+        const hint = due && suggestion.last_days_ago > 1 ? t('shop.daysAgo', { count: suggestion.last_days_ago }) : suggestion.interval_days === 7 ? t('shop.weekly') : suggestion.interval_days === 1 ? t('shop.daily') : null
+        return (
+          <button
+            key={suggestion.key}
+            type="button"
+            onClick={() => add(suggestion)}
+            title={t('shop.add', { title: suggestion.title })}
+            className={'flex h-7 items-center gap-1 rounded-full border px-2.5 text-[13px] text-mist-100 hover:bg-ink-800 ' + (due ? 'border-accent-500/60' : 'border-ink-700')}
+            data-testid="often-item"
+          >
+            <Plus className="h-3.5 w-3.5 text-petrol" strokeWidth={2.4} aria-hidden />
+            {suggestion.title}
+            {hint && <span className="text-[11px] text-mist-500">{hint}</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** "3 of 8 done" in a slim bar of the list's colour, and the way to clear the done ones. */
+function Progress({ list, onClear }: { list: List; onClear: () => void }) {
+  const { t } = useTranslation()
+  const view = useView()
+  const tops = view.live.filter((r) => r.list_id === list.id && !r.parent_id)
+  const done = tops.filter((r) => r.completed_at).length
+  if (!tops.length) return null
+  return (
+    <div className="nt-read mb-3 flex items-center gap-3 px-1" data-testid="list-progress">
+      <span className="shrink-0 text-xs text-mist-500 tabular-nums">{t('shop.progress', { done, total: tops.length })}</span>
+      <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-ink-800" role="progressbar" aria-valuemin={0} aria-valuemax={tops.length} aria-valuenow={done} aria-label={t('shop.progress', { done, total: tops.length })}>
+        <span className="block h-full rounded-full" style={{ width: `${(done / tops.length) * 100}%`, background: colorOf(list.color) }} />
+      </span>
+      {done > 0 && (
+        <button type="button" className="shrink-0 rounded-md px-1.5 py-0.5 text-xs font-semibold text-accent-400 hover:bg-ink-800" onClick={onClear} data-testid="progress-clear">
+          {t('list.clearDone', { count: done })}
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -224,7 +339,7 @@ function SectionBlock({ section, index, items, showDone }: { section: Section; i
   )
 }
 
-function Columns({ list, sections, top, loose, showDone }: { list: List; sections: Section[]; top: Reminder[]; loose: Reminder[]; showDone: boolean }) {
+function Columns({ list, sections, top, loose, showDone, shop }: { list: List; sections: Section[]; top: Reminder[]; loose: Reminder[]; showDone: boolean; shop: ShopHelp }) {
   const { t } = useTranslation()
   const columns: { section: Section | null; items: Reminder[] }[] = [...(loose.length ? [{ section: null, items: loose }] : []), ...sections.map((s) => ({ section: s, items: top.filter((r) => r.section_id === s.id) }))]
   if (!columns.length) columns.push({ section: null, items: [] })
@@ -246,7 +361,8 @@ function Columns({ list, sections, top, loose, showDone }: { list: List; section
               )}
             </div>
             <div className="mt-1.5 flex flex-1 flex-col">
-              <ReminderGroup spot={spot} items={items} showDone={showDone} board footer={<QuickEntry spot={spot} register={index === 0} label={t('reminder.new')} />} />
+              <ReminderGroup spot={spot} items={items} showDone={showDone} board footer={<QuickEntry spot={spot} register={index === 0} label={t('reminder.new')} shop={section ? undefined : shop} />} />
+
             </div>
           </section>
         )

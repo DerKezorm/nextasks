@@ -818,6 +818,100 @@
     },
     "openList": "„{{name}}“ öffnen"
   },
+  "shop": {
+    "often": "Oft gekauft:",
+    "offered": "Vorschläge",
+    "weekly": "jede Woche",
+    "daily": "jeden Tag",
+    "daysAgo_one": "vor einem Tag",
+    "daysAgo_other": "vor {{count}} Tagen",
+    "add": "„{{title}}“ hinzufügen",
+    "sorted": "Neu einsortiert in „{{section}}“",
+    "progress": "{{done}} von {{total}} erledigt"
+  },
+  "templates": {
+    "label": "Startvorlage",
+    "kinds": {
+      "empty": "Leer",
+      "shopping": "Einkauf",
+      "packing": "Packliste",
+      "cleaning": "Wochenputz"
+    },
+    "names": {
+      "shopping": "Einkauf",
+      "packing": "Packliste",
+      "cleaning": "Wochenputz"
+    },
+    "hints": {
+      "empty": "Ohne Abschnitte",
+      "shopping": "Abschnitte wie im Laden",
+      "packing": "Kleidung, Bad, Technik, Papiere",
+      "cleaning": "Jede Woche, Raum für Raum"
+    },
+    "sections": {
+      "produce": "Obst und Gemüse",
+      "chilled": "Kühlregal",
+      "bread": "Brot",
+      "drugstore": "Drogerie",
+      "household": "Haushalt",
+      "clothes": "Kleidung",
+      "bathroom": "Bad",
+      "tech": "Technik",
+      "papers": "Papiere",
+      "kitchen": "Küche",
+      "living": "Wohnzimmer",
+      "bedroom": "Schlafzimmer"
+    },
+    "items": {
+      "shirts": "T-Shirts",
+      "trousers": "Hosen",
+      "underwear": "Unterwäsche",
+      "socks": "Socken",
+      "pyjamas": "Schlafanzug",
+      "jacket": "Jacke",
+      "toothbrush": "Zahnbürste",
+      "toothpaste": "Zahnpasta",
+      "shampoo": "Shampoo",
+      "deodorant": "Deo",
+      "sunCream": "Sonnencreme",
+      "phoneCharger": "Ladekabel fürs Handy",
+      "headphones": "Kopfhörer",
+      "powerBank": "Powerbank",
+      "adapter": "Reiseadapter",
+      "passport": "Ausweis oder Reisepass",
+      "tickets": "Tickets",
+      "healthCard": "Versichertenkarte",
+      "wallet": "Geldbeutel",
+      "wipeSurfaces": "Arbeitsflächen abwischen",
+      "cleanHob": "Herd putzen",
+      "emptyBins": "Mülleimer leeren",
+      "cleanSink": "Waschbecken und Toilette putzen",
+      "cleanShower": "Dusche putzen",
+      "changeTowels": "Handtücher wechseln",
+      "dust": "Staub wischen",
+      "vacuum": "Staubsaugen",
+      "changeSheets": "Bettwäsche wechseln"
+    },
+    "copy": {
+      "menu": "Liste kopieren",
+      "title": "„{{name}}“ kopieren",
+      "name": "{{name}} (Kopie)",
+      "dates": "Daten",
+      "dropDates": "Ohne Daten, alle Aufgaben ohne Fälligkeit",
+      "keepDates": "Daten und Wiederholungen behalten",
+      "hint": "Abschnitte und Aufgaben kommen mit, alle offen. Dateien und Erledigte-Verlauf bleiben in der alten Liste.",
+      "go": "Kopieren"
+    },
+    "reopen": {
+      "menu": "Alle wieder offen",
+      "title": "„{{name}}“ wieder öffnen?",
+      "text_one": "Die erledigte Aufgabe wird wieder offen, zum Beispiel für die nächste Reise.",
+      "text_other": "Alle {{count}} erledigten Aufgaben werden wieder offen, zum Beispiel für die nächste Reise.",
+      "go": "Alle öffnen",
+      "done_one": "Eine Aufgabe ist wieder offen.",
+      "done_other": "{{count}} Aufgaben sind wieder offen."
+    }
+  },
   "filter": {
     "section": "Filter",
     "new": "Neuer Filter",
