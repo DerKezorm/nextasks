@@ -1,4 +1,4 @@
-"""What ``/api/v1`` changes (``docs/api.md``): make, change, tick off, reopen, trash and restore a task.
+"""What ``/api/v1`` changes (``docs/api.md``): make, change, tick off, reopen, trash and restore a task; comment on it.
 
 **No writing of its own.** Every change is an op of ``/batch`` (``services/sync.py``: ``put``, ``complete``), run
 through ``sync.Together``: the rule per field, cursors, tombstones, repeating tasks (the completed copy with its
@@ -25,7 +25,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models import ExternalRef, Member, Reminder, Section, Space, TaskList
+from ..models import Comment, ExternalRef, Member, Reminder, Section, Space, TaskList
 from . import clock, fractional, notify, records, spaces, sync
 from .apiread import Sight
 
@@ -356,3 +356,49 @@ def trash(caller: sync.Caller, sight: Sight, task_id: str) -> None:
         if row.deleted_at is None:
             _put(change, row, row.id, {"deleted_at": _now_stamp()})
     notify.after_op(change.events, caller.id)
+
+
+# --- Comments -------------------------------------------------------------------------------------------------------
+
+
+def comment_out(world_person: Any, row: Comment) -> dict[str, Any]:
+    """A comment as ``/api/v1`` shows it; ``world_person`` names an account as ``World.person`` does."""
+    return {
+        "id": row.id, "task_id": row.reminder_id, "author": world_person(row.author_id), "text": row.text,
+        "mentions": [world_person(person) for person in (row.mentions or [])], "attachment_id": row.attachment_id,
+        "created_at": row.created_at, "edited_at": row.edited_at, "removed": row.removed_at is not None,
+        "removed_at": row.removed_at,
+    }
+
+
+def comments_of(db: Session, sight: Sight, task_id: str) -> list[Comment]:
+    """``GET /api/v1/tasks/{id}/comments``: the task's comments, oldest first."""
+    row = _seen_task(db, sight, task_id)
+    return list(db.scalars(select(Comment).where(Comment.reminder_id == row.id)
+                           .order_by(Comment.created_at, Comment.id)))
+
+
+def add_comment(caller: sync.Caller, sight: Sight, task_id: str, text: Any, mentions: Any) -> str:
+    """``POST /api/v1/tasks/{id}/comments``: through the same op as the app and the web (``put`` of a ``comment``)."""
+    try:
+        clean_text = records.text(text, 1, records.MAX_COMMENT)
+    except (TypeError, ValueError) as exc:
+        raise invalid("text") from exc
+    try:
+        named = records.CHECKS["comment"]["mentions"]([] if mentions is None else mentions)
+    except (TypeError, ValueError) as exc:
+        raise invalid("mentions") from exc
+    comment_id = str(uuid.uuid4())
+    with sync.Together(caller) as change:
+        row = _seen_task(change.db, sight, task_id)
+        try:
+            change.run({"type": "put", "kind": "comment", "id": comment_id,
+                        "fields": {"reminder_id": row.id, "text": clean_text, "mentions": named,
+                                   "created_at": _now_stamp()},
+                        "clock": {"text": clock.now_ms()}})
+        except sync.Failed as exc:
+            if exc.code == "forbidden":
+                raise Refused("private_space", "Comments are for shared spaces.", 403) from exc
+            raise _from_failed(exc) from exc
+    notify.after_op(change.events, caller.id)
+    return comment_id

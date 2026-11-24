@@ -29,6 +29,7 @@ from ..models import (
     MANAGER,
     Account,
     Attachment,
+    Comment,
     Gone,
     ListPref,
     Member,
@@ -43,7 +44,19 @@ from ..models import (
 )
 
 # ``completions`` records every completion as the session flushes (its hook); imported here, where every write runs.
-from . import changes, clock, completions, cursor, files, gleichstand, records, spaces, wiederholung  # noqa: F401
+# ``history`` keeps what happened to a task and who did it, by a hook of its own as well.
+from . import (  # noqa: F401
+    changes,
+    clock,
+    completions,
+    cursor,
+    files,
+    gleichstand,
+    history,
+    records,
+    spaces,
+    wiederholung,
+)
 
 logger = logging.getLogger("nextasks.sync")
 
@@ -59,7 +72,10 @@ _MODELS: dict[str, Any] = {
     "filter": SavedFilter,
     "tile_pref": TilePref,
     "attachment": Attachment,
+    "comment": Comment,
 }
+#: How long the author may change the text of a comment.
+EDIT_HOURS = 24
 
 
 @dataclass
@@ -102,6 +118,8 @@ class Events:
     assigned: list[tuple[str, list[int]]] = field(default_factory=list)
     added: list[str] = field(default_factory=list)
     completed: list[str] = field(default_factory=list)
+    #: Comments made, by id.
+    comments: list[str] = field(default_factory=list)
     accounts: set[int] = field(default_factory=set)
 
 
@@ -233,7 +251,7 @@ def _clock_with(kind: str, given: dict[str, int]) -> dict[str, int]:
 def _create(db: Session, caller: Caller, kind: str, item_id: str, incoming: records.Incoming, now_ms: int,
             events: Events) -> Outcome:
     values = incoming.values
-    missing = [name for name in records.REQUIRED[kind] if name not in values]
+    missing = [name for name in records.REQUIRED[kind] if name not in values and name not in incoming.fixed]
     if missing:
         raise Failed("invalid", fields=missing)
     data = {**records.DEFAULTS[kind], **values}
@@ -312,6 +330,9 @@ def _create(db: Session, caller: Caller, kind: str, item_id: str, incoming: reco
                           position=data["position"], rules=data["rules"], hidden=data["hidden"], clock=clocks)
         spaces.restamp(db, [row])
         db.add(row)
+    elif kind == "comment":
+        row = _create_comment(db, caller, item_id, incoming, data, clocks, now_ms)
+        events.comments.append(item_id)
     else:  # tile_pref
         row = TilePref(account_id=caller.id, tile_id=item_id, hidden=data["hidden"], clock=clocks)
         spaces.restamp(db, [row])
@@ -320,6 +341,51 @@ def _create(db: Session, caller: Caller, kind: str, item_id: str, incoming: reco
     events.accounts.update(_audience(db, caller, _space_of(kind, row)))
     return Outcome(True, kind=kind, item_id=item_id,
                    values={"applied": applied, "ignored": sorted(set(incoming.ignored)), "dropped_assignees": dropped})
+
+
+def _create_comment(db: Session, caller: Caller, item_id: str, incoming: records.Incoming, data: dict[str, Any],
+                    clocks: dict[str, int], now_ms: int) -> Comment:
+    """A comment under a task the caller sees, never in a space "Private"; a text or a picture (an attachment of the
+    same task) it must have. People it names who are no members drop out quietly."""
+    reminder_id = incoming.fixed.get("reminder_id")
+    if reminder_id is None:
+        raise Failed("invalid", fields=["reminder_id"])
+    task = db.get(Reminder, reminder_id)
+    if task is None:
+        raise Failed("gone" if _is_gone(db, "reminder", reminder_id) else "parent_missing")
+    if _member(db, caller, task.space_id) is None:
+        raise Failed("not_found")
+    space = db.get(Space, task.space_id)
+    if space is None or space.private:
+        raise Failed("forbidden")
+    attachment_id = incoming.fixed.get("attachment_id")
+    if attachment_id is not None:
+        picture = db.get(Attachment, attachment_id)
+        if picture is None or picture.reminder_id != task.id:
+            raise Failed("invalid", fields=["attachment_id"])
+    if not data["text"] and attachment_id is None:
+        raise Failed("invalid", fields=["text"])
+    created = incoming.created_at
+    if created is None or records.ms(records.parse_stamp(created)) > now_ms + AHEAD_MS:
+        created = _now_stamp()
+    members = set(spaces.member_ids(db, task.space_id))
+    row = Comment(id=item_id, reminder_id=task.id, space_id=task.space_id, author_id=caller.id, text=data["text"],
+                  mentions=[person for person in data["mentions"] if person in members], attachment_id=attachment_id,
+                  created_at=created, clock=clocks)
+    spaces.restamp(db, [row])
+    db.add(row)
+    return row
+
+
+def _may_edit(caller: Caller, row: Comment) -> bool:
+    """The author, for a day after it was made (by the server's clock), and never once it was removed."""
+    if row.author_id != caller.id or row.removed_at is not None:
+        return False
+    try:
+        made = records.parse_stamp(row.created_at)
+    except ValueError:
+        return False
+    return clock.now() - made <= timedelta(hours=EDIT_HOURS)
 
 
 def _update(db: Session, caller: Caller, kind: str, row: Any, incoming: records.Incoming, now_ms: int,
@@ -333,6 +399,11 @@ def _update(db: Session, caller: Caller, kind: str, row: Any, incoming: records.
     if kind == "reminder" and incoming.values.get("completed_at") is not None:
         # Completing goes through ``complete`` only; a put may reopen.
         raise Failed("invalid", fields=["completed_at"])
+    if kind == "comment":
+        # The task and the picture stay what they were made with.
+        incoming.ignored.extend(incoming.fixed)
+        if incoming.clocks and not _may_edit(caller, row):
+            raise Failed("forbidden")
     stored = records.data_of(kind, row) if kind != "space" else records.data_of(kind, row, role=None)
     stored_clock = records.clock_of(kind, row)
     proposed = {**stored, **incoming.values}
@@ -382,6 +453,12 @@ def _update(db: Session, caller: Caller, kind: str, row: Any, incoming: records.
     if kind == "reminder" and "assignees" in taken:
         kept, dropped = _allowed_assignees(db, new_space, list(row.assignees or []))
         row.assignees = kept
+    if kind == "comment":
+        if not row.text and row.attachment_id is None:
+            raise Failed("invalid", fields=["text"])
+        members = set(spaces.member_ids(db, row.space_id))
+        row.mentions = [person for person in (row.mentions or []) if person in members]
+        row.edited_at = _now_stamp()
     spaces.restamp(db, [row])
     db.flush()
     if kind == "list" and new_space != old_space:
@@ -407,12 +484,14 @@ def _update(db: Session, caller: Caller, kind: str, row: Any, incoming: records.
 def delete(db: Session, caller: Caller, op: dict[str, Any], events: Events) -> Outcome:
     kind = op.get("kind")
     item_id = op.get("id")
-    if kind not in ("section", "attachment", "filter"):
+    if kind not in ("section", "attachment", "filter", "comment"):
         raise Failed("invalid", fields=["kind"])
     if not records.is_uuid(item_id):
         raise Failed("invalid", fields=["id"])
     if kind == "filter":
         return _delete_filter(db, caller, item_id, events)
+    if kind == "comment":
+        return _remove_comment(db, caller, item_id, events)
     row = db.get(_MODELS[kind], item_id)
     if row is None:
         # Vertragslücke: "already gone: ok" is read as "a tombstone is there"; an id the server never had is
@@ -431,6 +510,41 @@ def delete(db: Session, caller: Caller, op: dict[str, Any], events: Events) -> O
         files.forget_if_unused(db, digest)
     events.accounts.update(spaces.member_ids(db, space_id))
     return Outcome(True, kind=kind, item_id=item_id)
+
+
+def _remove_comment(db: Session, caller: Caller, item_id: str, events: Events) -> Outcome:
+    """Not for good: the comment stays as "message removed", its text, the people it named and its picture go. Its
+    author may, and every manager of the space. Removed already: ok."""
+    row = db.get(Comment, item_id)
+    if row is None:
+        if _is_gone(db, "comment", item_id):
+            return Outcome(True, kind="comment", item_id=item_id)
+        raise Failed("not_found")
+    member = _member(db, caller, row.space_id)
+    if member is None:
+        raise Failed("not_found")
+    if row.removed_at is not None:
+        return Outcome(True, kind="comment", item_id=item_id)
+    if row.author_id != caller.id and member.role != MANAGER:
+        raise Failed("forbidden")
+    now_ms = clock.now_ms()
+    row.removed_at = _now_stamp()
+    row.text = ""
+    row.mentions = []
+    clocks = dict(row.clock or {})
+    clocks["text"] = max(now_ms, int(clocks.get("text", 0)) + 1)
+    row.clock = clocks
+    picture = db.get(Attachment, row.attachment_id) if row.attachment_id else None
+    row.attachment_id = None
+    spaces.restamp(db, [row])
+    if picture is not None:
+        digest = picture.hash
+        db.delete(picture)
+        db.flush()
+        spaces.tombstone(db, "attachment", picture.id, picture.space_id)
+        files.forget_if_unused(db, digest)
+    events.accounts.update(spaces.member_ids(db, row.space_id))
+    return Outcome(True, kind="comment", item_id=item_id)
 
 
 def _delete_filter(db: Session, caller: Caller, item_id: str, events: Events) -> Outcome:
@@ -517,6 +631,10 @@ def complete(db: Session, caller: Caller, op: dict[str, Any], events: Events) ->
         return Outcome(True, kind="reminder", item_id=row.id, values={"copy_id": None, "next_due": None})
     copy = plan["copy"]
     copy_row: Reminder | None = None
+    # The history tells this as done for the date, not as a new date and a new task (``services/history.py``).
+    db.info.setdefault(history.COMPLETING, {})[row.id] = occurrence
+    if copy is not None:
+        db.info.setdefault(history.COPIES, set()).add(copy["id"])
     # ``moved_on``: the copy of this occurrence is there already, only the original moves on (no copy in the plan).
     if copy is not None:
         copy_row = Reminder(
@@ -620,6 +738,7 @@ def apply(caller: Caller, op: dict[str, Any]) -> tuple[dict[str, Any], Events]:
     if runner is None:
         return {"op_id": op.get("op_id"), "ok": False, "code": "invalid", "fields": ["type"]}, events
     with cursor.WRITE_LOCK, SessionLocal() as db:
+        db.info[history.ACTOR] = caller.id
         try:
             outcome = runner(db, caller, op, events)
             db.commit()
@@ -654,6 +773,7 @@ class Together:
     def __enter__(self) -> Self:
         cursor.WRITE_LOCK.acquire()
         self.db = SessionLocal()
+        self.db.info[history.ACTOR] = self.caller.id
         return self
 
     def run(self, op: dict[str, Any]) -> Outcome:
