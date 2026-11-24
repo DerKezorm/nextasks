@@ -12,7 +12,7 @@
  * the settings at the foot. The column is as wide as one drags it (`ColumnHandle`, `lib/columns.ts`). On a phone the
  * same is a page of its own, without the handle.
  */
-import { ChevronDown, ChevronRight, CloudOff, Eye, EyeOff, FolderPlus, ListPlus, MoreHorizontal, Pencil, Plus, Search, Settings, Trash2, Users } from 'lucide-react'
+import { BarChart3, ChevronDown, ChevronRight, CloudOff, Eye, EyeOff, FolderPlus, ListPlus, MoreHorizontal, Pencil, Plus, Search, Settings, Sparkles, Trash2, Users } from 'lucide-react'
 import { createElement, useState, type DragEvent, type HTMLAttributes, type MouseEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useLocation } from 'react-router-dom'
@@ -23,6 +23,7 @@ import { localDay, localTime, overdue } from '../lib/due'
 import { dragging, draggedReminder, DRAG_LIST, DRAG_SPACE } from '../lib/drag'
 import { colorOf, iconFor } from '../lib/look'
 import { isShared } from '../lib/shared'
+import { yearOffered } from '../lib/stats'
 import { useFold } from '../lib/sidebarFold'
 import { TILE_LOOK } from '../lib/tileLook'
 import { useAuth } from '../state/auth'
@@ -210,10 +211,11 @@ export function SidebarBody() {
 
         <div className="mt-auto pt-3">
           <div className="border-t border-ink-700 pt-2">
+            <ReviewEntries today={today} />
             <NavLink
               to="/trash"
               data-testid="trash-entry"
-              className={({ isActive }) => 'flex h-8 items-center gap-2 rounded-lg px-2.5 text-[13.5px] ' + (isActive ? 'nt-chosen font-semibold' : 'text-mist-300 hover:bg-ink-800 hover:text-mist-100')}
+              className={({ isActive }) => bottomRow(isActive)}
             >
               <Trash2 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden /> {t('trash.title')}
             </NavLink>
@@ -223,6 +225,28 @@ export function SidebarBody() {
       </div>
       <AccountLine />
     </div>
+  )
+}
+
+/** A row at the bottom of the sidebar, above the trash. */
+const bottomRow = (active: boolean) => 'flex h-8 items-center gap-2 rounded-lg px-2.5 text-[13.5px] ' + (active ? 'nt-chosen font-semibold' : 'text-mist-300 hover:bg-ink-800 hover:text-mist-100')
+
+/** "Review" (symbol: bars), and from 1 December to 31 January "Your 2026" above it, the year's card. */
+function ReviewEntries({ today }: { today: string }) {
+  const { t } = useTranslation()
+  const year = yearOffered(today)
+  const yearPath = `/review/year/${year}`
+  return (
+    <>
+      {year !== null && (
+        <NavLink to={yearPath} data-testid="year-entry" className={({ isActive }) => bottomRow(isActive)}>
+          <Sparkles className="h-3.5 w-3.5 text-accent-400" strokeWidth={2} aria-hidden /> {t('review.yearEntry', { year })}
+        </NavLink>
+      )}
+      <NavLink to="/review" end data-testid="review-entry" className={({ isActive }) => bottomRow(isActive)}>
+        <BarChart3 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden /> {t('review.title')}
+      </NavLink>
+    </>
   )
 }
 

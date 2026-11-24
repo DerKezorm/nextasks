@@ -7,10 +7,12 @@ import { SidebarBody } from './components/Sidebar'
 import { AppConnectPage, ConfirmEmailPage, InvitePage, LoginPage, SetupPage, UnsubscribePage } from './pages/AuthPages'
 import { FilterPage } from './pages/FilterPage'
 import { ListPage } from './pages/ListPage'
+import { ReviewPage } from './pages/ReviewPage'
 import { SearchPage } from './pages/SearchPage'
 import { FormerAboutAddress, FormerAccountAddress, SettingsPage } from './pages/SettingsPage'
 import { TilePage } from './pages/TilePage'
 import { TrashPage } from './pages/TrashPage'
+import { YearPage } from './pages/YearPage'
 import { OfflinePage } from './components/AppInstall'
 import { NotFound } from './components/NotFound'
 import { usePhone } from './lib/phone'
@@ -95,6 +97,8 @@ export default function App() {
         <Route path="lists/:id" element={<ListPage />} />
         <Route path="filters/:id" element={<FilterPage />} />
         <Route path="search" element={<SearchPage />} />
+        <Route path="review" element={<ReviewPage />} />
+        <Route path="review/year/:year" element={<YearPage />} />
         <Route path="trash" element={<TrashPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="settings/:area" element={<SettingsPage />} />

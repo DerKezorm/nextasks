@@ -61,6 +61,27 @@
   --color-prio-3: #d9534f;
 }
 
+/* The review (pages/ReviewPage.tsx): petrol in five steps for the heat map and its kin, from "nothing" (a shade above
+   the card) to "most"; a term of a repeating task done on time in green, late in amber. Outside @theme for the same
+   reason. */
+:root {
+  --color-heat-0: #1f2b32;
+  --color-heat-1: #15404c;
+  --color-heat-2: #1d6b80;
+  --color-heat-3: #38a9c4;
+  --color-heat-4: #8fdcef;
+  --color-on-time: #3f9a6b;
+  --color-done-late: #c98a12;
+}
+
+:root[data-theme='light'] {
+  --color-heat-0: #e9eef0;
+  --color-heat-1: #c4e6ef;
+  --color-heat-2: #85cde0;
+  --color-heat-3: #38a9c4;
+  --color-heat-4: #1b7389;
+}
+
 /* Light mode: only swap the values behind the same names. */
 :root[data-theme='light'] {
   --color-ink-950: #f4f6f7;
