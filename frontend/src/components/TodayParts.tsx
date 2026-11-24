@@ -3,13 +3,13 @@
  * "Scheduled", a task dropped on a day moves there), and the cards of the right column: how far the day got, the focus
  * of the day, the family's day (where others share a space), "Your week" (alone) and what comes tomorrow.
  */
-import { Star, X } from 'lucide-react'
-import { useState, type DragEvent, type ReactNode } from 'react'
+import { GripVertical, Star, X } from 'lucide-react'
+import { useState, type DragEvent, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
 import { moveToDay } from '../lib/actions'
-import { draggedReminder } from '../lib/drag'
+import { DRAG_REMINDER, draggedReminder, dragging } from '../lib/drag'
 import { FOCUS_MOST, type Focus } from '../lib/focus'
 import { colorOf } from '../lib/look'
 import type { BandDay } from '../lib/today'
@@ -167,6 +167,22 @@ export function FocusCard({ focus, items }: { focus: Focus; items: Reminder[] })
     const reminder = view.reminder(id)
     if (reminder && !reminder.completed_at) focus.add(id)
   })
+  // A task of the focus dragged onto another one takes its place; one from the page goes in there.
+  const [aim, setAim] = useState<number | null>(null)
+  const dropOn = (event: DragEvent, n: number) => {
+    const id = draggedReminder(event)
+    setAim(null)
+    if (!id) return
+    event.preventDefault()
+    event.stopPropagation()
+    if (focus.has(id)) focus.move(id, n)
+    else if (view.reminder(id) && !view.reminder(id)!.completed_at) focus.add(id, n)
+  }
+  const onKey = (event: KeyboardEvent, id: string, n: number) => {
+    if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return
+    event.preventDefault()
+    focus.move(id, n + (event.key === 'ArrowUp' ? -1 : 1))
+  }
   return (
     <RailCard title={t('today.focus.title')} side={t('today.focus.count', { count: items.length, most: FOCUS_MOST })} testid="today-focus" drop={handlers} lit={over}>
       {items.length ? (
@@ -175,10 +191,41 @@ export function FocusCard({ focus, items }: { focus: Focus; items: Reminder[] })
             const done = !!reminder.completed_at
             const id = focus.ids[n]
             return (
-              <li key={id} className="group grid grid-cols-[18px_20px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-[10px] border border-ink-700 px-2.5 py-2" data-testid="focus-item">
-                <span className="text-center text-[13px] font-bold text-accent-400 tabular-nums">{n + 1}</span>
+              <li
+                key={id}
+                draggable
+                onDragStart={(event) => {
+                  dragging.reminder = id
+                  event.dataTransfer?.setData(DRAG_REMINDER, id)
+                  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragEnd={() => {
+                  dragging.reminder = null
+                  setAim(null)
+                }}
+                onDragOver={(event) => {
+                  if (!draggedReminder(event)) return
+                  event.preventDefault()
+                  event.stopPropagation()
+                  setAim(n)
+                }}
+                onDragLeave={() => setAim(null)}
+                onDrop={(event) => dropOn(event, n)}
+                className={'group grid cursor-grab grid-cols-[18px_20px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-[10px] border px-2.5 py-2 ' + (aim === n ? 'border-accent-500 bg-accent-wash' : 'border-ink-700')}
+                data-testid="focus-item"
+              >
+                <span className="relative text-center text-[13px] font-bold text-accent-400 tabular-nums">
+                  <span className="group-hover:invisible">{n + 1}</span>
+                  <GripVertical className="invisible absolute inset-0 m-auto h-3.5 w-3.5 text-mist-500 group-hover:visible" aria-hidden />
+                </span>
                 <TickBox done={done} title={reminder.title} onToggle={() => engine.toggle(reminder.id)} small />
-                <button type="button" onClick={() => shell.openReminder(reminder.id)} className={'min-w-0 truncate text-left text-[14px] ' + (done ? 'text-mist-500 line-through' : 'text-mist-100')}>
+                <button
+                  type="button"
+                  onClick={() => shell.openReminder(reminder.id)}
+                  onKeyDown={(event) => onKey(event, id, n)}
+                  title={t('today.focus.order')}
+                  className={'min-w-0 truncate text-left text-[14px] ' + (done ? 'text-mist-500 line-through' : 'text-mist-100')}
+                >
                   {reminder.title}
                 </button>
                 <button type="button" onClick={() => focus.remove(id)} aria-label={t('today.focus.removeOne', { title: reminder.title })} title={t('today.focus.remove')} className="rounded-md p-0.5 text-mist-500 opacity-0 group-hover:opacity-100 hover:text-mist-100 focus:opacity-100">

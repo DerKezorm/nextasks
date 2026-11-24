@@ -19,9 +19,12 @@ export interface Focus {
   ready: boolean
   has(id: string): boolean
   full: boolean
-  add(id: string): void
+  /** `at`: the place in the order (at the end without). */
+  add(id: string, at?: number): void
   remove(id: string): void
   toggle(id: string): void
+  /** Puts a task of the focus at another place of the order (dragged, or Alt and the arrows). */
+  move(id: string, to: number): void
 }
 
 const FocusContext = createContext<Focus | null>(null)
@@ -71,12 +74,19 @@ export function useFocusState(today: string): Focus {
   return useMemo(() => {
     const has = (id: string) => ids.includes(id)
     const full = ids.length >= FOCUS_MOST
-    const add = (id: string) => {
-      if (!has(id) && !full) write([...ids, id])
+    const add = (id: string, at = ids.length) => {
+      if (!has(id) && !full) write([...ids.slice(0, at), id, ...ids.slice(at)])
     }
     const remove = (id: string) => {
       if (has(id)) write(ids.filter((x) => x !== id))
     }
-    return { ids, ready, has, full, add, remove, toggle: (id: string) => (has(id) ? remove(id) : add(id)) }
+    const move = (id: string, to: number) => {
+      const from = ids.indexOf(id)
+      if (from < 0 || to < 0 || to >= ids.length || from === to) return
+      const next = ids.filter((x) => x !== id)
+      next.splice(to, 0, id)
+      write(next)
+    }
+    return { ids, ready, has, full, add, remove, move, toggle: (id: string) => (has(id) ? remove(id) : add(id)) }
   }, [ids, ready, write])
 }

@@ -1952,7 +1952,8 @@
       "add": "In den Fokus für heute",
       "remove": "Aus dem Fokus nehmen",
       "removeOne": "„{{title}}“ aus dem Fokus nehmen",
-      "full": "Der Fokus hat schon drei Aufgaben"
+      "full": "Der Fokus hat schon drei Aufgaben",
+      "order": "Ziehen oder Alt + Pfeiltasten ändert die Reihenfolge"
     },
     "family": {
       "title": "Familie heute",

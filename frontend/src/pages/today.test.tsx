@@ -1,6 +1,7 @@
 // "Today" as a page of the day: the three cards with what was ticked off today, "All to today", the timeline with the
 // line of now, the week band (a click leads to the day, a drop moves there), the focus of the day on the server, the
 // right column shared and alone, "Plan tomorrow", the quiet card once nothing is left.
+import { act } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { localDay } from '../lib/due'
@@ -124,6 +125,24 @@ describe('Today', () => {
     await unmount()
     const again = await mount(server, '/today')
     expect(again.querySelectorAll('[data-testid="focus-item"]')).toHaveLength(2)
+  })
+
+  it('changes the order of the focus by dragging or with Alt and the arrows', async () => {
+    const { server, robin } = world()
+    const id = (title: string) => reminder(server, title)!.id
+    server.focus.set(robin, [id('Late pickup'), id('Today without time'), id('Overdue bins')])
+    const page = await mount(server, '/today')
+    const items = () => [...page.querySelectorAll<HTMLElement>('[data-testid="focus-item"]')]
+    const shown = () => items().map((i) => i.textContent)
+    expect(shown()).toEqual(['1Late pickup', '2Today without time', '3Overdue bins'])
+    await drag(items()[2], items()[0])
+    expect(server.focus.get(robin)).toEqual([id('Overdue bins'), id('Late pickup'), id('Today without time')])
+    expect(shown()).toEqual(['1Overdue bins', '2Late pickup', '3Today without time'])
+    await act(async () => {
+      items()[0].querySelector('button:not([role="checkbox"])')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true, cancelable: true }))
+    })
+    await settle()
+    expect(server.focus.get(robin)).toEqual([id('Late pickup'), id('Overdue bins'), id('Today without time')])
   })
 
   it('shows the family\'s day where others share a space, and "Your week" alone', async () => {

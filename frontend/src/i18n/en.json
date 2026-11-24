@@ -1952,7 +1952,8 @@
       "add": "Add to today's focus",
       "remove": "Remove from focus",
       "removeOne": "Remove “{{title}}” from focus",
-      "full": "The focus has three tasks already"
+      "full": "The focus has three tasks already",
+      "order": "Drag, or Alt + arrow keys, to change the order"
     },
     "family": {
       "title": "Family today",
