@@ -26,6 +26,11 @@ import { addDays } from '../sync/repeat'
 import { groupByDay, tileItems, type Tile } from '../sync/tiles'
 import type { Data, Reminder } from '../sync/types'
 
+/** "26 November": the date of a day without its weekday. */
+function shortDate(day: string, language: string): string {
+  return new Date(`${day}T12:00:00`).toLocaleDateString(language, { day: 'numeric', month: 'long' })
+}
+
 /** Top-level rows only: a subtask whose parent shows too appears under it. */
 // eslint-disable-next-line react-refresh/only-export-components
 export function tops(items: Reminder[]): Reminder[] {
@@ -65,8 +70,15 @@ export function TilePage({ tile }: { tile: Tile }) {
           only={only}
           head={
             <CardHead count={group.length} tone={day < today ? 'late' : day === today ? 'today' : undefined}>
-              <span className="shrink-0">{dayLabel(day, today, i18n.language, t)}</span>
-              <span className="truncate font-medium tracking-normal normal-case">· {longDay(day, i18n.language)}</span>
+              {/* Near days by their word and the date; the others by the long date alone. */}
+              {day >= addDays(today, -1) && day <= addDays(today, 6) ? (
+                <>
+                  <span className="shrink-0">{dayLabel(day, today, i18n.language, t)}</span>
+                  <span className="truncate font-medium tracking-normal normal-case">· {shortDate(day, i18n.language)}</span>
+                </>
+              ) : (
+                <span className="truncate">{longDay(day, i18n.language)}</span>
+              )}
             </CardHead>
           }
         />
