@@ -54,11 +54,11 @@ family, plus `"fields"` inside `detail` for `422 invalid_input`.
 ```json
 { "name": "robin", "display_name": "Robin", "level": "write", "time_zone": "Europe/Berlin",
   "spaces": [{"id": "…", "name": "Familie"}], "version": "0.1.0",
-  "features": ["tasks", "dashboard", "external_ref", "members"] }
+  "features": ["tasks", "dashboard", "external_ref", "members", "stats"] }
 ```
 
 `features` names what this server's `/api/v1` offers; a program asks for a feature before it uses it. `members`: the
-server has `GET /api/v1/spaces/{id}/members`.
+server has `GET /api/v1/spaces/{id}/members`. `stats`: the server has `GET /api/v1/stats/summary`.
 
 ## Spaces and lists
 
@@ -206,6 +206,28 @@ Each list holds at most 10 tasks (`?limit=` up to 50), soonest first. Counted ar
 subtasks included, as the interface's tiles count them. `today` counts what is due today, `overdue` what was due
 before, `upcoming` the next 7 days after today, `assigned_to_me` the open tasks assigned to the account. Days are
 those of `time_zone`, the account's.
+
+## Statistics
+
+### `GET /api/v1/stats/summary`
+
+For a card such as nexdeck's "Streak": how many days in a row something was done, and a year of days for a heat map.
+
+```json
+{
+  "time_zone": "Europe/Berlin", "today": "2026-11-24",
+  "streak": { "current": 23, "record": 41, "done_today": true },
+  "done_today": 4, "done_week": 42, "total": 1284,
+  "days": { "from": "2025-11-25", "to": "2026-11-24", "counts": [0, 3, 1, …] }
+}
+```
+
+Counted from the server's record of completions, as the interface's review counts: every space the token may see
+(hidden ones too), a task once (subtasks done along with it not), also when the task was deleted since; a space in
+the bin not at all. `streak.current` is the run of days with at least one task done that ends today or yesterday
+(today is not over; `done_today` says whether today counts already), `record` the longest run ever. `done_week` is the
+last seven days, today included. `days.counts` has one number per day of the last 365, oldest first. Days are those
+of `time_zone`, the account's.
 
 ## Later
 

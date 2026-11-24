@@ -54,6 +54,7 @@ WORDS: dict[str, dict[str, str]] = {
         "weekly_heading": "Die Woche",
         "weekly_lead": "Was in deinen Bereichen in den letzten sieben Tagen erledigt wurde und was in den nächsten "
                        "sieben Tagen fällig ist.",
+        "review_week": "Rückblick",
         "done_week": "Erledigt ({count})",
         "next_week": "In den nächsten 7 Tagen fällig",
         "done_by": "erledigt von {name}",
@@ -104,6 +105,7 @@ WORDS: dict[str, dict[str, str]] = {
         "weekly_title": "Your week in nextasks",
         "weekly_heading": "The week",
         "weekly_lead": "What was done in your spaces in the last seven days, and what is due in the next seven.",
+        "review_week": "Looking back",
         "done_week": "Done ({count})",
         "next_week": "Due in the next 7 days",
         "done_by": "done by {name}",
@@ -367,13 +369,18 @@ def daily(language: str, *, base: str, day: date, overdue: list[Item], today: li
                    unsubscribe=unsubscribe, language=language, inline={LOGO: "mail-logo.png"})
 
 
-def weekly(language: str, *, base: str, done: list[Item], upcoming: list[Item], unsubscribe: str) -> Message | None:
+def weekly(language: str, *, base: str, done: list[Item], upcoming: list[Item], unsubscribe: str,
+           review: list[str] | None = None) -> Message | None:
+    """``review``: the week in sentences (``services/stats.py``), above the lists."""
     if not done and not upcoming:
         return None
     w = words(language)
     lead = w["weekly_lead"]
     body = _p(lead, quiet=True)
     text_parts: list[str] = []
+    if review:
+        body += _part(w["review_week"], color=PETROL_TEXT) + "".join(_p(sentence) for sentence in review)
+        text_parts += [f"{w['review_week']}:", *review, ""]
     if done:
         heading = w["done_week"].format(count=len(done))
         body += _part(heading, color=PETROL_TEXT) + _rows(done, language, done=True)

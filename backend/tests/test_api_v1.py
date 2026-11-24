@@ -87,7 +87,7 @@ def test_me_names_the_time_zone_the_features_and_only_the_spaces_of_the_token() 
     anna.put(f"{API}/me", json={"timezone": "Europe/Berlin"})
     me = ok(token(anna_account).get(f"{V1}/me"))
     assert me["time_zone"] == "Europe/Berlin" and me["level"] == "write"
-    assert {"tasks", "dashboard", "external_ref", "members"} <= set(me["features"])
+    assert {"tasks", "dashboard", "external_ref", "members", "stats"} <= set(me["features"])
     assert {item["id"] for item in me["spaces"]} == {private, space}
     narrow = ok(token(anna_account, "read", [private]).get(f"{V1}/me"))
     assert [item["id"] for item in narrow["spaces"]] == [private] and narrow["level"] == "read"
@@ -318,6 +318,25 @@ def test_a_space_in_the_bin_has_no_members_to_show() -> None:
     anna_account, anna, _ben_account, _ben, space, _list_id = family()
     assert put(anna, "space", space, {"deleted_at": "2026-11-24T08:00:00.000Z"})["ok"]
     refused(token(anna_account).get(f"{V1}/spaces/{space}/members"), 404, "not_found")
+
+
+def test_the_stats_summary_counts_the_spaces_of_the_token_only() -> None:
+    anna_account, anna, _ben_account, ben, _space, list_id = family()
+    private, first = private_space(anna)
+    stamp = records.format_stamp(clock.now())
+    for browser, task in ((ben, make_reminder(anna, list_id, "Bread")), (anna, make_reminder(anna, first, "Own"))):
+        batch(browser, {"type": "complete", "id": task, "occurrence": None, "at": stamp,
+                        "on": clock.today().isoformat()})
+    summary = ok(token(anna_account, "read").get(f"{V1}/stats/summary"))
+    assert summary["done_today"] == 2 and summary["done_week"] == 2 and summary["total"] == 2
+    assert summary["streak"] == {"current": 1, "record": 1, "done_today": True}
+    assert len(summary["days"]["counts"]) == 365 and summary["days"]["counts"][-1] == 2
+    assert summary["days"]["to"] == clock.today().isoformat() == summary["today"]
+    narrow = ok(token(anna_account, "read", [private]).get(f"{V1}/stats/summary"))
+    assert narrow["done_today"] == 1, "a token limited to some spaces counts only those"
+    _cleo_account, cleo = person("cleo")
+    assert ok(token(_cleo_account).get(f"{V1}/stats/summary"))["total"] == 0
+    assert cleo
 
 
 def test_subtasks_and_sections_must_fit_their_list() -> None:
@@ -569,7 +588,7 @@ def test_every_route_describes_itself() -> None:
     schema = app.openapi()
     routes = {path: methods for path, methods in schema["paths"].items() if path.startswith(V1)}
     assert set(routes) == {f"{V1}/me", f"{V1}/spaces", f"{V1}/spaces/{{space_id}}/members", f"{V1}/lists",
-                           f"{V1}/tasks", f"{V1}/tasks/{{task_id}}", f"{V1}/dashboard"}
+                           f"{V1}/tasks", f"{V1}/tasks/{{task_id}}", f"{V1}/dashboard", f"{V1}/stats/summary"}
     for path, methods in routes.items():
         for method, operation in methods.items():
             assert operation.get("summary"), (method, path)

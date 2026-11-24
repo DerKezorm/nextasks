@@ -110,6 +110,10 @@ def init_db() -> None:
     for table in Base.metadata.sorted_tables:
         for table_index in table.indexes:
             table_index.create(engine, checkfirst=True)
+    # The record of completions, filled once from what is done already (``services/completions.py``).
+    from .services import completions
+
+    completions.fill_once()
 
 
 def _sql_literal(value: Any) -> str:

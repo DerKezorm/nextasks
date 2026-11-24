@@ -41,7 +41,9 @@ from ..models import (
     TilePref,
     utcnow,
 )
-from . import changes, clock, cursor, files, gleichstand, records, spaces, wiederholung
+
+# ``completions`` records every completion as the session flushes (its hook); imported here, where every write runs.
+from . import changes, clock, completions, cursor, files, gleichstand, records, spaces, wiederholung  # noqa: F401
 
 logger = logging.getLogger("nextasks.sync")
 

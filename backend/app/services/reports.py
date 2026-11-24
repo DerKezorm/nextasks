@@ -4,7 +4,9 @@
   "Mine" is whom a due task rings for (``notify.recipients``): the assignees, or whoever made it when nobody is
   assigned. Nothing in it: no mail.
 * **The week** (``weekly``): everything done in the last seven days in the spaces I am in, by anybody; everything due
-  in the next seven days there (today included). Nothing in it: no mail.
+  in the next seven days there (today included). Above them, by mail, the week in sentences of the review
+  (``stats.weekly_sentences``: for somebody alone in their spaces in the second person, nobody compared). Nothing done
+  and nothing due: no mail.
 
 A report is due when its moment (day, time, for the week also the weekday, in ``Account.timezone`` or the server's)
 has come and is at most ``GRACE`` old: a server that was down longer skips it rather than sending yesterday's day.
@@ -25,7 +27,7 @@ from sqlalchemy.orm import Session
 
 from ..db import SessionLocal
 from ..models import Account, AssignedLog, NotifyRoute, NotifySchedule, Reminder, TaskList
-from . import clock, messages, notify, notifyprefs, spaces, visibility
+from . import clock, messages, notify, notifyprefs, spaces, stats, visibility
 from .channels import Message
 from .messages import Item
 from .records import format_stamp
@@ -157,7 +159,7 @@ def _weekly_parts(db: Session, account: Account, *, base: str, today: date,
 def weekly(db: Session, account: Account, *, base: str, today: date, now: datetime, unsubscribe: str) -> Message | None:
     done, upcoming = _weekly_parts(db, account, base=base, today=today, now=now)
     return messages.weekly(spaces.language_of(account), base=base, done=done, upcoming=upcoming,
-                           unsubscribe=unsubscribe)
+                           unsubscribe=unsubscribe, review=stats.weekly_sentences(db, account.id, today))
 
 
 SHORT: dict[str, dict[str, str]] = {
