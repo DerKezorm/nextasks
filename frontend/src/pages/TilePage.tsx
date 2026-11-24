@@ -7,8 +7,9 @@
  * list.
  */
 import { ArrowRight } from 'lucide-react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { CardHead } from '../components/CardHead'
 import { DayBoard, DayNav, ScheduledViewMenu } from '../components/DayBoard'
@@ -38,6 +39,11 @@ export function tops(items: Reminder[]): Reminder[] {
   return items.filter((r) => !r.parent_id || !shown.has(r.parent_id))
 }
 
+/** Whole days from `from` to `to`. */
+function daysFrom(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86_400_000)
+}
+
 export function TilePage({ tile }: { tile: Tile }) {
   const { t, i18n } = useTranslation()
   const view = useView()
@@ -48,6 +54,22 @@ export function TilePage({ tile }: { tile: Tile }) {
   const items = tileItems(view, tile, today)
   const switchable = tile === 'scheduled' && !phone
   const columns = switchable && look === 'columns'
+  // "Scheduled?day=…" (a day of the week band on "Today"): that day in view, or the first one after it.
+  const [params] = useSearchParams()
+  const wanted = tile === 'scheduled' ? params.get('day') : null
+  const { setStart } = paging
+  useEffect(() => {
+    if (!wanted || !/^\d{4}-\d{2}-\d{2}$/.test(wanted)) return
+    if (columns) {
+      setStart(Math.max(0, daysFrom(today, wanted)))
+      return
+    }
+    const sections = [...document.querySelectorAll<HTMLElement>('section[data-day]')]
+    const found = sections.find((section) => (section.dataset.day ?? '') >= wanted)
+    found?.scrollIntoView?.({ block: 'start' })
+    // Only when the page opens for a day, not as the tasks change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wanted, columns])
   const only = new Set(items.map((r) => r.id))
   const defaults: Data | null = tile === 'today' || tile === 'scheduled' ? { due_date: today, due_time: null, repeat: null, repeat_from: 'due' } : tile === 'flagged' ? { flagged: true } : tile === 'all' ? {} : null
   // "+ New task" goes where the quick entry goes, with what the collection stands for (me only where others are).
@@ -61,7 +83,7 @@ export function TilePage({ tile }: { tile: Tile }) {
   if (columns) body = <DayBoard items={items} today={today} paging={paging} />
   else if (tile === 'scheduled') {
     body = groupByDay(items).map(({ day, items: group }) => (
-      <section key={day} aria-label={longDay(day, i18n.language)}>
+      <section key={day} aria-label={longDay(day, i18n.language)} data-day={day} className="scroll-mt-24">
         <ReminderGroup
           spot={null}
           items={tops(group)}
