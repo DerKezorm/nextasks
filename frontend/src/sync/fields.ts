@@ -27,6 +27,8 @@ export const GROUPS: Partial<Record<Kind, Record<string, string[]>>> = {
   space_pref: { hidden: ['hidden'] },
   filter: { name: ['name'], color: ['color'], icon: ['icon'], position: ['position'], rules: ['rules'], hidden: ['hidden'] },
   tile_pref: { hidden: ['hidden'] },
+  // The text of a comment and the people it names change together.
+  comment: { text: ['text', 'mentions'] },
 }
 
 /** The clock key a field is kept under; null for fields without a clock (`id`, `private`, `created_by`, …). */
@@ -83,7 +85,11 @@ export const DEFAULTS: Record<Kind, Data> = {
   space_pref: { hidden: false },
   filter: { name: '', color: 'blue', icon: 'filter', position: '', rules: {}, hidden: false },
   tile_pref: { hidden: false },
+  comment: { reminder_id: null, author_id: null, text: '', mentions: [], attachment_id: null, created_at: '', edited_at: null, removed_at: null },
 }
+
+/** Fields of a comment without a clock, sent once when it is made. */
+export const COMMENT_FIXED = ['reminder_id', 'attachment_id']
 
 /** Fields a `put` must carry when it creates the record. */
 export const REQUIRED: Partial<Record<Kind, string[]>> = {
@@ -98,7 +104,7 @@ export const REQUIRED: Partial<Record<Kind, string[]>> = {
 }
 
 /** Fields only the server sets: a `put` may carry them, the server ignores them. */
-export const SERVER_ONLY = ['created_by', 'completed_by', 'private', 'role']
+export const SERVER_ONLY = ['created_by', 'completed_by', 'private', 'role', 'author_id', 'edited_at', 'removed_at']
 
 /** A new record with the defaults, every clock 0 so any real change wins. */
 export function fresh(kind: Kind, id: string): { data: Data; clock: Clock } {

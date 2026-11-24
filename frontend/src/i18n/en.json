@@ -1993,5 +1993,50 @@
       "coming": "Already planned for tomorrow",
       "close": "Done"
     }
+  },
+  "comments": {
+    "title": "History",
+    "count_one": "1 comment",
+    "count_other": "{{count}} comments",
+    "empty": "Nothing has happened yet. Be the first to write something about this task.",
+    "placeholder": "Write a comment, @ mentions someone",
+    "keys": "Enter sends, Shift+Enter starts a new line.",
+    "send": "Send",
+    "sending": "sending",
+    "edited": "edited",
+    "removed": "Message deleted",
+    "actions": "Actions for this comment",
+    "edit": "Edit",
+    "save": "Save",
+    "remove": "Delete",
+    "removeTitle": "Delete the comment?",
+    "removeText": "Everybody then sees “Message deleted” in place of the text.",
+    "tooLong": "A comment has at most {{max}} characters.",
+    "mentionList": "People in the space",
+    "picture": "Picture",
+    "pictureAdd": "Add a picture",
+    "pictureRemove": "Remove the picture again",
+    "pictureOpen": "View the picture large",
+    "pictureLoading": "Loading the picture",
+    "pictureTooLarge": "The picture is empty or larger than the server takes.",
+    "event": {
+      "created": "{{name}} created the task",
+      "completed": "{{name}} completed it",
+      "reopened": "{{name}} opened it again",
+      "occurrence": "{{name}} completed it for {{date}}",
+      "due": "{{name}} set the date to {{date}}",
+      "dueRemoved": "{{name}} removed the date",
+      "assignees": "{{name}} assigned it to {{people}}",
+      "assigneesNone": "{{name}} unassigned it",
+      "priority": "{{name}} set the priority to {{priority}}",
+      "moved": "{{name}} moved it to “{{list}}”",
+      "movedAway": "{{name}} moved it to another list",
+      "renamed": "{{name}} renamed it to “{{title}}”",
+      "changed": "{{name}} changed it"
+    },
+    "notify": {
+      "comment": "Someone comments on a task I created or am assigned to",
+      "mention": "Someone mentions me in a comment"
+    }
   }
 }

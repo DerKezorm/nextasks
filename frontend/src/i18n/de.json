@@ -1993,5 +1993,50 @@
       "coming": "Morgen schon geplant",
       "close": "Fertig"
     }
+  },
+  "comments": {
+    "title": "Verlauf",
+    "count_one": "1 Kommentar",
+    "count_other": "{{count}} Kommentare",
+    "empty": "Noch nichts passiert. Schreib als Erste oder Erster etwas zu dieser Aufgabe.",
+    "placeholder": "Kommentar schreiben, @ erwähnt jemanden",
+    "keys": "Enter sendet, Umschalt+Enter macht eine neue Zeile.",
+    "send": "Senden",
+    "sending": "wird gesendet",
+    "edited": "bearbeitet",
+    "removed": "Nachricht gelöscht",
+    "actions": "Aktionen für diesen Kommentar",
+    "edit": "Bearbeiten",
+    "save": "Speichern",
+    "remove": "Löschen",
+    "removeTitle": "Kommentar löschen?",
+    "removeText": "Statt des Textes steht dann für alle „Nachricht gelöscht“ da.",
+    "tooLong": "Ein Kommentar hat höchstens {{max}} Zeichen.",
+    "mentionList": "Personen im Bereich",
+    "picture": "Bild",
+    "pictureAdd": "Bild anhängen",
+    "pictureRemove": "Bild wieder entfernen",
+    "pictureOpen": "Bild groß ansehen",
+    "pictureLoading": "Bild wird geladen",
+    "pictureTooLarge": "Das Bild ist leer oder größer, als der Server annimmt.",
+    "event": {
+      "created": "{{name}} hat die Aufgabe angelegt",
+      "completed": "{{name}} hat sie erledigt",
+      "reopened": "{{name}} hat sie wieder geöffnet",
+      "occurrence": "{{name}} hat sie für {{date}} erledigt",
+      "due": "{{name}} hat das Datum auf {{date}} gesetzt",
+      "dueRemoved": "{{name}} hat das Datum entfernt",
+      "assignees": "{{name}} hat sie {{people}} zugewiesen",
+      "assigneesNone": "{{name}} hat die Zuständigkeit aufgehoben",
+      "priority": "{{name}} hat die Priorität auf {{priority}} gesetzt",
+      "moved": "{{name}} hat sie nach „{{list}}“ verschoben",
+      "movedAway": "{{name}} hat sie in eine andere Liste verschoben",
+      "renamed": "{{name}} hat sie in „{{title}}“ umbenannt",
+      "changed": "{{name}} hat sie geändert"
+    },
+    "notify": {
+      "comment": "Jemand kommentiert eine Aufgabe, die ich angelegt habe oder für die ich zuständig bin",
+      "mention": "Jemand erwähnt mich in einem Kommentar"
+    }
   }
 }

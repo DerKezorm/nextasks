@@ -108,6 +108,8 @@ export class FakeServer {
   /** The tasks `/api/sweep` offers; null: 404, as an older server. Kept ones (`POST /api/sweep/keep`) drop out. */
   sweep: { id: string; [key: string]: unknown }[] | null = null
   kept = new Set<string>()
+  /** What `/api/reminders/{id}/history` answers per task (events of the history); none: an empty one. */
+  history = new Map<string, unknown[]>()
   /** Mails the fake server "sent": to, what. */
   mails: { to: string; kind: string; token?: string }[] = []
   settings: Record<string, unknown> = {
@@ -131,7 +133,7 @@ export class FakeServer {
     strip_location: true,
     update_check: false,
   }
-  features = ['changes', 'batch', 'files', 'wait', 'invites', 'webpush', 'space_prefs', 'filters']
+  features = ['changes', 'batch', 'files', 'wait', 'invites', 'webpush', 'space_prefs', 'filters', 'comments']
   limits = { attachment_bytes: 50 * 1024 * 1024 }
   failures: Failure[] = []
   requests: { method: string; path: string; body: unknown }[] = []
@@ -210,6 +212,12 @@ export class FakeServer {
     return id
   }
 
+  /** A comment under a task, as if written on another device. */
+  addComment(reminderId: string, by: number, text: string, data: Data = {}, id = uuid4()): string {
+    this.set('comment', id, { reminder_id: reminderId, author_id: by, text, mentions: [], attachment_id: null, created_at: this.iso(), edited_at: null, removed_at: null, ...data })
+    return id
+  }
+
   addSection(listId: string, name: string, position: string, id = uuid4()): string {
     this.set('section', id, { list_id: listId, name, position })
     return id
@@ -267,7 +275,8 @@ export class FakeServer {
         const list = this.row('list', row.data.list_id as string)
         return list ? (list.data.space_id as string) : null
       }
-      case 'attachment': {
+      case 'attachment':
+      case 'comment': {
         const reminder = this.row('reminder', row.data.reminder_id as string)
         return reminder ? this.spaceOf(reminder) : null
       }
@@ -399,7 +408,7 @@ export class FakeServer {
 
   private put(account: number, op: PutOp): Result {
     const fail = (code: string, row?: Row, extra: Partial<Result> = {}) => this.result(op.op_id, false, code, row, account, extra)
-    const kinds: Kind[] = ['space', 'list', 'section', 'reminder', 'list_pref', 'space_pref', ...(this.features.includes('filters') ? ACCOUNT_KINDS : [])]
+    const kinds: Kind[] = ['space', 'list', 'section', 'reminder', 'list_pref', 'space_pref', ...(this.features.includes('filters') ? ACCOUNT_KINDS : []), ...(this.features.includes('comments') ? (['comment'] as Kind[]) : [])]
     if (!kinds.includes(op.kind) || !UUID.test(op.id)) return fail('invalid')
     if (op.kind === 'tile_pref' && !Object.values(TILE_IDS).includes(op.id)) return fail('invalid')
     if (this.tombs.has(`${op.kind}:${op.id}`)) return fail('gone')
@@ -413,7 +422,8 @@ export class FakeServer {
     const ignored: string[] = []
     for (const [field, value] of Object.entries(op.fields)) {
       if (SERVER_ONLY.includes(field)) ignored.push(field)
-      else fields[field] = typeof value === 'string' && ['title', 'name', 'notes'].includes(field) ? cleanText(value) : value
+      else if (op.kind === 'comment' && ['reminder_id', 'attachment_id', 'created_at'].includes(field)) continue
+      else fields[field] = typeof value === 'string' && ['title', 'name', 'notes', 'text'].includes(field) ? cleanText(value) : value
     }
     if ('tags' in fields && Array.isArray(fields.tags)) fields.tags = cleanTags(fields.tags as string[])
     const bad = this.invalidFields(op.kind, fields)
@@ -459,6 +469,17 @@ export class FakeServer {
       if (target === 'gone') return fail('gone')
       if (!this.member(op.id, account)) return fail('not_found')
     }
+    if (op.kind === 'comment') {
+      if (existing && (existing.data.author_id !== account || existing.data.removed_at)) return fail('forbidden', existing)
+      if (!existing) {
+        const task = this.ref('reminder', op.fields.reminder_id)
+        if (task === 'missing') return fail('parent_missing')
+        if (task === 'gone') return fail('gone')
+        if (!this.sees(account, task)) return fail('not_found')
+        space = this.spaceOf(task)
+        if (space && this.row('space', space)?.data.private) return fail('forbidden')
+      }
+    }
     const before = existing ? this.spaceOf(existing) : null
 
     // Assignees: only members of the space; none in "Privat".
@@ -484,6 +505,12 @@ export class FakeServer {
         row.data.created_at = Number.isFinite(created) && created <= now ? new Date(created).toISOString() : this.iso(now)
       }
       if (op.kind === 'reminder' && typeof fields.completed_at === 'string') row.data.completed_by = account
+      if (op.kind === 'comment') {
+        row.data.author_id = account
+        row.data.reminder_id = op.fields.reminder_id
+        row.data.attachment_id = op.fields.attachment_id ?? null
+        row.data.created_at = this.iso(now)
+      }
     }
     const applied = mergeInto(op.kind, row.data, row.clock, fields, clock)
     for (const k of Object.keys(clock)) if (!applied.includes(k)) ignored.push(k)
@@ -529,6 +556,15 @@ export class FakeServer {
       this.rows.delete(`filter:${account}:${op.id}`)
       this.tombs.set(`filter:${op.id}`, { kind: 'filter', id: op.id, cursor: this.bump(), space_id: null, owner: account })
       return this.result(op.op_id, true, null, undefined, account)
+    }
+    if (op.kind === 'comment') {
+      const row = this.row('comment', op.id)
+      if (!row || !this.sees(account, row)) return this.result(op.op_id, false, 'not_found', undefined, account)
+      const manager = this.member(this.spaceOf(row), account)?.data.role === 'manager'
+      if (row.data.author_id !== account && !manager) return this.result(op.op_id, false, 'forbidden', row, account)
+      row.data = { ...row.data, text: '', mentions: [], attachment_id: null, removed_at: row.data.removed_at ?? this.iso(this.clock()) }
+      row.cursor = this.bump()
+      return this.result(op.op_id, true, null, row, account)
     }
     if (!['section', 'attachment'].includes(op.kind)) return this.result(op.op_id, false, 'invalid', undefined, account)
     const row = this.row(op.kind, op.id)
@@ -870,6 +906,12 @@ export class FakeServer {
     }
     if (!me) return path.startsWith('/api/') ? error(401, 'sign_in_required') : null
     if (path === '/api/focus') return this.focusCall(me.id, method, body)
+    const history = path.match(/^\/api\/reminders\/([^/]+)\/history$/)
+    if (history && method === 'GET') {
+      const task = this.row('reminder', history[1])
+      if (!task || !this.sees(me.id, task)) return error(404, 'not_found')
+      return { status: 200, body: { events: this.history.get(history[1]) ?? [] } }
+    }
     if (path === '/api/stats' && method === 'GET') return this.stats ? { status: 200, body: this.stats } : error(404, 'not_found')
     const suggested = path.match(/^\/api\/lists\/([^/]+)\/suggestions$/)
     if (suggested && method === 'GET') return this.suggestions.has(suggested[1]) ? { status: 200, body: this.suggestions.get(suggested[1]) } : error(404, 'not_found')

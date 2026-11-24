@@ -5,7 +5,7 @@
  * small buttons for date, assignees and mark (`RowActions`). Rows can be dragged; a group of rows takes drops before,
  * after or onto a row (onto: becomes its subtask).
  */
-import { ChevronDown, ChevronRight, Clock, Link2, ListTree, MapPin, NotebookText, PanelRightClose, PanelRightOpen, Paperclip, Repeat } from 'lucide-react'
+import { ChevronDown, ChevronRight, Clock, Link2, ListTree, MapPin, MessageCircle, NotebookText, PanelRightClose, PanelRightOpen, Paperclip, Repeat } from 'lucide-react'
 import { useState, type CSSProperties, type DragEvent, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -61,7 +61,10 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
   const done = !!reminder.completed_at
   // Pictures of the note do not count again as files.
   const pictured = picturedIn(reminder.notes)
-  const files = view.attachmentsOf(reminder.id).filter((a) => !pictured.has(a.id.toLowerCase())).length
+  const comments = view.commentsOf(reminder.id)
+  const commented = new Set(comments.map((c) => c.attachment_id))
+  const files = view.attachmentsOf(reminder.id).filter((a) => !pictured.has(a.id.toLowerCase()) && !commented.has(a.id)).length
+  const talk = comments.filter((c) => !c.removed_at).length
   const open = shell.selected === reminder.id
   const inPane = shell.pane === reminder.id
   const menu = useTaskMenu(reminder)
@@ -157,6 +160,11 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
           {files > 0 && (
             <span className="inline-flex items-center gap-1" title={t('detail.files')}>
               <Paperclip className="h-[13px] w-[13px]" aria-hidden /> {files}
+            </span>
+          )}
+          {shared && talk > 0 && (
+            <span className="inline-flex items-center gap-1" title={t('comments.count', { count: talk })} data-testid="comment-count">
+              <MessageCircle className="h-[13px] w-[13px]" aria-hidden /> {talk}
             </span>
           )}
           {reminder.url && <Link2 className="h-[13px] w-[13px]" aria-label={t('detail.url')} role="img" />}

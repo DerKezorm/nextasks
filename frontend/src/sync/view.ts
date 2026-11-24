@@ -4,7 +4,7 @@
  * contradict each other.
  */
 import { byPosition } from './position'
-import type { Attachment, Data, Filter, Kind, List, ListPref, Member, Person, Reminder, Section, Space, SpacePref, TilePref } from './types'
+import type { Attachment, Comment, Data, Filter, Kind, List, ListPref, Member, Person, Reminder, Section, Space, SpacePref, TilePref } from './types'
 
 export interface Rec {
   kind: Kind
@@ -41,6 +41,10 @@ export interface View {
   inTrash(reminder: Reminder): boolean
   listInTrash(list: List): boolean
   attachmentsOf(reminderId: string): Attachment[]
+  /** The comments of a task, oldest first, removed ones included ("message removed"). */
+  commentsOf(reminderId: string): Comment[]
+  /** How many comments a task has that are not removed. */
+  commentCount(reminderId: string): number
   membersOf(spaceId: string): Member[]
   pref(listId: string): ListPref
   /** The own space "Privat" and its first list (where orphans go). */
@@ -87,6 +91,7 @@ export function buildView(records: Iterable<Rec>, people: Map<number, Person>, m
   const sections = new Map<string, Section>()
   const rawReminders = new Map<string, Reminder>()
   const attachments = new Map<string, Attachment[]>()
+  const comments = new Map<string, Comment[]>()
   const members = new Map<string, Member[]>()
   const prefs = new Map<string, ListPref>()
   const hidden = new Set<string>()
@@ -110,6 +115,11 @@ export function buildView(records: Iterable<Rec>, people: Map<number, Person>, m
       case 'attachment': {
         const a = data as unknown as Attachment
         attachments.set(a.reminder_id, [...(attachments.get(a.reminder_id) ?? []), a])
+        break
+      }
+      case 'comment': {
+        const c = data as unknown as Comment
+        comments.set(c.reminder_id, [...(comments.get(c.reminder_id) ?? []), c])
         break
       }
       case 'member': {
@@ -229,6 +239,8 @@ export function buildView(records: Iterable<Rec>, people: Map<number, Person>, m
     inTrash,
     listInTrash,
     attachmentsOf: (id) => (attachments.get(id) ?? []).sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0)),
+    commentsOf: (id) => (comments.get(id) ?? []).sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : a.id < b.id ? -1 : 1)),
+    commentCount: (id) => (comments.get(id) ?? []).filter((c) => !c.removed_at).length,
     membersOf: (spaceId) => members.get(spaceId) ?? [],
     pref: (listId) => prefs.get(listId) ?? { id: listId, show_completed: false, notify_changes: false },
     privateSpace,

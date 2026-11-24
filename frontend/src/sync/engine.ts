@@ -8,7 +8,7 @@
  * rule per field decides between entry and change (data model, "Empfangen").
  */
 import { applyComplete, copyId, type CompleteWorld, type Stored } from './complete'
-import { cleanTags, cleanText, fieldsOf, fresh, keyOf, REQUIRED } from './fields'
+import { cleanTags, cleanText, COMMENT_FIXED, fieldsOf, fresh, keyOf, REQUIRED } from './fields'
 import { mergeInto } from './merge'
 import { keyAtEnd } from './position'
 import { browserBlobs, browserStorage, entryId, Queue, type BlobStore, type Entry, type KeyValue, type OpEntry, type UploadEntry } from './queue'
@@ -312,6 +312,7 @@ export class SyncEngine {
       if (entry.type !== 'op') continue
       const op = entry.op
       if (op.type === 'put' && op.kind === rec.kind && op.id === rec.id) mergeInto(rec.kind, rec.data, rec.clock, op.fields, op.clock)
+      else if (op.type === 'delete' && op.kind === 'comment' && rec.kind === 'comment' && op.id === rec.id) removedLocally(rec)
       else if (op.type === 'delete' && op.kind === rec.kind && op.id === rec.id) this.records.delete(key)
       else if (op.type === 'complete' && rec.kind === 'reminder' && op.id === rec.id) this.completeLocally(op)
     }
@@ -334,9 +335,16 @@ export class SyncEngine {
           const made = fresh(op.kind, op.id)
           rec = { kind: op.kind, id: op.id, data: made.data, clock: made.clock }
           if (op.fields.created_at) rec.data.created_at = op.fields.created_at
+          if (op.kind === 'comment') {
+            for (const field of COMMENT_FIXED) if (field in op.fields) rec.data[field] = op.fields[field]
+            rec.data.author_id = this.me?.account.id ?? null
+          }
           this.records.set(key, rec)
         }
         mergeInto(op.kind, rec.data, rec.clock, op.fields, op.clock)
+      } else if (op.type === 'delete' && op.kind === 'comment') {
+        const rec = this.records.get(keyFor('comment', op.id))
+        if (rec) removedLocally(rec)
       } else if (op.type === 'delete') this.records.delete(keyFor(op.kind, op.id))
       else if (op.type === 'complete') this.completeLocally(op)
       else {
@@ -395,7 +403,8 @@ export class SyncEngine {
         (rec.kind === 'space_pref' && goneSpaces.has(rec.id)) ||
         (rec.kind === 'section' && lists.has(d.list_id as string)) ||
         (rec.kind === 'reminder' && reminderIds.has(rec.id)) ||
-        (rec.kind === 'attachment' && reminderIds.has(d.reminder_id as string))
+        (rec.kind === 'attachment' && reminderIds.has(d.reminder_id as string)) ||
+        (rec.kind === 'comment' && reminderIds.has(d.reminder_id as string))
       )
         doomed.add(keyFor(rec.kind, rec.id))
     }
@@ -448,6 +457,11 @@ export class SyncEngine {
         rec.data.created_at = this.nowIso()
         rec.data.created_by = this.me?.account.id ?? null
       }
+      if (kind === 'comment') {
+        rec.data.created_at = this.nowIso()
+        rec.data.author_id = this.me?.account.id ?? null
+        for (const field of COMMENT_FIXED) if (field in change) rec.data[field] = change[field] ?? null
+      }
       this.records.set(key, rec)
     }
     const fields: Data = {}
@@ -466,6 +480,10 @@ export class SyncEngine {
       opClock[clockKey] = Math.max(now, (rec.clock[clockKey] ?? 0) + 1)
     }
     if ((isNew || creating) && kind === 'reminder') opFields.created_at = rec.data.created_at
+    if ((isNew || creating) && kind === 'comment') {
+      opFields.created_at = rec.data.created_at
+      for (const field of COMMENT_FIXED) opFields[field] = rec.data[field] ?? null
+    }
     for (const [field, value] of Object.entries(opFields)) rec.data[field] = structuredClone(value)
     for (const [clockKey, time] of Object.entries(opClock)) rec.clock[clockKey] = time
     if (!Object.keys(opClock).length && !isNew) return this.bump()
@@ -497,6 +515,13 @@ export class SyncEngine {
   remove(kind: 'section' | 'attachment' | 'filter', id: string): void {
     this.records.delete(keyFor(kind, id))
     this.enqueue({ op_id: uuid4(), type: 'delete', kind, id })
+  }
+
+  /** A comment as "message removed": its text and picture go at once here, the server keeps it as removed. */
+  removeComment(id: string): void {
+    const rec = this.records.get(keyFor('comment', id))
+    if (rec) removedLocally(rec)
+    this.enqueue({ op_id: uuid4(), type: 'delete', kind: 'comment', id })
   }
 
   /** Ticks a reminder off, or opens it again. */
@@ -772,9 +797,17 @@ export class SyncEngine {
   }
 }
 
+/** A comment shown as removed before the server confirms it. */
+function removedLocally(rec: Rec): void {
+  rec.data.text = ''
+  rec.data.mentions = []
+  rec.data.attachment_id = null
+  rec.data.removed_at = rec.data.removed_at ?? new Date().toISOString()
+}
+
 /** Texts as stored: NFC, trimmed; tags cleaned. */
 function normalize(field: string, value: unknown): unknown {
-  if (typeof value === 'string' && ['title', 'name', 'notes', 'url'].includes(field)) {
+  if (typeof value === 'string' && ['title', 'name', 'notes', 'url', 'text'].includes(field)) {
     const text = cleanText(value)
     return field === 'url' && !text ? null : text
   }

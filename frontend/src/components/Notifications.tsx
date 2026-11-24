@@ -245,6 +245,7 @@ function ChannelHead({ channel, compact = false, push }: { channel: NotifyChanne
 }
 
 function rowName(t: (key: string) => string, state: NotifyState, event: string): string {
+  if (event === 'comment' || event === 'mention') return t(`comments.notify.${event}`)
   return state.reports.includes(event) ? t(`notify.${event}`) : t(`notify.events.${event}`)
 }
 
