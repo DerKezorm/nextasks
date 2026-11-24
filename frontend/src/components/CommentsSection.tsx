@@ -10,7 +10,6 @@ import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 
 import { useTranslation } from 'react-i18next'
 
 import { COMMENT_MAX, loadHistory, mayEdit, mentionsIn, pieces, timeline, typedMention, type TaskEvent } from '../lib/comments'
-import { dueLabel, localDay } from '../lib/due'
 import { ago, moment } from '../lib/time'
 import { useEngine, useView } from '../state/sync'
 import { APP_BASE } from '../sync/transport'
@@ -88,7 +87,11 @@ function Text({ comment, people }: { comment: Comment; people: Picked[] }) {
 function useEventLine(): (event: TaskEvent) => string {
   const { t, i18n } = useTranslation()
   const view = useView()
-  const today = localDay()
+  // A day as it was, not as seen from today: "tomorrow" in a history would be wrong by tomorrow.
+  const day = (date: string, time: string | null = null) => {
+    const shown = new Date(`${date}T12:00:00`).toLocaleDateString(i18n.language, { weekday: 'short', day: 'numeric', month: 'short' })
+    return time ? `${shown}, ${time}` : shown
+  }
   return (event) => {
     const name = personName(event.by ? view.people.get(event.by) : undefined, t)
     const value = event.new as Record<string, unknown> | number[] | number | string | boolean | null
@@ -98,11 +101,11 @@ function useEventLine(): (event: TaskEvent) => string {
       case 'completion':
         return t(value ? 'comments.event.completed' : 'comments.event.reopened', { name })
       case 'occurrence':
-        return t('comments.event.occurrence', { name, date: dueLabel({ due_date: String(value), due_time: null }, today, i18n.language, t) })
+        return t('comments.event.occurrence', { name, date: day(String(value)) })
       case 'due': {
         const due = (value ?? {}) as { due_date?: string | null; due_time?: string | null }
         if (!due.due_date) return t('comments.event.dueRemoved', { name })
-        return t('comments.event.due', { name, date: dueLabel({ due_date: due.due_date, due_time: due.due_time ?? null }, today, i18n.language, t) })
+        return t('comments.event.due', { name, date: day(due.due_date, due.due_time ?? null) })
       }
       case 'assignees': {
         const ids = Array.isArray(value) ? value : []
