@@ -185,7 +185,7 @@ export function TodayPage() {
   )
 
   const rail = (
-    <div className="grid min-w-0 content-start gap-3.5 sm:grid-cols-2 min-[1400px]:grid-cols-1" data-testid="today-rail">
+    <div className="grid min-w-0 content-start items-start gap-3.5 sm:max-[1399px]:grid-cols-2" data-testid="today-rail">
       <ProgressCard due={progress.due} done={progress.done} overdue={progress.overdue} streak={streak} />
       {focus.ready && <FocusCard focus={focus} items={focused} />}
       {!alone && stats && <FamilyCard stats={stats} />}
