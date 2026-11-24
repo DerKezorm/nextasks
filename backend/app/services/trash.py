@@ -38,6 +38,7 @@ from ..models import (
     SavedFilter,
     Space,
     SpacePref,
+    SweepKeep,
     TaskList,
     TilePref,
     utcnow,
@@ -149,6 +150,7 @@ def remove_account(db: Session, account_id: int) -> None:
     db.execute(delete(SavedFilter).where(SavedFilter.account_id == account_id))
     db.execute(delete(TilePref).where(TilePref.account_id == account_id))
     db.execute(delete(Focus).where(Focus.account_id == account_id))
+    db.execute(delete(SweepKeep).where(SweepKeep.account_id == account_id))
     db.execute(delete(Gone).where(Gone.kind == "filter", Gone.account_id == account_id))
     db.flush()
 

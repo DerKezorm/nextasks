@@ -775,6 +775,20 @@ class Focus(Base):
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow)
 
 
+# --- Kept in the look through -----------------------------------------------------------------------------------------
+
+
+class SweepKeep(Base):
+    """A task one chose to keep in the look through ("Rückschau", web only, ``routers/sweep.py``): it stays out of it
+    until ``until``. Per account; nobody else sees it, and ``/api/app/1`` knows nothing of it."""
+
+    __tablename__ = "sweep_keeps"
+
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), primary_key=True)
+    reminder_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    until: Mapped[datetime] = mapped_column(UtcDateTime)
+
+
 Index("reminders_due", Reminder.due_date, Reminder.due_time)
 Index("hidden_account_cursor", Hidden.account_id, Hidden.cursor)
 
@@ -821,6 +835,7 @@ __all__ = [
     "Setting",
     "Space",
     "SpacePref",
+    "SweepKeep",
     "SyncState",
     "TaskList",
     "TilePref",
