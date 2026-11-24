@@ -278,7 +278,7 @@ export function Punchcard({ hours }: { hours: number[][] }) {
           )
         })}
         {Array.from({ length: 24 / every }, (_, k) => k * every).map((hour) => (
-          <text key={hour} x={left + hour * colW} y={height - 1} textAnchor="middle" {...AXIS}>
+          <text key={hour} x={left + (hour + 0.5) * colW} y={height - 1} textAnchor="middle" {...AXIS}>
             {hour}
           </text>
         ))}
@@ -324,7 +324,7 @@ export function Pulse({ pulse, people, alone }: { pulse: Series[]; people: Stats
   const percent = (n: number) => (n / 100).toLocaleString(i18n.language, { style: 'percent' })
   return (
     <div className="flex flex-col gap-2.5" data-testid="pulse">
-      <div className="grid grid-cols-1 items-center gap-x-3.5 gap-y-1.5 md:grid-cols-[minmax(150px,230px)_minmax(0,1fr)_88px]">
+      <div className="grid grid-cols-1 items-center gap-x-3.5 gap-y-1.5 md:grid-cols-[minmax(0,1fr)_auto_96px]">
         {shown.map((series) => {
           const rate = pulseRate(series.slots)
           const rhythm = describeRule(series.repeat, series.repeat_from, i18n.language, t)
@@ -337,12 +337,12 @@ export function Pulse({ pulse, people, alone }: { pulse: Series[]; people: Stats
                   {series.title}
                 </span>
                 {rhythm && (
-                  <span className="ml-auto max-w-[45%] shrink-0 truncate text-[11.5px] text-mist-600" title={rhythm}>
+                  <span className="ml-auto max-w-[50%] shrink-0 truncate pl-2 text-[11.5px] text-mist-600" title={rhythm}>
                     {rhythm}
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-[repeat(16,minmax(0,26px))] gap-[4px] sm:gap-[5px]" role="list" aria-label={series.title}>
+              <div className="grid grid-cols-[repeat(16,minmax(0,26px))] gap-[4px] sm:gap-[5px] md:grid-cols-[repeat(16,26px)]" role="list" aria-label={series.title}>
                 {Array.from({ length: empty }, (_, k) => (
                   <i key={`e${k}`} className="aspect-square rounded-[4px] border border-dashed border-ink-700" aria-hidden />
                 ))}
@@ -360,7 +360,7 @@ export function Pulse({ pulse, people, alone }: { pulse: Series[]; people: Stats
                       style={SLOT_LOOK[slot.status]}
                       data-status={slot.status}
                     >
-                      {who.trim()[0]?.toUpperCase()}
+                      {slot.status === 'skipped' ? <span className="h-[2px] w-[40%] rounded-full bg-mist-500" aria-hidden /> : who.trim()[0]?.toUpperCase()}
                     </i>
                   )
                 })}

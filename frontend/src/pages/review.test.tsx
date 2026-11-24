@@ -116,7 +116,7 @@ describe('the review page', () => {
     await click(entry)
     expect(byTest(page, 'review-page')).not.toBeNull()
     expect(server.asked.at(-1)).toBe('?space=all&range=month')
-    expect(byTest(page, 'review-sub')?.textContent).toMatch(/^All spaces · one space · as of today/)
+    expect(byTest(page, 'review-sub')?.textContent).toMatch(/^Family · 2 members · as of today/)
     await click([...page.querySelectorAll('[data-testid="review-period"] button')].find((b) => b.textContent === 'Week'))
     expect(server.asked.at(-1)).toBe('?space=all&range=week')
     await choose(byTest(page, 'review-space'), family)

@@ -77,7 +77,7 @@ function YearBody({ year }: { year: number }) {
         )}
         {load.state === 'ready' &&
           (done ? (
-            <div className="w-full max-w-[560px]">
+            <div className="w-full max-w-[620px]">
               <YearCard ref={card} stats={load.stats} />
             </div>
           ) : (

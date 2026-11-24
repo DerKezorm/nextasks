@@ -50,8 +50,8 @@ export const YearCard = forwardRef<SVGSVGElement, { stats: Stats }>(function Yea
   ]
 
   // The months as bars, the strongest in petrol.
-  const monthTop = 760
-  const barArea = 150
+  const monthTop = 740
+  const barArea = 130
   const barGap = 14
   const barW = (INNER - 11 * barGap) / 12
   const monthMax = Math.max(1, ...block.months)
@@ -59,7 +59,7 @@ export const YearCard = forwardRef<SVGSVGElement, { stats: Stats }>(function Yea
   // The days of the year as a small heat map, Monday on top.
   const first = `${year}-01-01`
   const { lead, columns } = gridOf(first, block.days.length)
-  const heatTop = 1040
+  const heatTop = 990
   const step = INNER / columns
   const cell = step - 3
   const steps = heatSteps(block.days)
@@ -84,6 +84,8 @@ export const YearCard = forwardRef<SVGSVGElement, { stats: Stats }>(function Yea
           <stop offset="0.7" stopColor="var(--color-petrol)" stopOpacity={0} />
         </linearGradient>
       </defs>
+      {/* The page's ground in the corners, so the saved picture has none left open. */}
+      <rect width={CARD_WIDTH} height={CARD_HEIGHT} fill="var(--color-ink-950)" />
       <rect x={1} y={1} width={CARD_WIDTH - 2} height={CARD_HEIGHT - 2} rx={44} fill="var(--color-ink-850)" stroke="var(--color-ink-700)" strokeWidth={2} />
       <rect x={1} y={1} width={CARD_WIDTH - 2} height={CARD_HEIGHT - 2} rx={44} fill="url(#year-glow)" />
 
@@ -94,19 +96,19 @@ export const YearCard = forwardRef<SVGSVGElement, { stats: Stats }>(function Yea
         NEX<tspan fill="var(--color-accent-500)">TASKS</tspan>
       </text>
 
-      <text x={P - 6} y={318} fontSize={200} fontWeight={800} letterSpacing={-6} fill="var(--color-mist-100)" data-testid="year-count">
+      <text x={P - 6} y={300} fontSize={190} fontWeight={800} letterSpacing={-6} fill="var(--color-mist-100)" data-testid="year-count">
         {fmt(block.completed, lang)}
       </text>
-      <text x={P} y={380} fontSize={36} fill="var(--color-mist-300)">
+      <text x={P} y={392} fontSize={36} fill="var(--color-mist-300)">
         {fit(t(alone ? 'review.year.doneAlone' : 'review.year.doneFamily', { year }), INNER, 36)}
       </text>
-      <text x={P} y={430} fontSize={30} fontWeight={600} fill={difference > 0 && previous ? 'var(--color-ok-500)' : 'var(--color-mist-500)'}>
+      <text x={P} y={440} fontSize={30} fontWeight={600} fill={difference > 0 && previous ? 'var(--color-ok-500)' : 'var(--color-mist-500)'}>
         {compare}
       </text>
 
       {facts.map((fact, i) => {
         const x = P + (i % 2) * (INNER / 2 + 12)
-        const y = 520 + Math.floor(i / 2) * 118
+        const y = 512 + Math.floor(i / 2) * 112
         return (
           <g key={fact.label}>
             <text x={x} y={y} fontSize={24} fontWeight={600} fill="var(--color-mist-500)">
@@ -162,14 +164,14 @@ export const YearCard = forwardRef<SVGSVGElement, { stats: Stats }>(function Yea
             const x = P + i * (INNER / 3)
             return (
               <g key={item.label}>
-                <text x={x} y={1240} fontSize={22} fontWeight={600} fill="var(--color-mist-500)">
+                <text x={x} y={1200} fontSize={22} fontWeight={600} fill="var(--color-mist-500)">
                   {item.label}
                 </text>
-                <text x={x} y={1286} fontSize={40} fontWeight={800} fill="var(--color-mist-100)">
+                <text x={x} y={1246} fontSize={40} fontWeight={800} fill="var(--color-mist-100)">
                   {item.value}
                 </text>
                 {item.line && (
-                  <text x={x} y={1318} fontSize={20} fill="var(--color-mist-600)">
+                  <text x={x} y={1278} fontSize={20} fill="var(--color-mist-600)">
                     {fit(item.line, INNER / 3 - 16, 20)}
                   </text>
                 )}
@@ -179,23 +181,24 @@ export const YearCard = forwardRef<SVGSVGElement, { stats: Stats }>(function Yea
         </g>
       ) : (
         <g>
-          <text x={P} y={1236} fontSize={24} fontWeight={600} fill="var(--color-mist-500)">
+          <text x={P} y={1188} fontSize={24} fontWeight={600} fill="var(--color-mist-500)">
             {t('review.year.people')}
           </text>
           {people.map((person, i) => {
             const name = nameOf(person.id)
             const color = personColor(name)
-            const x = P + i * (INNER / Math.max(people.length, 4))
+            const x = P + (i % 3) * (INNER / 3)
+            const cy = 1236 + Math.floor(i / 3) * 66
             return (
               <g key={person.id ?? 'former'} data-person={person.id ?? 'former'}>
-                <circle cx={x + 26} cy={1282} r={26} fill={color} fillOpacity={0.3} />
-                <text x={x + 26} y={1291} fontSize={24} fontWeight={700} textAnchor="middle" fill={color}>
+                <circle cx={x + 24} cy={cy} r={24} fill={color} fillOpacity={0.3} />
+                <text x={x + 24} y={cy + 8.5} fontSize={23} fontWeight={700} textAnchor="middle" fill={color}>
                   {(name.trim()[0] ?? '?').toUpperCase()}
                 </text>
-                <text x={x + 62} y={1276} fontSize={22} fill="var(--color-mist-300)">
-                  {fit(name, INNER / Math.max(people.length, 4) - 70, 22)}
+                <text x={x + 60} y={cy - 5} fontSize={22} fill="var(--color-mist-300)">
+                  {fit(name, INNER / 3 - 70, 22)}
                 </text>
-                <text x={x + 62} y={1304} fontSize={24} fontWeight={800} fill="var(--color-mist-100)">
+                <text x={x + 60} y={cy + 22} fontSize={24} fontWeight={800} fill="var(--color-mist-100)">
                   {fmt(person.count, lang)}
                 </text>
               </g>

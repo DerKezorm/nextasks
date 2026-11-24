@@ -119,7 +119,8 @@ type T = ReturnType<typeof useTranslation>['t']
 function subOf(stats: Stats, t: T, language: string): string {
   const { scope } = stats
   const time = new Date(scope.as_of).toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })
-  const only = scope.space !== 'all' ? scope.spaces.find((s) => s.id === scope.space) : undefined
+  // One space counted (asked for, or the only one there is): its name and who is in it.
+  const only = scope.space !== 'all' ? scope.spaces.find((s) => s.id === scope.space) : scope.spaces.length === 1 ? scope.spaces[0] : undefined
   const place = only
     ? `${only.name} · ${only.members > 1 ? t('review.members', { count: only.members }) : t('review.onlyYou')}`
     : `${t('review.allSpaces')} · ${t('review.spaces', { count: scope.spaces.length })}`
@@ -131,6 +132,8 @@ function ReviewBody({ stats, period }: { stats: Stats; period: Period }) {
   const alone = stats.scope.alone
   const offered = yearOffered(localDay())
   const teaser = offered !== null && <YearTeaser year={offered} alone={alone} />
+  // A repeating task without a date done yet has no pulse to show.
+  const pulse = stats.pulse.filter((series) => series.slots.length > 0)
   if (!stats.records.total)
     return (
       <>
@@ -163,8 +166,8 @@ function ReviewBody({ stats, period }: { stats: Stats; period: Period }) {
           <WhenCard stats={stats} />
         </div>
       )}
-      <ReviewCard title={t('review.pulse')} sub={t(alone ? 'review.pulseSubAlone' : 'review.pulseSub')} right={stats.pulse.length ? <PulseLegend /> : undefined} testid="pulse-card">
-        {stats.pulse.length ? <Pulse pulse={stats.pulse} people={stats.people} alone={alone} /> : <Quiet>{t('review.pulseNone')}</Quiet>}
+      <ReviewCard title={t('review.pulse')} sub={t(alone ? 'review.pulseSubAlone' : 'review.pulseSub')} right={pulse.length ? <PulseLegend /> : undefined} testid="pulse-card">
+        {pulse.length ? <Pulse pulse={pulse} people={stats.people} alone={alone} /> : <Quiet>{t('review.pulseNone')}</Quiet>}
       </ReviewCard>
       <WeekCard stats={stats} />
     </>
