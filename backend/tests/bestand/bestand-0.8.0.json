@@ -1,0 +1,164 @@
+{
+  "version": "0.8.0",
+  "test_key": "tests/conftest.py (NEXTASKS_SECRET_KEY)",
+  "provider": {
+    "slug": "sso",
+    "issuer": "https://sso.example.com",
+    "client_id": "nextasks-bestand",
+    "client_pass": "bestand-client"
+  },
+  "settings": {
+    "two_factor_required": false,
+    "api_tokens_allowed": true,
+    "password_login": true,
+    "mail": "none",
+    "public_url": "https://tasks.example.com"
+  },
+  "family": "d0561a4d-717b-4cc8-9008-dbd83309d638",
+  "accounts": [
+    {
+      "name": "betreiber",
+      "password": "Bestand-betreiber-2026",
+      "email": "betrieb@example.com",
+      "email_confirmed": true,
+      "operator": true,
+      "second_factor": "totp-betreiber",
+      "recovery_codes": [
+        "hry7e-nv4bj",
+        "sz8fp-w5ckt",
+        "29gqx-6dmu3",
+        "ahry7-env4b",
+        "jsz8f-pw5ck",
+        "t29gq-x6dmu",
+        "3ahry-7env4",
+        "bjsz8-fpw5c"
+      ],
+      "spaces": [
+        "d0561a4d-717b-4cc8-9008-dbd83309d638"
+      ],
+      "case": "operator, password, confirmed address, second factor, manager of a shared space"
+    },
+    {
+      "name": "anna",
+      "password": "Bestand-anna-2026",
+      "email": "anna@example.com",
+      "email_confirmed": true,
+      "api_token": "ntk_bestand-api-anna-9",
+      "device": "ntd_bestand-device-anna-10",
+      "spaces": [
+        "d0561a4d-717b-4cc8-9008-dbd83309d638"
+      ],
+      "case": "password, confirmed address, API token, paired iPhone, joined a space signed in"
+    },
+    {
+      "name": "ben",
+      "password": "Bestand-ben-2026x",
+      "email": "ben@example.net",
+      "email_confirmed": false,
+      "spaces": [
+        "d0561a4d-717b-4cc8-9008-dbd83309d638"
+      ],
+      "case": "account made by an invitation into a space, its address"
+    },
+    {
+      "name": "carla",
+      "password": "Bestand-carla-2026",
+      "email": "familie@example.org",
+      "email_confirmed": false,
+      "shared_email": true,
+      "case": "address shared with dora, from the invitation (not confirmed)"
+    },
+    {
+      "name": "dora",
+      "password": "Bestand-dora-2026x",
+      "email": "Familie@Example.org",
+      "email_confirmed": true,
+      "shared_email": true,
+      "case": "address shared with carla in other case, confirmed by its link"
+    },
+    {
+      "name": "emil",
+      "password": "Bestand-emil-2026x",
+      "email": "",
+      "email_confirmed": false,
+      "pending_email": "emil@example.com",
+      "pending_link": "nxm_bestand-email-emil-24",
+      "session": "bestand-session-emil-22",
+      "case": "password, no address, a new address waiting for its link, open browser session"
+    },
+    {
+      "name": "fritz",
+      "password": "",
+      "email": "fritz@example.com",
+      "email_confirmed": false,
+      "provider": {
+        "sub": "bestand-fritz",
+        "preferred_username": "fritz",
+        "name": "Fritz Faber",
+        "email": "fritz@example.com",
+        "email_verified": true
+      },
+      "case": "provider only, made by it, its address (not confirmed)"
+    },
+    {
+      "name": "greta",
+      "password": "Bestand-greta-2026",
+      "email": "greta@example.com",
+      "email_confirmed": false,
+      "provider": {
+        "sub": "bestand-greta",
+        "preferred_username": "greta.g",
+        "name": "Greta",
+        "email": "greta@example.com"
+      },
+      "case": "password and provider, the invitation's address"
+    },
+    {
+      "name": "hans",
+      "password": "Bestand-hans-2026x",
+      "email": "hans@example.com",
+      "email_confirmed": false,
+      "blocked": true,
+      "case": "blocked by the operator"
+    },
+    {
+      "name": "jonas",
+      "password": "Bestand-jonas-neu-2026",
+      "email": "",
+      "email_confirmed": false,
+      "case": "password set anew by the operator (0.8.0 has no link for a forgotten password)"
+    }
+  ],
+  "deleted": {
+    "name": "ida",
+    "password": "Bestand-ida-2026xx",
+    "case": "deleted by the operator: no row is left"
+  },
+  "open_invites": [
+    {
+      "token": "bestand-invite-open-with-39",
+      "email": "neu@example.com",
+      "space": null
+    },
+    {
+      "token": "bestand-invite-open-without-40",
+      "email": "",
+      "space": null
+    },
+    {
+      "token": "bestand-invite-open-space-41",
+      "email": "",
+      "space": "d0561a4d-717b-4cc8-9008-dbd83309d638"
+    },
+    {
+      "token": "bestand-invite-open-space-mail-42",
+      "email": "gast@example.com",
+      "space": "d0561a4d-717b-4cc8-9008-dbd83309d638"
+    }
+  ],
+  "join_signed_in": {
+    "token": "bestand-invite-open-join-43",
+    "space": "d0561a4d-717b-4cc8-9008-dbd83309d638",
+    "who": "emil"
+  }
+}
