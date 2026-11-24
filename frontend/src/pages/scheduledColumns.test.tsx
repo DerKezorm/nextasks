@@ -134,6 +134,19 @@ describe('"Scheduled" as day columns', () => {
     expect(days(page)).toEqual([0, 1, 2, 3, 4, 5, 6].map((n) => addDays(today, n)))
   })
 
+  it('keeps every head at the top of the box while the days scroll: the columns are as tall as the longest', async () => {
+    const { server, home } = world({ late: false })
+    for (let n = 0; n < 30; n++) server.addReminder(home, `Many ${n}`, { due_date: today })
+    const page = await mount(server, '/scheduled')
+    await asColumns(page)
+    const board = page.querySelector<HTMLElement>('[data-testid="day-board"]')!
+    // A head sticks only inside its column: a column ending early would take its head with it.
+    expect(board.className).not.toMatch(/\bitems-(start|center|end)\b/)
+    expect(board.parentElement!.className).toMatch(/\boverflow-y-auto\b/)
+    for (const head of page.querySelectorAll('[data-testid="day-head"]')) expect(head.className).toMatch(/\bsticky top-0\b/)
+    expect(cardTitles(column(page, today)).length).toBeGreaterThan(30)
+  })
+
   it('moves a task dragged to another day to that date and keeps its time', async () => {
     const { server } = world()
     const page = await mount(server, '/scheduled')

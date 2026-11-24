@@ -132,7 +132,8 @@ export function DayBoard({ items, today, paging }: { items: Reminder[]; today: s
 
   return (
     <div className="nt-scroll -mx-4 min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:-mx-7 sm:px-7">
-      <div ref={setBoard} className="grid items-start gap-3" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }} data-testid="day-board">
+      {/* The columns stretch to the longest one, so every head stays at the top of the box while the days scroll. */}
+      <div ref={setBoard} className="grid gap-3" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }} data-testid="day-board">
         {late && <DayColumnView day={null} items={late} today={today} label={t('tiles.overdue')} />}
         {days.map(({ day, items: group }) => (
           <DayColumnView key={day} day={day} items={group} today={today} label={longDay(day, i18n.language)} />
