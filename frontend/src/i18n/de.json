@@ -1792,7 +1792,6 @@
       "year": "{{change}} zu den 12 Monaten davor"
     },
     "noBefore": "davor nichts erledigt",
-    "since": "seit {{month}}",
     "spark": {
       "week": "Verlauf der letzten 14 Tage",
       "month": "Verlauf der letzten 9 Wochen",
@@ -1898,7 +1897,8 @@
       "foot": "Rückblick {{year}}",
       "empty": "{{year}} wurde noch nichts erledigt",
       "emptyText": "Die Jahreskarte füllt sich mit jeder erledigten Aufgabe."
-    }
+    },
+    "since": "seit {{month}}"
   },
   "today": {
     "sub": "{{day}} · aus allen Bereichen",
@@ -1910,8 +1910,6 @@
     "quick": "Neue Aufgabe für heute in „{{list}}“",
     "doneBy": "erledigt von {{name}}, {{time}}",
     "doneAt": "erledigt um {{time}}",
-    "openLate_one": "eine davon überfällig",
-    "openLate_other": "{{count}} davon überfällig",
     "time": {
       "now": "jetzt",
       "inMinutes": "in {{n}} Min.",
@@ -1936,14 +1934,14 @@
     },
     "progress": {
       "done": "{{done}} von {{due}} für heute geschafft",
-      "left_one": "noch eine offen",
-      "left_other": "noch {{count}} offen",
       "nothingDue": "Heute ist nichts fällig",
       "ring": "{{percent}} Prozent geschafft",
       "overdue_one": "dazu eine überfällig",
       "overdue_other": "dazu {{count}} überfällig",
       "streak_one": "Serie: ein Tag",
-      "streak_other": "Serie: {{count}} Tage"
+      "streak_other": "Serie: {{count}} Tage",
+      "left_one": "noch eine offen",
+      "left_other": "noch {{count}} offen"
     },
     "focus": {
       "title": "Fokus für heute",
@@ -1998,6 +1996,53 @@
       "trashOne": "„{{title}}“ streichen",
       "coming": "Morgen schon geplant",
       "close": "Fertig"
+    },
+    "openLate_one": "eine davon überfällig",
+    "openLate_other": "{{count}} davon überfällig"
+  },
+  "comments": {
+    "title": "Verlauf",
+    "count_one": "1 Kommentar",
+    "count_other": "{{count}} Kommentare",
+    "empty": "Noch nichts passiert. Schreib als Erste oder Erster etwas zu dieser Aufgabe.",
+    "placeholder": "Kommentar schreiben",
+    "keys": "Enter sendet, Umschalt+Enter macht eine neue Zeile, @ erwähnt jemanden.",
+    "send": "Senden",
+    "sending": "wird gesendet",
+    "edited": "bearbeitet",
+    "removed": "Nachricht gelöscht",
+    "actions": "Aktionen für diesen Kommentar",
+    "edit": "Bearbeiten",
+    "save": "Speichern",
+    "remove": "Löschen",
+    "removeTitle": "Kommentar löschen?",
+    "removeText": "Statt des Textes steht dann für alle „Nachricht gelöscht“ da.",
+    "tooLong": "Ein Kommentar hat höchstens {{max}} Zeichen.",
+    "mentionList": "Personen im Bereich",
+    "picture": "Bild",
+    "pictureAdd": "Bild anhängen",
+    "pictureRemove": "Bild wieder entfernen",
+    "pictureOpen": "Bild groß ansehen",
+    "pictureLoading": "Bild wird geladen",
+    "pictureTooLarge": "Das Bild ist leer oder größer, als der Server annimmt.",
+    "event": {
+      "created": "{{name}} hat die Aufgabe angelegt",
+      "completed": "{{name}} hat sie erledigt",
+      "reopened": "{{name}} hat sie wieder geöffnet",
+      "occurrence": "{{name}} hat sie für {{date}} erledigt",
+      "due": "{{name}} hat das Datum auf {{date}} gesetzt",
+      "dueRemoved": "{{name}} hat das Datum entfernt",
+      "assignees": "{{name}} hat sie {{people}} zugewiesen",
+      "assigneesNone": "{{name}} hat die Zuständigkeit aufgehoben",
+      "priority": "{{name}} hat die Priorität auf {{priority}} gesetzt",
+      "moved": "{{name}} hat sie nach „{{list}}“ verschoben",
+      "movedAway": "{{name}} hat sie in eine andere Liste verschoben",
+      "renamed": "{{name}} hat sie in „{{title}}“ umbenannt",
+      "changed": "{{name}} hat sie geändert"
+    },
+    "notify": {
+      "comment": "Jemand kommentiert eine Aufgabe, die ich angelegt habe oder für die ich zuständig bin",
+      "mention": "Jemand erwähnt mich in einem Kommentar"
     }
   },
   "rotation": {

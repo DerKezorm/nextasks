@@ -37,9 +37,9 @@ WHITE_SPACE = frozenset(
 MAX_TAGS = 20
 MAX_ASSIGNEES = 10
 
-PUT_KINDS = ("space", "list", "section", "reminder", "list_pref", "space_pref", "filter", "tile_pref")
+PUT_KINDS = ("space", "list", "section", "reminder", "list_pref", "space_pref", "filter", "tile_pref", "comment")
 KINDS = ("space", "member", "list", "section", "reminder", "attachment", "list_pref", "space_pref", "filter",
-         "tile_pref")
+         "tile_pref", "comment")
 #: The own settings of an account: nobody else ever sees them; ``id`` = the list's or the space's.
 PREF_KINDS = ("list_pref", "space_pref")
 #: What belongs to an account and to no space (contract 0.5): nobody else ever sees it, and it reaches only the own
@@ -49,6 +49,9 @@ OWN_KINDS = ("filter", "tile_pref")
 TILE_IDS = tuple(f"00000000-0000-4000-8000-0000000000a{number}" for number in range(1, 7))
 #: The longest ``rules`` of a filter, written as JSON (RFC 8785, in code points).
 MAX_RULES = 4000
+#: The longest text of a comment, in code points (contract 0.9), and the most people it mentions.
+MAX_COMMENT = 4000
+MAX_MENTIONS = 20
 
 #: Clock key -> its fields. A field that stands alone is its own key.
 GROUPS: dict[str, dict[str, tuple[str, ...]]] = {
@@ -64,6 +67,8 @@ GROUPS: dict[str, dict[str, tuple[str, ...]]] = {
     "space_pref": {},
     "filter": {},
     "tile_pref": {},
+    # The text of a comment and the people it names change together.
+    "comment": {"text": ("text", "mentions")},
 }
 #: The fields with a clock, alone or in a group, per kind (in the order of the data model).
 CLOCKED: dict[str, tuple[str, ...]] = {
@@ -80,9 +85,13 @@ CLOCKED: dict[str, tuple[str, ...]] = {
     # ``rules`` is one field with one clock: the later object wins whole, conditions are never merged one by one.
     "filter": ("name", "color", "icon", "position", "rules", "hidden"),
     "tile_pref": ("hidden",),
+    "comment": ("text", "mentions"),
 }
 #: What only the server sets: named in ``ignored`` when sent.
-SERVER_ONLY = frozenset({"created_by", "completed_by", "private", "role", "id"})
+SERVER_ONLY = frozenset({"created_by", "completed_by", "private", "role", "id", "author_id", "edited_at",
+                         "removed_at"})
+#: Fields of a comment fixed when it is made, without a clock: taken then, named in ``ignored`` afterwards.
+COMMENT_FIXED = ("reminder_id", "attachment_id")
 #: What must come with a new thing.
 REQUIRED: dict[str, tuple[str, ...]] = {
     "space": ("name",),
@@ -93,6 +102,7 @@ REQUIRED: dict[str, tuple[str, ...]] = {
     "space_pref": (),
     "filter": ("name", "position"),
     "tile_pref": (),
+    "comment": ("reminder_id",),
 }
 DEFAULTS: dict[str, dict[str, Any]] = {
     "space": {"color": "blue", "icon": "list", "deleted_at": None},
@@ -107,6 +117,7 @@ DEFAULTS: dict[str, dict[str, Any]] = {
     "space_pref": {"hidden": False},
     "filter": {"color": "blue", "icon": "filter", "rules": {}, "hidden": False},
     "tile_pref": {"hidden": False},
+    "comment": {"text": "", "mentions": [], "attachment_id": None},
 }
 
 
@@ -306,6 +317,18 @@ def _assignees(value: Any) -> list[int]:
     return out
 
 
+def _mentions(value: Any) -> list[int]:
+    if not isinstance(value, list) or len(value) > MAX_MENTIONS:
+        raise ValueError
+    out: list[int] = []
+    for item in value:
+        if isinstance(item, bool) or not isinstance(item, int) or item < 1:
+            raise ValueError
+        if item not in out:
+            out.append(item)
+    return out
+
+
 def _priority(value: Any) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 3:
         raise ValueError
@@ -369,12 +392,17 @@ CHECKS: dict[str, dict[str, Any]] = {
         "hidden": _bool,
     },
     "tile_pref": {"hidden": _bool},
+    "comment": {
+        "text": lambda v: text(v, 0, MAX_COMMENT), "mentions": _mentions, "reminder_id": uuid_or_none,
+        "attachment_id": uuid_or_none, "created_at": stamp,
+    },
 }
 #: Fields that may not be null.
 NOT_NULL: dict[str, frozenset[str]] = {
     "list": frozenset({"space_id"}),
     "section": frozenset({"list_id"}),
     "reminder": frozenset({"list_id", "position"}),
+    "comment": frozenset({"reminder_id"}),
 }
 
 
@@ -388,6 +416,8 @@ class Incoming:
     created_at: str | None = None
     #: Fields missing from a group that came in part: wrong for a change, filled with defaults when making.
     missing: list[str] = field(default_factory=list)
+    #: A comment's fields without a clock (``COMMENT_FIXED``).
+    fixed: dict[str, Any] = field(default_factory=dict)
 
 
 def take_apart(kind: str, fields: Any, clock: Any) -> Incoming:
@@ -404,7 +434,7 @@ def take_apart(kind: str, fields: Any, clock: Any) -> Incoming:
         if name in SERVER_ONLY and name not in ("completed_by",):
             out.ignored.append(name)
             continue
-        if name == "created_at" and kind == "reminder":
+        if name == "created_at" and kind in ("reminder", "comment"):
             try:
                 out.created_at = stamp(raw)
             except ValueError:
@@ -415,6 +445,13 @@ def take_apart(kind: str, fields: Any, clock: Any) -> Incoming:
             # server sets; it is named in ``ignored`` and the server fills it in (whoever made it done, null on
             # reopening).
             out.ignored.append(name)
+            continue
+        if kind == "comment" and name in COMMENT_FIXED:
+            # Without a clock: ``sync`` takes them when the comment is made and names them in ``ignored`` later.
+            try:
+                out.fixed[name] = checks[name](raw)
+            except (ValueError, TypeError):
+                bad.append(name)
             continue
         if name not in checks or name not in CLOCKED[kind]:
             bad.append(name)
@@ -489,6 +526,10 @@ def data_of(kind: str, row: Any, *, role: str | None = None, own_member: bool = 
                 "rules": row.rules if isinstance(row.rules, dict) else {}, "hidden": row.hidden}
     if kind == "tile_pref":
         return {"id": row.tile_id, "hidden": row.hidden}
+    if kind == "comment":
+        return {"id": row.id, "reminder_id": row.reminder_id, "author_id": row.author_id, "text": row.text,
+                "mentions": list(row.mentions or []), "attachment_id": row.attachment_id, "created_at": row.created_at,
+                "edited_at": row.edited_at, "removed_at": row.removed_at}
     raise ValueError(kind)
 
 

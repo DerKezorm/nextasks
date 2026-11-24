@@ -199,8 +199,9 @@ class MailChannel(Channel):
             raise DeliveryError(exc.code) from exc
 
 
-#: What went to the browsers and the app before there were choices; on from the start there.
-PUSH_DEFAULTS = frozenset({"due", "assigned", "changed"})
+#: What went to the browsers and the app before there were choices; on from the start there. Comments and mentions
+#: came later and are on there from the start as well, like the other events about one's tasks.
+PUSH_DEFAULTS = frozenset({"due", "assigned", "changed", "comment", "mention"})
 #: A push that could not go out is worth little hours later: three tries, then it is given up.
 PUSH_RETRIES = (1, 5, 15)
 

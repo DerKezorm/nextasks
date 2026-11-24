@@ -32,6 +32,7 @@ from .. import __version__
 from ..db import SessionLocal
 from ..errors import error
 from ..models import Account, Member
+from ..models import Comment as CommentRow
 from ..models import Space as SpaceRow
 from ..services import apiread, apitokens, apiwrite, clock, logs, records, stats, sync
 from ..services.apitokens import Caller
@@ -41,7 +42,7 @@ logger = logging.getLogger("nextasks.api")
 router = APIRouter(prefix="/api/v1", tags=["api v1"])
 
 #: What this server's ``/api/v1`` offers; a program asks for a word before it uses it.
-FEATURES = ["tasks", "dashboard", "external_ref", "members", "stats", "rotation"]
+FEATURES = ["tasks", "dashboard", "external_ref", "members", "stats", "rotation", "comments"]
 MAX_IDS = 200
 DEFAULT_LIMIT = 100
 MAX_LIMIT = 500
@@ -285,6 +286,36 @@ class TaskChange(BaseModel):
     section_id: Any = None
     completed: Any = None
     trashed: Any = None
+
+
+class CommentOut(BaseModel):
+    id: str
+    task_id: str
+    #: Null only for a comment whose author is gone for good; a former member has ``name`` null.
+    author: Person | None = None
+    #: Empty once removed.
+    text: str
+    #: The people named with ``@`` in the text.
+    mentions: list[Person]
+    #: A picture: an attachment of the task.
+    attachment_id: str | None = None
+    created_at: str
+    #: Set when its author changed the text afterwards.
+    edited_at: str | None = None
+    #: Removed by its author or a manager: shown as "message removed".
+    removed: bool
+    removed_at: str | None = None
+
+
+class CommentsOut(BaseModel):
+    comments: list[CommentOut]
+
+
+class CommentIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: Any = None
+    #: Account ids of members of the task's space; others drop out.
+    mentions: Any = None
 
 
 class CountsOut(BaseModel):
@@ -577,6 +608,39 @@ def trash_task(task_id: str, found: Writer) -> Response:
     except apiwrite.Refused as exc:
         raise _refused(exc) from exc
     return Response(status_code=204)
+
+
+# --- Comments -------------------------------------------------------------------------------------------------------
+
+
+@router.get("/tasks/{task_id}/comments", response_model=CommentsOut, responses=ERRORS,
+            summary="The comments of a task, oldest first")
+def get_comments(task_id: str, found: Reader) -> JSONResponse:
+    with SessionLocal() as db:
+        sight = apiread.sight_of(db, found.account)
+        try:
+            rows = apiwrite.comments_of(db, sight, task_id.lower())
+        except apiwrite.Refused as exc:
+            raise _refused(exc) from exc
+        world = apiread.World.read(db, sight)
+        return JSONResponse({"comments": [apiwrite.comment_out(world.person, row) for row in rows]})
+
+
+@router.post("/tasks/{task_id}/comments", response_model=CommentOut, status_code=201, responses=WRITE_ERRORS,
+             summary="Comment on a task of a shared space")
+def post_comment(task_id: str, body: CommentIn, found: Writer) -> JSONResponse:
+    try:
+        with SessionLocal() as db:
+            sight = apiread.sight_of(db, found.account)
+        comment_id = apiwrite.add_comment(_sync_caller(found), sight, task_id.lower(), body.text, body.mentions)
+    except apiwrite.Refused as exc:
+        raise _refused(exc) from exc
+    logger.info("API comment made token_id=%s", found.token_id)
+    with SessionLocal() as db:
+        world = apiread.World.read(db, apiread.sight_of(db, found.account))
+        row = db.get(CommentRow, comment_id)
+        assert row is not None
+        return JSONResponse(apiwrite.comment_out(world.person, row), status_code=201)
 
 
 # --- Dashboard ------------------------------------------------------------------------------------------------------

@@ -1792,7 +1792,6 @@
       "year": "{{change}} on the 12 months before"
     },
     "noBefore": "nothing done before",
-    "since": "since {{month}}",
     "spark": {
       "week": "The last 14 days",
       "month": "The last 9 weeks",
@@ -1898,7 +1897,8 @@
       "foot": "Review {{year}}",
       "empty": "Nothing done in {{year}} yet",
       "emptyText": "The year card fills up with every task done."
-    }
+    },
+    "since": "since {{month}}"
   },
   "today": {
     "sub": "{{day}} · from all spaces",
@@ -1910,8 +1910,6 @@
     "quick": "New task for today in “{{list}}”",
     "doneBy": "done by {{name}}, {{time}}",
     "doneAt": "done at {{time}}",
-    "openLate_one": "one of them overdue",
-    "openLate_other": "{{count}} of them overdue",
     "time": {
       "now": "now",
       "inMinutes": "in {{n}} min",
@@ -1936,14 +1934,14 @@
     },
     "progress": {
       "done": "{{done}} of {{due}} for today done",
-      "left_one": "one still open",
-      "left_other": "{{count}} still open",
       "nothingDue": "Nothing is due today",
       "ring": "{{percent}} percent done",
       "overdue_one": "plus one overdue",
       "overdue_other": "plus {{count}} overdue",
       "streak_one": "Run: one day",
-      "streak_other": "Run: {{count}} days"
+      "streak_other": "Run: {{count}} days",
+      "left_one": "one still open",
+      "left_other": "{{count}} still open"
     },
     "focus": {
       "title": "Focus for today",
@@ -1998,6 +1996,53 @@
       "trashOne": "Drop “{{title}}”",
       "coming": "Already planned for tomorrow",
       "close": "Done"
+    },
+    "openLate_one": "one of them overdue",
+    "openLate_other": "{{count}} of them overdue"
+  },
+  "comments": {
+    "title": "History",
+    "count_one": "1 comment",
+    "count_other": "{{count}} comments",
+    "empty": "Nothing has happened yet. Be the first to write something about this task.",
+    "placeholder": "Write a comment",
+    "keys": "Enter sends, Shift+Enter starts a new line, @ mentions someone.",
+    "send": "Send",
+    "sending": "sending",
+    "edited": "edited",
+    "removed": "Message deleted",
+    "actions": "Actions for this comment",
+    "edit": "Edit",
+    "save": "Save",
+    "remove": "Delete",
+    "removeTitle": "Delete the comment?",
+    "removeText": "Everybody then sees “Message deleted” in place of the text.",
+    "tooLong": "A comment has at most {{max}} characters.",
+    "mentionList": "People in the space",
+    "picture": "Picture",
+    "pictureAdd": "Add a picture",
+    "pictureRemove": "Remove the picture again",
+    "pictureOpen": "View the picture large",
+    "pictureLoading": "Loading the picture",
+    "pictureTooLarge": "The picture is empty or larger than the server takes.",
+    "event": {
+      "created": "{{name}} created the task",
+      "completed": "{{name}} completed it",
+      "reopened": "{{name}} opened it again",
+      "occurrence": "{{name}} completed it for {{date}}",
+      "due": "{{name}} set the date to {{date}}",
+      "dueRemoved": "{{name}} removed the date",
+      "assignees": "{{name}} assigned it to {{people}}",
+      "assigneesNone": "{{name}} unassigned it",
+      "priority": "{{name}} set the priority to {{priority}}",
+      "moved": "{{name}} moved it to “{{list}}”",
+      "movedAway": "{{name}} moved it to another list",
+      "renamed": "{{name}} renamed it to “{{title}}”",
+      "changed": "{{name}} changed it"
+    },
+    "notify": {
+      "comment": "Someone comments on a task I created or am assigned to",
+      "mention": "Someone mentions me in a comment"
     }
   },
   "rotation": {

@@ -274,8 +274,9 @@ def features(db: Any) -> list[str]:
     # ``devices``: a device brings in another device of its account (``POST /devices``, contract 0.7).
     # ``own_colors``: a space, list or filter takes an own colour as ``#rrggbb`` besides the fixed names (contract 0.8).
     # ``rotation``: a reminder takes the field ``rotation`` (taking turns, contract 0.9); older servers refuse it.
+    # ``comments``: the kind ``comment`` is known here (contract 0.9); an app sends it only where it is named.
     offered = ["changes", "batch", "files", "wait", "invites", "space_prefs", "filters", "devices", "own_colors",
-               "rotation"]
+               "rotation", "comments"]
     if push.relay_url():
         offered.append("push")
     if webpush.ready(db):

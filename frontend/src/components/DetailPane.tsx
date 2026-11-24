@@ -15,11 +15,13 @@ import { useTranslation } from 'react-i18next'
 import { createReminder, dueChange, moveReminder, siblingsAt, trashReminder, type Spot } from '../lib/actions'
 import { describeRule, localDay } from '../lib/due'
 import { picturedIn } from '../lib/notes'
+import { isShared } from '../lib/shared'
 import { moment } from '../lib/time'
 import { useEngine, useView } from '../state/sync'
 import { cleanTags } from '../sync/fields'
 import { APP_BASE } from '../sync/transport'
 import type { Attachment, Data, Reminder } from '../sync/types'
+import { CommentsSection } from './CommentsSection'
 import { Mark } from './Mark'
 import { NotesField } from './NotesField'
 import { personName, PersonAvatar } from './People'
@@ -125,7 +127,9 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
   const move = (spot: Spot) => (draft ? draft.move(spot) : moveReminder(engine, view, reminder.id, spot, siblingsAt(view, spot, reminder.id).length))
   const children = draft ? [] : view.childrenOf(reminder.id).filter((c) => !view.inTrash(c))
   const pictured = picturedIn(reminder.notes)
-  const attachments = draft ? [] : view.attachmentsOf(reminder.id).filter((a) => !pictured.has(a.id.toLowerCase()))
+  // Pictures of the note and of comments do not show again as files.
+  const commented = new Set(draft ? [] : view.commentsOf(reminder.id).map((c) => c.attachment_id))
+  const attachments = draft ? [] : view.attachmentsOf(reminder.id).filter((a) => !pictured.has(a.id.toLowerCase()) && !commented.has(a.id))
   const members = space && !space.private ? view.membersOf(space.id) : []
   // Taking turns: the row of people stands in for the assignees.
   const turning = members.length > 1 && reminder.rotation.some((id) => members.some((m) => m.account_id === id))
@@ -274,6 +278,11 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
             <NotesField key={reminder.id} reminder={reminder} label={t('detail.notes')} onSave={(notes) => put({ notes })} locked={draft ? t('detail.notesNeedTitle') : null} />
           </div>
           <div className="pl-7">{subtasks}</div>
+          {!draft && space && isShared(view, space) && engine.me?.features.includes('comments') && (
+            <div className="pl-7">
+              <CommentsSection reminder={reminder} spaceId={space.id} />
+            </div>
+          )}
         </div>
 
         <div data-part="fields" className="min-w-0 border-ink-700 pb-3 @min-[860px]:border-l @min-[860px]:pl-6">

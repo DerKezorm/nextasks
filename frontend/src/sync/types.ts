@@ -3,7 +3,7 @@
  * nextasks-ios). Field names stay English and as the server writes them.
  */
 
-export type Kind = 'space' | 'member' | 'list' | 'section' | 'reminder' | 'attachment' | 'list_pref' | 'space_pref' | 'filter' | 'tile_pref'
+export type Kind = 'space' | 'member' | 'list' | 'section' | 'reminder' | 'attachment' | 'list_pref' | 'space_pref' | 'filter' | 'tile_pref' | 'comment'
 
 /** When each field or field group last changed, ms UTC. */
 export type Clock = Record<string, number>
@@ -121,6 +121,24 @@ export interface Attachment {
   created_at: string
 }
 
+/**
+ * A message under a task of a shared space (contract 0.9, word `comments`). `text` and `mentions` change together
+ * (clock key `text`); the author may change them for a day. Removed, it stays with an empty text and `removed_at`.
+ */
+export interface Comment {
+  id: string
+  reminder_id: string
+  author_id: number | null
+  text: string
+  /** Account ids named with `@Name` in the text. */
+  mentions: number[]
+  /** A picture: an attachment of the same task. */
+  attachment_id: string | null
+  created_at: string
+  edited_at: string | null
+  removed_at: string | null
+}
+
 export interface ListPref {
   id: string
   show_completed: boolean
@@ -178,6 +196,7 @@ export interface KindTypes {
   space_pref: SpacePref
   filter: Filter
   tile_pref: TilePref
+  comment: Comment
 }
 
 // ---- Operations -----------------------------------------------------------------------------------------------------
@@ -194,7 +213,7 @@ export interface PutOp {
 export interface DeleteOp {
   op_id: string
   type: 'delete'
-  kind: 'section' | 'attachment' | 'filter'
+  kind: 'section' | 'attachment' | 'filter' | 'comment'
   id: string
 }
 

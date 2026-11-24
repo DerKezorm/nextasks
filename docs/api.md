@@ -54,12 +54,13 @@ family, plus `"fields"` inside `detail` for `422 invalid_input`.
 ```json
 { "name": "robin", "display_name": "Robin", "level": "write", "time_zone": "Europe/Berlin",
   "spaces": [{"id": "…", "name": "Familie"}], "version": "0.1.0",
-  "features": ["tasks", "dashboard", "external_ref", "members", "stats", "rotation"] }
+  "features": ["tasks", "dashboard", "external_ref", "members", "stats", "rotation", "comments"] }
 ```
 
 `features` names what this server's `/api/v1` offers; a program asks for a feature before it uses it. `members`: the
 server has `GET /api/v1/spaces/{id}/members`. `stats`: the server has `GET /api/v1/stats/summary`. `rotation`: tasks
-read and take `rotation` (taking turns, see below).
+read and take `rotation` (taking turns, see below). `comments`: the server has `GET` and `POST
+/api/v1/tasks/{id}/comments`.
 
 ## Spaces and lists
 
@@ -195,6 +196,35 @@ once, and the same rules for simultaneous changes apply (per field, the later ch
 ### `DELETE /api/v1/tasks/{id}` (write)
 
 Moves the task, with its subtasks, to the trash (30 days, as in the interface). Answer `204`.
+
+## Comments
+
+Messages under a task, as in the history of a task in the interface. Only in shared spaces: in an account's own
+"Private" there are none.
+
+### `GET /api/v1/tasks/{id}/comments`
+
+```json
+{ "comments": [
+  { "id": "…", "task_id": "…", "author": {"id": 3, "name": "sam", "display_name": "Sam"},
+    "text": "I'll take it on Saturday, @Nora", "mentions": [{"id": 2, "name": "nora", "display_name": "Nora"}],
+    "attachment_id": null, "created_at": "2026-11-24T09:12:00.000Z", "edited_at": null,
+    "removed": false, "removed_at": null } ] }
+```
+
+Oldest first. `author` and `mentions` name people like `assignees` (a former member with `name` null).
+`attachment_id`: a picture, an attachment of the task. `edited_at`: its author changed the text afterwards (possible
+for a day). A removed comment stays as `removed: true` with an empty text.
+
+### `POST /api/v1/tasks/{id}/comments` (write)
+
+```json
+{ "text": "Bought, it's in the fridge", "mentions": [2] }
+```
+
+`text` 1 to 4000 characters; `mentions` account ids of members of the task's space, others drop out quietly; the
+text should name them as `@Name`. Answer `201` with the comment. The people assigned to the task and whoever made it
+are notified, the ones mentioned as a mention. `403 private_space` in an account's own "Private".
 
 ## Dashboard
 

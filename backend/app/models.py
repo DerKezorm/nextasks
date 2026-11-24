@@ -467,6 +467,52 @@ class Attachment(Base):
     cursor: Mapped[int] = mapped_column(Integer, default=0, index=True)
 
 
+class Comment(Base):
+    """A message under a task (``comment``, contract 0.9): its author, a text with the people it mentions, optionally a
+    picture (an attachment of the same task). Editable by its author for a day; removed, it stays as "message
+    removed" with its text gone. It goes with its task (bin, gone for good, a space that goes)."""
+
+    __tablename__ = "comments"
+
+    id: Mapped[str] = mapped_column(ID, primary_key=True)
+    reminder_id: Mapped[str] = mapped_column(ForeignKey("reminders.id", ondelete="CASCADE"), index=True)
+    #: The space of the task, kept here for the rights and ``/changes``; follows the task.
+    space_id: Mapped[str] = mapped_column(ID, index=True)
+    author_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    text: Mapped[str] = mapped_column(Text, default="")
+    #: Account ids named with ``@`` in the text, members of the space only.
+    mentions: Mapped[Any] = mapped_column(JSON, default=list)
+    #: A picture: the id of an attachment of the same task, fixed when the comment is made.
+    attachment_id: Mapped[str | None] = mapped_column(ID, nullable=True)
+    created_at: Mapped[str] = mapped_column(STAMP)
+    #: Set by the server when the text changed after it was made.
+    edited_at: Mapped[str | None] = mapped_column(STAMP, nullable=True)
+    #: Set by the server when it was removed; the text is empty from then on.
+    removed_at: Mapped[str | None] = mapped_column(STAMP, nullable=True)
+    clock: Mapped[Any] = mapped_column(JSON, default=dict)
+    cursor: Mapped[int] = mapped_column(Integer, default=0, index=True)
+
+
+class TaskEvent(Base):
+    """What happened to a task and who did it, for its history in the web (``services/history.py``): made, done or
+    opened again, a date, the assignees, the priority, another list, another title. Written as the session flushes,
+    whichever way the change came; one person's changes of one field within ten minutes are one row. Never sent to
+    the app; it goes with its task."""
+
+    __tablename__ = "task_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reminder_id: Mapped[str] = mapped_column(ForeignKey("reminders.id", ondelete="CASCADE"), index=True)
+    actor_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: ``created``, ``completion``, ``occurrence``, ``due``, ``assignees``, ``priority``, ``list``, ``title``.
+    field: Mapped[str] = mapped_column(String(16))
+    old: Mapped[Any] = mapped_column(JSON, nullable=True)
+    new: Mapped[Any] = mapped_column(JSON, nullable=True)
+    #: When it began, and when it last changed (the ten minutes count from ``first_at``).
+    first_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow)
+    at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow, index=True)
+
+
 class ListPref(Base):
     """One person's settings for one list (``list_pref``, id = the list's): nobody else ever sees them."""
 
@@ -638,6 +684,19 @@ class ChangeBundle(Base):
     list_id: Mapped[str] = mapped_column(ID, primary_key=True)
     opened_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow, index=True)
     #: ``[{"by": account id, "type": "added"|"completed", "reminder_id": …}]``
+    events: Mapped[Any] = mapped_column(JSON, default=list)
+
+
+class CommentBundle(Base):
+    """Comments on one task for one person (``services/notify.py``): the first goes out at once and opens ten minutes;
+    what comes in them is told in one notification at their end."""
+
+    __tablename__ = "comment_bundles"
+
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), primary_key=True)
+    reminder_id: Mapped[str] = mapped_column(ID, primary_key=True)
+    opened_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow, index=True)
+    #: ``[{"by": account id, "comment_id": …}]``: what came after the first.
     events: Mapped[Any] = mapped_column(JSON, default=list)
 
 
@@ -813,6 +872,8 @@ __all__ = [
     "AuthSession",
     "Base",
     "ChangeBundle",
+    "Comment",
+    "CommentBundle",
     "Completion",
     "CursorTime",
     "ExternalRef",
@@ -839,6 +900,7 @@ __all__ = [
     "SpacePref",
     "SweepKeep",
     "SyncState",
+    "TaskEvent",
     "TaskList",
     "TilePref",
     "WebPushSubscription",

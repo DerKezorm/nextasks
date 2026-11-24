@@ -10,6 +10,10 @@
   those in the bin.
 * **Changes by others** (``notify_changes`` of the list): made (without subtasks) and completed count. The first
   change opens ten minutes, at their end one notification tells all of them.
+* **Comments** (contract 0.9): to the assignees and the maker of the task who are members, never to the writer. Who
+  is named with ``@`` gets ``mention`` instead, at once and never bundled, so nobody hears of one comment twice.
+  ``comment`` is bundled per person and task: the first goes out at once and opens ten minutes, what comes in them
+  is told in one notification at their end (``CommentBundle``).
 
 Done reminders and those in the bin (themselves, their parent, list or space) never ring. Every notification goes to
 the channels the person has it on for (``services/notifyprefs.py``): the app through the relay (``services/push.py``)
@@ -31,7 +35,19 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from ..db import SessionLocal
-from ..models import Account, AssignedLog, ChangeBundle, ListPref, Member, NotifySent, Reminder, Space, TaskList
+from ..models import (
+    Account,
+    AssignedLog,
+    ChangeBundle,
+    Comment,
+    CommentBundle,
+    ListPref,
+    Member,
+    NotifySent,
+    Reminder,
+    Space,
+    TaskList,
+)
 from . import channels, clock, messages, notetext, notifyprefs, push, spaces, visibility
 
 logger = logging.getLogger("nextasks.notify")
@@ -54,6 +70,12 @@ TEXTS: dict[str, dict[str, str]] = {
         "others_completed": "{name} und andere haben {n} Aufgaben abgehakt",
         "mixed": "{n} Änderungen in {list}",
         "former": "Ehemaliges Mitglied",
+        "comment": "{name}: {text}",
+        "comment_picture": "{name} hat ein Bild geschickt",
+        "mention": "{name} hat dich erwähnt: {text}",
+        "mention_picture": "{name} hat dich bei einem Bild erwähnt",
+        "comments_one": "{n} neue Kommentare von {name}",
+        "comments_others": "{n} neue Kommentare von {name} und anderen",
     },
     "en": {
         "assigned": "{name} assigned a task to you",
@@ -65,6 +87,12 @@ TEXTS: dict[str, dict[str, str]] = {
         "others_completed": "{name} and others completed {n} tasks",
         "mixed": "{n} changes in {list}",
         "former": "Former member",
+        "comment": "{name}: {text}",
+        "comment_picture": "{name} sent a picture",
+        "mention": "{name} mentioned you: {text}",
+        "mention_picture": "{name} mentioned you with a picture",
+        "comments_one": "{n} new comments from {name}",
+        "comments_others": "{n} new comments from {name} and others",
     },
 }
 
@@ -239,6 +267,119 @@ def _bundle(db: Session, reminder_id: str, kind: str, actor_id: int) -> None:
     db.commit()
 
 
+# --- Comments -----------------------------------------------------------------------------------------------------
+
+
+def comment_text(db: Session, account: Account, row: Comment, event: str) -> str:
+    """One line for a push: who and what they wrote (``event`` ``comment`` or ``mention``)."""
+    language = spaces.language_of(account)
+    name = _name(db, account.id, row.author_id, language) if row.author_id else _text(language, "former")
+    words = " ".join((row.text or "").split())
+    if not words:
+        return _text(language, f"{event}_picture", name=name)
+    return _text(language, event, name=name, text=words)
+
+
+def _comment_mail(task: Reminder, list_row: TaskList | None, by: str, text: str, event: str,
+                  count: int = 1) -> notifyprefs.Maker:
+    def make(language: str, base: str, unsubscribe: str) -> messages.Message:
+        return messages.comment(language, base=base, by=by, item=item_of(task, list_row, base), text=text,
+                                mention=event == "mention", count=count, unsubscribe=unsubscribe)
+
+    return make
+
+
+def _send_comment(db: Session, account: Account, task: Reminder, event: str, key: str, text: str, by: str,
+                  mail_text: str, count: int = 1) -> None:
+    pushed = push.Message(title=task.title, text=text, reminder_id=task.id, list_id=task.list_id, type=event,
+                          collapse=f"comment:{task.id}")
+    list_row = db.get(TaskList, task.list_id)
+    notifyprefs.dispatch(db, account, event, key, _comment_mail(task, list_row, by, mail_text, event, count),
+                         short(pushed, reminder_path(task)), at_once=True)
+    db.commit()
+
+
+def comment_audience(db: Session, task: Reminder, row: Comment) -> tuple[list[int], list[int]]:
+    """``(mentioned, others)``: who hears of a comment as a mention, who as a comment; members only, never the
+    writer, nobody in both."""
+    members = set(spaces.member_ids(db, task.space_id))
+    writer = row.author_id
+    mentioned = [person for person in dict.fromkeys(row.mentions or []) if person in members and person != writer]
+    wanted = [*(task.assignees or []), task.created_by]
+    others = [person for person in dict.fromkeys(wanted)
+              if isinstance(person, int) and person in members and person != writer and person not in mentioned]
+    return mentioned, others
+
+
+def _commented(db: Session, comment_id: str) -> None:
+    row = db.get(Comment, comment_id)
+    if row is None or row.removed_at is not None:
+        return
+    task = db.get(Reminder, row.reminder_id)
+    if task is None or in_bin(db, task):
+        return
+    mentioned, others = comment_audience(db, task, row)
+    now = clock.now()
+    for event, people in (("mention", mentioned), ("comment", others)):
+        for account_id in people:
+            account = db.get(Account, account_id)
+            if account is None or account.blocked_at is not None:
+                continue
+            if event == "comment":
+                bundle = db.get(CommentBundle, (account_id, task.id))
+                if bundle is not None and bundle.opened_at > now - WINDOW:
+                    bundle.events = [*list(bundle.events or []), {"by": row.author_id, "comment_id": row.id}]
+                    db.commit()
+                    continue
+                if bundle is not None:
+                    _tell_bundle(db, bundle)
+                db.add(CommentBundle(account_id=account_id, reminder_id=task.id, opened_at=now, events=[]))
+                db.commit()
+            language = spaces.language_of(account)
+            by = _name(db, account_id, row.author_id, language) if row.author_id else _text(language, "former")
+            _send_comment(db, account, task, event, row.id, comment_text(db, account, row, event), by, row.text)
+
+
+def comments_text(db: Session, account: Account, events: list[dict[str, Any]]) -> str:
+    language = spaces.language_of(account)
+    people = list(dict.fromkeys(event.get("by") for event in events))
+    first = people[0] if people else None
+    name = _name(db, account.id, first, language) if isinstance(first, int) else _text(language, "former")
+    return _text(language, "comments_others" if len(people) > 1 else "comments_one", n=len(events), name=name)
+
+
+def _tell_bundle(db: Session, bundle: CommentBundle) -> bool:
+    """The comments that came in a bundle's ten minutes, in one notification; the bundle goes."""
+    events = list(bundle.events or [])
+    account = db.get(Account, bundle.account_id)
+    task = db.get(Reminder, bundle.reminder_id)
+    opened = bundle.opened_at
+    db.delete(bundle)
+    db.commit()
+    if not events or account is None or task is None or account.blocked_at is not None or in_bin(db, task):
+        return False
+    if db.get(Member, (task.space_id, account.id)) is None:
+        return False
+    alive = [event for event in events if (found := db.get(Comment, event.get("comment_id"))) is not None
+             and found.removed_at is None]
+    if not alive:
+        return False
+    text = comments_text(db, account, alive)
+    _send_comment(db, account, task, "comment", f"{task.id}:{int(opened.timestamp() * 1000)}", text, "", text,
+                  count=len(alive))
+    return True
+
+
+def comment_round(now: datetime | None = None) -> int:
+    """Bundles of comments whose ten minutes are over go out."""
+    now = now or clock.now()
+    sent = 0
+    with SessionLocal() as db:
+        for bundle in db.scalars(select(CommentBundle).where(CommentBundle.opened_at <= now - WINDOW)).all():
+            sent += _tell_bundle(db, bundle)
+    return sent
+
+
 def handle(events: Any, actor_id: int) -> None:
     with SessionLocal() as db:
         for reminder_id, people in events.assigned:
@@ -247,11 +388,13 @@ def handle(events: Any, actor_id: int) -> None:
             _bundle(db, reminder_id, "added", actor_id)
         for reminder_id in events.completed:
             _bundle(db, reminder_id, "completed", actor_id)
+        for comment_id in getattr(events, "comments", []):
+            _commented(db, comment_id)
 
 
 def after_op(events: Any, actor_id: int) -> None:
     """After an op is committed: what it means for notifications, off the request (``INLINE`` in the tests)."""
-    if not (events.assigned or events.added or events.completed):
+    if not (events.assigned or events.added or events.completed or getattr(events, "comments", [])):
         return
     if INLINE:
         handle(events, actor_id)
@@ -317,6 +460,7 @@ async def run_forever(stop: asyncio.Event) -> None:
         try:
             await asyncio.to_thread(due_round)
             await asyncio.to_thread(bundle_round)
+            await asyncio.to_thread(comment_round)
         except Exception:
             logger.exception("The notification round failed")
         try:

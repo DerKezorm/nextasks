@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session, aliased
 from ..models import (
     Account,
     Attachment,
+    Comment,
     Gone,
     Hidden,
     ListPref,
@@ -71,6 +72,7 @@ _MODELS: dict[str, Any] = {
     "section": Section,
     "reminder": Reminder,
     "attachment": Attachment,
+    "comment": Comment,
     "list_pref": ListPref,
     "space_pref": SpacePref,
 }
@@ -206,9 +208,9 @@ def page(db: Session, account_id: int, since: int, limit: int = DEFAULT_LIMIT) -
 
 def people(db: Session, account_id: int, spaces: dict[str, int] | None = None) -> list[dict[str, Any]]:
     """The account itself, everybody it shares a space with, and every account named in ``created_by``,
-    ``completed_by`` or ``assignees`` of what it sees. Name and picture only of the first two
-    (``services/visibility``): one named in what it sees but sharing no space with it any more is given like a
-    deleted account, ``name`` and ``avatar_hash`` null (a former member)."""
+    ``completed_by`` or ``assignees`` of what it sees, or as author or mention of a comment. Name and picture only of
+    the first two (``services/visibility``): one named in what it sees but sharing no space with it any more is given
+    like a deleted account, ``name`` and ``avatar_hash`` null (a former member)."""
     spaces = granted(db, account_id) if spaces is None else spaces
     space_ids = list(spaces)
     wanted: set[int] = {account_id}
@@ -222,6 +224,9 @@ def people(db: Session, account_id: int, spaces: dict[str, int] | None = None) -
             wanted |= {value for value in assignees or [] if isinstance(value, int)}
         wanted |= {value for value in db.scalars(select(Attachment.created_by).where(
             Attachment.space_id.in_(space_ids))) if isinstance(value, int)}
+        for author, mentions in db.execute(select(Comment.author_id, Comment.mentions)
+                                           .where(Comment.space_id.in_(space_ids))):
+            wanted |= {value for value in (author, *(mentions or [])) if isinstance(value, int)}
     seen = visibility.seen_by(db, account_id)
     known = {row.id: row for row in db.scalars(select(Account).where(Account.id.in_(wanted & seen)))}
     return [

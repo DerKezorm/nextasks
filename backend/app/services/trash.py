@@ -25,6 +25,8 @@ from ..models import (
     AppPairing,
     Attachment,
     ChangeBundle,
+    Comment,
+    CommentBundle,
     Completion,
     CursorTime,
     Focus,
@@ -60,9 +62,13 @@ def _tomb(db: Session, items: list[tuple[str, str, int]], space_id: str) -> None
 
 
 def _reminder_items(db: Session, reminders: list[Reminder]) -> tuple[list[tuple[str, str, int]], set[str]]:
+    """Tombstones for the reminders and what hangs on them; their comments and history go with them (by the foreign
+    keys, and said here as well)."""
     ids = [row.id for row in reminders]
     attachments = list(db.scalars(select(Attachment).where(Attachment.reminder_id.in_(ids)))) if ids else []
+    comments = list(db.scalars(select(Comment.id).where(Comment.reminder_id.in_(ids)))) if ids else []
     items = [("reminder", row.id, 0) for row in reminders] + [("attachment", row.id, 0) for row in attachments]
+    items += [("comment", comment_id, 0) for comment_id in comments]
     return items, {row.hash for row in attachments}
 
 
@@ -182,6 +188,7 @@ def run_once() -> None:
         db.execute(delete(NotifySent).where(NotifySent.sent_at < now - timedelta(days=SENT_DAYS)))
         db.execute(delete(AppPairing).where(AppPairing.expires_at < now - timedelta(days=1)))
         db.execute(delete(ChangeBundle).where(ChangeBundle.opened_at < now - timedelta(days=1)))
+        db.execute(delete(CommentBundle).where(CommentBundle.opened_at < now - timedelta(days=1)))
         db.commit()
         files.sweep(db)
     cursor.touched_everybody()

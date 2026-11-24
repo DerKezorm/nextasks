@@ -187,7 +187,8 @@ export function search(view: View, query: string, withDone: boolean): Reminder[]
   return view.visible
     .filter((r) => withDone || !r.completed_at)
     .filter((r) => {
-      const text = [r.title, plainNotes(r.notes), r.url ?? '', ...r.tags.map((t) => '#' + t)].join(' ').toLowerCase().normalize('NFC')
+      const said = view.commentsOf(r.id).map((c) => c.text)
+      const text = [r.title, plainNotes(r.notes), r.url ?? '', ...r.tags.map((t) => '#' + t), ...said].join(' ').toLowerCase().normalize('NFC')
       return words.every((w) => text.includes(w))
     })
 }

@@ -588,7 +588,8 @@ def test_every_route_describes_itself() -> None:
     schema = app.openapi()
     routes = {path: methods for path, methods in schema["paths"].items() if path.startswith(V1)}
     assert set(routes) == {f"{V1}/me", f"{V1}/spaces", f"{V1}/spaces/{{space_id}}/members", f"{V1}/lists",
-                           f"{V1}/tasks", f"{V1}/tasks/{{task_id}}", f"{V1}/dashboard", f"{V1}/stats/summary"}
+                           f"{V1}/tasks", f"{V1}/tasks/{{task_id}}", f"{V1}/tasks/{{task_id}}/comments",
+                           f"{V1}/dashboard", f"{V1}/stats/summary"}
     for path, methods in routes.items():
         for method, operation in methods.items():
             assert operation.get("summary"), (method, path)

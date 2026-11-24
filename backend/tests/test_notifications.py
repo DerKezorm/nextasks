@@ -134,8 +134,10 @@ def test_mail_is_off_from_the_start_and_the_push_channels_carry_what_they_carrie
     _account, browser = person("robin")
     state = browser.get("/api/notify").json()
     assert all("mail" not in chosen for chosen in state["routes"].values())
-    assert state["reports"] == ["daily", "weekly"] and state["events"] == ["assigned", "due", "changed", "joined"]
-    pushed = {"assigned": ["webpush", "app"], "due": ["webpush", "app"], "changed": ["webpush", "app"]}
+    assert state["reports"] == ["daily", "weekly"]
+    assert state["events"] == ["assigned", "due", "changed", "joined", "comment", "mention"]
+    pushed = {"assigned": ["webpush", "app"], "due": ["webpush", "app"], "changed": ["webpush", "app"],
+              "comment": ["webpush", "app"], "mention": ["webpush", "app"]}
     assert state["routes"] == {"daily": [], "weekly": [], "joined": [], **pushed}
 
 

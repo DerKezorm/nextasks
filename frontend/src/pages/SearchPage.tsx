@@ -1,4 +1,4 @@
-/** Search over title, notes, tags and link of every task one sees; done ones on request. */
+/** Search over title, notes, tags, link and comments of every task one sees; done ones on request. */
 import { Search, SearchX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'

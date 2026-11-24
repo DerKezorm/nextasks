@@ -67,6 +67,12 @@ WORDS: dict[str, dict[str, str]] = {
         "due_title": "Fällig: {title}",
         "due_lead": "„{title}“ ist jetzt fällig.",
         "changed_lead": "In der Liste „{list}“ hat sich etwas getan.",
+        "comment_title": "{name} hat „{title}“ kommentiert",
+        "mention_title": "{name} hat dich in „{title}“ erwähnt",
+        "comments_title": "{count} neue Kommentare zu „{title}“",
+        "comment_lead": "{name} schreibt: „{text}“",
+        "comment_picture": "{name} hat ein Bild geschickt.",
+        "comments_lead": "{summary}. Lies sie im Verlauf der Aufgabe.",
         "joined_title": "{name} ist jetzt in „{space}“",
         "joined_lead": "{name} hat die Einladung angenommen und ist jetzt Mitglied im Bereich „{space}“.",
         "confirm_title": "nextasks: Mailadresse bestätigen",
@@ -118,6 +124,12 @@ WORDS: dict[str, dict[str, str]] = {
         "due_title": "Due: {title}",
         "due_lead": "“{title}” is due now.",
         "changed_lead": "Something happened in the list “{list}”.",
+        "comment_title": "{name} commented on “{title}”",
+        "mention_title": "{name} mentioned you in “{title}”",
+        "comments_title": "{count} new comments on “{title}”",
+        "comment_lead": "{name} writes: “{text}”",
+        "comment_picture": "{name} sent a picture.",
+        "comments_lead": "{summary}. Read them in the history of the task.",
         "joined_title": "{name} is in “{space}” now",
         "joined_lead": "{name} accepted the invitation and is a member of the space “{space}” now.",
         "confirm_title": "nextasks: confirm your mail address",
@@ -430,6 +442,30 @@ def changed(language: str, *, base: str, list_name: str, summary: str, link: str
     return _event(language, base=base, title=one_line(summary),
                   lead=w["changed_lead"].format(list=one_line(list_name)), item=None, link=link,
                   unsubscribe=unsubscribe)
+
+
+#: How much of a comment a mail quotes.
+COMMENT_QUOTE = 600
+
+
+def comment(language: str, *, base: str, by: str, item: Item, text: str, mention: bool, count: int,
+            unsubscribe: str) -> Message:
+    """A comment on a task (``mention``: one that names the reader), or with ``count`` > 1 several in one mail, then
+    ``text`` is the summary line."""
+    w = words(language)
+    title = one_line(item.title)
+    if count > 1:
+        return _event(language, base=base, title=w["comments_title"].format(count=count, title=title),
+                      lead=w["comments_lead"].format(summary=one_line(text)), item=item, link=item.link,
+                      unsubscribe=unsubscribe)
+    words_of = " ".join(text.split())
+    if len(words_of) > COMMENT_QUOTE:
+        words_of = words_of[:COMMENT_QUOTE].rstrip() + "…"
+    lead = (w["comment_lead"].format(name=one_line(by), text=words_of) if words_of
+            else w["comment_picture"].format(name=one_line(by)))
+    key = "mention_title" if mention else "comment_title"
+    return _event(language, base=base, title=w[key].format(name=one_line(by), title=title), lead=lead, item=item,
+                  link=item.link, unsubscribe=unsubscribe)
 
 
 def joined(language: str, *, base: str, name: str, space: str, link: str, unsubscribe: str) -> Message:

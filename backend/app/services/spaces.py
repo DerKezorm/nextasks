@@ -23,6 +23,7 @@ from ..models import (
     MANAGER,
     Account,
     Attachment,
+    Comment,
     Gone,
     Hidden,
     ListPref,
@@ -134,7 +135,7 @@ def contents_of_list(db: Session, list_id: str) -> tuple[list[Section], list[Rem
 
 def items_of_space(db: Session, space_id: str, account_id: int) -> list[tuple[str, str]]:
     """Everything an account sees in a space, as ``(kind, id)``: the space, its members, lists, sections,
-    reminders, attachments and the account's own list and space settings."""
+    reminders, attachments, comments and the account's own list and space settings."""
     items: list[tuple[str, str]] = [("space", space_id)]
     items += [("member", f"{space_id}:{other}") for other in member_ids(db, space_id)]
     for list_row in lists_in(db, space_id):
@@ -142,6 +143,7 @@ def items_of_space(db: Session, space_id: str, account_id: int) -> list[tuple[st
     items += [("section", row) for row in db.scalars(select(Section.id).where(Section.space_id == space_id))]
     items += [("reminder", row) for row in db.scalars(select(Reminder.id).where(Reminder.space_id == space_id))]
     items += [("attachment", row) for row in db.scalars(select(Attachment.id).where(Attachment.space_id == space_id))]
+    items += [("comment", row) for row in db.scalars(select(Comment.id).where(Comment.space_id == space_id))]
     items += [("list_pref", row) for row in db.scalars(select(ListPref.list_id).where(
         ListPref.space_id == space_id, ListPref.account_id == account_id))]
     if db.get(SpacePref, (account_id, space_id)) is not None:
@@ -278,29 +280,37 @@ def _filter_assignees(rows: list[Reminder], members: set[int], private: bool, no
         _take_out(row, people if private else people - members, now_ms, private=private)
 
 
+def comments_of(db: Session, reminder_ids: list[str]) -> list[Comment]:
+    if not reminder_ids:
+        return []
+    return list(db.scalars(select(Comment).where(Comment.reminder_id.in_(reminder_ids)).order_by(Comment.id)))
+
+
 def move_list(db: Session, list_row: TaskList, old_space: str, now_ms: int) -> None:
-    """The list is in ``list_row.space_id`` now: its sections, reminders, attachments and list settings follow with
-    new cursors; who saw it in the old space and is not in the new one hears it went."""
+    """The list is in ``list_row.space_id`` now: its sections, reminders, attachments, comments and list settings
+    follow with new cursors; who saw it in the old space and is not in the new one hears it went."""
     new_space = list_row.space_id
     sections, reminders, attachments = contents_of_list(db, list_row.id)
+    comments = comments_of(db, [row.id for row in reminders])
     prefs = list(db.scalars(select(ListPref).where(ListPref.list_id == list_row.id).order_by(ListPref.account_id)))
     losing = _losing(db, old_space, new_space)
     items = [("list", list_row.id)] + [("section", row.id) for row in sections]
     items += [("reminder", row.id) for row in reminders] + [("attachment", row.id) for row in attachments]
+    items += [("comment", row.id) for row in comments]
     hide(db, losing, items, old_space)
     hide_prefs = [pref.account_id for pref in prefs if pref.account_id in losing]
     for account_id in hide_prefs:
         hide(db, [account_id], [("list_pref", list_row.id)], old_space)
     members, private = _assignee_rule(db, new_space)
     _filter_assignees(reminders, members, private, now_ms)
-    for row in [*sections, *reminders, *attachments, *prefs]:
+    for row in [*sections, *reminders, *attachments, *comments, *prefs]:
         row.space_id = new_space  # type: ignore[union-attr]
-    restamp(db, [list_row, *sections, *reminders, *attachments, *prefs])
+    restamp(db, [list_row, *sections, *reminders, *attachments, *comments, *prefs])
 
 
 def move_reminder(db: Session, reminder: Reminder, old_list: str, old_space: str, now_ms: int) -> list[Reminder]:
     """The reminder is in ``reminder.list_id`` now: its subtasks come along (written by the server with the clock
-    ``now``), its attachments follow; into another space as a list does. Returns the subtasks moved."""
+    ``now``), its attachments and comments follow; into another space as a list does. Returns the subtasks moved."""
     subtasks = list(db.scalars(select(Reminder).where(Reminder.parent_id == reminder.id,
                                                       Reminder.list_id == old_list).order_by(Reminder.id)))
     for row in subtasks:
@@ -313,14 +323,15 @@ def move_reminder(db: Session, reminder: Reminder, old_list: str, old_space: str
     attachments = list(db.scalars(select(Attachment).where(
         Attachment.reminder_id.in_([row.id for row in moved])).order_by(Attachment.id)))
     if new_space != old_space:
+        comments = comments_of(db, [row.id for row in moved])
         losing = _losing(db, old_space, new_space)
-        hide(db, losing, [("reminder", row.id) for row in moved] + [("attachment", row.id) for row in attachments],
-             old_space)
+        hide(db, losing, [("reminder", row.id) for row in moved] + [("attachment", row.id) for row in attachments]
+             + [("comment", row.id) for row in comments], old_space)
         members, private = _assignee_rule(db, new_space)
         _filter_assignees(moved, members, private, now_ms)
-        for row in [*subtasks, *attachments]:
+        for row in [*subtasks, *attachments, *comments]:
             row.space_id = new_space
-        restamp(db, attachments)
+        restamp(db, [*attachments, *comments])
     restamp(db, subtasks)
     return subtasks
 
