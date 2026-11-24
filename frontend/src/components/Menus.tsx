@@ -15,6 +15,7 @@ import { parkReminder, SOMEDAY_ICON } from '../lib/someday'
 import { colorOf, iconFor } from '../lib/look'
 import { useEngine, useView } from '../state/sync'
 import { addDays } from '../sync/repeat'
+import { offered, pickAssignee } from '../sync/rotation'
 import type { Filter, List, Reminder, Space } from '../sync/types'
 import type { Question } from './ConfirmDialog'
 import { useContextMenu, type MenuItems } from './ContextMenu'
@@ -78,9 +79,9 @@ export function useTaskMenu(reminder: Reminder) {
       members.length > 0 && {
         label: t('menu.assign'),
         icon: Users,
-        items: members.map((m) => {
+        items: offered(reminder, members).map((m) => {
           const on = reminder.assignees.includes(m.account_id)
-          return { label: personName(view.people.get(m.account_id), t), checked: on, run: () => put({ assignees: on ? reminder.assignees.filter((x) => x !== m.account_id) : [...reminder.assignees, m.account_id] }) }
+          return { label: personName(view.people.get(m.account_id), t), checked: on, run: () => put({ assignees: pickAssignee(reminder, m.account_id) }) }
         }),
       },
       {

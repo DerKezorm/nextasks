@@ -12,6 +12,7 @@ import { dueChange } from '../lib/actions'
 import { localDay } from '../lib/due'
 import { useFocusOffered } from '../lib/focus'
 import { assignable } from '../lib/shared'
+import { offered, pickAssignee } from '../sync/rotation'
 import { parkReminder } from '../lib/someday'
 import { useEngine, useView } from '../state/sync'
 import { addDays } from '../sync/repeat'
@@ -26,7 +27,7 @@ export function RowActions({ reminder }: { reminder: Reminder }) {
   const { t } = useTranslation()
   const engine = useEngine()
   const view = useView()
-  const members = assignable(view, reminder.list_id)
+  const members = offered(reminder, assignable(view, reminder.list_id))
   const put = (fields: Record<string, unknown>) => engine.put('reminder', reminder.id, fields)
   const mark = t(reminder.flagged ? 'menu.unmark' : 'menu.mark')
   const focus = useFocusOffered()
@@ -55,7 +56,7 @@ export function RowActions({ reminder }: { reminder: Reminder }) {
                   role="menuitemcheckbox"
                   aria-checked={on}
                   className="nt-menu-item"
-                  onClick={() => put({ assignees: on ? reminder.assignees.filter((x) => x !== member.account_id) : [...reminder.assignees, member.account_id] })}
+                  onClick={() => put({ assignees: pickAssignee(reminder, member.account_id) })}
                 >
                   <PersonAvatar id={member.account_id} person={person} className="h-5 w-5 text-[10px]" />
                   <span className="min-w-0 flex-1 truncate">{personName(person, t)}</span>

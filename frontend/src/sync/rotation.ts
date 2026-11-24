@@ -36,3 +36,18 @@ export function turnOf(reminder: Turned): { now: number; then: number | null } |
   const then = reminder.rotation.length > 1 ? nextAfter(reminder.rotation, now) : null
   return { now, then }
 }
+
+/**
+ * `assignees` after picking `id` in a menu: taking turns, it becomes their turn (only people of the rotation are
+ * offered); else the person is added or taken away.
+ */
+export function pickAssignee(reminder: Turned, id: number): number[] {
+  if (takesTurns(reminder)) return reminder.rotation.includes(id) ? [id] : reminder.assignees
+  return reminder.assignees.includes(id) ? reminder.assignees.filter((x) => x !== id) : [...reminder.assignees, id]
+}
+
+/** Who a menu offers to assign: taking turns, the people of the rotation in their order. */
+export function offered<T extends { account_id: number }>(reminder: Turned, members: T[]): T[] {
+  if (!takesTurns(reminder)) return members
+  return reminder.rotation.flatMap((id) => members.filter((m) => m.account_id === id))
+}

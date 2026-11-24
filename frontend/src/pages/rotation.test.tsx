@@ -4,7 +4,7 @@ import { act } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { localDay } from '../lib/due'
-import { afterCompletion, turnOf, whoseTurn } from '../sync/rotation'
+import { afterCompletion, offered, pickAssignee, turnOf, whoseTurn } from '../sync/rotation'
 import { smallWorld } from '../test/fakeServer'
 import { button, click, drag, mount, press, row, settle, unmount } from '../test/harness'
 
@@ -31,6 +31,17 @@ describe('whose turn it is', () => {
     expect(afterCompletion([1, 2, 3], [3], 9)).toBe(1)
     expect(turnOf({ rotation: [1, 2], assignees: [2], repeat: 'FREQ=DAILY', due_date: today })).toEqual({ now: 2, then: 1 })
     expect(turnOf({ rotation: [1, 2], assignees: [2], repeat: null, due_date: today })).toBeNull()
+  })
+
+  it("makes it someone's turn from a menu, which offers the people of the row in their order", () => {
+    const turns = { rotation: [2, 1], assignees: [2], repeat: 'FREQ=DAILY', due_date: today }
+    expect(pickAssignee(turns, 1)).toEqual([1])
+    expect(pickAssignee(turns, 3)).toEqual([2])
+    expect(pickAssignee({ ...turns, rotation: [] }, 1)).toEqual([2, 1])
+    expect(pickAssignee({ ...turns, rotation: [] }, 2)).toEqual([])
+    const members = [{ account_id: 1 }, { account_id: 2 }, { account_id: 3 }]
+    expect(offered(turns, members).map((m) => m.account_id)).toEqual([2, 1])
+    expect(offered({ ...turns, repeat: null }, members)).toHaveLength(3)
   })
 })
 
