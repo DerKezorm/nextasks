@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.db import SessionLocal
 from app.main import app
@@ -87,7 +87,7 @@ def test_me_names_the_time_zone_the_features_and_only_the_spaces_of_the_token() 
     anna.put(f"{API}/me", json={"timezone": "Europe/Berlin"})
     me = ok(token(anna_account).get(f"{V1}/me"))
     assert me["time_zone"] == "Europe/Berlin" and me["level"] == "write"
-    assert {"tasks", "dashboard", "external_ref"} <= set(me["features"])
+    assert {"tasks", "dashboard", "external_ref", "members"} <= set(me["features"])
     assert {item["id"] for item in me["spaces"]} == {private, space}
     narrow = ok(token(anna_account, "read", [private]).get(f"{V1}/me"))
     assert [item["id"] for item in narrow["spaces"]] == [private] and narrow["level"] == "read"
@@ -276,6 +276,48 @@ def test_assignees_only_in_shared_spaces_and_only_members() -> None:
     made = ok(program.post(f"{V1}/tasks", json={"title": "x", "list_id": list_id, "assignees": [ben_account.id]}),
               201)
     assert [person_["id"] for person_ in made["assignees"]] == [ben_account.id]
+
+
+def test_members_of_a_shared_space_are_who_may_be_assigned_there() -> None:
+    anna_account, _anna, ben_account, _ben, space, list_id = family()
+    with SessionLocal() as db:
+        db.execute(update(Account).where(Account.id == ben_account.id).values(display_name="Benjamin"))
+        db.commit()
+    program = token(anna_account)
+    members = ok(program.get(f"{V1}/spaces/{space}/members"))["members"]
+    assert members == [
+        {"id": anna_account.id, "name": "anna", "display_name": "anna", "role": "admin"},
+        {"id": ben_account.id, "name": "ben", "display_name": "Benjamin", "role": "member"},
+    ]
+    # Every one listed is taken as an assignee there.
+    made = ok(program.post(f"{V1}/tasks", json={"title": "x", "list_id": list_id,
+                                                "assignees": [member["id"] for member in members]}), 201)
+    assert {person_["id"] for person_ in made["assignees"]} == {anna_account.id, ben_account.id}
+    # A reading token sees them too; Ben's token sees the same space the same way.
+    assert ok(token(anna_account, "read").get(f"{V1}/spaces/{space}/members"))["members"] == members
+    assert [m["id"] for m in ok(token(ben_account).get(f"{V1}/spaces/{space}/members"))["members"]] ==         [anna_account.id, ben_account.id]
+
+
+def test_the_private_space_has_only_its_own_account_and_others_spaces_are_not_there() -> None:
+    anna_account, _anna, _ben_account, _ben, space, _list_id = family()
+    private, _first = private_space(_anna)
+    program = token(anna_account)
+    assert ok(program.get(f"{V1}/spaces/{private}/members"))["members"] == [
+        {"id": anna_account.id, "name": "anna", "display_name": "anna", "role": "admin"}]
+    cleo_account, cleo = person("cleo")
+    hers, _hers_first = private_space(cleo)
+    theirs = shared_space(cleo, name="Club")
+    for other in (hers, theirs, new_id(), "not-an-id"):
+        refused(program.get(f"{V1}/spaces/{other}/members"), 404, "not_found")
+    # The token's own choice holds: limited to "Private", the shared space is not there.
+    refused(token(anna_account, "write", [private]).get(f"{V1}/spaces/{space}/members"), 404, "not_found")
+    assert cleo_account.id != anna_account.id
+
+
+def test_a_space_in_the_bin_has_no_members_to_show() -> None:
+    anna_account, anna, _ben_account, _ben, space, _list_id = family()
+    assert put(anna, "space", space, {"deleted_at": "2026-11-24T08:00:00.000Z"})["ok"]
+    refused(token(anna_account).get(f"{V1}/spaces/{space}/members"), 404, "not_found")
 
 
 def test_subtasks_and_sections_must_fit_their_list() -> None:
@@ -526,8 +568,8 @@ def test_switched_off_and_wrong_tokens_answer_401_in_the_api_form() -> None:
 def test_every_route_describes_itself() -> None:
     schema = app.openapi()
     routes = {path: methods for path, methods in schema["paths"].items() if path.startswith(V1)}
-    assert set(routes) == {f"{V1}/me", f"{V1}/spaces", f"{V1}/lists", f"{V1}/tasks", f"{V1}/tasks/{{task_id}}",
-                           f"{V1}/dashboard"}
+    assert set(routes) == {f"{V1}/me", f"{V1}/spaces", f"{V1}/spaces/{{space_id}}/members", f"{V1}/lists",
+                           f"{V1}/tasks", f"{V1}/tasks/{{task_id}}", f"{V1}/dashboard"}
     for path, methods in routes.items():
         for method, operation in methods.items():
             assert operation.get("summary"), (method, path)

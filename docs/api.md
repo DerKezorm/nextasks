@@ -54,10 +54,11 @@ family, plus `"fields"` inside `detail` for `422 invalid_input`.
 ```json
 { "name": "robin", "display_name": "Robin", "level": "write", "time_zone": "Europe/Berlin",
   "spaces": [{"id": "…", "name": "Familie"}], "version": "0.1.0",
-  "features": ["tasks", "dashboard", "external_ref"] }
+  "features": ["tasks", "dashboard", "external_ref", "members"] }
 ```
 
-`features` names what this server's `/api/v1` offers; a program asks for a feature before it uses it.
+`features` names what this server's `/api/v1` offers; a program asks for a feature before it uses it. `members`: the
+server has `GET /api/v1/spaces/{id}/members`.
 
 ## Spaces and lists
 
@@ -66,6 +67,13 @@ family, plus `"fields"` inside `detail` for `422 invalid_input`.
 The spaces the token may see, by name: `{"spaces": [{"id", "name", "icon", "role": "admin"|"member",
 "writable": true, "shared": true, "hidden": false}]}`. `hidden`: the account hid the space for itself (it still counts
 here; a program decides whether to show it).
+
+### `GET /api/v1/spaces/{id}/members`
+
+Who may be assigned in this space: `{"members": [{"id", "name", "display_name", "role": "admin"|"member"}]}`, by
+display name. Exactly the accounts `assignees` takes there. In the account's own "Private" only the account itself
+(tasks there take no assignees). A space the token does not see, or one in the bin, answers `404 not_found`. Everybody
+listed shares the space with the token's account, so their names are shown as on every other way out.
 
 ### `GET /api/v1/lists`
 

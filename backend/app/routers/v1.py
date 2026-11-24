@@ -26,10 +26,12 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy import select
 
 from .. import __version__
 from ..db import SessionLocal
 from ..errors import error
+from ..models import Account, Member
 from ..models import Space as SpaceRow
 from ..services import apiread, apitokens, apiwrite, clock, logs, records, sync
 from ..services.apitokens import Caller
@@ -39,7 +41,7 @@ logger = logging.getLogger("nextasks.api")
 router = APIRouter(prefix="/api/v1", tags=["api v1"])
 
 #: What this server's ``/api/v1`` offers; a program asks for a word before it uses it.
-FEATURES = ["tasks", "dashboard", "external_ref"]
+FEATURES = ["tasks", "dashboard", "external_ref", "members"]
 MAX_IDS = 200
 DEFAULT_LIMIT = 100
 MAX_LIMIT = 500
@@ -134,6 +136,18 @@ class SpaceOut(BaseModel):
 
 class SpacesOut(BaseModel):
     spaces: list[SpaceOut]
+
+
+class MemberOut(BaseModel):
+    id: int
+    name: str
+    display_name: str
+    #: ``admin`` (manages the space) or ``member``.
+    role: str
+
+
+class MembersOut(BaseModel):
+    members: list[MemberOut]
 
 
 class SectionOut(BaseModel):
@@ -323,6 +337,26 @@ def get_spaces(found: Reader) -> SpacesOut:
                  shared=not row.private, hidden=row.id in sight.hidden)
         for row in shown
     ])
+
+
+@router.get("/spaces/{space_id}/members", response_model=MembersOut, responses=ERRORS,
+            summary="Who may be assigned in a space: its members, by name")
+def get_members(found: Reader, space_id: str) -> MembersOut:
+    """Exactly the accounts ``assignees`` takes in this space (``services/spaces.member_ids``); in the account's own
+    "Private" only the account itself. Everybody listed shares this space with the token's account, so name and
+    display name follow the rule of ``services/visibility.py``."""
+    with SessionLocal() as db:
+        sight = apiread.sight_of(db, found.account)
+        space = db.get(SpaceRow, space_id) if space_id in sight.space_ids else None
+        if space is None or space.deleted_at is not None:
+            raise _not_found()
+        rows = db.execute(select(Member.role, Account).join(Account, Account.id == Member.account_id)
+                          .where(Member.space_id == space_id)).all()
+        if space.private:
+            rows = [(role, account) for role, account in rows if account.id == found.account.id]
+        people = [MemberOut(id=account.id, name=account.name, display_name=account.display_name or account.name,
+                            role="admin" if role == "manager" else "member") for role, account in rows]
+    return MembersOut(members=sorted(people, key=lambda person: (person.display_name.casefold(), person.id)))
 
 
 @router.get("/lists", response_model=ListsOut, responses=ERRORS,
