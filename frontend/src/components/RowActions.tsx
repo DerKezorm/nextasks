@@ -1,14 +1,16 @@
 /**
  * The small buttons of a task's row under the pointer (and with the focus in the row): the date (today, tomorrow,
- * next week, a day to pick, no date), who it is assigned to (only in a shared space) and the mark. The same changes as
+ * next week, a day to pick, no date), who it is assigned to (only in a shared space), the mark and, on "Today", the
+ * star that puts it into the focus of the day. The same changes as
  * the context menu and the detail make (`dueChange`). On a phone or a touch screen they never show (`.nt-row-acts`).
  */
-import { Bookmark, CalendarDays, Check, Users } from 'lucide-react'
+import { Bookmark, CalendarDays, Check, Star, Users } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { dueChange } from '../lib/actions'
 import { localDay } from '../lib/due'
+import { useFocusOffered } from '../lib/focus'
 import { assignable } from '../lib/shared'
 import { useEngine, useView } from '../state/sync'
 import { addDays } from '../sync/repeat'
@@ -26,8 +28,16 @@ export function RowActions({ reminder }: { reminder: Reminder }) {
   const members = assignable(view, reminder.list_id)
   const put = (fields: Record<string, unknown>) => engine.put('reminder', reminder.id, fields)
   const mark = t(reminder.flagged ? 'menu.unmark' : 'menu.mark')
+  const focus = useFocusOffered()
+  const inFocus = !!focus?.has(reminder.id)
+  const star = t(inFocus ? 'today.focus.remove' : focus?.full ? 'today.focus.full' : 'today.focus.add')
   return (
     <span className="nt-row-acts items-center gap-0.5" data-testid="row-actions">
+      {focus?.ready && (
+        <button type="button" className={BUTTON} aria-pressed={inFocus} aria-label={star} title={star} disabled={!inFocus && focus.full} onClick={() => focus.toggle(reminder.id)} data-testid="row-focus">
+          <Star className={'h-4 w-4 ' + (inFocus ? 'fill-current' : '')} strokeWidth={1.9} aria-hidden />
+        </button>
+      )}
       <Popover label={t('row.date')} button={<CalendarDays className="h-4 w-4" strokeWidth={1.9} aria-hidden />} className={BUTTON}>
         {(close) => <DueChoices reminder={reminder} close={close} />}
       </Popover>

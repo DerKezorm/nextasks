@@ -69,10 +69,10 @@ describe('the tiles', () => {
     expect(page.querySelector('[data-testid="tile-count-done"]')).toBeNull()
   })
 
-  it('show Today sorted: by date, without a time before with one', async () => {
+  it('show Today in its cards: overdue, then the timeline, then some time today', async () => {
     const { server } = world()
     const page = await mount(server, '/today')
-    expect(titles(page)).toEqual(['Overdue bins', 'Today without time', 'Today at nine'])
+    expect(titles(page)).toEqual(['Overdue bins', 'Today at nine', 'Today without time'])
   })
 
   it('show Completed with the latest first', async () => {

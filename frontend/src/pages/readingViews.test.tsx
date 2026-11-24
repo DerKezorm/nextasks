@@ -191,7 +191,7 @@ describe('empty pages', () => {
     server.addReminder(privateList, 'Tomorrow one', { due_date: addDays(today, 1) })
     server.addReminder(privateList, 'Tomorrow two', { due_date: addDays(today, 1) })
     const page = await mount(server, '/today')
-    const empty = page.querySelector('[data-testid="empty-state"]')!
+    const empty = page.querySelector('[data-testid="today-calm"]')!
     expect(empty.textContent).toContain('All done for today')
     expect(empty.textContent).toContain('2 tasks are due tomorrow.')
     expect(page.querySelector('[data-testid="quick-entry"]')).not.toBeNull()

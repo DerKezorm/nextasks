@@ -1749,5 +1749,100 @@
       "empty": "Nothing done in {{year}} yet",
       "emptyText": "The year card fills up with every task done."
     }
+  },
+  "today": {
+    "sub": "{{day}} · from all spaces",
+    "timed": "With a time",
+    "anytime": "Some time today",
+    "allToToday": "All to today",
+    "movedToToday_one": "One task moved to today.",
+    "movedToToday_other": "{{count}} tasks moved to today.",
+    "quick": "New task for today in “{{list}}”",
+    "doneBy": "done by {{name}}, {{time}}",
+    "doneAt": "done at {{time}}",
+    "time": {
+      "now": "now",
+      "inMinutes": "in {{n}} min",
+      "inHours": "in {{n}} h",
+      "sinceMinutes": "{{n}} min ago",
+      "sinceHours": "{{n}} h ago"
+    },
+    "calm": {
+      "streak_one": "Your run: one day.",
+      "streak_other": "Your run: {{count}} days."
+    },
+    "week": {
+      "label": "The next seven days",
+      "today_one": "today · one",
+      "today_other": "today · {{count}}",
+      "todayLate_one": "today · one + {{late}} overdue",
+      "todayLate_other": "today · {{count}} + {{late}} overdue",
+      "free": "free",
+      "open_one": "{{day}}, one task. Open in Scheduled",
+      "open_other": "{{day}}, {{count}} tasks. Open in Scheduled",
+      "dropHint": "Click to open the day in Scheduled. Drop a task here to move it to this day."
+    },
+    "progress": {
+      "done": "{{done}} of {{due}} done",
+      "nothingDue": "Nothing is due today",
+      "ring": "{{percent}} percent done",
+      "overdue_one": "plus one overdue",
+      "overdue_other": "plus {{count}} overdue",
+      "streak_one": "Run: one day",
+      "streak_other": "Run: {{count}} days"
+    },
+    "focus": {
+      "title": "Focus for today",
+      "count": "{{count}} of {{most}}",
+      "hint": "Drag a task here or pick it with the star in its row.",
+      "add": "Add to today's focus",
+      "remove": "Remove from focus",
+      "removeOne": "Remove “{{title}}” from focus",
+      "full": "The focus has three tasks already"
+    },
+    "family": {
+      "title": "Family today",
+      "of": "{{name}}: {{done}} of {{due}} done",
+      "doneOnly_one": "one done",
+      "doneOnly_other": "{{count}} done",
+      "none": "Nothing is due for anyone today."
+    },
+    "yourWeek": {
+      "title": "Your week",
+      "streak_one": "Run: one day",
+      "streak_other": "Run: {{count}} days",
+      "label": "Done on the last seven days: {{counts}}",
+      "day": "{{day}}: {{count}} done"
+    },
+    "tomorrow": {
+      "title": "Tomorrow",
+      "none": "Nothing is planned for tomorrow yet.",
+      "more_one": "and one more",
+      "more_other": "and {{count}} more"
+    },
+    "plan": {
+      "open": "Plan tomorrow",
+      "title": "Plan tomorrow",
+      "left_one": "One task stayed open today.",
+      "left_other": "{{count}} tasks stayed open today.",
+      "nothing": "Nothing stayed open today.",
+      "allTomorrow": "All to tomorrow",
+      "allSometime": "All some time",
+      "trashAll": "Drop all",
+      "trashAllTitle_one": "Drop one task?",
+      "trashAllTitle_other": "Drop {{count}} tasks?",
+      "trashAllText": "They go to the trash. They stay there for 30 days before they are deleted for good.",
+      "trashed_one": "One task dropped.",
+      "trashed_other": "{{count}} tasks dropped.",
+      "tomorrow": "To tomorrow",
+      "tomorrowOne": "“{{title}}” to tomorrow",
+      "sometime": "Some time (no date)",
+      "sometimeOne": "“{{title}}” some time",
+      "repeatKeeps": "A repeating task keeps its date",
+      "trash": "Drop",
+      "trashOne": "Drop “{{title}}”",
+      "coming": "Already planned for tomorrow",
+      "close": "Done"
+    }
   }
 }

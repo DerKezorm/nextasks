@@ -2,13 +2,14 @@
  * What the context menu offers on a task, a list, a space and an own filter: the actions the web has elsewhere already (the "…"
  * menus, the detail, the dialogs), nothing the server could not do. A member sees no manager's entries.
  */
-import { Bell, Bookmark, CalendarDays, Check, ChevronsUp, Columns3, Eye, EyeOff, FolderInput, FolderPlus, Link2, List as ListIcon, ListPlus, ListTree, LogOut, PanelRightOpen, Pencil, RotateCcw, SquareArrowOutUpRight, Trash2, UserPlus, Users } from 'lucide-react'
+import { Bell, Bookmark, CalendarDays, Check, ChevronsUp, Columns3, Eye, EyeOff, FolderInput, FolderPlus, Link2, List as ListIcon, ListPlus, ListTree, LogOut, PanelRightOpen, Pencil, RotateCcw, SquareArrowOutUpRight, Star, Trash2, UserPlus, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { deleteFilter, dueChange, moveList, moveReminder, setFilterHidden, setPref, setSpaceHidden, siblingsAt, trashReminder } from '../lib/actions'
 import { copyText } from '../lib/copy'
 import { localDay } from '../lib/due'
+import { useFocusOffered } from '../lib/focus'
 import { assignable } from '../lib/shared'
 import { colorOf, iconFor } from '../lib/look'
 import { useEngine, useView } from '../state/sync'
@@ -42,6 +43,7 @@ export function useTaskMenu(reminder: Reminder) {
   const engine = useEngine()
   const view = useView()
   const shell = useShell()
+  const focus = useFocusOffered()
   return useContextMenu((): MenuItems => {
     const id = reminder.id
     const list = view.list(reminder.list_id)
@@ -58,6 +60,8 @@ export function useTaskMenu(reminder: Reminder) {
       'line',
       { label: t(reminder.completed_at ? 'menu.reopen' : 'menu.complete'), icon: Check, keys: 'X', run: () => engine.toggle(id) },
       { label: t(reminder.flagged ? 'menu.unmark' : 'menu.mark'), icon: Bookmark, keys: 'F', run: () => put({ flagged: !reminder.flagged }) },
+      // The focus of the day, on "Today" only.
+      focus?.ready && !reminder.completed_at && { label: t(focus.has(id) ? 'today.focus.remove' : focus.full ? 'today.focus.full' : 'today.focus.add'), icon: Star, checked: focus.has(id), disabled: !focus.has(id) && focus.full, run: () => focus.toggle(id) },
       { label: t('detail.priority'), icon: ChevronsUp, items: [0, 1, 2, 3].map((p) => ({ label: t(`priority.${p}`), checked: reminder.priority === p, run: () => put({ priority: p }) })) },
       {
         label: t('detail.due'),

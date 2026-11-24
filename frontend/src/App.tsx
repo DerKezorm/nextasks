@@ -11,6 +11,7 @@ import { ReviewPage } from './pages/ReviewPage'
 import { SearchPage } from './pages/SearchPage'
 import { FormerAboutAddress, FormerAccountAddress, SettingsPage } from './pages/SettingsPage'
 import { TilePage } from './pages/TilePage'
+import { TodayPage } from './pages/TodayPage'
 import { TrashPage } from './pages/TrashPage'
 import { YearPage } from './pages/YearPage'
 import { OfflinePage } from './components/AppInstall'
@@ -92,7 +93,7 @@ export default function App() {
       >
         <Route index element={<Home />} />
         {TILES.map((tile) => (
-          <Route key={tile} path={tile} element={<TilePage tile={tile} />} />
+          <Route key={tile} path={tile} element={tile === 'today' ? <TodayPage /> : <TilePage tile={tile} />} />
         ))}
         <Route path="lists/:id" element={<ListPage />} />
         <Route path="filters/:id" element={<FilterPage />} />
