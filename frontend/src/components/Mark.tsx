@@ -27,3 +27,21 @@ export function MarkTile({ color, icon }: { color: string; icon: string }) {
     </span>
   )
 }
+
+/**
+ * The plaque of a list (docs "Aussehen", principle 2): a rounded square in the list's colour (corners about 28 % of
+ * its edge) with the symbol in white. The rows of the sidebar carry it.
+ */
+export function Plaque({ color, icon, size = 22 }: { color: string; icon: string; size?: number }) {
+  const inner = Math.round(size * 0.6)
+  return (
+    <span className="grid shrink-0 place-items-center" style={{ width: size, height: size, borderRadius: Math.round(size * 0.28), background: colorOf(color) }} data-plaque>
+      {createElement(iconFor(icon), {
+        style: { width: inner, height: inner, color: '#ffffff' },
+        strokeWidth: 2.2,
+        'aria-hidden': true,
+        'data-mark': icon,
+      } as Parameters<typeof createElement>[1])}
+    </span>
+  )
+}

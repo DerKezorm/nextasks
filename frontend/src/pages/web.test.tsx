@@ -120,7 +120,7 @@ describe('the own look (docs "Aussehen")', () => {
     const page = await mount(server, `/lists/${home}`)
     const head = page.querySelector('main header')!
     expect(head.querySelector('[data-mark-tile] svg[data-mark]')).not.toBeNull()
-    expect(page.querySelector('[data-plaque]')).toBeNull()
+    expect(head.querySelector('[data-plaque]')).toBeNull()
     expect((head.querySelector('h1') as HTMLElement).style.color).toBe('')
     expect(page.querySelector('aside [data-testid="new-reminder"]')?.textContent).toBe('New task')
     expect(page.textContent).not.toMatch(/reminder/i)

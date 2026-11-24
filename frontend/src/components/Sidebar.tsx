@@ -3,8 +3,10 @@
  * search; the collections as rows (Today, Scheduled, All, Marked, Assigned to me, Done) with a petrol symbol and their
  * number, those one hid left out; the own filters under the head "Filters" with "+" for a new one; one part per space,
  * its head (its symbol small and grey, the name in capitals, the members of a shared one, "…" and "+" for a new list) above its lists. A list or a
- * filter shows its symbol in its colour (nexnotes' `FolderMark`), its name and its number; under the pointer or with
- * the focus "…" takes the number's place and opens its menu. A new space is made from the menu of any space's head.
+ * filter shows its plaque (its symbol in white on its colour, docs "Aussehen"), its name and its number, the overdue
+ * ones on a red pill before it; under the pointer or with the focus "…" takes the numbers' place and opens its menu.
+ * "Today" shows today's day in its symbol. The filters, each space and the hidden spaces fold, and stay so on this
+ * device (`lib/sidebarFold.ts`). A new space is made from the menu of any space's head.
  * Lists and spaces are sorted by dragging; a task dropped on a list moves there. Spaces one hid wait folded under
  * "Hidden spaces (n)" to be shown again. At the bottom the trash and how the sync stands; the account with the way to
  * the settings at the foot. The column is as wide as one drags it (`ColumnHandle`, `lib/columns.ts`). On a phone the
@@ -17,18 +19,20 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 
 import { moveList, moveReminder, moveSpace, setSpaceHidden, siblingsAt } from '../lib/actions'
 import { useColumnWidth } from '../lib/columns'
-import { localDay } from '../lib/due'
+import { localDay, localTime, overdue } from '../lib/due'
 import { dragging, draggedReminder, DRAG_LIST, DRAG_SPACE } from '../lib/drag'
 import { colorOf, iconFor } from '../lib/look'
+import { isShared } from '../lib/shared'
+import { useFold } from '../lib/sidebarFold'
 import { TILE_LOOK } from '../lib/tileLook'
 import { useAuth } from '../state/auth'
 import { useEngine, useFiltersOffered, useSyncState, useView } from '../state/sync'
-import { filterCount, shownTiles, tileCount } from '../sync/tiles'
-import type { Filter, List, Space } from '../sync/types'
+import { filterCount, shownTiles, tileItems } from '../sync/tiles'
+import type { Filter, List, Reminder, Space } from '../sync/types'
 import { Avatar } from './Avatar'
 import { ColumnHandle } from './ColumnHandle'
 import { Logo } from './Logo'
-import { Mark } from './Mark'
+import { Mark, Plaque } from './Mark'
 import { useFilterMenu, useHideSpace, useListMenu, useSpaceMenu } from './Menus'
 import { AvatarStack } from './People'
 import { Popover } from './Popover'
@@ -39,9 +43,46 @@ import { useShell } from './Shell'
 const row = (active: boolean, tall = false) =>
   'flex items-center gap-2.5 rounded-lg px-2.5 text-[13.5px] transition-colors ' + (tall ? 'h-[34px] ' : 'h-8 max-md:h-[38px] ') + (active ? 'nt-chosen font-semibold' : 'text-mist-100 hover:bg-ink-800')
 
-/** The number of a row, petrol on the chosen one; with `swap` it gives its place to "…" under the pointer or the focus. */
-const counter = (active: boolean, swap = false) =>
-  'shrink-0 text-xs tabular-nums ' + (active ? 'text-accent-400 ' : 'text-mist-500 ') + (swap ? 'group-hover:invisible group-focus-within:invisible' : '')
+/** The number of a row, petrol on the chosen one. */
+const counter = (active: boolean) => 'shrink-0 text-xs tabular-nums ' + (active ? 'text-accent-400' : 'text-mist-500')
+
+/** How many of `items` are overdue now. */
+function lateOf(items: Reminder[], today: string): number {
+  const now = localTime()
+  return items.filter((r) => overdue(r, today, now)).length
+}
+
+/** The numbers of a row: the overdue ones on a red pill, then all open ones in grey; with `swap` they give their
+ * place to "…" under the pointer or the focus. */
+function Numbers({ count, late, active, swap = false, testid }: { count: number | null; late: number; active: boolean; swap?: boolean; testid?: string }) {
+  const { t } = useTranslation()
+  if (!count && !late) return null
+  return (
+    <span className={'flex shrink-0 items-center gap-1.5 ' + (swap ? 'group-hover:invisible group-focus-within:invisible' : '')}>
+      {late > 0 && (
+        <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-late px-1.5 text-[11px] leading-none font-bold text-on-late tabular-nums" title={t('sidebar.overdue', { count: late })} data-testid={testid ? `${testid}-late` : 'late-count'}>
+          <span aria-hidden>{late}</span>
+          <span className="sr-only">{t('sidebar.overdue', { count: late })}</span>
+        </span>
+      )}
+      {count ? (
+        <span className={counter(active)} data-testid={testid}>
+          {count}
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
+/** The symbol of "Today": a calendar leaf with today's day of the month, in petrol. */
+function TodayIcon({ day }: { day: string }) {
+  return (
+    <span aria-hidden data-today-icon className="relative grid h-4 w-4 shrink-0 place-items-center rounded-[4px] border-[1.6px] border-current pt-[3px] text-[8.5px] leading-none font-extrabold text-accent-400 tabular-nums">
+      <span className="absolute -top-[1.6px] -right-[1.6px] -left-[1.6px] h-[5px] rounded-t-[4px] bg-current" />
+      {Number(day.slice(8, 10))}
+    </span>
+  )
+}
 
 /** "…" of a row: opens the row's context menu just below it. */
 function MoreButton({ label }: { label: string }) {
@@ -142,18 +183,15 @@ export function SidebarBody() {
 
         <nav aria-label={t('tiles.label')} className="space-y-px">
           {shownTiles(view).map((tile) => {
-            const count = sync.loaded ? tileCount(view, tile, today) : null
+            // "Done" has no number; the others count their open tasks and, on a red pill, the overdue ones among them.
+            const items = sync.loaded && tile !== 'done' ? tileItems(view, tile, today) : []
             return (
               <NavLink key={tile} to={`/${tile}`} data-testid={`tile-${tile}`} className={({ isActive }) => row(isActive, true)}>
                 {({ isActive }) => (
                   <>
-                    {createElement(TILE_LOOK[tile].icon, { className: 'h-4 w-4 shrink-0 text-accent-400', strokeWidth: 1.8, 'aria-hidden': true })}
+                    {tile === 'today' ? <TodayIcon day={today} /> : createElement(TILE_LOOK[tile].icon, { className: 'h-4 w-4 shrink-0 text-accent-400', strokeWidth: 1.8, 'aria-hidden': true })}
                     <span className="min-w-0 flex-1 truncate">{t(`tiles.${tile}`)}</span>
-                    {count ? (
-                      <span className={counter(isActive)} data-testid={`tile-count-${tile}`}>
-                        {count}
-                      </span>
-                    ) : null}
+                    <Numbers count={items.length} late={lateOf(items, today)} active={isActive} testid={`tile-count-${tile}`} />
                   </>
                 )}
               </NavLink>
@@ -217,7 +255,7 @@ function Filters() {
   const { t } = useTranslation()
   const view = useView()
   const shell = useShell()
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useFold('filters')
   return (
     <section aria-label={t('filter.section')} className="mt-3" data-testid="filters">
       <SideHead title={t('filter.section')} open={open} onToggle={() => setOpen(!open)}>
@@ -247,15 +285,11 @@ function FilterRow({ filter }: { filter: Filter }) {
       <NavLink to={`/filters/${filter.id}`} data-testid={`filter-${filter.name}`} className={({ isActive }) => row(isActive) + ' group-focus-within:pr-8 group-hover:pr-8'}>
         {({ isActive }) => (
           <>
-            <Mark color={filter.color} icon={filter.icon} />
+            <Plaque color={filter.color} icon={filter.icon} />
             <span className="min-w-0 flex-1 truncate" title={filter.name}>
               {filter.name}
             </span>
-            {count ? (
-              <span className={counter(isActive, true)} data-testid={`filter-count-${filter.name}`}>
-                {count}
-              </span>
-            ) : null}
+            <Numbers count={count} late={0} active={isActive} swap testid={`filter-count-${filter.name}`} />
           </>
         )}
       </NavLink>
@@ -291,11 +325,12 @@ function SpaceBlock({ space, index }: { space: Space; index: number }) {
   const engine = useEngine()
   const view = useView()
   const shell = useShell()
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useFold(`space.${space.id}`)
   const [over, setOver] = useState(false)
   const lists = view.listsOf(space.id)
   const manager = space.role === 'manager'
-  const shared = space.private ? [] : view.membersOf(space.id).map((m) => m.account_id)
+  // The members only where others are: alone in a space, nobody needs to see oneself there.
+  const shared = isShared(view, space) ? view.membersOf(space.id).map((m) => m.account_id) : []
   const menu = useSpaceMenu(space)
   const hide = useHideSpace()
 
@@ -331,7 +366,7 @@ function SpaceBlock({ space, index }: { space: Space; index: number }) {
           <span className="truncate">{space.name}</span>
           {open ? <ChevronDown className="h-3 w-3 shrink-0 opacity-0 group-hover/space:opacity-100" aria-hidden /> : <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />}
         </button>
-        {shared.length > 1 && <AvatarStack ids={shared} people={view.people} max={4} />}
+        {shared.length > 0 && <AvatarStack ids={shared} people={view.people} max={4} />}
         <Popover label={t('space.menu', { name: space.name })} button={<MoreHorizontal className="h-3.5 w-3.5" />} className={PLUS + ' opacity-0 group-hover/space:opacity-100 focus:opacity-100 aria-expanded:bg-accent-wash aria-expanded:text-accent-400 aria-expanded:opacity-100 pointer-coarse:opacity-100'}>
           {(close) => (
             <>
@@ -386,7 +421,7 @@ function HiddenSpaces() {
   const engine = useEngine()
   const view = useView()
   const shell = useShell()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useFold('hidden', false)
   return (
     <section className="mt-3" aria-label={t('space.hiddenSpaces', { count: view.hiddenSpaces.length })} data-testid="hidden-spaces">
       <SideHead title={t('space.hiddenSpaces', { count: view.hiddenSpaces.length })} open={open} onToggle={() => setOpen(!open)}>
@@ -426,7 +461,9 @@ function ListRow({ list, index }: { list: List; index: number }) {
   const view = useView()
   const location = useLocation()
   const [over, setOver] = useState<'list' | 'reminder' | null>(null)
-  const count = view.live.filter((r) => r.list_id === list.id && !r.completed_at).length
+  const sync = useSyncState()
+  const open = view.live.filter((r) => r.list_id === list.id && !r.completed_at)
+  const late = sync.loaded ? lateOf(open, localDay()) : 0
   const active = location.pathname === `/lists/${list.id}`
   const menu = useListMenu(list)
   return (
@@ -467,11 +504,11 @@ function ListRow({ list, index }: { list: List; index: number }) {
       className={'group relative rounded-lg ' + (over === 'reminder' ? 'ring-2 ring-accent-500' : over === 'list' ? 'border-t-2 border-accent-500' : '')}
     >
       <NavLink to={`/lists/${list.id}`} data-testid={`list-${list.name}`} className={row(active) + ' group-focus-within:pr-8 group-hover:pr-8'}>
-        <Mark color={list.color} icon={list.icon} />
+        <Plaque color={list.color} icon={list.icon} />
         <span className="min-w-0 flex-1 truncate" title={list.name}>
           {list.name}
         </span>
-        {count > 0 && <span className={counter(active, true)}>{count}</span>}
+        <Numbers count={open.length} late={late} active={active} swap />
       </NavLink>
       <MoreButton label={t('list.menuNamed', { name: list.name })} />
     </li>

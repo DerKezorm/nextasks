@@ -9,6 +9,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { deleteFilter, dueChange, moveList, moveReminder, setFilterHidden, setPref, setSpaceHidden, siblingsAt, trashReminder } from '../lib/actions'
 import { copyText } from '../lib/copy'
 import { localDay } from '../lib/due'
+import { assignable } from '../lib/shared'
 import { colorOf, iconFor } from '../lib/look'
 import { useEngine, useView } from '../state/sync'
 import { addDays } from '../sync/repeat'
@@ -45,7 +46,8 @@ export function useTaskMenu(reminder: Reminder) {
     const id = reminder.id
     const list = view.list(reminder.list_id)
     const space = list ? view.space(list.space_id) : undefined
-    const members = space && !space.private ? view.membersOf(space.id) : []
+    // Only where others share the space: alone, there is nobody to assign to.
+    const members = assignable(view, reminder.list_id)
     const put = (fields: Record<string, unknown>) => engine.put('reminder', id, fields)
     const due = (date: string | null) => put(dueChange(reminder, date, reminder.due_time))
     const today = localDay()
