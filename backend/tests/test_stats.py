@@ -4,7 +4,7 @@ person, the calendar year, the look through what lies about, suggestions for a l
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Any
 
 from sqlalchemy import update
@@ -185,6 +185,10 @@ def test_the_calendar_year() -> None:
     assert block["completed"] == 1 and block["created"] == 2 and sum(block["months"]) == 1
     assert block["best_month"] == clock.today().month and block["best_hour"] == 12
     assert block["top_list"]["count"] == 1
+    today = clock.today()
+    assert len(block["days"]) == (date(year, 12, 31) - date(year, 1, 1)).days + 1
+    assert block["days"][today.timetuple().tm_yday - 1] == 1 and sum(block["days"]) == 1
+    assert block["longest_streak"] == {"days": 1, "from": today.isoformat(), "to": today.isoformat()}
     assert anna.get("/api/stats", params={"range": "week", "year": year}).status_code == 422
     assert read(anna, range="month")["year"] is None
 
