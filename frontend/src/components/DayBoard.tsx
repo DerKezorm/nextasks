@@ -4,6 +4,8 @@
  * tasks of the day as small cards, in the order of the list. "Overdue" comes first on the first page when there is
  * something overdue. A card dragged to another day gets that date and keeps its time (the same change as a new date in
  * the detail, `dueChange`); with the keys the date stays the detail's. "+" at the foot of a day makes a task on it.
+ * The columns share the width (each about 280 to 420 px) and scroll in a box of their own, their heads staying at its
+ * top; a card keeps the whole width for its title and puts priority and people at the end of its line below.
  */
 import { ChevronLeft, ChevronRight, Clock, Columns3, List as ListIcon, ListTree, Plus, Repeat, SlidersHorizontal, type LucideIcon } from 'lucide-react'
 import { createElement, useCallback, useEffect, useRef, useState, type DragEvent, type KeyboardEvent } from 'react'
@@ -13,6 +15,7 @@ import { moveToDay, trashReminder } from '../lib/actions'
 import { dayColumns, type DayPaging, type ScheduledLook } from '../lib/dayColumns'
 import { dayLabel, dueLabel, localTime, longDay, overdue } from '../lib/due'
 import { dragging, draggedReminder, DRAG_REMINDER } from '../lib/drag'
+import { isSharedList } from '../lib/shared'
 import { useEngine, useView } from '../state/sync'
 import { addDays } from '../sync/repeat'
 import type { Reminder } from '../sync/types'
@@ -128,11 +131,13 @@ export function DayBoard({ items, today, paging }: { items: Reminder[]; today: s
   )
 
   return (
-    <div ref={setBoard} className="grid items-start gap-3 pb-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }} data-testid="day-board">
-      {late && <DayColumnView day={null} items={late} today={today} label={t('tiles.overdue')} />}
-      {days.map(({ day, items: group }) => (
-        <DayColumnView key={day} day={day} items={group} today={today} label={longDay(day, i18n.language)} />
-      ))}
+    <div className="nt-scroll -mx-4 min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:-mx-7 sm:px-7">
+      <div ref={setBoard} className="grid items-start gap-3" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }} data-testid="day-board">
+        {late && <DayColumnView day={null} items={late} today={today} label={t('tiles.overdue')} />}
+        {days.map(({ day, items: group }) => (
+          <DayColumnView key={day} day={day} items={group} today={today} label={longDay(day, i18n.language)} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -154,7 +159,8 @@ function DayHead({ day, today, count }: { day: string | null; today: string; cou
   const isToday = day === today
   const tone = !day ? 'text-late' : isToday ? 'text-accent-400' : ''
   return (
-    <header className="px-1.5 pt-0.5 pb-2">
+    // Stays at the top of the box while the days scroll.
+    <header className="sticky top-0 z-[1] -mx-2 -mt-2 rounded-t-[12px] bg-ink-900 px-3.5 pt-2.5 pb-2" data-testid="day-head">
       <div className="flex items-baseline gap-1.5">
         <h2 className={'nt-sec min-w-0 truncate ' + tone}>{word}</h2>
         <span className={'ml-auto shrink-0 text-[11px] font-medium tabular-nums ' + (tone || 'text-mist-600')} data-testid="day-count">
@@ -294,6 +300,7 @@ function DayCard({ reminder, today, lateColumn, sub = false }: { reminder: Remin
   const late = overdue(reminder, today, localTime())
   const subtasks = view.childrenOf(reminder.id).filter((c) => !view.inTrash(c))
   const open = shell.selected === reminder.id
+  const shared = isSharedList(view, reminder.list_id)
   // In "Overdue" the days differ, so the card says which; a day's column says only the time.
   const when = lateColumn ? dueLabel(reminder, today, i18n.language, t) : (reminder.due_time ?? '')
 
@@ -363,13 +370,15 @@ function DayCard({ reminder, today, lateColumn, sub = false }: { reminder: Remin
                 <Mark color={list.color} icon={list.icon} size={12} /> <span className="truncate">{list.name}</span>
               </span>
             )}
+            {(reminder.priority > 0 || reminder.flagged || (shared && reminder.assignees.length > 0)) && (
+              <span className="ml-auto flex shrink-0 items-center gap-1">
+                <PriorityPlaque priority={reminder.priority} />
+                {reminder.flagged && <MarkedSign />}
+                {shared && <AvatarStack ids={reminder.assignees} people={view.people} max={2} />}
+              </span>
+            )}
           </span>
         </button>
-        <span className="flex shrink-0 items-center gap-1 pt-px">
-          <PriorityPlaque priority={reminder.priority} />
-          {reminder.flagged && <MarkedSign />}
-          <AvatarStack ids={reminder.assignees} people={view.people} max={2} />
-        </span>
       </div>
     </div>
   )

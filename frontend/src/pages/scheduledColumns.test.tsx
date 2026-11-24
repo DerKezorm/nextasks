@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { dueChange } from '../lib/actions'
-import { columnsFor, dayColumns, DAY_GAP, DAY_MIN } from '../lib/dayColumns'
+import { columnsFor, dayColumns, DAY_GAP, DAY_MAX, DAY_MIN } from '../lib/dayColumns'
 import { forgetPrefs, prefKey, setPref } from '../lib/devicePref'
 import { localDay } from '../lib/due'
 import { addDays, WEEKDAYS } from '../sync/repeat'
@@ -51,10 +51,19 @@ async function asColumns(page: HTMLElement) {
 describe('the arithmetic of the day columns', () => {
   const r = (title: string, due_date: string, due_time: string | null = null) => ({ id: title, title, due_date, due_time }) as Reminder
 
-  it('fits as many columns as the width holds, each at least 240 px', () => {
+  it('fits as many columns as keep each between 280 and 420 px, growing with the width', () => {
+    expect(DAY_MIN).toBe(280)
+    expect(DAY_MAX).toBe(420)
     expect(columnsFor(DAY_MIN)).toBe(1)
-    expect(columnsFor(DAY_MIN * 4 + DAY_GAP * 3)).toBe(4)
-    expect(columnsFor(DAY_MIN * 4 + DAY_GAP * 3 - 1)).toBe(3)
+    // 1680 px: four of 411 px, not five narrow ones of 327.
+    expect(columnsFor(1680)).toBe(4)
+    // Room for four of the narrowest: three of 377 px read better.
+    expect(columnsFor(DAY_MIN * 4 + DAY_GAP * 3)).toBe(3)
+    const width = (w: number) => (w - (columnsFor(w) - 1) * DAY_GAP) / columnsFor(w)
+    for (const w of [600, 900, 1200, 1500, 1800, 2400, 3000]) {
+      expect(width(w)).toBeGreaterThanOrEqual(DAY_MIN)
+      expect(width(w)).toBeLessThanOrEqual(DAY_MAX)
+    }
     expect(columnsFor(100)).toBe(1)
     expect(columnsFor(0)).toBe(7)
   })

@@ -1,6 +1,6 @@
 /**
- * "Scheduled" as day columns, the arithmetic of it: as many days side by side as the width holds (each at least
- * `DAY_MIN` wide), every day from today on a column of its own, also an empty one; before them a column "Overdue"
+ * "Scheduled" as day columns, the arithmetic of it: as many days side by side as the width holds (each between
+ * `DAY_MIN` and about `DAY_MAX` wide), every day from today on a column of its own, also an empty one; before them a column "Overdue"
  * with every open task of an earlier day, only on the first page and only when there is one. Pages go forward by as
  * many days as they show, never before today.
  */
@@ -11,7 +11,9 @@ import type { Reminder } from '../sync/types'
 import { useDevicePref } from './devicePref'
 
 /** The narrowest a day column gets. */
-export const DAY_MIN = 240
+export const DAY_MIN = 280
+/** The widest a day column should get while more days fit: then one more day comes in. */
+export const DAY_MAX = 420
 /** The room between two columns. */
 export const DAY_GAP = 12
 /** Without a width to go by (the page not laid out yet): a week. */
@@ -24,10 +26,13 @@ export function parseScheduledLook(raw: string | null): ScheduledLook {
   return raw === 'columns' ? 'columns' : 'list'
 }
 
-/** How many columns `width` pixels hold. */
+/** How many columns `width` pixels hold: as few as keep each at most `DAY_MAX` wide, as long as each stays at least
+ * `DAY_MIN` wide. */
 export function columnsFor(width: number): number {
   if (!(width > 0)) return DAYS_WITHOUT_WIDTH
-  return Math.max(1, Math.floor((width + DAY_GAP) / (DAY_MIN + DAY_GAP)))
+  const most = Math.floor((width + DAY_GAP) / (DAY_MIN + DAY_GAP))
+  const enough = Math.ceil((width + DAY_GAP) / (DAY_MAX + DAY_GAP))
+  return Math.max(1, Math.min(most, enough))
 }
 
 export interface DayColumn {
