@@ -99,6 +99,10 @@ export class FakeServer {
   webpush: { id: number; account: number; endpoint: string; agent: string; since: string }[] = []
   /** Notifications per account (`/api/notify`): the mail address and its confirmation, the choices, the times. */
   notify = new Map<number, { address: string; confirmed: boolean; pending: string; suggestion: string; routes: Record<string, string[]>; schedules: Record<string, { time: string; weekday: number }>; lastOk: string | null }>()
+  /** The focus of the day per account (`/api/focus`): ids, kept for today only. */
+  focus = new Map<number, string[]>()
+  /** What `/api/stats` answers (the right column of "Today"); null: 404, as an older server. */
+  stats: unknown = null
   /** Mails the fake server "sent": to, what. */
   mails: { to: string; kind: string; token?: string }[] = []
   settings: Record<string, unknown> = {
@@ -818,6 +822,23 @@ export class FakeServer {
     return false
   }
 
+  /** `GET/PUT /api/focus`: up to three ids of tasks the account sees, outside the bin. */
+  private focusCall(account: number, method: string, body: Data): Answer {
+    const today = new Date().toISOString().slice(0, 10)
+    const seen = (id: string) => {
+      const row = this.row('reminder', id)
+      const list = row ? this.data('list', row.data.list_id as string) : undefined
+      return !!row && !row.data.deleted_at && !!list && !!this.member(list.space_id as string, account)
+    }
+    if (method === 'PUT') {
+      const ids = [...new Set((body.ids as string[]) ?? [])]
+      if (ids.length > 3) return error(422, 'invalid_input')
+      if (!ids.every(seen)) return error(404, 'not_found')
+      this.focus.set(account, ids)
+    }
+    return { status: 200, body: { date: today, ids: (this.focus.get(account) ?? []).filter(seen), most: 3 } }
+  }
+
   private old(method: string, path: string, body: Data): Answer | null {
     const me = this.session !== null ? this.accounts.get(this.session) : undefined
     if (path === '/api/setup' && method === 'GET') return { status: 200, body: { needs_setup: false, code_required: false, signed_in: !!me, version: 'dev', min_password: 10 } }
@@ -843,6 +864,8 @@ export class FakeServer {
       return { status: 200, body: { event, channel, on: (own.routes[event] ?? []).includes(channel) } }
     }
     if (!me) return path.startsWith('/api/') ? error(401, 'sign_in_required') : null
+    if (path === '/api/focus') return this.focusCall(me.id, method, body)
+    if (path === '/api/stats' && method === 'GET') return this.stats ? { status: 200, body: this.stats } : error(404, 'not_found')
     if (path === '/api/notify' && method === 'GET') return { status: 200, body: this.notifyState(me) }
     if (path === '/api/notify/routes' && method === 'PUT') {
       const own = this.notifyOf(me.id)

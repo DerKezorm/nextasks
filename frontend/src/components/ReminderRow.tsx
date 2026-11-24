@@ -39,7 +39,15 @@ function stepFocus(from: HTMLElement, by: number): void {
   rows[at + by]?.focus()
 }
 
-export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone, folded, onFold, childCount = 0, actions = true }: { reminder: Reminder; showList?: boolean; depth?: number; onDropZone?: (dragged: string, zone: Zone) => void; folded?: boolean; onFold?: () => void; childCount?: number; actions?: boolean }) {
+/** What a page adds to a row: a column before the tick box (the time in a timeline), words at the start of the line
+ * below the title (in place of the date with `hideDue`). */
+export interface RowExtras {
+  lead?: ReactNode
+  meta?: ReactNode
+  hideDue?: boolean
+}
+
+export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone, folded, onFold, childCount = 0, actions = true, extras }: { reminder: Reminder; showList?: boolean; depth?: number; onDropZone?: (dragged: string, zone: Zone) => void; folded?: boolean; onFold?: () => void; childCount?: number; actions?: boolean; extras?: RowExtras }) {
   const { t, i18n } = useTranslation()
   const engine = useEngine()
   const view = useView()
@@ -122,11 +130,13 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
       {open && <span aria-hidden className="absolute top-2 bottom-2 left-0 w-[3px] rounded-r-[3px] bg-accent-500" data-testid="chosen-bar" />}
       {hint === 'before' && <span className="absolute inset-x-3 -top-px h-0.5 rounded bg-accent-500" />}
       {hint === 'after' && <span className="absolute inset-x-3 -bottom-px h-0.5 rounded bg-accent-500" />}
+      {extras?.lead}
       <TickBox done={done} title={reminder.title} onToggle={() => engine.toggle(reminder.id)} className="mt-px" />
       <button type="button" className="min-w-0 flex-1 text-left" onClick={() => shell.openReminder(reminder.id)} tabIndex={-1}>
         <span className={'block text-[15px] leading-snug break-words ' + (done ? 'text-mist-500 line-through' : 'text-mist-100')}>{reminder.title}</span>
         <span className="mt-[3px] flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[12.5px] text-mist-500 empty:hidden">
-          {reminder.due_date && (
+          {extras?.meta}
+          {reminder.due_date && !extras?.hideDue && (
             <span className={'inline-flex items-center gap-1 ' + (late ? 'font-semibold text-late' : dueToday ? 'font-semibold text-accent-400' : '')} data-testid="due">
               {late && <Clock className="h-[13px] w-[13px]" aria-hidden />}
               {dueLabel(reminder, today, i18n.language, t)}
@@ -199,7 +209,7 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
  * subtasks shown to those found (tiles, search). In a card the rows are parted by thin lines; on the board each task
  * with its subtasks is a card of its own.
  */
-export function ReminderGroup({ spot, items, showDone, showList = false, only, board = false, footer, head }: { spot: Spot | null; items: Reminder[]; showDone: boolean; showList?: boolean; only?: Set<string>; board?: boolean; footer?: ReactNode; head?: ReactNode }) {
+export function ReminderGroup({ spot, items, showDone, showList = false, only, board = false, footer, head, decorate, between }: { spot: Spot | null; items: Reminder[]; showDone: boolean; showList?: boolean; only?: Set<string>; board?: boolean; footer?: ReactNode; head?: ReactNode; decorate?: (reminder: Reminder) => RowExtras | undefined; between?: (index: number) => ReactNode }) {
   const engine = useEngine()
   const view = useView()
   const [folded, setFolded] = useState<Record<string, boolean>>({})
@@ -242,14 +252,16 @@ export function ReminderGroup({ spot, items, showDone, showList = false, only, b
     >
       {head}
       <div role="list" className={board ? 'nt-board flex flex-col gap-2' : 'nt-rows'}>
-        {items.map((reminder) => {
+        {items.map((reminder, index) => {
           // In a tile or a search only the subtasks that belong there show under their parent.
           const children = view.childrenOf(reminder.id).filter((c) => !view.inTrash(c) && (showDone || !c.completed_at) && (!only || only.has(c.id)))
           const shut = !!folded[reminder.id]
           return (
             <div key={reminder.id} className={board ? 'nt-card overflow-hidden' : undefined}>
+              {between?.(index)}
               <ReminderRow
                 reminder={reminder}
+                extras={decorate?.(reminder)}
                 showList={showList}
                 onDropZone={(dragged, zone) => drop(reminder, dragged, zone)}
                 folded={shut}
@@ -262,6 +274,7 @@ export function ReminderGroup({ spot, items, showDone, showList = false, only, b
             </div>
           )
         })}
+        {between?.(items.length)}
       </div>
       {footer}
     </div>

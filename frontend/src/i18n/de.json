@@ -1614,5 +1614,100 @@
     "assign": "Zuständige",
     "pickDate": "Datum wählen",
     "setDate": "Setzen"
+  },
+  "today": {
+    "sub": "{{day}} · aus allen Bereichen",
+    "timed": "Mit Uhrzeit",
+    "anytime": "Irgendwann heute",
+    "allToToday": "Alle auf heute",
+    "movedToToday_one": "Eine Aufgabe auf heute gelegt.",
+    "movedToToday_other": "{{count}} Aufgaben auf heute gelegt.",
+    "quick": "Neue Aufgabe für heute in „{{list}}“",
+    "doneBy": "erledigt von {{name}}, {{time}}",
+    "doneAt": "erledigt um {{time}}",
+    "time": {
+      "now": "jetzt",
+      "inMinutes": "in {{n}} Min.",
+      "inHours": "in {{n}} Std.",
+      "sinceMinutes": "seit {{n}} Min.",
+      "sinceHours": "seit {{n}} Std."
+    },
+    "calm": {
+      "streak_one": "Deine Serie: ein Tag.",
+      "streak_other": "Deine Serie: {{count}} Tage."
+    },
+    "week": {
+      "label": "Die nächsten sieben Tage",
+      "today_one": "heute · eine",
+      "today_other": "heute · {{count}}",
+      "todayLate_one": "heute · eine + {{late}} überfällig",
+      "todayLate_other": "heute · {{count}} + {{late}} überfällig",
+      "free": "frei",
+      "open_one": "{{day}}, eine Aufgabe. In „Geplant“ öffnen",
+      "open_other": "{{day}}, {{count}} Aufgaben. In „Geplant“ öffnen",
+      "dropHint": "Klicken öffnet den Tag in „Geplant“. Eine Aufgabe hierher ziehen legt sie auf diesen Tag."
+    },
+    "progress": {
+      "done": "{{done}} von {{due}} geschafft",
+      "nothingDue": "Heute ist nichts fällig",
+      "ring": "{{percent}} Prozent geschafft",
+      "overdue_one": "dazu eine überfällig",
+      "overdue_other": "dazu {{count}} überfällig",
+      "streak_one": "Serie: ein Tag",
+      "streak_other": "Serie: {{count}} Tage"
+    },
+    "focus": {
+      "title": "Fokus für heute",
+      "count": "{{count}} von {{most}}",
+      "hint": "Zieh eine Aufgabe hierher oder wähle sie mit dem Stern in ihrer Zeile.",
+      "add": "In den Fokus für heute",
+      "remove": "Aus dem Fokus nehmen",
+      "removeOne": "„{{title}}“ aus dem Fokus nehmen",
+      "full": "Der Fokus hat schon drei Aufgaben"
+    },
+    "family": {
+      "title": "Familie heute",
+      "of": "{{name}}: {{done}} von {{due}} erledigt",
+      "doneOnly_one": "eine erledigt",
+      "doneOnly_other": "{{count}} erledigt",
+      "none": "Heute ist für niemanden etwas fällig."
+    },
+    "yourWeek": {
+      "title": "Deine Woche",
+      "streak_one": "Serie: ein Tag",
+      "streak_other": "Serie: {{count}} Tage",
+      "label": "Erledigt an den letzten sieben Tagen: {{counts}}",
+      "day": "{{day}}: {{count}} erledigt"
+    },
+    "tomorrow": {
+      "title": "Morgen",
+      "none": "Für morgen ist noch nichts geplant.",
+      "more_one": "und eine weitere",
+      "more_other": "und {{count}} weitere"
+    },
+    "plan": {
+      "open": "Morgen planen",
+      "title": "Morgen planen",
+      "left_one": "Eine Aufgabe ist heute offen geblieben.",
+      "left_other": "{{count}} Aufgaben sind heute offen geblieben.",
+      "nothing": "Heute ist nichts offen geblieben.",
+      "allTomorrow": "Alle auf morgen",
+      "allSometime": "Alle irgendwann",
+      "trashAll": "Alle streichen",
+      "trashAllTitle_one": "Eine Aufgabe streichen?",
+      "trashAllTitle_other": "{{count}} Aufgaben streichen?",
+      "trashAllText": "Sie kommen in den Papierkorb. Dort liegen sie 30 Tage, bis sie endgültig gelöscht werden.",
+      "trashed_one": "Eine Aufgabe gestrichen.",
+      "trashed_other": "{{count}} Aufgaben gestrichen.",
+      "tomorrow": "Auf morgen",
+      "tomorrowOne": "„{{title}}“ auf morgen",
+      "sometime": "Irgendwann (ohne Datum)",
+      "sometimeOne": "„{{title}}“ irgendwann",
+      "repeatKeeps": "Eine wiederkehrende Aufgabe behält ihr Datum",
+      "trash": "Streichen",
+      "trashOne": "„{{title}}“ streichen",
+      "coming": "Morgen schon geplant",
+      "close": "Fertig"
+    }
   }
 }
