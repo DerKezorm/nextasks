@@ -12,6 +12,8 @@ export type StatsPerson = { id: number | null; name: string; me: boolean; former
 export type Run = { days: number; from: string; to: string }
 export type Records = {
   total: number
+  /** The day of the first completion counted (missing from an older server). */
+  first?: string | null
   best_day: { date: string; count: number } | null
   best_week: { from: string; to: string; count: number } | null
   longest_streak: Run | null
@@ -27,6 +29,8 @@ export type Series = {
   repeat_from: 'due' | 'completion'
   slots: Slot[]
   next: { due_date: string; due_time: string | null; overdue: boolean } | null
+  /** Taking turns: the people in the order of their turn (null: a former member); empty or missing when nobody does. */
+  rotation?: (number | null)[]
 }
 export type YearBlock = {
   year: number

@@ -24,6 +24,7 @@ import { Mark } from './Mark'
 import { NotesField } from './NotesField'
 import { personName, PersonAvatar } from './People'
 import { RepeatDialog } from './RepeatDialog'
+import { RotationField } from './Rotation'
 import { useShell } from './Shell'
 import { TickBox } from './TaskParts'
 
@@ -126,6 +127,8 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
   const pictured = picturedIn(reminder.notes)
   const attachments = draft ? [] : view.attachmentsOf(reminder.id).filter((a) => !pictured.has(a.id.toLowerCase()))
   const members = space && !space.private ? view.membersOf(space.id) : []
+  // Taking turns: the row of people stands in for the assignees.
+  const turning = members.length > 1 && reminder.rotation.some((id) => members.some((m) => m.account_id === id))
   const limit = engine.me?.limits.attachment_bytes ?? 50 * 1024 * 1024
   const popup = mode === 'popup'
   const close = popup ? shell.closeReminder : shell.closePane
@@ -343,7 +346,7 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
 
           {members.length > 0 && (
             <Row icon={Users} label={t('detail.assignees')}>
-              <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('detail.assignees')}>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('detail.assignees')} hidden={turning}>
                 {members.map((m) => {
                   const on = reminder.assignees.includes(m.account_id)
                   const person = view.people.get(m.account_id)
@@ -361,7 +364,10 @@ export function DetailPane({ reminder, mode = 'popup', draft }: { reminder: Remi
                   )
                 })}
               </div>
-              <p className="mt-1 text-xs text-mist-500">{t('detail.assigneesHint')}</p>
+              <p className="mt-1 text-xs text-mist-500" hidden={turning}>
+                {t('detail.assigneesHint')}
+              </p>
+              {members.length > 1 && <RotationField reminder={reminder} members={members} put={put} />}
             </Row>
           )}
 
@@ -618,6 +624,7 @@ export function NewTaskDetail({ target, mode }: { target: NewTarget; mode: 'popu
     created_by: null,
     created_at: '',
     deleted_at: null,
+    rotation: [],
     ...(fields as Partial<Reminder>),
   }
   return <DetailPane reminder={shown} mode={mode} draft={draft} />

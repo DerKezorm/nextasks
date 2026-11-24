@@ -21,7 +21,7 @@ import { addDays } from '../sync/repeat'
 import type { Reminder } from '../sync/types'
 import { Mark } from './Mark'
 import { useTaskMenu } from './Menus'
-import { AvatarStack } from './People'
+import { TaskPeople } from './Rotation'
 import { Popover } from './Popover'
 import { QuickEntry } from './QuickEntry'
 import { useShell } from './Shell'
@@ -374,7 +374,7 @@ function DayCard({ reminder, today, lateColumn, sub = false }: { reminder: Remin
               <span className="ml-auto flex shrink-0 items-center gap-1">
                 <PriorityPlaque priority={reminder.priority} />
                 {reminder.flagged && <MarkedSign />}
-                {shared && <AvatarStack ids={reminder.assignees} people={view.people} max={2} />}
+                {shared && <TaskPeople reminder={reminder} max={2} size="card" />}
               </span>
             )}
           </span>

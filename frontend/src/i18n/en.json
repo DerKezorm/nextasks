@@ -1792,6 +1792,7 @@
       "year": "{{change}} on the 12 months before"
     },
     "noBefore": "nothing done before",
+    "since": "since {{month}}",
     "spark": {
       "week": "The last 14 days",
       "month": "The last 9 weeks",
@@ -1993,5 +1994,21 @@
       "coming": "Already planned for tomorrow",
       "close": "Done"
     }
+  },
+  "rotation": {
+    "toggle": "Take turns",
+    "hint": "Whoever ticks it off had the turn. Then the next one in the row is in charge.",
+    "onlyRepeating": "Taking turns works for repeating tasks.",
+    "now": "{{name}}’s turn",
+    "nowThen": "{{name}}’s turn · then {{next}}",
+    "row": "Taking turns, it is {{name}}’s turn",
+    "order": "Order",
+    "grip": "Move {{name}} (drag, or Alt + arrow keys)",
+    "makeTurn": "Make it {{name}}’s turn",
+    "remove": "Take {{name}} out of the row",
+    "add": "Add {{name}} to the row",
+    "more": "Add",
+    "pulse": "Taking turns: {{names}}",
+    "share": "{{name}} {{count}}"
   }
 }

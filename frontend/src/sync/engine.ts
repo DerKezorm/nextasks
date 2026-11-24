@@ -425,6 +425,7 @@ export class SyncEngine {
         fields.position = keyAtEnd(this.current().live.filter((r) => r.list_id === target.id && !r.parent_id))
         fields.completed_at = null
         fields.assignees = []
+        fields.rotation = []
         this.put('reminder', fresh.get(copy.id as string)!, fields, true)
       }
       this.notice('space_left_copied', { count: copies.length, list: target.name })
@@ -748,6 +749,7 @@ export class SyncEngine {
           fields.position = position
         }
         fields.assignees = []
+        fields.rotation = []
         this.put('reminder', member.id, fields, true)
       }
       this.notice('moved_to_private', { list: target.name })

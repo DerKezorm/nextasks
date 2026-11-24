@@ -5,6 +5,7 @@
  * (`--color-heat-0` … `-4`); the colours of lists only as small marks and bar parts. Each one measures the room it
  * has, so its words keep their size on any width; the heat map scrolls sideways where the room is too small.
  */
+import { RefreshCw } from 'lucide-react'
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -329,6 +330,8 @@ export function Pulse({ pulse, people, alone }: { pulse: Series[]; people: Stats
           const rate = pulseRate(series.slots)
           const rhythm = describeRule(series.repeat, series.repeat_from, i18n.language, t)
           const empty = Math.max(0, 16 - series.slots.length)
+          // Taking turns: who is in the row and how often each did it among the squares shown, to see it is fair.
+          const turns = alone ? [] : (series.rotation ?? []).map((id) => ({ name: nameOf(id) || t('people.former'), count: series.slots.filter((slot) => slot.status !== 'skipped' && slot.by === id).length }))
           return (
             <div key={series.series_id} className="contents" data-series={series.series_id}>
               <div className="flex min-w-0 items-center gap-2 text-[13px] max-md:mt-1.5">
@@ -336,7 +339,12 @@ export function Pulse({ pulse, people, alone }: { pulse: Series[]; people: Stats
                 <span className="truncate text-mist-100" title={series.title}>
                   {series.title}
                 </span>
-                {rhythm && (
+                {turns.length > 0 ? (
+                  <span className="ml-auto inline-flex max-w-[55%] shrink-0 items-center gap-1 truncate pl-2 text-[11.5px] text-mist-500" title={[t('rotation.pulse', { names: turns.map((p) => p.name).join(', ') }), rhythm].filter(Boolean).join(' · ')} data-testid="pulse-turns">
+                    <RefreshCw className="h-3 w-3 shrink-0 text-accent-400" aria-label={t('rotation.toggle')} role="img" />
+                    <span className="truncate">{turns.map((p) => t('rotation.share', { name: p.name, count: p.count })).join(' · ')}</span>
+                  </span>
+                ) : rhythm && (
                   <span className="ml-auto max-w-[50%] shrink-0 truncate pl-2 text-[11.5px] text-mist-600" title={rhythm}>
                     {rhythm}
                   </span>

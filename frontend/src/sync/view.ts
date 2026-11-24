@@ -65,6 +65,8 @@ export interface View {
 /** Applies the reading rules to one reminder. */
 export function readReminder(raw: Reminder, reminders: Map<string, Reminder>, sections: Map<string, Section>): Reminder {
   const out = { ...raw }
+  // A record from before taking turns has no rotation.
+  if (!Array.isArray(out.rotation)) out.rotation = []
   if (out.parent_id) {
     const parent = reminders.get(out.parent_id)
     if (!parent || parent.parent_id || parent.list_id !== out.list_id) out.parent_id = null

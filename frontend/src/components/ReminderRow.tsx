@@ -18,7 +18,7 @@ import { useEngine, useView } from '../state/sync'
 import type { Reminder } from '../sync/types'
 import { Mark } from './Mark'
 import { useTaskMenu } from './Menus'
-import { AvatarStack } from './People'
+import { TaskPeople, TurnMeta } from './Rotation'
 import { RowActions } from './RowActions'
 import { useShell } from './Shell'
 import { MarkedSign, PriorityPlaque, TickBox } from './TaskParts'
@@ -143,6 +143,7 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
             </span>
           )}
           {reminder.repeat && <Repeat className="h-[13px] w-[13px]" aria-label={t('reminder.repeats')} role="img" />}
+          {shared && <TurnMeta reminder={reminder} />}
           {reminder.location && (
             <span className="inline-flex items-center gap-1">
               <MapPin className="h-[13px] w-[13px]" aria-hidden /> {reminder.location.name}
@@ -181,7 +182,7 @@ export function ReminderRow({ reminder, showList = false, depth = 0, onDropZone,
             <MarkedSign />
           </span>
         )}
-        {shared && <AvatarStack ids={reminder.assignees} people={view.people} />}
+        {shared && <TaskPeople reminder={reminder} />}
         {onFold && childCount > 0 && (
           <button type="button" onClick={onFold} aria-expanded={!folded} aria-label={t(folded ? 'reminder.showSubtasks' : 'reminder.hideSubtasks')} className="rounded-md p-0.5 text-mist-500 hover:text-mist-100">
             {folded ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}

@@ -150,8 +150,32 @@ describe('the review page', () => {
     expect([...slots].map((s) => s.textContent)).toEqual(['A', '', 'A', 'R'])
     expect(page.querySelectorAll('[data-series="r1"] [aria-hidden].border-dashed')).toHaveLength(12)
     expect(byTest(page, 'pulse-rate')?.textContent).toBe('50% on time')
+    expect(byTest(page, 'pulse-turns')).toBeNull()
     expect(byTest(page, 'week-card')?.textContent).toContain('The strongest day was Saturday with 14.')
     expect(byTest(page, 'records-card')).toBeNull()
+  })
+
+  it('marks a series where people take turns, with how often each did it', async () => {
+    const { server } = world(() => {
+      const stats = sample()
+      stats.pulse[0].rotation = [2, 1]
+      return stats
+    })
+    const page = await mount(server, '/review?range=year')
+    expect(byTest(page, 'pulse-turns')?.textContent).toBe('Alex 2 · Robin 1')
+    expect(byTest(page, 'pulse-turns')?.getAttribute('title')).toMatch(/^Taking turns: Alex, Robin · /)
+  })
+
+  it('says since when instead of "nothing done before" when there was no period before', async () => {
+    const fresh = () => ({ ...sample(), total: { count: 12, previous: 0, change_pct: null }, records: { ...sample().records, first: '2026-03-02' } })
+    const { server } = world(fresh)
+    const page = await mount(server, '/review?range=year')
+    expect(byTest(page, 'kpi-done')?.textContent).toContain('since March 2026')
+    expect(byTest(page, 'kpi-done')?.textContent).not.toContain('nothing done before')
+    await unmount()
+    const { server: other } = world(() => ({ ...fresh(), records: { ...sample().records, first: '2024-01-10' } }))
+    const again = await mount(other, '/review?range=year')
+    expect(byTest(again, 'kpi-done')?.textContent).toContain('nothing done before')
   })
 
   it('alone shows the lists and the records instead of the people, and no letters', async () => {

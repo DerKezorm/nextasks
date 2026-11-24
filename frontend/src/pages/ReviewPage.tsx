@@ -18,7 +18,7 @@ import { BackToOverview } from '../components/PageHead'
 import { HeatLegend, HeatMap, ListShares, Pulse, PulseLegend, Punchcard, RecordsBlock, ReviewCard, Spark, WhoBars } from '../components/ReviewCharts'
 import { localDay } from '../lib/due'
 import { errorText } from '../lib/errors'
-import { count, decimal, hourName, listName, monthYear, peakOf, PERIODS, shortDay, sparkOf, useStats, weekdayName, yearOffered, dayMonth, type Period, type Stats } from '../lib/stats'
+import { count, dateOf, decimal, hourName, listName, monthYear, peakOf, PERIODS, shortDay, sparkOf, useStats, weekdayName, yearOffered, dayMonth, type Period, type Stats } from '../lib/stats'
 import { useView } from '../state/sync'
 
 /** The petrol plaque of the review: its symbol in white, as a list's plaque in its head. */
@@ -196,8 +196,14 @@ function Numbers({ stats, period }: { stats: Stats; period: Period }) {
   const lang = i18n.language
   const { total, streak, punctuality, duration } = stats
   const change = total.change_pct
+  // Nothing to compare with: "since November 2026" when the first thing was done within the period (there is no
+  // period before), "nothing done before" only when there was one and it stayed empty.
+  const first = stats.records.first ?? null
+  const since = first && first >= stats.range.from ? t('review.since', { month: dateOf(first).toLocaleDateString(lang, { month: 'long', year: 'numeric' }) }) : ''
   const changeText =
-    change === null ? t('review.noBefore') : t(`review.change.${period}`, { change: (change > 0 ? '+' : change < 0 ? '−' : '±') + (Math.abs(change) / 100).toLocaleString(lang, { style: 'percent', maximumFractionDigits: 0 }) })
+    change === null
+      ? since || (first ? t('review.noBefore') : '')
+      : t(`review.change.${period}`, { change: (change > 0 ? '+' : change < 0 ? '−' : '±') + (Math.abs(change) / 100).toLocaleString(lang, { style: 'percent', maximumFractionDigits: 0 }) })
   const quickest = duration.lists[0]
   const days = (n: number) => t('review.openDays', { count: n, days: decimal(n, lang) })
   return (

@@ -3,6 +3,7 @@
  * web for the picture before the server answers, and in the fake server for tests.
  */
 import { step } from './repeat'
+import { afterCompletion } from './rotation'
 import type { Clock, Data } from './types'
 import { uuid5 } from './uuid'
 
@@ -81,10 +82,16 @@ export function applyComplete(world: CompleteWorld, id: string, occurrence: stri
     touched.push(copy!)
   }
 
-  // The original moves on; its subtasks open again.
+  // The original moves on; its subtasks open again. Taking turns, the next one is in charge of it; a copy there
+  // already moved the turn on when it was made.
   data.due_date = outcome.due
   data.repeat = outcome.repeat
   original.clock.due = time
+  const rotation = (data.rotation as number[] | undefined) ?? []
+  if (!there && rotation.length) {
+    data.assignees = [afterCompletion(rotation, (data.assignees as number[]) ?? [], by)]
+    original.clock.assignees = Math.max(time, (original.clock.assignees ?? 0) + 1)
+  }
   world.save(id, original)
   touched.push(id)
   for (const child of world.children(id)) {

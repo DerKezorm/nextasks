@@ -1792,6 +1792,7 @@
       "year": "{{change}} zu den 12 Monaten davor"
     },
     "noBefore": "davor nichts erledigt",
+    "since": "seit {{month}}",
     "spark": {
       "week": "Verlauf der letzten 14 Tage",
       "month": "Verlauf der letzten 9 Wochen",
@@ -1993,5 +1994,21 @@
       "coming": "Morgen schon geplant",
       "close": "Fertig"
     }
+  },
+  "rotation": {
+    "toggle": "Reihum",
+    "hint": "Wer abhakt, war dran. Danach ist die nächste Person der Reihe zuständig.",
+    "onlyRepeating": "Reihum gibt es für wiederkehrende Aufgaben.",
+    "now": "dran: {{name}}",
+    "nowThen": "dran: {{name}} · danach {{next}}",
+    "row": "Reihum, dran ist {{name}}",
+    "order": "Reihenfolge",
+    "grip": "{{name}} verschieben (ziehen oder Alt + Pfeiltasten)",
+    "makeTurn": "{{name}} ist jetzt dran",
+    "remove": "{{name}} aus der Reihe nehmen",
+    "add": "{{name}} in die Reihe nehmen",
+    "more": "Dazunehmen",
+    "pulse": "Reihum: {{names}}",
+    "share": "{{name}} {{count}}"
   }
 }

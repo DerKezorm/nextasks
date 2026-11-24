@@ -106,6 +106,8 @@ export interface Reminder {
   created_by: number | null
   created_at: string
   deleted_at: string | null
+  /** Taking turns (contract 0.9): account ids in the order of the turn; empty is off. `lib/rotation.ts`. */
+  rotation: number[]
 }
 
 export interface Attachment {
