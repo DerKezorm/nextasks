@@ -33,7 +33,7 @@ from ..db import SessionLocal
 from ..errors import error
 from ..models import Account, Member
 from ..models import Space as SpaceRow
-from ..services import apiread, apitokens, apiwrite, clock, logs, records, sync
+from ..services import apiread, apitokens, apiwrite, clock, logs, records, stats, sync
 from ..services.apitokens import Caller
 
 logger = logging.getLogger("nextasks.api")
@@ -41,7 +41,7 @@ logger = logging.getLogger("nextasks.api")
 router = APIRouter(prefix="/api/v1", tags=["api v1"])
 
 #: What this server's ``/api/v1`` offers; a program asks for a word before it uses it.
-FEATURES = ["tasks", "dashboard", "external_ref", "members"]
+FEATURES = ["tasks", "dashboard", "external_ref", "members", "stats"]
 MAX_IDS = 200
 DEFAULT_LIMIT = 100
 MAX_LIMIT = 500
@@ -299,6 +299,25 @@ class DashboardOut(BaseModel):
     link: str | None = None
     time_zone: str
     as_of: str
+
+
+class StreakOut(BaseModel):
+    #: Days in a row with at least one task done, up to today or yesterday (today is not over).
+    current: int
+    record: int
+    done_today: bool
+
+
+class StatsSummaryOut(BaseModel):
+    time_zone: str
+    today: str
+    streak: StreakOut
+    done_today: int
+    #: The last seven days, today included.
+    done_week: int
+    total: int
+    #: ``{"from", "to", "counts"}``: one number per day of the last 365, oldest first, in the account's zone.
+    days: dict[str, Any]
 
 
 ERRORS: dict[int | str, dict[str, Any]] = {status: {"model": Problem} for status in (401, 403, 404, 422, 429)}
@@ -564,3 +583,18 @@ def dashboard(found: Reader, limit: Annotated[int, Query(ge=1, le=DASHBOARD_MAX)
     with SessionLocal() as db:
         world = apiread.World.read(db, apiread.sight_of(db, found.account))
         return JSONResponse(apiread.dashboard(world, limit))
+
+
+# --- Statistics -----------------------------------------------------------------------------------------------------
+
+
+@router.get("/stats/summary", response_model=StatsSummaryOut, responses=ERRORS,
+            summary="The run of days, done today and this week, a year of days: for a dashboard card")
+def stats_summary(found: Reader) -> JSONResponse:
+    """From the record of completions, as the web's review counts: every space the token sees (hidden ones too), a
+    task once (subtasks not), days in the account's zone."""
+    with SessionLocal() as db:
+        sight = apiread.sight_of(db, found.account)
+        scope = stats.scope_of(db, found.account.id, allowed=sight.space_ids)
+        assert scope is not None
+        return JSONResponse(stats.summary(db, scope))
