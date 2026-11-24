@@ -37,6 +37,7 @@ from .routers import (
     app1,
     app_pairing,
     auth,
+    focus,
     health,
     invites,
     notifications,
@@ -71,6 +72,7 @@ logger = logging.getLogger("nextasks")
 ROUTERS = [
     health, about, locales_router, logs_router, auth, totp_router, oidc, invites, settings_router, backups_router,
     avatars_router, apitokens, v1, app_pairing, app1, notifications, stats,
+    focus,
 ]
 
 

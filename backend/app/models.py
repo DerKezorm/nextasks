@@ -758,6 +758,23 @@ class Completion(Base):
     logged_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow)
 
 
+
+# --- The focus of a day ----------------------------------------------------------------------------------------------
+
+
+class Focus(Base):
+    """Up to three tasks one picked for one day ("Fokus für heute", web only, ``routers/focus.py``). One row per
+    account; it counts only on ``day`` (the account's day), the next day it reads as empty. Nobody else ever sees it,
+    and ``/api/app/1`` knows nothing of it."""
+
+    __tablename__ = "focus"
+
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), primary_key=True)
+    day: Mapped[str] = mapped_column(String(10))
+    reminder_ids: Mapped[Any] = mapped_column(JSON, default=list)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow)
+
+
 Index("reminders_due", Reminder.due_date, Reminder.due_time)
 Index("hidden_account_cursor", Hidden.account_id, Hidden.cursor)
 
@@ -783,6 +800,7 @@ __all__ = [
     "Completion",
     "CursorTime",
     "ExternalRef",
+    "Focus",
     "Gone",
     "Hidden",
     "Invite",
