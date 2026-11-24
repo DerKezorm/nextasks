@@ -1,4 +1,27 @@
 {
+  "0.8.0": {
+    "lead": "Aufgaben gehen reihum, und ihr redet direkt an der Aufgabe miteinander.",
+    "sections": [
+      {
+        "title": "Reihum",
+        "where": "Aufgabe › Zugewiesen an › Reihum",
+        "body": "Eine wiederkehrende Aufgabe in einem geteilten Bereich wandert der Reihe nach: Du wählst die Personen und ziehst sie in die Reihenfolge. Nach jedem Abhaken ist die Person nach dem, der abgehakt hat, dran und bekommt die Mitteilung. Zeile und Detail zeigen „dran: Leo · danach Ivy“, der Puls im Rückblick zählt, wer wie oft dran war. Ideal für den Putzplan."
+      },
+      {
+        "title": "Kommentare und Verlauf",
+        "where": "Aufgabe › Verlauf",
+        "body": "In geteilten Bereichen schreibt ihr kurze Nachrichten direkt an die Aufgabe, mit Links, Bildern und @Name für eine Erwähnung. Dazwischen steht grau, was passiert ist: wer abgehakt, das Datum verschoben oder jemanden zugewiesen hat. Eigene Nachrichten lassen sich 24 Stunden bearbeiten. Zuständige, Ersteller und Erwähnte bekommen eine Mitteilung, mehrere Kommentare in zehn Minuten gebündelt."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Heute zählt im Kopf und im Ring dieselben Aufgaben.",
+      "Die Spaltenköpfe in „Geplant“ bleiben beim Scrollen oben stehen.",
+      "Den Fokus für heute sortierst du per Ziehen um.",
+      "Kommentare sind durchsuchbar und gehen über die API.",
+      "Die iPhone-App zeigt vorerst nur, wer gerade dran ist; Kommentare kommen mit einem eigenen Update."
+    ]
+  },
   "0.7.0": {
     "lead": "nextasks bekommt eine Tagesseite, einen Rückblick und mehr Ordnung in den Listen.",
     "sections": [

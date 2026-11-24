@@ -63,6 +63,10 @@ its own, and nextasks installs from the browser as an app.*
 - **Shopping and order**: the things you buy often under the entry line, new items in the section they stood in last,
   lists that start as shopping, packing or weekly cleaning, copying a list, opening it all over again, a collection
   "Someday" for tasks without a date and a sweep through old tasks one by one.
+- **Taking turns**: a repeating task in a shared space can go round its people in order; after each tick the next
+  one is up and gets a notification. Just right for a cleaning rota.
+- **Comments and history** at every task in a shared space: short messages with links, pictures and @mentions, and in
+  grey between them what happened to the task and who did it.
 - **Alone or together**: used alone, nextasks leaves out avatars, assignees and comparisons.
 - **Quick entry**: "Milk tomorrow 9am #groceries !!" becomes a task due tomorrow at nine, tagged, with a medium
   priority. Search across titles, notes, tags and links; keyboard shortcuts for the common moves.

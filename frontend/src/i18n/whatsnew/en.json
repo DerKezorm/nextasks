@@ -1,4 +1,27 @@
 {
+  "0.8.0": {
+    "lead": "Tasks take turns, and you talk right at the task.",
+    "sections": [
+      {
+        "title": "Taking turns",
+        "where": "Task › Assigned to › Take turns",
+        "body": "A repeating task in a shared space goes round in turn: pick the people and drag them into order. After each tick the person after whoever ticked it off is up and gets the notification. Row and detail show “up: Leo · then Ivy”, and the pulse in the review counts who was up how often. Just right for a cleaning rota."
+      },
+      {
+        "title": "Comments and history",
+        "where": "Task › History",
+        "body": "In shared spaces you write short messages right at the task, with links, pictures and @name to mention someone. In between, in grey, what happened: who ticked it off, moved the date or assigned someone. Your own messages can be edited for 24 hours. Assignees, the creator and those mentioned get a notification, several comments within ten minutes bundled."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "Today counts the same tasks in its head and in its ring.",
+      "The column heads in Scheduled stay on top as you scroll.",
+      "Drag today's focus into a new order.",
+      "Comments are searchable and go through the API.",
+      "The iPhone app shows for now only who is up; comments come with an update of its own."
+    ]
+  },
   "0.7.0": {
     "lead": "nextasks gets a page for your day, a look back and more order in lists.",
     "sections": [
