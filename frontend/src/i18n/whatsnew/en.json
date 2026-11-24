@@ -1,4 +1,18 @@
 {
+  "0.6.0": {
+    "lead": "Programs now see who can be assigned in a space.",
+    "sections": [
+      {
+        "title": "Members through the API",
+        "where": "For programs: /api/v1",
+        "body": "A program such as nexmail asks GET /api/v1/spaces/{id}/members who can take on tasks in a space and offers exactly those people as assignees. It only sees spaces its token sees."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "In your own space “Private” the list names only you."
+    ]
+  },
   "0.5.1": {
     "lead": "A fix in the sidebar.",
     "sections": [

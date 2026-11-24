@@ -1,4 +1,18 @@
 {
+  "0.6.0": {
+    "lead": "Programme sehen jetzt, wer in einem Bereich zuständig sein kann.",
+    "sections": [
+      {
+        "title": "Mitglieder über die API",
+        "where": "Für Programme: /api/v1",
+        "body": "Ein Programm wie nexmail fragt mit GET /api/v1/spaces/{id}/members, wer in einem Bereich Aufgaben übernehmen kann, und bietet genau diese Personen als Zuständige an. Es sieht dabei nur Bereiche, die sein Token sieht."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Im eigenen Bereich „Privat“ nennt die Liste nur dich selbst."
+    ]
+  },
   "0.5.1": {
     "lead": "Eine Korrektur in der Seitenleiste.",
     "sections": [
