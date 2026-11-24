@@ -110,7 +110,8 @@ describe('the own look (docs "Aussehen")', () => {
     const { server } = smallWorld()
     const page = await mount(server, '/today')
     const rows = [...page.querySelectorAll('[data-testid^="tile-"]:not([data-testid^="tile-count"])')]
-    expect(rows).toHaveLength(6)
+    // The six collections and the web's own "Someday".
+    expect(rows).toHaveLength(7)
     expect(rows.every((r) => !(r as HTMLElement).style.background)).toBe(true)
     expect(page.querySelector('[data-testid^="tile-count-"]')).toBeNull()
   })
@@ -919,7 +920,7 @@ describe('own filters and the sidebar overview (filter, tile_pref)', () => {
     server.addPref('tile_pref', TILE_IDS.done, robin, { hidden: true })
     const page = await mount(server, '/all')
     const tiles = [...page.querySelectorAll('aside nav a')].map((a) => a.getAttribute('data-testid'))
-    expect(tiles).toEqual(['tile-scheduled', 'tile-all', 'tile-flagged', 'tile-assigned'])
+    expect(tiles).toEqual(['tile-scheduled', 'tile-all', 'tile-someday', 'tile-flagged', 'tile-assigned'])
   })
 
   it('hides and deletes a filter from its context menu', async () => {
@@ -948,7 +949,7 @@ describe('own filters and the sidebar overview (filter, tile_pref)', () => {
     const secret = server.addFilter(robin, 'Secret', {}, { hidden: true })
     const page = await mount(server, '/settings/appearance')
     const card = page.querySelector('#sidebar')!
-    expect([...card.querySelectorAll('[data-testid^="pref-tile-"][data-testid$="-eye"]')]).toHaveLength(6)
+    expect([...card.querySelectorAll('[data-testid^="pref-tile-"][data-testid$="-eye"]')]).toHaveLength(7)
     const eye = card.querySelector('[data-testid="pref-tile-today-eye"]')!
     expect(eye.getAttribute('aria-pressed')).toBe('true')
     expect(eye.getAttribute('aria-label')).toBe('Hide “Today”')

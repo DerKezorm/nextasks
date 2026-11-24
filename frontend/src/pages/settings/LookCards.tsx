@@ -4,7 +4,7 @@
  * server knows filters), which spaces it shows (`space_pref`, on all devices), and the keyboard shortcuts.
  */
 import { Eye, EyeOff, FunnelPlus, Keyboard, Layers, PanelLeft, Palette, Pencil } from 'lucide-react'
-import { createElement, type ReactNode } from 'react'
+import { createElement, Fragment, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
@@ -12,6 +12,7 @@ import { Mark } from '../../components/Mark'
 import { useShell } from '../../components/Shell'
 import { ThemeSwitcher } from '../../components/ThemeSwitcher'
 import { setFilterHidden, setSpaceHidden, setTileHidden } from '../../lib/actions'
+import { SOMEDAY_ICON, useSomedayShown } from '../../lib/someday'
 import { TILE_LOOK } from '../../lib/tileLook'
 import { useEngine, useFiltersOffered, useView } from '../../state/sync'
 import { TILE_IDS, TILES } from '../../sync/tiles'
@@ -92,18 +93,35 @@ function SidebarCard() {
   const engine = useEngine()
   const view = useView()
   const shell = useShell()
+  const [someday, setSomeday] = useSomedayShown()
   return (
     <Card icon={PanelLeft} title={t('sidebarPrefs.title')} text={t('sidebarPrefs.text')} id="sidebar">
       <SubHead title={t('tiles.label')} />
       {TILES.map((tile) => (
-        <EyeRow
-          key={tile}
-          testId={`pref-tile-${tile}`}
-          sign={createElement(TILE_LOOK[tile].icon, { className: 'h-[18px] w-[18px] shrink-0 text-accent-400', strokeWidth: 2, 'aria-hidden': true })}
-          label={t(`tiles.${tile}`)}
-          hidden={view.isTileHidden(TILE_IDS[tile])}
-          onHidden={(hidden) => setTileHidden(engine, tile, hidden)}
-        />
+        <Fragment key={tile}>
+          <EyeRow
+            testId={`pref-tile-${tile}`}
+            sign={createElement(TILE_LOOK[tile].icon, { className: 'h-[18px] w-[18px] shrink-0 text-accent-400', strokeWidth: 2, 'aria-hidden': true })}
+            label={t(`tiles.${tile}`)}
+            hidden={view.isTileHidden(TILE_IDS[tile])}
+            onHidden={(hidden) => setTileHidden(engine, tile, hidden)}
+          />
+          {/* "Someday" is the web's own: shown or hidden on this device only. */}
+          {tile === 'all' && (
+            <EyeRow
+              testId="pref-tile-someday"
+              sign={<SOMEDAY_ICON className="h-[18px] w-[18px] shrink-0 text-accent-400" strokeWidth={2} aria-hidden />}
+              label={t('someday.title')}
+              name={
+                <>
+                  {t('someday.title')} <span className="text-xs font-normal text-mist-500">· {t('someday.device')}</span>
+                </>
+              }
+              hidden={!someday}
+              onHidden={(hidden) => setSomeday(!hidden)}
+            />
+          )}
+        </Fragment>
       ))}
       <SubHead title={t('filter.section')} />
       {view.filters.length === 0 && <p className="text-sm text-mist-500">{t('sidebarPrefs.noFilters')}</p>}

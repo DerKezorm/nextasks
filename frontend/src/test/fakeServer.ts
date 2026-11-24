@@ -103,6 +103,11 @@ export class FakeServer {
   focus = new Map<number, string[]>()
   /** What `/api/stats` answers (the right column of "Today"); null: 404, as an older server. */
   stats: unknown = null
+  /** What `/api/lists/{id}/suggestions` answers per list; a list without an entry: 404. */
+  suggestions = new Map<string, unknown>()
+  /** The tasks `/api/sweep` offers; null: 404, as an older server. Kept ones (`POST /api/sweep/keep`) drop out. */
+  sweep: { id: string; [key: string]: unknown }[] | null = null
+  kept = new Set<string>()
   /** Mails the fake server "sent": to, what. */
   mails: { to: string; kind: string; token?: string }[] = []
   settings: Record<string, unknown> = {
@@ -866,6 +871,17 @@ export class FakeServer {
     if (!me) return path.startsWith('/api/') ? error(401, 'sign_in_required') : null
     if (path === '/api/focus') return this.focusCall(me.id, method, body)
     if (path === '/api/stats' && method === 'GET') return this.stats ? { status: 200, body: this.stats } : error(404, 'not_found')
+    const suggested = path.match(/^\/api\/lists\/([^/]+)\/suggestions$/)
+    if (suggested && method === 'GET') return this.suggestions.has(suggested[1]) ? { status: 200, body: this.suggestions.get(suggested[1]) } : error(404, 'not_found')
+    if (path === '/api/sweep' && method === 'GET') {
+      if (!this.sweep) return error(404, 'not_found')
+      const tasks = this.sweep.filter((task) => !this.kept.has(task.id))
+      return { status: 200, body: { today: new Date().toISOString().slice(0, 10), stale_days: 14, keep_days: 30, total: tasks.length, tasks } }
+    }
+    if (path === '/api/sweep/keep' && method === 'POST') {
+      this.kept.add(String(body.id))
+      return { status: 200, body: { id: body.id, until: new Date(this.clock() + 30 * 86_400_000).toISOString() } }
+    }
     if (path === '/api/notify' && method === 'GET') return { status: 200, body: this.notifyState(me) }
     if (path === '/api/notify/routes' && method === 'PUT') {
       const own = this.notifyOf(me.id)

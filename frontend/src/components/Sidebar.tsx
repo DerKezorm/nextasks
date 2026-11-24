@@ -23,16 +23,19 @@ import { localDay, localTime, overdue } from '../lib/due'
 import { dragging, draggedReminder, DRAG_LIST, DRAG_SPACE } from '../lib/drag'
 import { colorOf, iconFor } from '../lib/look'
 import { isShared } from '../lib/shared'
+import { SOMEDAY_ICON, somedayItems, useSomedayShown } from '../lib/someday'
+import { showNotice } from '../lib/notice'
 import { useFold } from '../lib/sidebarFold'
 import { TILE_LOOK } from '../lib/tileLook'
 import { useAuth } from '../state/auth'
 import { useEngine, useFiltersOffered, useSyncState, useView } from '../state/sync'
-import { filterCount, shownTiles, tileItems } from '../sync/tiles'
+import { filterCount, shownTiles, tileItems, TILES } from '../sync/tiles'
 import type { Filter, List, Reminder, Space } from '../sync/types'
 import { Avatar } from './Avatar'
 import { ColumnHandle } from './ColumnHandle'
 import { Logo } from './Logo'
 import { Mark, Plaque } from './Mark'
+import { useContextMenu } from './ContextMenu'
 import { useFilterMenu, useHideSpace, useListMenu, useSpaceMenu } from './Menus'
 import { AvatarStack } from './People'
 import { Popover } from './Popover'
@@ -182,10 +185,11 @@ export function SidebarBody() {
         </NavLink>
 
         <nav aria-label={t('tiles.label')} className="space-y-px">
-          {shownTiles(view).map((tile) => {
+          {!shownTiles(view).some((tile) => TILES.indexOf(tile) <= TILES.indexOf('all')) && <SomedayRow />}
+          {shownTiles(view).flatMap((tile, index, shown) => {
             // "Done" has no number; the others count their open tasks and, on a red pill, the overdue ones among them.
             const items = sync.loaded && tile !== 'done' ? tileItems(view, tile, today) : []
-            return (
+            const entry = (
               <NavLink key={tile} to={`/${tile}`} data-testid={`tile-${tile}`} className={({ isActive }) => row(isActive, true)}>
                 {({ isActive }) => (
                   <>
@@ -196,6 +200,9 @@ export function SidebarBody() {
                 )}
               </NavLink>
             )
+            // "Someday" (web only) right after "All", or where "All" would stand when it is hidden.
+            const last = TILES.indexOf(tile) <= TILES.indexOf('all') && (index + 1 === shown.length || TILES.indexOf(shown[index + 1]) > TILES.indexOf('all'))
+            return last ? [entry, <SomedayRow key="someday" />] : [entry]
           })}
         </nav>
 
@@ -223,6 +230,37 @@ export function SidebarBody() {
       </div>
       <AccountLine />
     </div>
+  )
+}
+
+/** "Someday" among the collections: its number, and a menu to hide it on this device (it is not one the app knows). */
+function SomedayRow() {
+  const { t } = useTranslation()
+  const view = useView()
+  const sync = useSyncState()
+  const [shown, setShown] = useSomedayShown()
+  const menu = useContextMenu(() => [
+    {
+      label: t('someday.hide'),
+      icon: EyeOff,
+      run: () => {
+        setShown(false)
+        showNotice({ text: t('someday.hidden') })
+      },
+    },
+  ])
+  if (!shown) return null
+  const count = sync.loaded ? somedayItems(view).length : 0
+  return (
+    <NavLink {...menu} to="/someday" data-testid="tile-someday" className={({ isActive }) => row(isActive, true)}>
+      {({ isActive }) => (
+        <>
+          <SOMEDAY_ICON className="h-4 w-4 shrink-0 text-accent-400" strokeWidth={1.8} aria-hidden />
+          <span className="min-w-0 flex-1 truncate">{t('someday.title')}</span>
+          <Numbers count={count} late={0} active={isActive} testid="tile-count-someday" />
+        </>
+      )}
+    </NavLink>
   )
 }
 

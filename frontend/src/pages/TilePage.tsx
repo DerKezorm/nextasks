@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { CardHead } from '../components/CardHead'
+import { SweepButton } from '../components/SweepButton'
 import { DayBoard, DayNav, ScheduledViewMenu } from '../components/DayBoard'
 import { QuietEmpty } from '../components/EmptyState'
 import { Plaque } from '../components/Mark'
@@ -107,37 +108,7 @@ export function TilePage({ tile }: { tile: Tile }) {
       </section>
     ))
   } else if (tile === 'all' || tile === 'flagged') {
-    const lists = [...new Set(items.map((r) => r.list_id))]
-    body = lists.map((listId) => {
-      const list = view.list(listId)!
-      const group = items.filter((r) => r.list_id === listId)
-      return (
-        <section key={listId} aria-label={list.name}>
-          <ReminderGroup
-            spot={null}
-            items={tops(group)}
-            showDone={false}
-            only={only}
-            head={
-              <CardHead
-                count={group.length}
-                action={
-                  <Link to={`/lists/${list.id}`} className="nt-icon-btn h-7 w-7" aria-label={t('tiles.openList', { name: list.name })} title={t('tiles.openList', { name: list.name })}>
-                    <ArrowRight className="h-4 w-4" strokeWidth={1.9} aria-hidden />
-                  </Link>
-                }
-              >
-                <span className="self-center">
-                  <Plaque color={list.color} icon={list.icon} size={16} />
-                </span>
-                <span className="truncate">{list.name}</span>
-                <span className="truncate font-medium tracking-normal normal-case">· {view.space(list.space_id)?.name}</span>
-              </CardHead>
-            }
-          />
-        </section>
-      )
-    })
+    body = <ListCards items={items} only={only} />
   } else
     body = items.length > 0 && <ReminderGroup spot={null} items={tops(items)} showDone={tile === 'done'} showList only={only} footer={quick} />
 
@@ -151,6 +122,7 @@ export function TilePage({ tile }: { tile: Tile }) {
     <main className={'min-w-0 flex-1 ' + (columns ? 'flex flex-col overflow-hidden' : 'nt-scroll overflow-y-auto')} aria-labelledby="tile-title">
       <div className={'px-4 py-5 sm:px-7 sm:py-6 ' + (columns ? 'flex min-h-0 flex-1 flex-col pb-0 sm:pb-0' : '')}>
         <PageHead id="tile-title" target={target} title={t(`tiles.${tile}`)} count={tile === 'done' ? t('tiles.subDone', { count: items.length }) : t('list.open', { count: items.length })} sub={t('tiles.everywhere')} icon={<TileIcon icon={TILE_LOOK[tile].icon} />}>
+          {tile === 'all' && <SweepButton />}
           {switchable && (
             <>
               {columns && <DayNav items={items} today={today} paging={paging} />}
@@ -176,4 +148,41 @@ export function TilePage({ tile }: { tile: Tile }) {
       </div>
     </main>
   )
+}
+
+/** Tasks in a card per list, with its plaque, its space and the way to the list (All, Marked, Someday). */
+export function ListCards({ items, only }: { items: Reminder[]; only: Set<string> }) {
+  const { t } = useTranslation()
+  const view = useView()
+  const lists = [...new Set(items.map((r) => r.list_id))]
+  return lists.map((listId) => {
+    const list = view.list(listId)!
+    const group = items.filter((r) => r.list_id === listId)
+    return (
+      <section key={listId} aria-label={list.name}>
+        <ReminderGroup
+          spot={null}
+          items={tops(group)}
+          showDone={false}
+          only={only}
+          head={
+            <CardHead
+              count={group.length}
+              action={
+                <Link to={`/lists/${list.id}`} className="nt-icon-btn h-7 w-7" aria-label={t('tiles.openList', { name: list.name })} title={t('tiles.openList', { name: list.name })}>
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.9} aria-hidden />
+                </Link>
+              }
+            >
+              <span className="self-center">
+                <Plaque color={list.color} icon={list.icon} size={16} />
+              </span>
+              <span className="truncate">{list.name}</span>
+              <span className="truncate font-medium tracking-normal normal-case">· {view.space(list.space_id)?.name}</span>
+            </CardHead>
+          }
+        />
+      </section>
+    )
+  })
 }

@@ -168,7 +168,7 @@ describe('the buttons of a row', () => {
     await click(button(bins(), 'Set'))
     expect(reminder(server, 'Overdue bins')!.data.due_date).toBe(day)
     await click(bins().querySelector('button[aria-label="Date"]'))
-    await click(button(bins(), 'No date'))
+    await click(button(bins(), 'Someday'))
     expect(reminder(server, 'Overdue bins')!.data.due_date).toBeNull()
   })
 

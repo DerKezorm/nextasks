@@ -11,6 +11,7 @@ import { copyText } from '../lib/copy'
 import { localDay } from '../lib/due'
 import { useFocusOffered } from '../lib/focus'
 import { assignable } from '../lib/shared'
+import { parkReminder, SOMEDAY_ICON } from '../lib/someday'
 import { colorOf, iconFor } from '../lib/look'
 import { useEngine, useView } from '../state/sync'
 import { addDays } from '../sync/repeat'
@@ -71,7 +72,7 @@ export function useTaskMenu(reminder: Reminder) {
           { label: t('menu.tomorrow'), checked: reminder.due_date === addDays(today, 1), run: () => due(addDays(today, 1)) },
           { label: t('menu.nextWeek'), checked: reminder.due_date === addDays(today, 7), run: () => due(addDays(today, 7)) },
           'line',
-          { label: t('detail.noDate'), disabled: !reminder.due_date, run: () => due(null) },
+          { label: t('someday.set'), icon: SOMEDAY_ICON, disabled: !reminder.due_date, run: () => parkReminder(engine, reminder, (title) => t('someday.moved', { title })) },
         ],
       },
       members.length > 0 && {

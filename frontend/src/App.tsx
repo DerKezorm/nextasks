@@ -8,6 +8,8 @@ import { AppConnectPage, ConfirmEmailPage, InvitePage, LoginPage, SetupPage, Uns
 import { FilterPage } from './pages/FilterPage'
 import { ListPage } from './pages/ListPage'
 import { SearchPage } from './pages/SearchPage'
+import { SomedayPage } from './pages/SomedayPage'
+import { SweepPage } from './pages/SweepPage'
 import { FormerAboutAddress, FormerAccountAddress, SettingsPage } from './pages/SettingsPage'
 import { TilePage } from './pages/TilePage'
 import { TodayPage } from './pages/TodayPage'
@@ -95,6 +97,8 @@ export default function App() {
         ))}
         <Route path="lists/:id" element={<ListPage />} />
         <Route path="filters/:id" element={<FilterPage />} />
+        <Route path="someday" element={<SomedayPage />} />
+        <Route path="sweep" element={<SweepPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="trash" element={<TrashPage />} />
         <Route path="settings" element={<SettingsPage />} />

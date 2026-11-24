@@ -12,6 +12,7 @@ import { dueChange } from '../lib/actions'
 import { localDay } from '../lib/due'
 import { useFocusOffered } from '../lib/focus'
 import { assignable } from '../lib/shared'
+import { parkReminder } from '../lib/someday'
 import { useEngine, useView } from '../state/sync'
 import { addDays } from '../sync/repeat'
 import type { Reminder } from '../sync/types'
@@ -125,8 +126,18 @@ function DueChoices({ reminder, close }: { reminder: Reminder; close: () => void
           {t('row.pickDate')}
         </button>
       )}
-      <button type="button" role="menuitem" className="nt-menu-item" disabled={!reminder.due_date} onClick={() => set(null)}>
-        {t('detail.noDate')}
+      <button
+        type="button"
+        role="menuitem"
+        className="nt-menu-item"
+        disabled={!reminder.due_date}
+        onClick={() => {
+          parkReminder(engine, reminder, (title) => t('someday.moved', { title }))
+          close()
+        }}
+        data-testid="row-someday"
+      >
+        {t('someday.set')}
       </button>
     </>
   )
