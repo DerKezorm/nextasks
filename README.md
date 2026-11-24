@@ -9,11 +9,16 @@ dark.
 
 **Early days.** nextasks was rebuilt from the ground up in November 2026. Expect rough edges, and keep backups.
 
-![Today: overdue tasks in red, the ones due today with their time, priorities and the people they are assigned to](docs/screenshots/today.png)
+![Today: the week ahead, overdue tasks, a timeline of the day, progress and focus on the right](docs/screenshots/today.png)
 
-*Today, across every space: what is overdue and what is due today, with its list, its priority and who it is
-assigned to. On the left the collections Scheduled, All, Marked, Assigned to me and Completed, then the spaces with
-their members and lists.*
+*Today, across every space: the next seven days on top, what is overdue on its own, a timeline with a now line, and
+on the right your progress, today's focus and the day of everybody in your spaces. On the left the collections, then
+the spaces with their members and lists.*
+
+![The review: a year of completed tasks as a heatmap, who took on what, when things get done, how repeating tasks run](docs/screenshots/review.png)
+
+*The review shows what got done: a year as a heatmap, your run of days, who took on what, when you tick things off and
+how reliably repeating tasks run. Used alone, it shows records and milestones instead.*
 
 ## Screenshots
 
@@ -50,6 +55,15 @@ its own, and nextasks installs from the browser as an app.*
   chosen weekdays or days of the month, counted from the due date or from completing, with an end if you like), a
   mark, a priority, tags, people it is assigned to, subtasks one level deep, attachments. Completed tasks stay and
   are hidden; the trash keeps deleted tasks, lists and spaces for 30 days.
+- **Today** as a page for the day: the week ahead to drag tasks onto, overdue tasks with "All to today", a timeline,
+  tasks done today staying ticked off, up to three tasks as today's focus, and "Plan tomorrow" for what is left.
+- **A review** of what got done: a heatmap over a year, runs of days, on time or late, who took on what, weekday and
+  hour, the pulse of repeating tasks, the week in sentences (also in the weekly mail), and from 1 December your year
+  as a card to save as a picture.
+- **Shopping and order**: the things you buy often under the entry line, new items in the section they stood in last,
+  lists that start as shopping, packing or weekly cleaning, copying a list, opening it all over again, a collection
+  "Someday" for tasks without a date and a sweep through old tasks one by one.
+- **Alone or together**: used alone, nextasks leaves out avatars, assignees and comparisons.
 - **Quick entry**: "Milk tomorrow 9am #groceries !!" becomes a task due tomorrow at nine, tagged, with a medium
   priority. Search across titles, notes, tags and links; keyboard shortcuts for the common moves.
 - **Notifications**, chosen per person in one table, on three channels:

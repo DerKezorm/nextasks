@@ -1,4 +1,36 @@
 {
+  "0.7.0": {
+    "lead": "nextasks gets a page for your day, a look back and more order in lists.",
+    "sections": [
+      {
+        "title": "Today as a day page",
+        "where": "Today",
+        "body": "On top the next seven days, to drag tasks onto. Below, overdue tasks on their own with “All to today”, a timeline with a now line, and what is due some time today. Done tasks stay ticked off until tomorrow. On the right your progress with your run of days, up to three tasks as today's focus, in shared spaces the others' day, alone your week. “Plan tomorrow” moves what is left with one click."
+      },
+      {
+        "title": "Review",
+        "where": "Sidebar › Review",
+        "body": "What got done, as a heatmap over a year, with your run of days, how much was on time, who took on what (alone: records and milestones), when you tick things off, and how reliably repeating tasks run. Plus the week in sentences, also in the weekly mail. From 1 December your year comes as a card you can save as a picture."
+      },
+      {
+        "title": "Shopping, templates, someday",
+        "where": "Lists",
+        "body": "Under the entry line stand the things you buy often, and new items land in the right section by themselves. New lists can start as shopping, packing list or weekly cleaning; lists can be copied and opened all over again. “Someday” gathers tasks without a date, and the sweep shows you old tasks one by one: keep, next week, someday or drop."
+      },
+      {
+        "title": "A new look",
+        "where": "Everywhere",
+        "body": "Lists wear their plaque in the sidebar, Today shows the date, overdue tasks a red number. Tasks stand in cards at a calm reading width, columns grow with the window, and hovering over a task offers date, assignees and mark right there."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "If you use nextasks alone, avatars, assignees and comparisons are gone.",
+      "Spaces in the sidebar fold away.",
+      "The review also counts everything done before this update.",
+      "The iPhone app stays as it is and gets the new pages with an update of its own."
+    ]
+  },
   "0.6.0": {
     "lead": "Programs now see who can be assigned in a space.",
     "sections": [

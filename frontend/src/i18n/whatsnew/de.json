@@ -1,4 +1,36 @@
 {
+  "0.7.0": {
+    "lead": "nextasks bekommt eine Tagesseite, einen Rückblick und mehr Ordnung in den Listen.",
+    "sections": [
+      {
+        "title": "Heute als Tagesseite",
+        "where": "Heute",
+        "body": "Oben die nächsten sieben Tage, auf die du Aufgaben ziehen kannst. Darunter Überfälliges für sich mit „Alle auf heute“, eine Zeitleiste mit Jetzt-Linie und was irgendwann heute dran ist. Erledigtes bleibt bis morgen abgehakt stehen. Rechts dein Fortschritt mit Serie, bis zu drei Aufgaben als Fokus für heute, in geteilten Bereichen der Tag der anderen, allein deine Woche. „Morgen planen“ schiebt Liegengebliebenes mit einem Klick weiter."
+      },
+      {
+        "title": "Rückblick",
+        "where": "Seitenleiste › Rückblick",
+        "body": "Was erledigt wurde, als Wärmekarte über ein Jahr, mit Serie, Pünktlichkeit, wer was übernommen hat (allein: Rekorde und Meilensteine), wann ihr abhakt und wie zuverlässig wiederkehrende Aufgaben laufen. Dazu die Woche in Sätzen, auch in der Wochenmail. Ab 1. Dezember gibt es dein Jahr als Karte, die du als Bild speichern kannst."
+      },
+      {
+        "title": "Einkauf, Vorlagen, Irgendwann",
+        "where": "Listen",
+        "body": "Unter der Eingabe stehen Dinge, die ihr oft kauft, und neue Einträge landen von selbst im richtigen Abschnitt. Neue Listen starten auf Wunsch als Einkauf, Packliste oder Wochenputz; Listen lassen sich kopieren und ganz wieder öffnen. „Irgendwann“ sammelt Aufgaben ohne Datum, und die Rückschau legt dir alte Aufgaben einzeln vor: behalten, nächste Woche, irgendwann oder streichen."
+      },
+      {
+        "title": "Neues Aussehen",
+        "where": "Überall",
+        "body": "Listen tragen ihre Plakette in der Seitenleiste, Heute zeigt das Datum, Überfälliges eine rote Zahl. Aufgaben stehen in Karten in einer ruhigen Lesebreite, Spalten wachsen mit dem Fenster, und beim Überfahren einer Aufgabe stehen Datum, Zuständige und Markieren gleich bereit."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Wer nextasks allein nutzt, sieht keine Avatare, Zuständigen und Vergleiche mehr.",
+      "Bereiche in der Seitenleiste lassen sich einklappen.",
+      "Der Rückblick zählt auch alles, was vor diesem Update erledigt wurde.",
+      "Die iPhone-App bleibt, wie sie ist, und bekommt die neuen Seiten mit einem eigenen Update."
+    ]
+  },
   "0.6.0": {
     "lead": "Programme sehen jetzt, wer in einem Bereich zuständig sein kann.",
     "sections": [
