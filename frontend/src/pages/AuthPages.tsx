@@ -1,25 +1,48 @@
 /**
- * The pages before signing in, as in nexlore: the first account (with the setup code from the server's log),
- * signing in (password, then the second factor; or a provider's button), and accepting an invitation.
+ * The pages before signing in, as nexnotes' (`pages/AuthPages.tsx` there): the first account (with the setup code from
+ * the server's log), signing in (username or email and password, then the second factor; a passkey; or a provider's
+ * button), a forgotten password, accepting an invitation (into a space, or the operator's into nextasks), setting a new
+ * password with a link, and confirming a new address. Fields, their order and their words come from the shared account
+ * module (`vendor/nexkonten`), the look from the shared kit (`vendor/nexui`: `AuthCard`, `Field`, `OrLine`,
+ * `TextLink`); every button of the module through `AccountButton` (kind and symbol from `BUTTONS`).
  *
  * The sign-in providers follow the shared sign-in blueprint (part 04): below the password form the line "or" and a
  * button per active provider in the order of the operator's list; with the password sign-in off only the buttons, and
  * small at the bottom "Sign in as the operator with a password". The code step comes after a provider too, when that
  * provider is not trusted with the second factor (`?step=code`, the server parked the sign-in).
  */
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
-import { ApiError, api, authApi, type Me, type Methods } from '../api/client'
+import { ApiError, api, authApi, invitesApi, resetApi, type InviteOffer, type Me, type Methods, type SetupState } from '../api/client'
+import { AccountButton } from '../components/AccountButton'
 import { Logo } from '../components/Logo'
+import { PasswordConfirmField } from '../components/PasswordConfirm'
 import { ProviderButtons } from '../components/ProviderButtons'
 import { ThemeSwitcher } from '../components/ThemeSwitcher'
 import i18n from '../i18n'
 import { errorText, returnErrorText } from '../lib/errors'
+import { passkeysSupported, signInWithPasskey } from '../lib/passkeys'
+import { usePasswordConfirm } from '../lib/passwordConfirm'
 import { safeNext, useAuth } from '../state/auth'
+import {
+  DISPLAY_NAME_MAX,
+  EMAIL_MAX,
+  followUsername,
+  normalizeUsername,
+  PASSWORD_MIN,
+  SETUP_PAGE,
+  setupNotes,
+  STAY_SIGNED_IN_DEFAULT,
+  suggestUsername,
+  USERNAME_MAX,
+  usernameProblem,
+} from '../vendor/nexkonten/konten'
+import type { ButtonName } from '../vendor/nexkonten/konten'
+import { AuthCard, Button, Checkbox, Field, Notice, TextLink } from '../vendor/nexui'
 
-function AuthFrame({ title, text, children }: { title: string; text?: string; children: ReactNode }) {
+export function AuthFrame({ title, text, children }: { title: string; text?: string; children: ReactNode }) {
   return (
     <div className="nt-safe nt-scroll flex min-h-dvh flex-col overflow-y-auto">
       <header className="flex items-center justify-between px-5 py-4">
@@ -27,17 +50,17 @@ function AuthFrame({ title, text, children }: { title: string; text?: string; ch
         <ThemeSwitcher />
       </header>
       <main className="flex flex-1 items-start justify-center px-4 pt-[6vh] pb-10">
-        <div className="w-full max-w-sm rounded-[16px] border border-ink-700 bg-ink-850 p-6 shadow-xl shadow-black/20">
-          <h1 className="text-xl font-bold tracking-tight">{title}</h1>
-          {text && <p className="mt-1 text-sm text-mist-500">{text}</p>}
-          <div className="mt-5">{children}</div>
-        </div>
+        <AuthCard title={title} subtitle={text}>
+          {children}
+        </AuthCard>
       </main>
     </div>
   )
 }
 
-function Field({ label, value, onChange, type = 'text', autoComplete, autoFocus = false, hint }: {
+/** A field of the screens before signing in: the shared kit's `Field` (label joined by `htmlFor`, hints by
+ * `aria-describedby`), with the value handed over as text. */
+export function AuthField({ label, value, onChange, type = 'text', autoComplete, autoFocus = false, hint, maxLength, name }: {
   label: string
   value: string
   onChange: (value: string) => void
@@ -45,88 +68,152 @@ function Field({ label, value, onChange, type = 'text', autoComplete, autoFocus 
   autoComplete?: string
   autoFocus?: boolean
   hint?: string
+  maxLength?: number
+  name?: string
 }) {
-  const hintId = useId()
   return (
-    <div className="text-sm">
-      <label className="block">
-        <span className="font-medium">{label}</span>
-        <input
-          type={type}
-          value={value}
-          autoComplete={autoComplete}
-          autoFocus={autoFocus}
-          aria-describedby={hint ? hintId : undefined}
-          onChange={(event) => onChange(event.target.value)}
-          className="nt-field mt-1"
-        />
-      </label>
-      {hint && (
-        <span id={hintId} className="mt-1 block text-xs text-mist-500">
-          {hint}
-        </span>
-      )}
-    </div>
+    <Field
+      label={label}
+      type={type}
+      name={name}
+      value={value}
+      autoComplete={autoComplete}
+      autoFocus={autoFocus}
+      maxLength={maxLength}
+      hints={hint ? [hint] : []}
+      onChange={(event) => onChange(event.target.value)}
+    />
   )
 }
 
-function Primary({ children, busy = false }: { children: ReactNode; busy?: boolean }) {
+/** The one button of a screen, as wide as the card: kind and symbol from the module's table (`BUTTONS`). */
+function Primary({ name, children, busy = false }: { name: ButtonName; children: ReactNode; busy?: boolean }) {
   return (
-    <button type="submit" disabled={busy} className="nt-btn nt-btn-accent w-full">
+    <AccountButton name={name} type="submit" busy={busy} wide>
       {children}
-    </button>
+    </AccountButton>
   )
+}
+
+/** A way back or on, as wide as the card (a link: the screens are pages of their own). */
+function Onward({ to, kind = 'secondary', children }: { to: string; kind?: 'primary' | 'secondary'; children: ReactNode }) {
+  return (
+    <Button kind={kind} icon={kind === 'primary' ? 'ArrowRight' : 'ArrowLeft'} href={to} wide>
+      {children}
+    </Button>
+  )
+}
+
+/** What went wrong: the server's code with the values its sentence needs ("at least {{minimum}} characters"). */
+export type Trouble = { code: string; values?: Record<string, unknown> } | null
+
+/** The refusal as a `Trouble`, values kept. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function troubleOf(error: unknown): NonNullable<Trouble> {
+  return error instanceof ApiError ? { code: error.code, values: error.values } : { code: 'internal_error' }
 }
 
 /** A refusal; `returned`: the code came back in the address (`?error=`), where a code of the shared sign-in module
  * speaks only through its own sentence. */
-function Problem({ code, returned = false }: { code: string | null; returned?: boolean }) {
-  if (!code) return null
-  return (
-    <p role="alert" className="nt-problem">
-      {returned ? returnErrorText(code) : errorText(code)}
-    </p>
+export function Problem({ problem, returned = false }: { problem: Trouble; returned?: boolean }) {
+  if (!problem) return null
+  return <Notice tone="danger">{returned ? returnErrorText(problem.code) : errorText(problem.code, problem.values)}</Notice>
+}
+
+function Warning({ children }: { children: ReactNode }) {
+  return <Notice tone="warn">{children}</Notice>
+}
+
+const codeOf = (error: unknown) => troubleOf(error).code
+
+/** When the server cannot say which ways in there are: the password only, no button. */
+const PASSWORD_ONLY: Methods = { password: true, providers: [] }
+
+/** The ways in, or the password way when the answer fails. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function waysIn(): Promise<Methods> {
+  return authApi.methods().then(
+    (methods) => ({ ...methods, providers: Array.isArray(methods.providers) ? methods.providers : [] }),
+    () => PASSWORD_ONLY,
   )
 }
 
-/** When the server cannot say which ways in there are: the password only, no button. */
-const NO_PROVIDERS: Methods = { password: true, providers: [] }
-
-const codeOf = (error: unknown) => (error instanceof ApiError ? error.code : 'internal_error')
+/** The username field follows the display name until somebody types into it (the shared module's suggestion). */
+function useUsername(displayName: string) {
+  const [state, setState] = useState({ touched: false, username: '' })
+  return {
+    username: followUsername(state, displayName),
+    setUsername: (value: string) => setState({ touched: true, username: value }),
+  }
+}
 
 export function SetupPage() {
   const { t } = useTranslation()
   const { status, setMe } = useAuth()
+  const [state, setState] = useState<SetupState | null>(null)
   const [name, setName] = useState('')
+  const { username, setUsername } = useUsername(name)
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const again = usePasswordConfirm(password)
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState<string | null>(null)
+  const [problem, setProblem] = useState<Trouble>(null)
+  useEffect(() => {
+    authApi.setupState().then(setState, () => undefined)
+  }, [])
   if (status === 'loading') return null
   if (status !== 'setup') return <Navigate to="/" replace />
+  const min = state?.min_password ?? PASSWORD_MIN
   return (
-    <AuthFrame title={t('auth.setup.title')} text={t('auth.setup.text')}>
+    <AuthFrame title={t(SETUP_PAGE.title)} text={t(SETUP_PAGE.subtitle)}>
       <form
-        className="space-y-4"
+        className="flex flex-col gap-4"
         onSubmit={async (event) => {
           event.preventDefault()
-          if (!name.trim()) return setProblem('name_missing')
-          setBusy(true)
+          if (!name.trim()) return setProblem({ code: 'display_name_empty' })
+          if (usernameProblem(username)) return setProblem({ code: 'username_invalid' })
+          if (password.length < min) return setProblem({ code: 'password_too_short', values: { minimum: min } })
           setProblem(null)
+          if (!again.matches()) return
+          setBusy(true)
           try {
-            setMe(await authApi.setup(name.trim(), password, code.trim(), i18n.language))
+            setMe(
+              await authApi.setup({
+                display_name: name.trim(),
+                name: normalizeUsername(username),
+                email: email.trim(),
+                password,
+                password_confirm: again.confirm,
+                code: code.trim(),
+                // The language comes from the browser silently and is changed in the profile (konten: no field).
+                language: i18n.language,
+              }),
+            )
           } catch (error) {
-            setProblem(codeOf(error))
+            setProblem(troubleOf(error))
           } finally {
             setBusy(false)
           }
         }}
       >
-        <Problem code={problem} />
-        <Field label={t('auth.setup.code')} value={code} onChange={setCode} autoFocus hint={t('auth.setup.codeHint')} />
-        <Field label={t('auth.name')} value={name} onChange={setName} autoComplete="username" />
-        <Field label={t('auth.password')} value={password} onChange={setPassword} type="password" autoComplete="new-password" hint={t('auth.passwordHint')} />
-        <Primary busy={busy}>{t('auth.setup.submit')}</Primary>
+        <Problem problem={problem} />
+        <AuthField label={t('account.setupCode')} value={code} onChange={setCode} autoComplete="off" autoFocus hint={t('account.setupCodeHint')} />
+        <AuthField label={t('account.displayName')} value={name} onChange={setName} autoComplete="name" maxLength={DISPLAY_NAME_MAX} hint={t('account.displayNameHint')} />
+        <AuthField label={t('account.username')} value={username} onChange={setUsername} autoComplete="username" maxLength={USERNAME_MAX} hint={t('account.usernameHint')} />
+        <AuthField label={t('account.email')} value={email} onChange={setEmail} type="email" autoComplete="email" maxLength={EMAIL_MAX} hint={t('account.emailHint')} />
+        <AuthField label={t('account.newPassword')} value={password} onChange={setPassword} type="password" autoComplete="new-password" hint={t('account.passwordRules', { minimum: min })} />
+        <PasswordConfirmField value={again.confirm} onChange={again.setConfirm} mismatch={again.mismatch} />
+        {/* No word about the second factor under the password unless one is required (konten 0.3.6): the first
+            account comes before any switch of the operator. */}
+        {setupNotes({ factorRequired: false }).map((note) => (
+          <p key={note} className="m-0 text-sm">
+            {t(note)}
+          </p>
+        ))}
+        <Primary name="setupSubmit" busy={busy}>
+          {t('auth.setup.submit')}
+        </Primary>
       </form>
     </AuthFrame>
   )
@@ -140,20 +227,26 @@ export function LoginPage() {
   const [methods, setMethods] = useState<Methods | null>(null)
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
+  const [remember, setRemember] = useState(STAY_SIGNED_IN_DEFAULT)
   const [step, setStep] = useState<'password' | 'code'>(params.get('step') === 'code' ? 'code' : 'password')
+  const [passkeyStep, setPasskeyStep] = useState(false)
+  /** False when a passkey is the only second step (no authenticator: there is no code to ask). */
+  const [codeAsked, setCodeAsked] = useState(true)
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState<string | null>(params.get('error'))
+  const [problem, setProblem] = useState<Trouble>(params.get('error') ? { code: params.get('error')! } : null)
   /** The problem shown came back from the provider in the address, not from a request of this page. */
   const [returned, setReturned] = useState(!!params.get('error'))
   // Password sign-in off: the form waits behind "Sign in as the operator with a password".
   const [operatorWay, setOperatorWay] = useState(false)
+  /** Without a mail server "Forgot your password?" only says who can help. */
+  const [forgot, setForgot] = useState(false)
   const next = safeNext(params.get('next'))
   /** Sent here from the open app whose session ended (blocked, signed out everywhere, E2). */
   const ended = params.get('ended') === '1'
 
   useEffect(() => {
-    void authApi.methods().then(setMethods, () => setMethods(NO_PROVIDERS))
+    void waysIn().then(setMethods)
   }, [])
 
   if (status === 'loading') return null
@@ -162,27 +255,33 @@ export function LoginPage() {
   // Nothing until the ways in are known: no password form that turns out not to be one.
   if (methods === null) return null
 
+  const signedIn = async () => {
+    setMe(await authApi.me())
+    navigate(next, { replace: true })
+  }
+
   const submit = async () => {
-    if (step === 'password' && !name.trim()) return setProblem('name_missing')
-    if (step === 'password' && !password) return setProblem('password_missing')
+    if (step === 'password' && !name.trim()) return setProblem({ code: 'login_missing' })
+    if (step === 'password' && !password) return setProblem({ code: 'password_missing' })
     setBusy(true)
     setProblem(null)
     setReturned(false)
     try {
-      let answer: Me | { second_factor: true }
+      let answer: Me | { second_factor: true; passkey?: boolean; code?: boolean }
       if (step === 'code') answer = await authApi.code(code.trim())
-      else answer = await authApi.login(name.trim(), password)
+      else answer = await authApi.login(name.trim(), password, remember)
       if ('second_factor' in answer) {
         setPassword('')
+        setPasskeyStep(Boolean(answer.passkey) && passkeysSupported())
+        setCodeAsked(answer.code !== false)
         setStep('code')
         return
       }
-      setMe(await authApi.me())
-      navigate(next, { replace: true })
+      await signedIn()
     } catch (error) {
-      const found = codeOf(error)
+      const found = troubleOf(error)
       setProblem(found)
-      if (found === 'second_factor_expired') {
+      if (found.code === 'second_factor_expired' || found.code === 'sign_in_expired') {
         setStep('password')
         setCode('')
       }
@@ -191,31 +290,53 @@ export function LoginPage() {
     }
   }
 
+  const withPasskey = async () => {
+    setBusy(true)
+    setProblem(null)
+    setReturned(false)
+    try {
+      await signInWithPasskey()
+      await signedIn()
+    } catch (error) {
+      // The browser's own "cancelled" says nothing worth showing.
+      if (error instanceof ApiError) setProblem(troubleOf(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (step === 'code') {
     return (
-      <AuthFrame title={t('auth.code.title')} text={t('auth.code.text')}>
+      <AuthFrame title={t('auth.code.title')} text={codeAsked ? t('auth.code.text') : t('account.passkeysHint')}>
         <form
-          className="space-y-4"
+          className="flex flex-col gap-4"
           onSubmit={(event) => {
             event.preventDefault()
             if (code.trim()) void submit()
           }}
         >
-          <Problem code={problem} returned={returned} />
-          <Field label={t('auth.code.label')} value={code} onChange={setCode} autoComplete="one-time-code" autoFocus hint={t('auth.code.hint')} />
-          <Primary busy={busy}>{t('auth.login.submit')}</Primary>
-          <button
-            type="button"
-            className="w-full text-center text-xs text-mist-500 hover:text-mist-300"
-            onClick={() => {
-              void authApi.cancelCode().catch(() => undefined)
-              setStep('password')
-              setCode('')
-              setProblem(null)
-            }}
-          >
-            {t('auth.code.back')}
-          </button>
+          <Problem problem={problem} returned={returned} />
+          {codeAsked && (
+            <>
+              <AuthField label={t('account.code')} value={code} onChange={setCode} autoComplete="one-time-code" autoFocus hint={t('account.codeHint')} />
+              <Primary name="codeSubmit" busy={busy}>
+                {t('auth.login.submit')}
+              </Primary>
+            </>
+          )}
+          {(passkeyStep || !codeAsked) && <AccountButton name="account.passkeySignIn" wide disabled={busy} onClick={() => void withPasskey()} />}
+          <div className="text-center">
+            <TextLink
+              onClick={() => {
+                void authApi.cancelCode().catch(() => undefined)
+                setStep('password')
+                setCode('')
+                setProblem(null)
+              }}
+            >
+              {t('auth.code.back')}
+            </TextLink>
+          </div>
         </form>
       </AuthFrame>
     )
@@ -224,96 +345,300 @@ export function LoginPage() {
   const providers = methods.providers
   // Password sign-in off: only the buttons, the operator's form behind a small link (blueprint 04).
   const passwordShown = methods.password || providers.length === 0 || operatorWay
+  const endedNote = ended && <Warning>{t('auth.login.ended')}</Warning>
+  // "Sign in with a passkey" where the operator allows them and the browser can (a secure context: https or localhost).
+  const passkeyShown = Boolean(methods.passkeys) && passkeysSupported()
   return (
     <AuthFrame title={t('auth.login.title')} text={t('auth.login.text')}>
-      {ended && <p role="status" className="mb-4 rounded-[9px] border border-warn-500/30 bg-warn-500/10 px-3 py-2 text-sm text-warn-500">{t('auth.login.ended')}</p>}
       {passwordShown ? (
         <form
-          className="space-y-4"
+          className="flex flex-col gap-4"
           onSubmit={(event) => {
             event.preventDefault()
             void submit()
           }}
         >
-          <Problem code={problem} returned={returned} />
-          <Field label={t('auth.name')} value={name} onChange={setName} autoComplete="username" autoFocus />
-          <Field label={t('auth.password')} value={password} onChange={setPassword} type="password" autoComplete="current-password" />
-          <Primary busy={busy}>{t('auth.login.submit')}</Primary>
+          {endedNote}
+          <Problem problem={problem} returned={returned} />
+          <AuthField label={t('account.login')} value={name} onChange={setName} autoComplete="username" autoFocus name="name" maxLength={EMAIL_MAX} />
+          <AuthField label={t('account.password')} value={password} onChange={setPassword} type="password" autoComplete="current-password" name="password" />
+          <Checkbox label={t('account.stayIn')} checked={remember} onChange={setRemember} />
+          <Primary name="signIn" busy={busy}>
+            {t('auth.login.submit')}
+          </Primary>
+          <div className="text-center">
+            {methods.forgot_mail ? (
+              <TextLink href="/forgot">{t('account.forgot')}</TextLink>
+            ) : (
+              <TextLink onClick={() => setForgot(!forgot)}>{t('account.forgot')}</TextLink>
+            )}
+          </div>
+          {!methods.forgot_mail && forgot && <p className="m-0 text-xs text-[var(--nexui-text-muted)]">{t('account.forgotNoMail')}</p>}
         </form>
       ) : (
-        <Problem code={problem} returned={returned} />
+        <div className="flex flex-col gap-4">
+          {endedNote}
+          <Problem problem={problem} returned={returned} />
+        </div>
       )}
-      <div className={passwordShown ? '' : 'mt-1'}>
-        <ProviderButtons providers={providers} next={next} withOr={passwordShown} />
-      </div>
+      {passkeyShown && <AccountButton name="account.passkeySignIn" wide disabled={busy} onClick={() => void withPasskey()} />}
+      <ProviderButtons providers={providers} next={next} withOr={passwordShown || passkeyShown} />
       {!passwordShown && (
-        <p className="mt-5 text-center text-xs text-mist-600">
-          <button type="button" className="hover:text-mist-300" onClick={() => setOperatorWay(true)}>
-            {t('oidc.login.operator')}
-          </button>
-        </p>
+        <div className="text-center">
+          <TextLink onClick={() => setOperatorWay(true)}>{t('oidc.login.operator')}</TextLink>
+        </div>
       )}
     </AuthFrame>
   )
 }
 
-type InviteState = { space: string | null; role: string | null; min_password: number; signed_in_as: string | null; by?: string | null }
+/** "Forgot your password?" by mail: the same answer whatever was typed; without a mail server only the sentence. */
+export function ForgotPage() {
+  const { t } = useTranslation()
+  const [methods, setMethods] = useState<Methods | null>(null)
+  const [name, setName] = useState('')
+  const [sent, setSent] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [problem, setProblem] = useState<Trouble>(null)
+  useEffect(() => {
+    void waysIn().then(setMethods)
+  }, [])
+  if (methods === null) return null
+  const back = <Onward to="/login">{t('auth.backToLogin')}</Onward>
+  if (!methods.forgot_mail) {
+    return (
+      <AuthFrame title={t('account.forgotTitle')}>
+        <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{t('account.forgotNoMail')}</p>
+        {back}
+      </AuthFrame>
+    )
+  }
+  if (sent) {
+    return (
+      <AuthFrame title={t('account.forgotTitle')}>
+        <Notice tone="ok">{t('account.forgotSent')}</Notice>
+        {back}
+      </AuthFrame>
+    )
+  }
+  return (
+    <AuthFrame title={t('account.forgotTitle')}>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={async (event) => {
+          event.preventDefault()
+          if (!name.trim()) return setProblem({ code: 'login_missing' })
+          setBusy(true)
+          setProblem(null)
+          try {
+            await authApi.forgot(name.trim())
+            setSent(true)
+          } catch (error) {
+            setProblem(troubleOf(error))
+          } finally {
+            setBusy(false)
+          }
+        }}
+      >
+        <Problem problem={problem} />
+        <AuthField label={t('account.login')} value={name} onChange={setName} autoComplete="username" autoFocus maxLength={EMAIL_MAX} />
+        <Primary name="account.forgotSubmit" busy={busy}>
+          {t('account.forgotSubmit')}
+        </Primary>
+      </form>
+      {back}
+    </AuthFrame>
+  )
+}
 
-/** An invitation into nextasks itself, made by the operator (the older kind, still kept by the server). */
+/** A link for a new password (the person's own, the operator's, or the server's emergency command): the person sets
+ * a new password; nobody is signed in by it. */
+export function ResetPage() {
+  const { t } = useTranslation()
+  const { token = '' } = useParams()
+  const [offer, setOffer] = useState<{ name: string; username?: string; min_password: number } | null>(null)
+  const [invalid, setInvalid] = useState<'invalid' | 'expired' | null>(null)
+  const [password, setPassword] = useState('')
+  const again = usePasswordConfirm(password)
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(false)
+  const [problem, setProblem] = useState<Trouble>(null)
+
+  useEffect(() => {
+    resetApi.offer(token).then(setOffer, (error) => setInvalid(codeOf(error) === 'reset_expired' ? 'expired' : 'invalid'))
+  }, [token])
+
+  if (invalid || done) {
+    const key = done ? 'done' : invalid
+    return (
+      <AuthFrame title={t(`auth.reset.${key}Title`)}>
+        <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{t(`auth.reset.${key}Text`)}</p>
+        <Onward to="/login" kind={done ? 'primary' : 'secondary'}>
+          {t('auth.backToLogin')}
+        </Onward>
+      </AuthFrame>
+    )
+  }
+  if (!offer) return null
+  const min = offer.min_password || PASSWORD_MIN
+  return (
+    <AuthFrame title={t('account.resetTitle')} text={t('auth.reset.text', { name: offer.username || offer.name })}>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={async (event) => {
+          event.preventDefault()
+          if (password.length < min) return setProblem({ code: 'password_too_short', values: { minimum: min } })
+          setProblem(null)
+          if (!again.matches()) return
+          setBusy(true)
+          try {
+            await resetApi.use(token, password, again.confirm)
+            setDone(true)
+          } catch (error) {
+            const found = troubleOf(error)
+            if (found.code === 'reset_expired' || found.code === 'reset_invalid') setInvalid(found.code === 'reset_expired' ? 'expired' : 'invalid')
+            else setProblem(found)
+          } finally {
+            setBusy(false)
+          }
+        }}
+      >
+        <Problem problem={problem} />
+        <AuthField label={t('account.newPassword')} value={password} onChange={setPassword} type="password" autoComplete="new-password" autoFocus hint={t('account.passwordRules', { minimum: min })} />
+        <PasswordConfirmField value={again.confirm} onChange={again.setConfirm} mismatch={again.mismatch} />
+        <Primary name="resetSubmit" busy={busy}>
+          {t('auth.reset.submit')}
+        </Primary>
+      </form>
+    </AuthFrame>
+  )
+}
+
+/**
+ * A new account through an invitation (into a space, or the operator's into nextasks), as the shared module lays it
+ * out: display name (from the invitation), username (the server's suggestion, then following the display name), the
+ * address (from the invitation), the password twice; under it "or" and the providers.
+ */
+function NewAccountForm({ token, offer, methods, onDone }: { token: string; offer: InviteOffer; methods: Methods; onDone: (answer: Me & { space_id?: string | null }) => Promise<void> }) {
+  const { t } = useTranslation()
+  const [name, setName] = useState<string | null>(null)
+  const [username, setUsername] = useState<{ touched: boolean; username: string }>({ touched: false, username: '' })
+  const [email, setEmail] = useState<string | null>(null)
+  const [password, setPassword] = useState('')
+  const again = usePasswordConfirm(password)
+  const [busy, setBusy] = useState(false)
+  const [problem, setProblem] = useState<Trouble>(null)
+  const shown = name ?? offer.display_name ?? ''
+  // The suggestion of the server (from the invitation) until the display name is typed, then it follows that.
+  const suggested = username.touched ? username.username : name === null ? (offer.name ?? '') : suggestUsername(shown)
+  const address = email ?? offer.email ?? ''
+  const min = offer.min_password || PASSWORD_MIN
+  const passwordWay = offer.password !== false && methods.password
+  return (
+    <>
+      {!passwordWay && methods.providers.length === 0 && <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{t('auth.invite.noWay')}</p>}
+      {passwordWay && (
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={async (event) => {
+            event.preventDefault()
+            if (busy) return
+            if (!shown.trim()) return setProblem({ code: 'display_name_empty' })
+            if (usernameProblem(suggested)) return setProblem({ code: 'username_invalid' })
+            if (password.length < min) return setProblem({ code: 'password_too_short', values: { minimum: min } })
+            setProblem(null)
+            if (!again.matches()) return
+            setBusy(true)
+            try {
+              const answer = await invitesApi.accept(token, {
+                display_name: shown.trim(),
+                name: normalizeUsername(suggested),
+                email: address.trim(),
+                password,
+                password_confirm: again.confirm,
+              })
+              await onDone(answer)
+            } catch (error) {
+              setProblem(troubleOf(error))
+            } finally {
+              setBusy(false)
+            }
+          }}
+        >
+          <Problem problem={problem} />
+          <AuthField label={t('account.displayName')} value={shown} onChange={setName} autoComplete="name" autoFocus maxLength={DISPLAY_NAME_MAX} hint={t('account.displayNameHint')} />
+          <AuthField
+            label={t('account.username')}
+            value={suggested}
+            onChange={(value) => setUsername({ touched: true, username: value })}
+            autoComplete="username"
+            maxLength={USERNAME_MAX}
+            hint={t('account.usernameHint')}
+          />
+          <AuthField label={t('account.email')} value={address} onChange={setEmail} type="email" autoComplete="email" maxLength={EMAIL_MAX} hint={t('account.emailHint')} />
+          <AuthField label={t('account.newPassword')} value={password} onChange={setPassword} type="password" autoComplete="new-password" hint={t('account.passwordRules', { minimum: min })} />
+          <PasswordConfirmField value={again.confirm} onChange={again.setConfirm} mismatch={again.mismatch} />
+          <Primary name="inviteSubmit" busy={busy}>
+            {t('auth.invite.submit')}
+          </Primary>
+        </form>
+      )}
+      {/* Through a sign-in provider (a1-9, C9): the invitation is the permission for the new account. */}
+      <ProviderButtons providers={methods.providers} invite={token} withOr={passwordWay} />
+    </>
+  )
+}
+
+/** An invitation into nextasks itself, made by the operator (or an older link into a space). */
 function LegacyInvite({ token }: { token: string }) {
   const { t } = useTranslation()
   const { setMe, refresh } = useAuth()
   const navigate = useNavigate()
-  const [state, setState] = useState<InviteState | null>(null)
+  const [offer, setOffer] = useState<InviteOffer | null>(null)
   /** Why the link does not hold: run out, or anything else (used, withdrawn, replaced) (Prüfgang G4). */
   const [invalid, setInvalid] = useState<'expired' | 'invalid' | null>(null)
-  const [name, setName] = useState('')
-  const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState<string | null>(null)
+  const [problem, setProblem] = useState<Trouble>(null)
   const [methods, setMethods] = useState<Methods | null>(null)
 
   useEffect(() => {
-    api<InviteState>(`/api/invite/${encodeURIComponent(token)}`).then(setState, (error) => {
-      const code = codeOf(error)
-      setInvalid(code === 'invite_expired' ? 'expired' : 'invalid')
-    })
-    authApi.methods().then(setMethods, () => setMethods(NO_PROVIDERS))
+    invitesApi.offer(token).then(setOffer, (error) => setInvalid(codeOf(error) === 'invite_expired' ? 'expired' : 'invalid'))
+    void waysIn().then(setMethods)
   }, [token])
 
   if (invalid) {
     return (
       <AuthFrame title={invalid === 'expired' ? t('auth.invite.expiredTitle') : t('auth.invite.invalidTitle')}>
-        <p className="text-sm text-mist-400">{invalid === 'expired' ? t('auth.invite.expiredText') : t('auth.invite.invalidText')}</p>
-        <BackLink />
+        <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{invalid === 'expired' ? t('auth.invite.expiredText') : t('auth.invite.invalidText')}</p>
+        <Onward to="/login">{t('auth.backToLogin')}</Onward>
       </AuthFrame>
     )
   }
   // The ways in first, as on the sign-in page: no password form that turns out not to be one.
-  if (!state || methods === null) return null
+  if (!offer || methods === null) return null
   // Who invites, so the link is not taken for spam (E18).
-  const by = state.by ? 'By' : ''
-  const text = state.space ? t(`auth.invite.intoSpace${by}`, { space: state.space, role: t(`roles.${state.role}`), by: state.by }) : t(`auth.invite.intoApp${by}`, { by: state.by })
+  const by = offer.by ? 'By' : ''
+  const text = offer.space ? t(`auth.invite.intoSpace${by}`, { space: offer.space, role: t(`roles.${offer.role}`), by: offer.by }) : t(`auth.invite.intoApp${by}`, { by: offer.by })
 
-  if (state.signed_in_as && !state.space) {
+  if (offer.signed_in_as && !offer.space) {
     // A link for a new account, opened by somebody signed in already: there is nothing to join (F2).
     return (
-      <AuthFrame title={t('auth.invite.title')} text={t('auth.invite.haveAccount', { name: state.signed_in_as })}>
-        <Link to="/" className="nt-btn nt-btn-accent flex w-full">
+      <AuthFrame title={t('auth.invite.title')} text={t('auth.invite.haveAccount', { name: offer.signed_in_as })}>
+        <Onward to="/" kind="primary">
           {t('auth.invite.toApp')}
-        </Link>
+        </Onward>
       </AuthFrame>
     )
   }
 
-  if (state.signed_in_as) {
+  if (offer.signed_in_as) {
     return (
       <AuthFrame title={t('auth.invite.title')} text={text}>
-        <Problem code={problem} />
-        <button
-          type="button"
-          disabled={busy}
-          className="nt-btn nt-btn-accent w-full"
+        <Problem problem={problem} />
+        <AccountButton
+          name="confirm"
+          wide
+          busy={busy}
           onClick={async () => {
             // Once: a second click while the first is under way would only meet the used link.
             if (busy) return
@@ -323,60 +648,30 @@ function LegacyInvite({ token }: { token: string }) {
               await refresh()
               navigate('/', { replace: true })
             } catch (error) {
-              setProblem(codeOf(error))
+              setProblem(troubleOf(error))
             } finally {
               setBusy(false)
             }
           }}
         >
-          {t('auth.invite.join', { name: state.signed_in_as })}
-        </button>
+          {t('auth.invite.join', { name: offer.signed_in_as })}
+        </AccountButton>
       </AuthFrame>
     )
   }
 
   return (
     <AuthFrame title={t('auth.invite.title')} text={text}>
-      {!methods.password && methods.providers.length === 0 && <p className="text-sm text-mist-400">{t('auth.invite.noWay')}</p>}
-      {methods.password && (
-        <>
-        <form
-          className="space-y-4"
-          onSubmit={async (event) => {
-            event.preventDefault()
-            setBusy(true)
-            setProblem(null)
-            try {
-              setMe(await api<Me>(`/api/invite/${encodeURIComponent(token)}`, { method: 'POST', body: { name: name.trim(), password } }))
-              navigate('/', { replace: true })
-            } catch (error) {
-              setProblem(codeOf(error))
-            } finally {
-              setBusy(false)
-            }
-          }}
-        >
-          <Problem code={problem} />
-          {/* The rule up front, not after the first refusal (E18). */}
-          <Field label={t('auth.invite.name')} value={name} onChange={setName} autoComplete="username" autoFocus hint={t('auth.invite.nameHint')} />
-          <Field label={t('auth.password')} value={password} onChange={setPassword} type="password" autoComplete="new-password" hint={t('auth.passwordHint')} />
-          <Primary busy={busy}>{t('auth.invite.submit')}</Primary>
-        </form>
-        </>
-      )}
-      {/* Through a sign-in provider (a1-9, C9): the invitation is the permission for the new account. */}
-      <ProviderButtons providers={methods.providers} invite={token} withOr={methods.password} />
+      <NewAccountForm
+        token={token}
+        offer={offer}
+        methods={methods}
+        onDone={async (answer) => {
+          setMe(answer)
+          navigate(answer.space_id ? `/?space=${encodeURIComponent(answer.space_id)}` : '/', { replace: true })
+        }}
+      />
     </AuthFrame>
-  )
-}
-
-/** The way back from a page behind a link that does not hold (G3). */
-function BackLink() {
-  const { t } = useTranslation()
-  return (
-    <Link to="/login" className="nt-btn nt-btn-ghost mt-4 flex w-full">
-      {t('auth.backToLogin')}
-    </Link>
   )
 }
 
@@ -384,9 +679,9 @@ type SpaceInvite = { space_name: string; invited_by: string | null; expires_at: 
 
 /**
  * `/invite/<secret>`: an invitation into a space (contract, "Bereiche und Mitglieder"), also without being signed in.
- * Signed in, one button takes it; without an account one makes one here (name and password) or goes on with a
- * sign-in provider; who has an account signs in first. A link the space invitations do not know may be an older
- * invitation into nextasks itself.
+ * Signed in, one button takes it; without an account one makes one here (as the shared module lays it out) or goes on
+ * with a sign-in provider; who has an account signs in first. A link the space invitations do not know may be the
+ * operator's invitation into nextasks itself.
  */
 export function InvitePage() {
   const { t } = useTranslation()
@@ -394,96 +689,92 @@ export function InvitePage() {
   const { refresh, status } = useAuth()
   const navigate = useNavigate()
   const [invite, setInvite] = useState<SpaceInvite | 'legacy' | 'unknown' | null>(null)
+  const [offer, setOffer] = useState<InviteOffer | null>(null)
   const [methods, setMethods] = useState<Methods | null>(null)
-  const [name, setName] = useState('')
-  const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState<string | null>(null)
+  const [problem, setProblem] = useState<Trouble>(null)
 
   useEffect(() => {
-    api<SpaceInvite>(`/api/invites/${encodeURIComponent(token)}`).then(setInvite, (error) => {
-      if (codeOf(error) !== 'invite_unknown') return setInvite('unknown')
-      // Not a space invitation: perhaps the operator's invitation into nextasks.
-      api(`/api/invite/${encodeURIComponent(token)}`).then(
-        () => setInvite('legacy'),
-        () => setInvite('unknown'),
-      )
-    })
-    authApi.methods().then(setMethods, () => setMethods(NO_PROVIDERS))
+    api<SpaceInvite>(`/api/invites/${encodeURIComponent(token)}`).then(
+      (found) => {
+        setInvite(found)
+        // The fields of a new account as the shared module fills them (display name, username, address).
+        if (!found.signed_in) invitesApi.offer(token).then(setOffer, () => setInvite('unknown'))
+      },
+      (error) => {
+        if (codeOf(error) !== 'invite_unknown') return setInvite('unknown')
+        // Not a space invitation: perhaps the operator's invitation into nextasks.
+        invitesApi.offer(token).then(
+          () => setInvite('legacy'),
+          () => setInvite('unknown'),
+        )
+      },
+    )
+    void waysIn().then(setMethods)
   }, [token])
 
   if (invite === 'legacy') return <LegacyInvite token={token} />
   if (invite === 'unknown') {
     return (
       <AuthFrame title={t('join.unknownTitle')}>
-        <p className="text-sm text-mist-400">{t('join.unknownText')}</p>
-        <BackLink />
+        <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{t('join.unknownText')}</p>
+        <Onward to="/login">{t('auth.backToLogin')}</Onward>
       </AuthFrame>
     )
   }
   if (!invite || methods === null || status === 'loading') return null
-
-  /** Signed in: take it. Without an account: make one with it (`POST /api/invite/{secret}`, the older path). */
-  const accept = async (account?: { name: string; password: string }) => {
-    if (busy) return
-    setBusy(true)
-    setProblem(null)
-    try {
-      const done = account
-        ? await api<{ space_id: string }>(`/api/invite/${encodeURIComponent(token)}`, { method: 'POST', body: account })
-        : await api<{ space_id: string }>(`/api/invites/${encodeURIComponent(token)}/accept`, { method: 'POST' })
-      await refresh()
-      navigate(`/?space=${encodeURIComponent(done.space_id)}`, { replace: true })
-    } catch (error) {
-      setProblem(codeOf(error))
-    } finally {
-      setBusy(false)
-    }
-  }
   const text = invite.invited_by ? t('join.textBy', { space: invite.space_name, name: invite.invited_by }) : t('join.text', { space: invite.space_name })
 
   if (invite.signed_in) {
     return (
       <AuthFrame title={t('join.title')} text={text}>
-        <Problem code={problem} />
+        <Problem problem={problem} />
         {invite.already_member ? (
-          <Link to="/" className="nt-btn nt-btn-accent flex w-full">
+          <Onward to="/" kind="primary">
             {t('join.already')}
-          </Link>
+          </Onward>
         ) : (
-          <button type="button" disabled={busy} onClick={() => void accept()} className="nt-btn nt-btn-accent w-full">
+          <AccountButton
+            name="confirm"
+            wide
+            busy={busy}
+            onClick={async () => {
+              if (busy) return
+              setBusy(true)
+              setProblem(null)
+              try {
+                const done = await api<{ space_id: string }>(`/api/invites/${encodeURIComponent(token)}/accept`, { method: 'POST' })
+                await refresh()
+                navigate(`/?space=${encodeURIComponent(done.space_id)}`, { replace: true })
+              } catch (error) {
+                setProblem(troubleOf(error))
+              } finally {
+                setBusy(false)
+              }
+            }}
+          >
             {t('join.accept')}
-          </button>
+          </AccountButton>
         )}
       </AuthFrame>
     )
   }
 
+  if (!offer) return null
   return (
     <AuthFrame title={t('join.title')} text={text}>
-      {!methods.password && methods.providers.length === 0 && <p className="text-sm text-mist-400">{t('auth.invite.noWay')}</p>}
-      {methods.password && (
-        <form
-          className="space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault()
-            if (!name.trim()) return setProblem('name_missing')
-            if (!password) return setProblem('password_missing')
-            void accept({ name: name.trim(), password })
-          }}
-        >
-          <Problem code={problem} />
-          <Field label={t('auth.invite.name')} value={name} onChange={setName} autoComplete="username" autoFocus hint={t('auth.invite.nameHint')} />
-          <Field label={t('auth.password')} value={password} onChange={setPassword} type="password" autoComplete="new-password" hint={t('auth.passwordHint')} />
-          <Primary busy={busy}>{t('join.create')}</Primary>
-        </form>
-      )}
-      <ProviderButtons providers={methods.providers} invite={token} withOr={methods.password} />
-      <p className="mt-5 text-center text-xs text-mist-500">
-        <Link to={`/login?next=${encodeURIComponent(`/invite/${token}`)}`} className="font-medium text-accent-400 hover:underline">
-          {t('join.signIn')}
-        </Link>
-      </p>
+      <NewAccountForm
+        token={token}
+        offer={offer}
+        methods={methods}
+        onDone={async (answer) => {
+          await refresh()
+          navigate(answer.space_id ? `/?space=${encodeURIComponent(answer.space_id)}` : '/', { replace: true })
+        }}
+      />
+      <div className="text-center">
+        <TextLink href={`/login?next=${encodeURIComponent(`/invite/${token}`)}`}>{t('join.signIn')}</TextLink>
+      </div>
     </AuthFrame>
   )
 }
@@ -497,16 +788,16 @@ export function AppConnectPage() {
   const [params] = useSearchParams()
   const device = (params.get('device') ?? '').slice(0, 80)
   const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState<string | null>(null)
+  const [problem, setProblem] = useState<Trouble>(null)
   const [link, setLink] = useState<string | null>(null)
   return (
     <AuthFrame title={t('connect.title')} text={device ? t('connect.textNamed', { device }) : t('connect.text')}>
-      <Problem code={problem} />
-      <button
-        type="button"
-        disabled={busy}
-        data-testid="app-connect"
-        className="nt-btn nt-btn-accent w-full"
+      <Problem problem={problem} />
+      <AccountButton
+        name="confirm"
+        wide
+        busy={busy}
+        testId="app-connect"
         onClick={async () => {
           setBusy(true)
           setProblem(null)
@@ -517,40 +808,36 @@ export function AppConnectPage() {
             setLink(answer.link)
             window.location.assign(answer.link)
           } catch (error) {
-            setProblem(codeOf(error))
+            setProblem(troubleOf(error))
           } finally {
             setBusy(false)
           }
         }}
       >
         {t('connect.button')}
-      </button>
+      </AccountButton>
       {link && (
-        <p className="mt-4 text-center text-xs text-mist-500">
-          {t('connect.notOpened')}{' '}
-          <a href={link} className="font-medium text-accent-400 hover:underline">
-            {t('connect.again')}
-          </a>
+        <p className="m-0 text-center text-xs text-[var(--nexui-text-muted)]">
+          {t('connect.notOpened')} <TextLink href={link}>{t('connect.again')}</TextLink>
         </p>
       )}
-      <p className="mt-4 text-center text-xs text-mist-600">
-        <Link to="/" className="hover:text-mist-300">
-          {t('connect.skip')}
-        </Link>
-      </p>
+      <div className="text-center">
+        <TextLink href="/">{t('connect.skip')}</TextLink>
+      </div>
     </AuthFrame>
   )
 }
 
 /**
  * `/confirm-email/<token>`: the link from the mail that confirms an address. Works without being signed in (the link
- * is the proof); it is taken once, on purpose by the page, not by opening it (`POST /api/email/confirm`).
+ * is the proof); it is taken once, on purpose by the page, not by opening it (`POST /api/email/confirm`). The address
+ * lives in the profile now, so the way on leads there.
  */
 export function ConfirmEmailPage() {
   const { t } = useTranslation()
   const { token = '' } = useParams()
   const [email, setEmail] = useState<string | null>(null)
-  const [problem, setProblem] = useState<string | null>(null)
+  const [problem, setProblem] = useState<Trouble>(null)
   // A link works once: asked once per token, also when React runs the effect twice.
   const asked = useRef('')
   useEffect(() => {
@@ -558,21 +845,19 @@ export function ConfirmEmailPage() {
     asked.current = token
     api<{ email: string }>('/api/email/confirm', { method: 'POST', body: { token } }).then(
       (answer) => setEmail(answer.email),
-      (error) => setProblem(codeOf(error)),
+      (error) => setProblem(troubleOf(error)),
     )
   }, [token])
   return (
     <AuthFrame title={t('confirmEmail.title')}>
-      <Problem code={problem} />
-      {!problem && !email && <p className="text-sm text-mist-400">{t('confirmEmail.busy')}</p>}
+      <Problem problem={problem} />
+      {!problem && !email && <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{t('confirmEmail.busy')}</p>}
       {email && (
-        <p role="status" className="rounded-[9px] border border-ok-500/30 bg-ok-500/10 px-3 py-2 text-sm text-ok-500" data-testid="confirmed">
+        <Notice tone="ok" testId="confirmed">
           {t('confirmEmail.done', { email })}
-        </p>
+        </Notice>
       )}
-      <Link to="/settings/notifications" className="nt-btn nt-btn-ghost mt-4 flex w-full">
-        {t('confirmEmail.toSettings')}
-      </Link>
+      <Onward to="/settings/profile">{t('confirmEmail.toProfile')}</Onward>
     </AuthFrame>
   )
 }
@@ -585,48 +870,44 @@ export function UnsubscribePage() {
   const { t } = useTranslation()
   const { token = '' } = useParams()
   const [found, setFound] = useState<{ event: string; channel: string; on: boolean } | null>(null)
-  const [problem, setProblem] = useState<string | null>(null)
+  const [problem, setProblem] = useState<Trouble>(null)
   const [done, setDone] = useState(false)
   const [busy, setBusy] = useState(false)
   const path = `/api/notify/unsubscribe/${encodeURIComponent(token)}`
   useEffect(() => {
-    api<{ event: string; channel: string; on: boolean }>(path).then(setFound, (error) => setProblem(codeOf(error)))
+    api<{ event: string; channel: string; on: boolean }>(path).then(setFound, (error) => setProblem(troubleOf(error)))
   }, [path])
   const event = found ? t(found.event === 'daily' || found.event === 'weekly' ? `notify.${found.event}` : `notify.events.${found.event}`) : ''
   const channel = found ? t(`notify.channels.${found.channel}`, { defaultValue: found.channel }) : ''
   return (
     <AuthFrame title={t('unsubscribe.title')}>
-      <Problem code={problem} />
+      <Problem problem={problem} />
       {found && !done && (
         <>
-          <p className="text-sm text-mist-300">{found.on ? t('unsubscribe.ask', { event, channel }) : t('unsubscribe.already', { event, channel })}</p>
+          <p className="m-0 text-sm">{found.on ? t('unsubscribe.ask', { event, channel }) : t('unsubscribe.already', { event, channel })}</p>
           {found.on && (
-            <button
-              type="button"
-              disabled={busy}
-              data-testid="unsubscribe"
-              className="nt-btn nt-btn-accent mt-4 w-full"
+            <AccountButton
+              name="confirm"
+              wide
+              busy={busy}
+              testId="unsubscribe"
               onClick={() => {
                 setBusy(true)
-                api(path, { method: 'POST' }).then(
-                  () => setDone(true),
-                  (error) => setProblem(codeOf(error)),
-                ).finally(() => setBusy(false))
+                api(path, { method: 'POST' })
+                  .then(
+                    () => setDone(true),
+                    (error) => setProblem(troubleOf(error)),
+                  )
+                  .finally(() => setBusy(false))
               }}
             >
               {t('unsubscribe.button')}
-            </button>
+            </AccountButton>
           )}
         </>
       )}
-      {done && (
-        <p role="status" className="rounded-[9px] border border-ok-500/30 bg-ok-500/10 px-3 py-2 text-sm text-ok-500">
-          {t('unsubscribe.done')}
-        </p>
-      )}
-      <Link to="/settings/notifications" className="nt-btn nt-btn-ghost mt-4 flex w-full">
-        {t('unsubscribe.toSettings')}
-      </Link>
+      {done && <Notice tone="ok">{t('unsubscribe.done')}</Notice>}
+      <Onward to="/settings/notifications">{t('unsubscribe.toSettings')}</Onward>
     </AuthFrame>
   )
 }

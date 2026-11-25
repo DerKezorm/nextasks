@@ -5,6 +5,7 @@
 import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 
 import { SIGNED_OUT_EVENT } from '../api/client'
+import { useSession } from './auth'
 import { SyncEngine, type Notice, type SyncStatus } from '../sync/engine'
 import { httpTransport, type Transport } from '../sync/transport'
 import type { View } from '../sync/view'
@@ -41,6 +42,12 @@ export function SyncProvider({ children, make = defaultEngine }: { children: Rea
       engine.stop()
     }
   }, [engine])
+  // Signed in again in the dialog "Session expired": the same engine starts over and sends what waited in its queue;
+  // the page and what is typed on it stay.
+  const session = useSession()
+  useEffect(() => {
+    if (session > 0) engine.start().catch(() => undefined)
+  }, [engine, session])
   return <Context.Provider value={engine}>{children}</Context.Provider>
 }
 

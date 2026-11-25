@@ -1,7 +1,13 @@
 /**
  * Who is signed in. `loading` until the server answered, `setup` while nextasks has no account yet, `signedOut`,
- * or `signedIn` with the account. A request that finds the session gone sends `SIGNED_OUT_EVENT`; then `ended` is set, so
- * the sign-in can say why (blocked, signed out everywhere, E2 of the night check).
+ * or `signedIn` with the account.
+ *
+ * A session that ends while the page is open does not throw the page away: `interrupted` is set, and the dialog
+ * "Session expired" (`components/SessionDialog.tsx`, the shared account module's `sessionExpiredParts`) asks to sign in
+ * again right there; what waits to be sent stays in the queue of the sync engine, and after signing in again `session`
+ * counts up, so the engine starts over (`state/sync.tsx`) and sends it; the page and what is typed on it stay. Ended before anything was on
+ * screen, the page goes to the sign-in with `ended` set, so the sign-in can say why (blocked, signed out everywhere,
+ * E2 of the night check).
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
@@ -16,9 +22,17 @@ type Auth = {
   me: Me | null
   /** The session ended while the app was open (not by signing out here). */
   ended: boolean
+  /** The session ended while a page was open; the dialog "Session expired" stands over it. */
+  interrupted: boolean
+  /** Counts the sign-ins again in that dialog: the sync engine starts over after each. */
+  session: number
   refresh: () => Promise<void>
   setMe: (me: Me) => void
   signOut: () => Promise<void>
+  /** Signed in again in the dialog: the page goes on where it was. */
+  resume: (me: Me) => void
+  /** Out of the dialog to the sign-in page (somebody else signs in, or the account is blocked). */
+  leave: () => void
 }
 
 const Context = createContext<Auth | null>(null)
@@ -27,10 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>('loading')
   const [me, setMeState] = useState<Me | null>(null)
   const [ended, setEnded] = useState(false)
+  const [interrupted, setInterrupted] = useState(false)
+  const [session, setSession] = useState(0)
 
   const setMe = useCallback((next: Me) => {
     setMeState(next)
     setEnded(false)
+    setInterrupted(false)
     setStatus('signedIn')
     // The account's language wins over the browser's.
     if (next.language && next.language !== i18n.language) void changeLanguage(next.language)
@@ -64,9 +81,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refresh()
     const gone = () => {
-      setEnded(true)
-      setStatus('signedOut')
-      setMeState(null)
+      setStatus((now) => {
+        // Signed in a moment ago: keep the page and ask to sign in again over it.
+        if (now === 'signedIn') {
+          setInterrupted(true)
+          return now
+        }
+        setEnded(true)
+        setMeState(null)
+        return 'signedOut'
+      })
     }
     window.addEventListener(SIGNED_OUT_EVENT, gone)
     return () => window.removeEventListener(SIGNED_OUT_EVENT, gone)
@@ -87,10 +111,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     await authApi.logout().catch(() => undefined)
     setMeState(null)
+    setInterrupted(false)
     setStatus('signedOut')
   }, [])
 
-  const value = useMemo(() => ({ status, me, ended, refresh, setMe, signOut }), [status, me, ended, refresh, setMe, signOut])
+  const resume = useCallback(
+    (next: Me) => {
+      setMe(next)
+      setSession((count) => count + 1)
+    },
+    [setMe],
+  )
+
+  const leave = useCallback(() => {
+    setInterrupted(false)
+    setEnded(true)
+    setMeState(null)
+    setStatus('signedOut')
+  }, [])
+
+  const value = useMemo(
+    () => ({ status, me, ended, interrupted, session, refresh, setMe, signOut, resume, leave }),
+    [status, me, ended, interrupted, session, refresh, setMe, signOut, resume, leave],
+  )
   return <Context.Provider value={value}>{children}</Context.Provider>
 }
 
@@ -99,6 +142,12 @@ export function useAuth(): Auth {
   const value = useContext(Context)
   if (!value) throw new Error('useAuth outside AuthProvider')
   return value
+}
+
+/** How often the account signed in again in the dialog "Session expired"; 0 outside the provider (tests). */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useSession(): number {
+  return useContext(Context)?.session ?? 0
 }
 
 /** Only addresses inside nextasks, so a link cannot send someone elsewhere after signing in. */

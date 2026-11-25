@@ -1,47 +1,4 @@
-/** A field with its name above it, and a problem as a red box: the pieces of the account page, as in nexlore. */
-import { useId } from 'react'
-
-export function Field({
-  label,
-  value,
-  onChange,
-  type = 'text',
-  autoComplete,
-  autoFocus = false,
-  hint,
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  type?: string
-  autoComplete?: string
-  autoFocus?: boolean
-  hint?: string
-}) {
-  // The hint describes the field; it is not part of its name.
-  const hintId = useId()
-  return (
-    <div className="text-sm">
-      <label className="block">
-        <span className="font-medium text-mist-100">{label}</span>
-        <input
-          type={type}
-          value={value}
-          autoComplete={autoComplete}
-          autoFocus={autoFocus}
-          aria-describedby={hint ? hintId : undefined}
-          onChange={(event) => onChange(event.target.value)}
-          className="nt-field mt-1"
-        />
-      </label>
-      {hint && (
-        <span id={hintId} className="mt-1 block text-xs text-mist-500">
-          {hint}
-        </span>
-      )}
-    </div>
-  )
-}
+/** That something worked, and a problem as a red box: small pieces of the settings, as in nexlore. */
 
 /** That it worked, as nexnotes' settings say it: one green line, no box (a box stays for what went wrong). */
 export function Done({ text, className = '' }: { text: string | null; className?: string }) {

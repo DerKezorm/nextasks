@@ -4,7 +4,7 @@ import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-rou
 
 import { AppShell } from './components/AppShell'
 import { SidebarBody } from './components/Sidebar'
-import { AppConnectPage, ConfirmEmailPage, InvitePage, LoginPage, SetupPage, UnsubscribePage } from './pages/AuthPages'
+import { AppConnectPage, ConfirmEmailPage, ForgotPage, InvitePage, LoginPage, ResetPage, SetupPage, UnsubscribePage } from './pages/AuthPages'
 import { FilterPage } from './pages/FilterPage'
 import { ListPage } from './pages/ListPage'
 import { ReviewPage } from './pages/ReviewPage'
@@ -17,6 +17,7 @@ import { TodayPage } from './pages/TodayPage'
 import { TrashPage } from './pages/TrashPage'
 import { YearPage } from './pages/YearPage'
 import { OfflinePage } from './components/AppInstall'
+import { SessionDialog } from './components/SessionDialog'
 import { NotFound } from './components/NotFound'
 import { usePhone } from './lib/phone'
 import { useAuth } from './state/auth'
@@ -34,7 +35,13 @@ function SignedIn({ children }: { children: ReactNode }) {
   if (status === 'setup') return <Navigate to="/setup" replace />
   if (status === 'signedOut') return <Navigate to={`/login?next=${encodeURIComponent(location.pathname + location.search)}${ended ? '&ended=1' : ''}`} replace />
   if (me?.second_factor_setup_required && location.pathname !== '/settings/security' && location.pathname !== '/account') return <Navigate to="/settings/security" replace />
-  return <SyncProvider key={me?.id}>{children}</SyncProvider>
+  // The session may end while the page is open: the dialog "Session expired" asks to sign in again over it.
+  return (
+    <SyncProvider key={me?.id}>
+      {children}
+      <SessionDialog />
+    </SyncProvider>
+  )
 }
 
 /**
@@ -75,6 +82,8 @@ export default function App() {
     <Routes>
       <Route path="setup" element={<SetupPage />} />
       <Route path="login" element={<LoginPage />} />
+      <Route path="forgot" element={<ForgotPage />} />
+      <Route path="reset/:token" element={<ResetPage />} />
       <Route path="invite/:token" element={<InvitePage />} />
       <Route path="confirm-email/:token" element={<ConfirmEmailPage />} />
       <Route path="unsubscribe/:token" element={<UnsubscribePage />} />

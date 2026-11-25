@@ -84,6 +84,8 @@ export class SyncEngine {
   private backoff = 0
   private solo = false
   private stopped = false
+  /** The loop that asks `/wait` runs. */
+  private looping = false
   private timers: ReturnType<typeof setTimeout>[] = []
   private waitAbort: AbortController | null = null
   private noticeId = 0
@@ -117,7 +119,8 @@ export class SyncEngine {
     }
     this.bump()
     void this.flush()
-    if (this.options.wait) void this.waitLoop()
+    // Started again after signing in anew (the dialog "Session expired"): one loop asks `/wait`, never two.
+    if (this.options.wait && !this.looping) void this.waitLoop()
   }
 
   stop(): void {
@@ -268,6 +271,15 @@ export class SyncEngine {
   }
 
   private async waitLoop(): Promise<void> {
+    this.looping = true
+    try {
+      await this.waitRounds()
+    } finally {
+      this.looping = false
+    }
+  }
+
+  private async waitRounds(): Promise<void> {
     let pause = 1000
     while (!this.stopped) {
       try {
