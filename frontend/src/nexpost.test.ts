@@ -30,10 +30,8 @@ function leaves(tree: Tree, prefix = ''): [string, string][] {
   })
 }
 
-// TODO post 1.1.0: the template gives the placeholders new in 1.1.0 no values (count …); the module fills them in its
-// next copy, then this goes.
-const values = { email: 'kim@example.com', when: 'today', error: 'mail_unreachable', count: '3' }
-const fill: Record<string, string> = { ...postVariables(APP_NAME), ...values }
+const values = { email: 'kim@example.com', when: 'today', error: 'mail_unreachable', count: 3 }
+const fill: Record<string, string | number> = { ...postVariables(APP_NAME), ...values }
 
 describe('the post texts', () => {
   for (const [language, tree] of [['de', de], ['en', en]] as const) {

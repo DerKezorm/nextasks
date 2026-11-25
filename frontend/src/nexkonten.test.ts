@@ -205,9 +205,7 @@ function leaves(tree: Tree, prefix = ''): [string, string][] {
 }
 
 // Every value a text of the module asks for (since 0.3.10 also name, day and providers, the words of 0.3.9).
-// TODO konten 1.1.0: the template gives the placeholders new in 1.1.0 no values (things, used, limit, address, networks,
-// proxies, proxy, variable …); the module fills them in its next copy, then these go.
-const values = { username: 'kim', email: 'kim@example.com', provider: 'Pocket ID', name: 'Kim', day: '25.11.2026', providers: 'Pocket ID, Entra', things: 'Aufgaben', used: '2 GB', limit: '5 GB', address: 'https://tasks.example.com', networks: '192.0.2.0/24', proxies: '192.0.2.1', proxy: '192.0.2.1', variable: 'NEXTASKS_TRUSTED_PROXIES', status: '403', seen: 'https://tasks.example.com', zone: 'UTC', days: '30' }
+const values = { username: 'kim', email: 'kim@example.com', provider: 'Pocket ID', name: 'Kim', day: '25.11.2026', providers: 'Pocket ID, Entra', address: 'https://notes.example.com', used: '1 GB', limit: '5 GB', things: 'Notizen', variable: 'NEXAPP_TRUSTED_PROXIES', networks: '0.0.0.0/0', proxy: '172.18.0.2', proxies: '172.18.0.0/16' }
 const fill: Record<string, string | number> = { ...kontenVariables(APP_NAME), ...values }
 /** Plural keys (``days_one``, ``recoveryLeft_other``) are asked by their base with a count that picks them. */
 const PLURAL = /_(one|other)$/

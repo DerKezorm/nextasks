@@ -37,7 +37,7 @@ function leaves(tree: Tree, prefix = ''): [string, string][] {
 
 // Every placeholder of the texts but `{{app}}` and `{{slug}}`, which the app's i18n fills in itself (`address` since
 // 1.0.10, in the template since 1.0.11).
-const values = { name: 'N', count: 2, only: 1, status: 403, address: 'https://a.example.com' }
+const values = { name: 'N', count: 2, only: 1, status: 403, address: 'https://app.example.com' }
 
 describe('the oidc texts', () => {
   for (const [language, tree] of [['de', de], ['en', en]] as const) {

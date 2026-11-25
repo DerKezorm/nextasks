@@ -65,9 +65,9 @@ test('33: sign-in through the provider button ends in a session', async ({ page,
   const row = ossie.getByTestId('my-providers').locator('li').filter({ hasText: 'Stand-in 33' })
   await expect(row).toContainText('Not linked')
   await row.getByRole('button', { name: 'Link' }).click()
-  // Linking asks for the own password in a dialog of the shared kit.
+  // Linking asks for the own password in a dialog of the shared kit ("Password", plan "Einstellungen").
   const asked = ossie.getByRole('dialog')
-  await asked.getByLabel('Current password').fill(PASSWORD)
+  await asked.getByLabel('Password', { exact: true }).fill(PASSWORD)
   await asked.getByRole('button', { name: 'Link' }).click()
   await expect(ossie).toHaveURL(/\/account\?linked=standin33/)
   // The provider by the name on its button, not by the short name in the address.
@@ -102,7 +102,10 @@ test('34: add, edit and remove a provider; the authentik card lists its steps', 
   const problems = collectProblems(page)
   await removeEntry(page, 'stand-in')
   await page.goto('/settings?tab=server&sub=signin')
-  await expect(page.getByRole('heading', { name: 'Sign-in', exact: true })).toBeVisible()
+  // The area's title and the card "Sign-in" both say it (plan "Einstellungen"): the area by its h1, the card by
+  // data-card, each found once.
+  await expect(page.getByRole('heading', { level: 1, name: 'Sign-in', exact: true })).toBeVisible()
+  await expect(page.locator('[data-card="sign-in"]').getByRole('heading', { name: 'Sign-in', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Sign-in providers' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'authentik in one step' })).toBeVisible()
   await page.getByRole('button', { name: 'Add a provider' }).click()
