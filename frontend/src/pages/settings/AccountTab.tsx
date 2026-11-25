@@ -26,7 +26,7 @@ import { copyText } from '../../lib/copy'
 import { errorText, problemText, returnErrorText } from '../../lib/errors'
 import { usePasswordConfirm } from '../../lib/passwordConfirm'
 import { useAuth } from '../../state/auth'
-import { confirmLine, DISPLAY_NAME_MAX, EMAIL_MAX, FIELDS, PAGES, PASSWORD_MIN, screenFields, SECOND_FACTOR_STATE, USERNAME_MAX } from '../../vendor/nexkonten/konten'
+import { confirmLine, DISPLAY_NAME_MAX, EMAIL_MAX, FIELDS, PAGES, PASSWORD_MIN, passwordChanged, screenFields, SECOND_FACTOR_STATE, USERNAME_MAX } from '../../vendor/nexkonten/konten'
 import { Badge, Box, Card, CheckboxRow, ConfirmDialog, Field, Notice, Row, Rows, SelectField } from '../../vendor/nexui'
 import { pagePart } from './accountPages'
 import { Notice as Done, PasskeysBox, RemainingAccess, SecondFactorOffNotice, SessionsBox } from './SecurityBoxes'
@@ -36,7 +36,7 @@ import { saveAsFile } from './ui'
 export type AccountPart = 'profile' | 'security'
 
 export function AccountTab({ part }: { part: AccountPart }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { me, setMe, refresh } = useAuth()
   const [params] = useSearchParams()
   const [name, setName] = useState(me?.display_name ?? '')
@@ -125,8 +125,8 @@ export function AccountTab({ part }: { part: AccountPart }) {
         ...(typed.toLowerCase() !== (me.email ?? '').toLowerCase() && typed ? { email: typed } : {}),
         ...(password ? { password } : {}),
       })
-      // An address emptied is taken away (no password: "Entfernen geht immer").
-      const cleared = !typed && me.email ? await api<unknown>('/api/me/email', { method: 'DELETE' }).then(() => authApi.me()) : saved
+      // An address emptied is taken away, with the own password like a new one (konten 0.3.10).
+      const cleared = !typed && me.email ? await api<unknown>('/api/me/email', { method: 'DELETE', body: { password } }).then(() => authApi.me()) : saved
       setName(cleared.display_name)
       setUsername(cleared.name)
       setEmail(cleared.email)
@@ -145,6 +145,9 @@ export function AccountTab({ part }: { part: AccountPart }) {
     setDialogProblem(null)
   }
 
+  // "Last changed on …" under the password (konten 0.3.10, `PAGES.security` part `password`, `line`).
+  const changed = passwordChanged(me.password_changed_at)
+  const changedLine = t(changed.text, changed.date ? { day: new Date(changed.date).toLocaleDateString(i18n.language, { day: 'numeric', month: 'long', year: 'numeric' }) } : {})
   const picture = pagePart('profile', 'picture')
   const lastLinkOf = (provider: MyProvider) => me.sign_in === 'oidc' && provider.linked && (providers ?? []).filter((entry) => entry.linked).length === 1
   const unchanged = name.trim() === (me.display_name ?? '') && email.trim().toLowerCase() === (me.email ?? '').toLowerCase() && username.trim().toLowerCase() === me.name
@@ -186,7 +189,7 @@ export function AccountTab({ part }: { part: AccountPart }) {
             className="flex flex-col gap-3"
             onSubmit={(event) => {
               event.preventDefault()
-              const changed = { username: username.trim().toLowerCase() !== me.name, email: email.trim() !== '' && email.trim().toLowerCase() !== (me.email ?? '').toLowerCase() }
+              const changed = { username: username.trim().toLowerCase() !== me.name, email: email.trim().toLowerCase() !== (me.email ?? '').toLowerCase() }
               const weighty = PAGES.profile.confirmOnSave.some((field) => changed[field as keyof typeof changed])
               if (weighty) {
                 setOwn('')
@@ -315,6 +318,7 @@ export function AccountTab({ part }: { part: AccountPart }) {
           {withPassword && (
             <Box
               title={t(pagePart('security', 'password').title)}
+              hint={changedLine}
               testId="password-row"
               actions={
                 <AccountButton

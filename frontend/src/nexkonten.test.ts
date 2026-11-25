@@ -23,6 +23,7 @@ import { APP_CAPS as SHOWN_CAPS, APP_OWN_ACTIONS } from './pages/settings/accoun
 import { AuthProvider } from './state/auth'
 import { FakeServer } from './test/fakeServer'
 import {
+  ACCOUNT_NAMESPACE,
   accountActions,
   BUTTONS,
   FIELDS,
@@ -32,6 +33,7 @@ import {
   NOT_ON_SELF,
   PAGES,
   pageOrder,
+  passwordChanged,
   SCREENS,
   screenFields,
   suggestUsername,
@@ -198,7 +200,8 @@ function leaves(tree: Tree, prefix = ''): [string, string][] {
 
 // nextasks: since 0.3.9 the texts name the account (`{{name}}`), a day (`{{day}}`) and the providers (`{{providers}}`) too;
 // the template's values leave them out, so i18next keeps the placeholder (as nextime fills them in).
-const values = { username: 'kim', email: 'kim@example.com', provider: 'Pocket ID', name: 'Kim', day: '01.12.2026', providers: 'Pocket ID' }
+// Every value a text of the module asks for (since 0.3.10 also name, day and providers, the words of 0.3.9).
+const values = { username: 'kim', email: 'kim@example.com', provider: 'Pocket ID', name: 'Kim', day: '25.11.2026', providers: 'Pocket ID, Entra' }
 const fill: Record<string, string | number> = { ...kontenVariables(APP_NAME), ...values }
 /** Plural keys (``days_one``, ``recoveryLeft_other``) are asked by their base with a count that picks them. */
 const PLURAL = /_(one|other)$/
@@ -215,6 +218,17 @@ describe('the konten texts', () => {
         const expected = text.replace(/\{\{(\w+)\}\}/g, (_, name: string) => String(given[name] ?? ''))
         const asked = plural ? key.replace(PLURAL, '') : key
         expect(i18n.t(asked, count === undefined ? values : { ...values, count }), key).toBe(expected)
+      }
+    })
+
+    it(`keep the namespace account to the module in ${language}, no text of the app's own there (since 0.3.10)`, () => {
+      const module = new Set(leaves(tree as Tree).map(([key]) => key))
+      const data = (i18n.getDataByLanguage(language) ?? {}) as Record<string, Tree>
+      for (const [namespace, resources] of Object.entries(data)) {
+        const own = namespace === ACCOUNT_NAMESPACE ? resources : resources[ACCOUNT_NAMESPACE]
+        if (own === undefined || typeof own === 'string') continue
+        const extra = leaves(own, ACCOUNT_NAMESPACE).map(([key]) => key).filter((key) => !module.has(key))
+        expect(extra, `${namespace}: the app's own keys under ${ACCOUNT_NAMESPACE}`).toEqual([])
       }
     })
   }
@@ -420,6 +434,23 @@ function checkButtons(root: HTMLElement, where: string): number {
   }
   return found
 }
+
+describe('the box Password says when it was changed last (since 0.3.10)', () => {
+  it('shows "Last changed on …" or that it is not known, on the page "Security"', async () => {
+    const render = APP_PAGE_RENDER.security
+    if (!render) throw new Error('APP_PAGE_RENDER.security is missing')
+    await i18n.changeLanguage('de')
+    const { root, unmount } = await render()
+    try {
+      const text = (root.textContent ?? '').replace(/\s+/g, ' ')
+      const known = i18n.t(passwordChanged('x').text, { day: '' }).trim()
+      const unknown = i18n.t(passwordChanged(null).text)
+      expect(text.includes(known) || text.includes(unknown), `"${known}" or "${unknown}"`).toBe(true)
+    } finally {
+      unmount()
+    }
+  })
+})
 
 describe('the account list and its dialog "Manage" (since 0.3.9)', () => {
   it('never offers on the own account what belongs in the profile', () => {

@@ -8,6 +8,8 @@ import type { AccountCaps, ListedAccount, OwnAction } from '../../vendor/nexkont
 export const APP_CAPS: AccountCaps = {
   rename: true,
   roles: true,
+  // Roles are changed in the dialog "Manage"; an invitation makes a member, its route takes no role (konten 0.3.10).
+  inviteRole: false,
   emailRemove: true,
   resetLink: true,
   factorReset: true,

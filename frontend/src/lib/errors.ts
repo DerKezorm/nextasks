@@ -1,6 +1,6 @@
 import { ApiError } from '../api/client'
 import i18n from '../i18n'
-import { accountErrorKey } from '../vendor/nexkonten/konten'
+import { accountErrorKeyOf } from '../vendor/nexkonten/konten'
 import { mailErrorKey } from '../vendor/nexpost/post'
 import { oidcErrorKey, oidcFormErrorKey } from '../vendor/nexoidc/oidc'
 
@@ -28,7 +28,9 @@ const OWN_FIRST = new Set(['not_found', 'public_url_needed'])
 export function errorText(code: string, values: Record<string, unknown> = {}): string {
   const own = `errors.${code}`
   if (OWN_FIRST.has(code) && i18n.exists(own)) return i18n.t(own, values)
-  const account = accountErrorKey(code, OLD_ACCOUNT_CODES)
+  // The module's own code first where the server sends it beside an old one (konten 0.3.10, `account_code`).
+  const accountCode = typeof values.account_code === 'string' ? values.account_code : null
+  const account = accountErrorKeyOf({ code, account_code: accountCode }, OLD_ACCOUNT_CODES)
   if (account !== 'account.error.unknown' && i18n.exists(account)) return i18n.t(account, values)
   const mail = mailErrorKey(code)
   if (mail !== 'mail.error.unknown' && i18n.exists(mail)) return i18n.t(mail, values)

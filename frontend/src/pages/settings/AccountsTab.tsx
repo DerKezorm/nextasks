@@ -550,7 +550,7 @@ function InviteDialog({ onClose, onMade }: { onClose: () => void; onMade: () => 
   const [send, setSend] = useState(true)
   const [made, setMade] = useState<{ link: string; sent: boolean; email: string; expires: string } | null>(null)
   const action = useAction()
-  const fields = inviteFields({ ...APP_CAPS, roles: false }, { mailServer: Boolean(me?.mail), email })
+  const fields = inviteFields(APP_CAPS, { mailServer: Boolean(me?.mail), email })
   const sends = fields.includes('sendMail') && send
   return (
     <Dialog title={t(INVITE_DIALOG.title)} onClose={onClose} closeLabel={t('common.close')} testId="invite-dialog">

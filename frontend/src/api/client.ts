@@ -137,6 +137,8 @@ export type Me = {
   sign_in: 'password' | 'oidc'
   /** The account has a password of its own (else it signs in through a provider only). */
   has_password?: boolean
+  /** When the password was set last (konten 0.3.10); null for a password of 0.8.0. */
+  password_changed_at?: string | null
   email: string
   /** The address counts (signing in, a forgotten password); a new one waiting for its link; the name before. */
   email_confirmed?: boolean
