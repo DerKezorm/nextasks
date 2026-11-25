@@ -50,8 +50,10 @@ def test_guessing_the_setup_code_is_braked(client: TestClient) -> None:
 def test_without_a_given_token_nextasks_makes_a_code_and_writes_it_to_the_log(
     client: TestClient, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
+    from app.vendor.nexkonten import setup as konten_setup
+
     monkeypatch.setattr(get_settings(), "setup_token", "")
-    monkeypatch.setattr(accounts, "_generated_code", None)
+    konten_setup.forget_generated_code()
     code = accounts.setup_code()
     assert len(code) == 14 and code == accounts.setup_code()
     from app.db import SessionLocal
@@ -123,15 +125,18 @@ def test_a_device_cookie_of_another_account_or_forged_does_not_open_a_lock(clien
 def test_sixty_wrong_passwords_at_once_count_no_more_than_the_lock_allows(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    from app.services.konten_store import KontenStore
+
     make_account("anna")
     counted: list[int] = []
-    original = accounts.note_failure
+    original = KontenStore.note_failure
 
-    def counting(db, account) -> None:  # type: ignore[no-untyped-def]
-        counted.append(1)
-        original(db, account)
+    def counting(store, account_id) -> None:  # type: ignore[no-untyped-def]
+        if account_id is not None:
+            counted.append(1)
+        original(store, account_id)
 
-    monkeypatch.setattr(accounts, "note_failure", counting)
+    monkeypatch.setattr(KontenStore, "note_failure", counting)
     start = threading.Barrier(30)
 
     def one(number: int) -> None:
@@ -145,7 +150,9 @@ def test_sixty_wrong_passwords_at_once_count_no_more_than_the_lock_allows(
     for thread in threads:
         thread.join()
     brake.forget()
-    assert len(counted) == 10
+    # The lock allows ten; the shared module's brake at the account holds the rest back before (five free, the sixth
+    # counted).
+    assert 0 < len(counted) <= 10
 
 
 def test_behind_a_proxy_nextasks_was_not_told_about_a_stranger_does_not_freeze_everybody(client: TestClient) -> None:
@@ -165,10 +172,13 @@ def test_signing_in_to_an_own_account_does_not_reset_the_brake_for_guessing_othe
     make_account("mallory")
     for name in ("anna", "bob", "carl", "dora", "emil", "fred"):
         make_account(name)
+    for name in ("gina", "hugo"):
+        make_account(name)
     sprayer = fresh("203.0.113.50")
     answers = []
-    for round_ in range(10):
-        for name in ("anna", "bob", "carl", "dora"):
+    # Five guesses per name at most (the brake of each account stays free): only the sender's count can hold them.
+    for round_ in range(5):
+        for name in ("anna", "bob", "carl", "dora", "emil", "fred", "gina", "hugo"):
             answers.append(sprayer.post("/api/auth/login",
                                         json={"name": name, "password": f"guess {round_}"}).status_code)
         sprayer.post("/api/auth/login", json={"name": "mallory", "password": PASSWORD})
@@ -184,8 +194,9 @@ def test_ports_and_spellings_of_one_address_are_one_sender(client: TestClient, m
     assert normal_address("2001:db8::1") == normal_address("[2001:db8::2]:443") == "2001:db8::/64"
     monkeypatch.setattr(get_settings(), "trusted_proxies", "10.9.0.0/16")
     proxy = fresh("10.9.0.1")
-    answers = [proxy.post("/api/auth/login", json={"name": "nobody", "password": "x"},
-                          headers={"X-Forwarded-For": f"7.7.7.7:{4000 + n}"}).status_code for n in range(7)]
+    # Another name each time (no count of a name fills): only the one sender's count (30 free) can hold them.
+    answers = [proxy.post("/api/auth/login", json={"name": f"nobody{n}", "password": "x"},
+                          headers={"X-Forwarded-For": f"7.7.7.7:{4000 + n}"}).status_code for n in range(32)]
     assert answers[-1] == 429
     brake.forget()
 

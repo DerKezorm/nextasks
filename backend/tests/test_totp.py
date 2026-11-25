@@ -46,8 +46,12 @@ class Clock:
 
 @pytest.fixture
 def clock(monkeypatch: pytest.MonkeyPatch) -> Clock:
+    from app.vendor.nexkonten import factor
+
     fake = Clock()
     monkeypatch.setattr(totp, "time", fake)
+    # The codes are checked by the shared account module since it was wired in: it reads the same clock.
+    monkeypatch.setattr(factor, "time", fake)
     return fake
 
 
@@ -129,7 +133,8 @@ def test_a_code_is_accepted_in_the_window_and_only_after_the_last_used_step() ->
 
 def test_recovery_codes_are_typed_from_paper() -> None:
     codes = totp.generate_recovery_codes()
-    assert len(codes) == 8 and len(set(codes)) == 8
+    # Ten since the shared account module (part 2: "10 für neu erzeugte"); the eight of 0.8.0 keep counting.
+    assert len(codes) == totp.RECOVERY_CODES == 10 and len(set(codes)) == 10
     for code in codes:
         head, tail = code.split("-")
         assert len(head) == 5 and len(tail) == 5
@@ -137,7 +142,7 @@ def test_recovery_codes_are_typed_from_paper() -> None:
     stored = totp.recovery_hashes(codes)
     assert codes[0] not in stored
     remaining = totp.use_recovery(stored, codes[2].upper().replace("-", " "))
-    assert remaining is not None and len(totp.load_recovery(remaining)) == 7
+    assert remaining is not None and len(totp.load_recovery(remaining)) == 9
     assert totp.use_recovery(remaining, codes[2]) is None
 
 
@@ -155,7 +160,7 @@ def test_enrolment_needs_the_password_and_a_matching_code(client: TestClient, op
     confirmed = client.post("/api/auth/totp/confirm", json={"code": current_code(secret), "password": PASSWORD})
     assert confirmed.status_code == 200, confirmed.text
     me = client.get("/api/auth/me").json()
-    assert me["two_factor"] is True and me["two_factor_recovery_left"] == 8
+    assert me["two_factor"] is True and me["two_factor_recovery_left"] == totp.RECOVERY_CODES
     # On already: a second enrolment is refused until it is turned off.
     assert client.post("/api/auth/totp/begin").status_code == 409
     # The seed is stored sealed, not in the clear.
@@ -165,10 +170,18 @@ def test_enrolment_needs_the_password_and_a_matching_code(client: TestClient, op
         assert totp.open_seed(row.totp_secret_enc) == secret
 
 
-def test_an_enrolment_runs_out(client: TestClient, operator: Account, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_an_enrolment_runs_out(client: TestClient, operator: Account) -> None:
+    from datetime import timedelta
+
+    from app.models import utcnow
+
     secret = client.post("/api/auth/totp/begin").json()["secret"]
-    monkeypatch.setattr(totp, "ENROLMENT_SECONDS", 0)
-    client.post("/api/auth/totp/begin")
+    # The seed waits sealed in the database (the shared account module), ten minutes.
+    with SessionLocal() as db:
+        row = db.get(Account, operator.id)
+        assert row is not None and row.totp_pending and secret not in row.totp_pending
+        row.totp_pending_until = utcnow() - timedelta(seconds=1)
+        db.commit()
     late = client.post("/api/auth/totp/confirm", json={"code": current_code(secret), "password": PASSWORD})
     assert late.status_code == 410 and late.json()["detail"]["code"] == "totp_enrolment_expired"
 
@@ -248,6 +261,8 @@ def test_the_brake_slows_a_guessing_sender(client: TestClient, operator: Account
     for _ in range(totp.MAX_ATTEMPTS):
         code_step(client, "000000")
     password_step(client)
+    # The shared module counts the codes of the account (``code:<id>``): five free, the sixth counted, then it waits.
+    code_step(client, "000000")
     braked = code_step(client, "000000")
     assert braked.status_code == 429 and braked.json()["detail"]["code"] == "too_many_attempts"
     assert "retry-after" in braked.headers
@@ -295,7 +310,7 @@ def test_a_recovery_code_signs_in_once(client: TestClient, operator: Account, cl
     password_step(client)
     used = code_step(client, codes[0])
     assert used.status_code == 200, used.text
-    assert used.json()["two_factor_recovery_left"] == 7
+    assert used.json()["two_factor_recovery_left"] == totp.RECOVERY_CODES - 1
     sign_out(client)
     password_step(client)
     assert code_step(client, codes[0]).status_code == 401
@@ -308,7 +323,7 @@ def test_new_recovery_codes_replace_the_old_ones(client: TestClient, operator: A
     renewed = client.post("/api/auth/totp/recovery", json={"password": PASSWORD})
     assert renewed.status_code == 200
     new = renewed.json()["recovery_codes"]
-    assert len(new) == 8 and not set(new) & set(old)
+    assert len(new) == totp.RECOVERY_CODES and not set(new) & set(old)
     sign_out(client)
     password_step(client)
     assert code_step(client, old[0]).status_code == 401

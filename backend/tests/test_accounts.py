@@ -108,12 +108,15 @@ def test_an_expired_session_is_gone(client: TestClient) -> None:
 
 
 def test_the_brake_holds_a_guesser_back(client: TestClient) -> None:
+    """The shared module's brake at the account: five free, the sixth counted, then the account's pot waits. While it
+    waits even the right password is refused, as by the lock of 0.8.0 (``wrong_credentials``): otherwise the brake
+    would tell when a guess was right."""
     make_account("anna")
-    for _ in range(5):
+    for _ in range(6):
         assert client.post("/api/auth/login", json={"name": "anna", "password": "wrong password"}).status_code == 401
     held = client.post("/api/auth/login", json={"name": "anna", "password": PASSWORD})
-    # Even the right password waits: otherwise the brake would tell when a guess was right.
-    assert held.status_code == 429 and int(held.headers["Retry-After"]) > 0
+    assert held.status_code == 401 and held.json()["detail"]["code"] == "wrong_credentials"
+    assert client.get("/api/auth/me").status_code == 401
 
 
 def test_the_account_locks_after_ten_failures_from_anywhere(client: TestClient) -> None:
@@ -165,7 +168,8 @@ def test_password_sign_in_off_keeps_the_operator_in(client: TestClient) -> None:
     refused = client.post("/api/auth/login", json={"name": "anna", "password": PASSWORD})
     assert refused.status_code == 403 and refused.json()["detail"]["code"] == "password_login_off"
     assert client.post("/api/auth/login", json={"name": "boss", "password": PASSWORD}).status_code == 200
-    assert client.get("/api/auth/methods").json() == {"password": False, "providers": []}
+    methods = client.get("/api/auth/methods").json()
+    assert methods["password"] is False and methods["providers"] == [] and methods["forgot_mail"] is False
 
 
 def test_changing_the_password_ends_the_other_sessions(client: TestClient) -> None:
@@ -187,7 +191,8 @@ def test_changing_the_password_ends_the_other_sessions(client: TestClient) -> No
 def test_a_wrong_current_password_counts_like_a_wrong_sign_in(client: TestClient) -> None:
     anna = make_account("anna")
     sign_in(client, anna)
-    for _ in range(5):
+    # The shared module's count at the door ``confirm:<account>``: five free, the sixth counted, then it waits.
+    for _ in range(6):
         client.put("/api/auth/password", json={"current": "guess guess guess", "new": GOOD})
     held = client.put("/api/auth/password", json={"current": PASSWORD, "new": GOOD})
     assert held.status_code == 429
@@ -211,8 +216,12 @@ def test_the_operator_manages_accounts(client: TestClient, operator: Account) ->
     anna_client = TestClient(client.app, headers={"X-Nextasks-Client": "tab-anna00000"})
     sign_in(anna_client, anna)
     assert anna_client.get("/api/accounts").status_code == 403
-    assert client.put(f"/api/accounts/{anna.id}/password", json={"password": GOOD, "current_password": PASSWORD}).status_code == 204
-    # A new password from the operator ends the account's sessions.
+    # The operator no longer sets a password (410 for one version); a link lets the person set one.
+    gone = client.put(f"/api/accounts/{anna.id}/password", json={"password": GOOD, "current_password": PASSWORD})
+    assert gone.status_code == 410 and gone.json()["detail"]["code"] == "use_reset_link"
+    link = client.post(f"/api/accounts/{anna.id}/reset-link", json={"current_password": PASSWORD}).json()["link"]
+    assert anna_client.post(f"/api/reset/{link.rsplit('/', 1)[1]}", json={"password": GOOD}).status_code == 204
+    # A new password through the link ends the account's browser sessions.
     assert anna_client.get("/api/auth/me").status_code == 401
     sign_in(anna_client, anna)
     assert client.post(f"/api/accounts/{anna.id}/sign-out").status_code == 204

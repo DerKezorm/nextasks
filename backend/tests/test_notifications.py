@@ -27,6 +27,7 @@ from app.models import (
 )
 from app.services import channels, emailaddr, logs, notifyprefs, outbox, reports, settings_service
 
+from .conftest import PASSWORD
 from .sync_helpers import API, batch, make_list, make_reminder, person, private_space, put, shared_space
 
 PUBLIC = "https://tasks.example.test"
@@ -37,6 +38,9 @@ class Postbox:
     fail = False
 
     def __init__(self, host: str, port: int, timeout: float = 0, context: Any = None) -> None:
+        # The shared post module connects without ``with``: a server that is down fails right here.
+        if Postbox.fail:
+            raise smtplib.SMTPServerDisconnected("mail.example.test hung up on robin@example.test")
         self.host = host
 
     def __enter__(self) -> Self:
@@ -55,6 +59,9 @@ class Postbox:
 
     def send_message(self, message: EmailMessage) -> None:
         Postbox.sent.append(message)
+
+    def quit(self) -> None:
+        pass
 
 
 @pytest.fixture
@@ -85,7 +92,7 @@ def html_of(message: EmailMessage) -> str:
 
 def confirmed(browser: TestClient, box: type[Postbox], address: str) -> None:
     """Enters ``address`` and opens the link from the mail."""
-    answer = browser.put("/api/me/email", json={"address": address})
+    answer = browser.put("/api/me/email", json={"address": address, "password": PASSWORD})
     assert answer.status_code == 200, answer.text
     link = re.search(r"https://\S+/confirm-email/(\S+)", text_of(box.sent[-1]))
     assert link is not None
@@ -115,17 +122,21 @@ def test_without_a_mail_server_mail_is_greyed_with_a_reason_and_cannot_be_chosen
     assert state["routes"]["daily"] == []
     refused = browser.put("/api/notify/routes", json={"event": "daily", "channel": "mail", "on": True})
     assert refused.status_code == 409 and refused.json()["detail"]["code"] == "channel_unavailable"
-    assert browser.put("/api/me/email", json={"address": "robin@example.test"}).json()["detail"]["code"] == "mail_off"
+    # Without a mail server an address counts at once (the shared account module): nothing can be sent to prove it.
+    counted = browser.put("/api/me/email", json={"address": "robin@example.test", "password": PASSWORD}).json()
+    assert counted["sent"] is False
+    assert next(entry for entry in counted["channels"] if entry["kind"] == "mail")["confirmed"] is True
     mail_server()
-    assert mail_channel(browser)["available"] is True and mail_channel(browser)["state"] == "setup"
+    assert mail_channel(browser)["available"] is True and mail_channel(browser)["state"] == "ready"
 
 
 def test_mail_needs_the_public_address_for_its_links(postbox: type[Postbox]) -> None:
     _account, browser = person("robin")
     mail_server(public="")
     assert mail_channel(browser)["can_send"] is False
-    refused = browser.put("/api/me/email", json={"address": "robin@example.test"})
-    assert refused.status_code == 409 and refused.json()["detail"]["code"] == "public_url_missing"
+    # No link can point anywhere without the public address: the address counts at once, nothing is mailed.
+    counted = browser.put("/api/me/email", json={"address": "robin@example.test", "password": PASSWORD})
+    assert counted.status_code == 200 and counted.json()["sent"] is False
     assert postbox.sent == []
 
 
@@ -148,11 +159,12 @@ def test_an_address_counts_only_once_its_link_was_opened(postbox: type[Postbox])
     mail_server()
     _account, browser = person("robin")
     browser.put(f"{API}/me", json={"language": "de"})
-    answer = browser.put("/api/me/email", json={"address": "robin@example.test"}).json()
+    answer = browser.put("/api/me/email", json={"address": "robin@example.test", "password": PASSWORD}).json()
     assert answer["sent"] is True
     [mail] = postbox.sent
-    assert mail["To"] == "robin@example.test" and mail["Subject"] == "nextasks: Mailadresse bestätigen"
-    assert f"{PUBLIC}/confirm-email/nxm_" in text_of(mail) and "cid:logo" in html_of(mail)
+    # The letter of the shared post module, the link to the page of 0.8.0.
+    assert mail["To"] == "robin@example.test" and mail["Subject"] == "Bestätige deine Adresse für nextasks"
+    assert f"{PUBLIC}/confirm-email/" in text_of(mail) and "cid:logo" in html_of(mail)
     waiting = mail_channel(browser)
     assert waiting["pending"] == "robin@example.test" and waiting["confirmed"] is False and waiting["ready"] is False
     refused = browser.put("/api/notify/routes", json={"event": "daily", "channel": "mail", "on": True})
@@ -171,7 +183,7 @@ def test_an_address_counts_only_once_its_link_was_opened(postbox: type[Postbox])
 def test_a_link_runs_out_and_a_made_up_one_does_nothing(postbox: type[Postbox]) -> None:
     mail_server()
     account, browser = person("robin")
-    browser.put("/api/me/email", json={"address": "robin@example.test"})
+    browser.put("/api/me/email", json={"address": "robin@example.test", "password": PASSWORD})
     token = re.search(r"/confirm-email/(\S+)", text_of(postbox.sent[-1])).group(1)  # type: ignore[union-attr]
     with SessionLocal() as db:
         db.execute(update(Account).where(Account.id == account.id)
@@ -188,9 +200,8 @@ def test_no_two_accounts_confirm_the_same_address(postbox: type[Postbox]) -> Non
     _robin, robin = person("robin")
     _alex, alex = person("alex")
     confirmed(robin, postbox, "family@example.test")
-    alex.put("/api/me/email", json={"address": "FAMILY@example.test"})
-    token = re.search(r"/confirm-email/(\S+)", text_of(postbox.sent[-1])).group(1)  # type: ignore[union-attr]
-    taken = alex.post("/api/email/confirm", json={"token": token})
+    # The shared account module refuses an address another account has already when it is typed.
+    taken = alex.put("/api/me/email", json={"address": "FAMILY@example.test", "password": PASSWORD})
     assert taken.status_code == 409 and taken.json()["detail"]["code"] == "email_taken"
     assert mail_channel(alex)["confirmed"] is False
 
@@ -199,19 +210,20 @@ def test_a_failing_mail_server_leaves_nothing_waiting(postbox: type[Postbox]) ->
     mail_server()
     _account, browser = person("robin")
     postbox.fail = True
-    failed = browser.put("/api/me/email", json={"address": "robin@example.test"})
+    failed = browser.put("/api/me/email", json={"address": "robin@example.test", "password": PASSWORD})
     assert failed.status_code == 502 and failed.json()["detail"]["code"] == "mail_failed"
     assert mail_channel(browser)["pending"] == ""
     with SessionLocal() as db:
-        assert settings_service.get(db, "mail_last_error") == "mail_failed"
+        # The code of the shared post module.
+        assert settings_service.get(db, "mail_last_error") == "mail_unreachable"
 
 
 def test_confirmation_mails_are_braked(postbox: type[Postbox]) -> None:
     mail_server()
     _account, browser = person("robin")
     for number in range(emailaddr.SENDS_PER_HOUR):
-        assert browser.put("/api/me/email", json={"address": f"r{number}@example.test"}).status_code == 200
-    braked = browser.put("/api/me/email", json={"address": "late@example.test"})
+        assert browser.put("/api/me/email", json={"address": f"r{number}@example.test", "password": PASSWORD}).status_code == 200
+    braked = browser.put("/api/me/email", json={"address": "late@example.test", "password": PASSWORD})
     assert braked.status_code == 429
 
 
@@ -641,4 +653,4 @@ def test_the_operator_sees_the_last_mail_and_the_last_failure(client: TestClient
     postbox.fail = True
     client.post("/api/settings/mail-test", json={"to": "robin@example.test"})
     shown = client.get("/api/settings").json()
-    assert shown["mail_last_error"] == "mail_failed" and shown["mail_last_error_at"]
+    assert shown["mail_last_error"] == "mail_unreachable" and shown["mail_last_error_at"]

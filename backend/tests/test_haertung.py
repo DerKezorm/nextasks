@@ -27,7 +27,7 @@ def _browser(host: str = "172.18.0.2") -> TestClient:
                       client=(host, 50000))
 
 
-def _spray(count: int = 31) -> list[int]:
+def _spray(count: int = 32) -> list[int]:
     """A stranger behind the same proxy tries one password against many names, with made-up X-Forwarded-For."""
     stranger = _browser()
     return [stranger.post("/api/auth/login", json={"name": f"guess{n}", "password": "summer2026"},
@@ -111,9 +111,11 @@ def test_a5_a_stranger_guessing_that_very_name_does_not_keep_its_known_browser_o
         make_account(name)
     own = _known(name)
     brake.forget()
-    assert 429 in _spray_name(name)
+    # The shared module's brake counts the name's account (five free); while its pot waits, the right password is
+    # refused like a wrong one (the lock's answer of 0.8.0).
+    assert _spray_name(name)[-1] == 401
     without = _browser().post("/api/auth/login", json={"name": name, "password": PASSWORD})
-    assert without.status_code == 429, "without the cookie the sender waits"
+    assert without.status_code == 401, "without the cookie the account's count holds"
     assert own.post("/api/auth/login", json={"name": name, "password": PASSWORD}).status_code == 200
 
 
@@ -191,8 +193,10 @@ def test_a5_what_the_operator_does_to_an_account_forgets_its_browsers(client: Te
         for path in ("block", "unblock"):
             assert client.post(f"/api/accounts/{anna.id}/{path}", json=confirm).status_code == 204
     elif way == "password":
-        answer = client.put(f"/api/accounts/{anna.id}/password", json={**confirm, "password": PASSWORD})
-        assert answer.status_code == 204
+        # The operator's link for a new password (0.8.0: the operator set one), used by the person.
+        link = client.post(f"/api/accounts/{anna.id}/reset-link", json={**confirm, "send": False}).json()["link"]
+        reset = new_client().post(f"/api/reset/{link.rsplit('/', 1)[1]}", json={"password": PASSWORD})
+        assert reset.status_code == 204
     elif way == "sign-out":
         assert client.post(f"/api/accounts/{anna.id}/sign-out").status_code == 204
     else:
