@@ -54,6 +54,35 @@ Tests: `nexkonten.test.ts`, `nexpost.test.ts`, `nexui.vendored.test.ts` (Vorlage
 Testserver `test/fakeServer.ts`), `pages/accountPages.test.tsx` (Sitzung abgelaufen, Passwort vergessen). Playwright
 (`frontend/e2e`, zentral auszuführen): Einrichtungscode mit 16 Zeichen, „Username or email“, Verknüpfen im Dialog.
 
+Profilbild ohne Foto: überall (Seitenleiste, Personen, Profil, Kontenliste) der Buchstabe und Farbton aus
+`avatarPlaceholder` des Moduls, Sättigung, Helligkeit und Schrift aus `--nexui-avatar-*` (`components/Avatar.tsx`
+`placeholder`); vorher hing die Farbe in nextasks am Benutzernamen und wechselte mit ihm.
+
+### Home Assistant
+
+`nextasks-homeassistant`, Zweig `konten` (`b168ceb`, nicht gepusht, kein Release): Ein Eintrag heißt jetzt
+`<adresse>::id:<konto-id>::<bereiche>` (aus `id` in `/api/v1/me`). Ein Eintrag von 0.1.0 (`<adresse>::<name>::…`)
+übernimmt die ID beim nächsten Start über sein noch gültiges Token, auch nach einem Umbenennen; Geräte und Entitäten
+hängen an der `entry_id` und bleiben. „Token erneuern“ erkennt das Konto an der ID, neu Hinzufügen findet auch einen
+noch nicht gestarteten Eintrag von 0.1.0. Ein Server ohne `id` behält die Benennung nach Namen. Reihenfolge beim
+Aufspielen: erst nextasks mit `id`, dann die Integration (Release, in die laufende Home-Assistant-Installation kopieren), Umbenennen
+danach.
+
+### Läufe (25.11.2026, Ende)
+
+Backend `pytest -q -n 2`: 1381 bestanden, 4 übersprungen (darin Vertrag nexkonten 223 + 2 übersprungen, nexoidc 112,
+nexpost 25, Bestand 51); `ruff` sauber; `sync.py check` für konten 0.3.9, oidc 1.1.0, post 0.1.1, ui 0.1.1 ok.
+Frontend `vitest --maxWorkers=2`: 1043 bestanden (ein erster Lauf unter Last hatte drei Zeitfehler in
+`web.test.tsx` „own filters“, allein und im zweiten vollen Lauf grün); `npm run build` und `npm run lint` sauber.
+Home Assistant (WSL): 52 bestanden, ruff, `ruff format`, `mypy --strict` sauber.
+
+### Offen
+
+- **Wer Profilbilder sieht:** nextasks zeigt Namen und Bilder weiter nur Konten mit gemeinsamem Bereich
+  (`services/visibility.py`, Vertrag 0.4); der Entwurf (Teil 2) sagt „alle angemeldeten Konten auf dem Server“. Nicht
+  umgestellt, weil es nextasks' eigene Datenschutzregel aufweicht: Entscheidung des Betreibers der Apps offen.
+- Sichtprüfung im Browser, Playwright, Probe auf einer Kopie der Live-Datenbank.
+
 ## 1. Bestand heute (0.8.0)
 
 ### Datenmodell
