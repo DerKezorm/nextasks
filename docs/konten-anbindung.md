@@ -11,7 +11,18 @@ haben**, eine Adresse dient heute nur den Mitteilungen, und es gibt einen Weg, d
 Betreiber setzt ein Passwort selbst** (Konten › „Neues Passwort“). Der Entwurf sagt, nextasks habe gar keinen Weg
 zurück; das stimmt nicht ganz.
 
-## 0. Stand (25.11.2026): Backend und Oberfläche angebunden
+## 0. Stand (25.11.2026): Backend und Oberfläche angebunden, auf den Modulen 1.0.0
+
+**Auf den eingefrorenen Modulen konten 1.0.0, ui 1.0.0, post 1.0.0, oidc 1.1.2** (25.11.2026): „Passwort vergessen“
+und jeder andere Link, der sofort geht (Bestätigung nach einer Einladung, Reset-Link des Betreibers, neue Adresse),
+kommt bei einem Fehler nie in die Outbox (`send_now(..., keep=False)`; nach einer Einladung bleibt die Adresse wartend,
+„Link nochmal schicken“ schickt neu). Einladungen in einen Bereich gehen jetzt über post mit `space`, an ein
+bestehendes Konto mit `member=True` („Mit dem Knopf trittst du mit deinem Konto bei“); nextasks' eigener Brief von
+0.8.0 ist weg. Mail „Neue Anmeldung“ mit Knopf zur Seite Sicherheit (`/settings/security`) und der Uhrzeit in der
+Zeitzone der Person (`accounts.timezone`, sonst die des Servers), nie mit einer Netzadresse. Adapter:
+`forgot_through_route`, `picture_status` (beide über die echten Routen), `new_sign_in_letter`; vitest-Vorlage mit dem
+Abschnitt „Helpers“.
+
 
 **Nachgezogen auf konten 0.3.10, ui 0.1.2, oidc 1.1.1, post 0.1.2** (25.11.2026): Anmeldung über `login.sign_in`
 (der eigene Zweig „nur der Konto-Topf wartet“ ist weg, das Modul antwortet selbst 401); „5 frei“ heißt genau 5 (App-Tests
