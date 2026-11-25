@@ -14,3 +14,6 @@ segno==1.6.6
 tzdata==2026.1
 # Web Push: the message encrypted for one browser (RFC 8291, aes128gcm).
 http-ece==1.2.1
+# Passkeys (konten 0.3.x, WebAuthn): the version the shared account module is tested with (its manifest test asks).
+webauthn==3.0.1
+cbor2==6.3.0
