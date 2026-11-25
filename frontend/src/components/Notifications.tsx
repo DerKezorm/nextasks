@@ -6,8 +6,8 @@
  * On a narrow screen, or with more than four channels, the table becomes a card per row with a labelled box per
  * channel, so nothing scrolls sideways.
  *
- * Below it the parts of the channels that need more than a head: the mail address with its confirmation, and this
- * browser (on or off) with the list of browsers that take notifications.
+ * Below it the parts of the channels that need more than a head: the mail address (its state, changed in the profile),
+ * and this browser (on or off) with the list of browsers that take notifications.
  */
 import { AtSign, Bell, Globe, Mail, Smartphone, Trash2, Zap, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
@@ -186,7 +186,7 @@ export function NotificationsPart() {
         </p>
       </Section>
 
-      {mail?.available && <MailAddress channel={mail} busy={busy} run={run} />}
+      {mail?.available && <MailAddress channel={mail} />}
       {browser && <BrowserPush channel={browser} busy={busy} run={run} push={push} />}
     </div>
   )
@@ -403,64 +403,36 @@ function ScheduleFields({ report, value, busy, onChange }: { report: string; val
   )
 }
 
-function MailAddress({ channel, busy, run }: { channel: NotifyChannel; busy: boolean; run: Run }) {
-  const { t, i18n } = useTranslation()
-  const [address, setAddress] = useState('')
-  const send = (value: string) =>
-    run(
-      () => api<NotifyState>('/api/me/email', { method: 'PUT', body: { address: value.trim() } }),
-      (next) => (next.sent ? t('notify.mail.sent', { address: value.trim() }) : null),
-    ).then(() => setAddress(''))
+/**
+ * The card "Mail": which address mail goes to and its state, and a link to the profile, where the address lives now
+ * (the shared account module: E-Mail in the profile, with "Waiting for confirmation", "Send the link again" and
+ * "Withdraw"). Under it when the channel delivered last.
+ */
+function MailAddress({ channel }: { channel: NotifyChannel }) {
+  const { t } = useTranslation()
   const canSend = channel.can_send !== false
   return (
     <Section icon={AtSign} title={t('notify.mail.title')} id="mail">
       <p className="mb-3 text-sm text-mist-400">{t('notify.mail.text')}</p>
-      {channel.confirmed && channel.address && (
+      {channel.confirmed && channel.address ? (
         <p className="mb-3 flex flex-wrap items-center gap-2 text-sm" data-testid="mail-address">
           <span className="font-medium text-mist-100">{channel.address}</span>
           <span className="rounded-full bg-accent-500/15 px-2 py-0.5 text-xs text-accent-400">{t('notify.mail.confirmed')}</span>
-          <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium" disabled={busy} onClick={() => void run(() => api<NotifyState>('/api/me/email', { method: 'DELETE' }), () => t('notify.mail.removed'))}>
-            {t('notify.mail.remove')}
-          </button>
+        </p>
+      ) : (
+        <p className="mb-3 text-sm text-mist-400" data-testid="mail-address-none">
+          {t('notify.mail.none')}
         </p>
       )}
       {channel.pending && (
-        <div className="mb-3 rounded-xl border border-accent-500/30 bg-accent-500/10 px-3 py-2 text-sm text-mist-200" data-testid="mail-pending">
-          <p>{t('notify.mail.pending', { address: channel.pending, until: channel.pending_until ? moment(channel.pending_until, i18n.language) : '' })}</p>
-          <div className="mt-2 flex gap-2">
-            <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium" disabled={busy || !canSend} onClick={() => void run(() => api<NotifyState>('/api/me/email/resend', { method: 'POST' }), () => t('notify.mail.sent', { address: channel.pending }))}>
-              {t('notify.mail.resend')}
-            </button>
-            <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium" disabled={busy} onClick={() => void run(() => api<NotifyState>('/api/me/email/pending', { method: 'DELETE' }))}>
-              {t('notify.mail.cancel')}
-            </button>
-          </div>
-        </div>
-      )}
-      {!canSend && <p className="mb-3 text-sm text-warn-500">{t('notify.mail.noPublic')}</p>}
-      {channel.suggestion && !channel.pending && (
-        <p className="mb-3 flex flex-wrap items-center gap-2 text-sm text-mist-300" data-testid="mail-suggestion">
-          {t('notify.mail.suggestion', { address: channel.suggestion })}
-          <button type="button" className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium" disabled={busy || !canSend} onClick={() => void send(channel.suggestion ?? '')}>
-            {t('notify.mail.useSuggestion')}
-          </button>
+        <p className="mb-3 text-sm text-mist-300" data-testid="mail-pending">
+          {t('account.emailPending', { email: channel.pending })}
         </p>
       )}
-      <form
-        className="flex flex-wrap items-end gap-2"
-        onSubmit={(event) => {
-          event.preventDefault()
-          if (address.trim()) void send(address)
-        }}
-      >
-        <label className="min-w-60 flex-1 text-sm">
-          <span className="text-xs font-medium text-mist-400">{t('notify.mail.address')}</span>
-          <input type="email" autoComplete="email" value={address} onChange={(e) => setAddress(e.target.value)} placeholder={channel.address || 'name@example.com'} className="nt-field mt-1" data-testid="mail-input" />
-        </label>
-        <button type="submit" className="nt-btn nt-btn-accent" disabled={busy || !canSend || !address.trim()}>
-          {t('notify.mail.send')}
-        </button>
-      </form>
+      {!canSend && <p className="mb-3 text-sm text-warn-500">{t('notify.mail.noPublic')}</p>}
+      <Link to="/settings/profile" className="text-sm font-medium text-accent-400 hover:underline" data-testid="mail-to-profile">
+        {t('notify.mail.inProfile')}
+      </Link>
       <LastDelivery channel={channel} />
     </Section>
   )
