@@ -1,6 +1,6 @@
 # Anbindung des Kontenmoduls (`nexkonten`) an nextasks
 
-Stand 25.11.2026, Zweig `konten`. Backend angebunden (Abschnitt 0), Oberfläche folgt. Maßgeblich sind der Entwurf in nexlore
+Stand 25.11.2026, Zweig `konten`. Backend und Oberfläche angebunden (Abschnitt 0). Maßgeblich sind der Entwurf in nexlore
 (`Development/nexapps/Baupläne/Entwurf Konten, Einrichtung und Anmeldung.md`) und die Schnittstelle des Moduls
 (`bauplaene/konten/SCHNITTSTELLE.md`, Zweig `konten`, Fassung 0.1.0, dazu `oidc` 1.1.0). Wo dieser Plan von beiden
 abweicht oder etwas offen lässt, steht es unter „Passt das Modul?“ und „Offene Fragen“.
@@ -11,11 +11,11 @@ haben**, eine Adresse dient heute nur den Mitteilungen, und es gibt einen Weg, d
 Betreiber setzt ein Passwort selbst** (Konten › „Neues Passwort“). Der Entwurf sagt, nextasks habe gar keinen Weg
 zurück; das stimmt nicht ganz.
 
-## 0. Stand (25.11.2026): Backend angebunden
+## 0. Stand (25.11.2026): Backend und Oberfläche angebunden
 
-Das Backend läuft auf **konten 0.3.9, oidc 1.1.0, post 0.1.1** (Zweig `konten`). Die Oberfläche zieht ein eigener
-Schritt nach; die Abschnitte 1 bis 13 unten sind die Bestandsaufnahme vor dem Umbau (sie stimmt), die Modulfassungen
-darin sind veraltet.
+Backend und Oberfläche laufen auf **konten 0.3.9, oidc 1.1.0, post 0.1.1 und dem Bausatz ui 0.1.1** (Zweig `konten`).
+Die Abschnitte 1 bis 13 unten sind die Bestandsaufnahme vor dem Umbau (sie stimmt), die Modulfassungen darin sind
+veraltet; Abschnitt 6 beschreibt den Plan der Oberfläche, gebaut ist sie wie in der Tabelle „Oberfläche“ hier.
 
 | Teil | Wo | Was |
 |---|---|---|
@@ -32,6 +32,27 @@ Kontos (bzw. der Eingabe), antwortet die Anmeldung wie die Sperre `wrong_credent
 „Bestand“ unverändert grün bleibt; der volle Topf des Absenders antwortet 429. Einladungen in einen Bereich gehen mit
 nextasks' eigener Mail (sie nennt den Bereich), die des Betreibers über post. `DELETE /api/me/email` braucht kein
 Passwort („Entfernen geht immer“). Gelöschte Konten: Name in `former_names` ohne Konto, für immer reserviert.
+
+### Oberfläche (Frontend)
+
+Aussehen aus dem Bausatz `frontend/src/vendor/nexui` mit nextasks' Petrol (`--nexui-*` in `styles/index.css`, hell und
+dunkel, auch die Avatar-Farben); jeder Knopf der Kontoseiten über `components/AccountButton.tsx` (Art und Symbol aus
+`BUTTONS`). Wortlaute `account.*` und `mail.*` kommen mit den Modulen (`i18n/index.ts`), Fehler über `accountErrorKey`
+mit den alten Kennungen (`lib/errors.ts`, `OLD_ACCOUNT_CODES`).
+
+| Bildschirm | Wo | Was |
+|---|---|---|
+| Einrichten, Anmelden, Passwort vergessen, Neues Passwort, Einladung, Adresse bestätigen | `pages/AuthPages.tsx` (`/setup`, `/login`, `/forgot`, `/reset/<token>`, `/invite/<token>`, `/confirm-email/<token>`) | Felder und Reihenfolge nach `SCREENS`; Anmelden mit „Benutzername oder E-Mail“, „Angemeldet bleiben“, „Passwort vergessen?“, Passkey, Anbieter; Code-Schritt mit Code oder Passkey; Einladung in einen Bereich und die des Betreibers mit einem Formular (`NewAccountForm`), angemeldet „Beitreten als …“ wie in 0.8.0 |
+| Sitzung abgelaufen | `components/SessionDialog.tsx`, `state/auth.tsx` | neu: endet die Sitzung auf einer offenen Seite, bleibt die Seite stehen, der Dialog fragt nach `sessionExpiredParts`; danach startet die Sync-Maschine neu und schickt, was wartete (`state/sync.tsx`, `session`) |
+| Mein Konto › Profil, Sicherheit | `pages/settings/AccountTab.tsx`, `SecurityBoxes.tsx`, `accountPages.ts` | Teile aus `PAGES`, danach nextasks' eigene (`APP_PAGES`: Zeitzone, Installieren, Abmelden; Anbieter); ein „Speichern“ für Anzeigename, Benutzername, E-Mail mit einer Passwort-Rückfrage (ohne Passwort `account.confirmFresh`) |
+| Benachrichtigungen › Mail | `components/Notifications.tsx` | zeigt die Adresse und ihren Zustand, ändern im Profil |
+| Server › Konten | `pages/settings/AccountsTab.tsx`, `accountList.ts` | Liste nach `ACCOUNT_LIST`, Fenster „Verwalten“ nach `MANAGE_DIALOG` (`APP_CAPS`: alles außer `restore`), Einladen nach `INVITE_DIALOG` ohne Rolle, `OPEN_INVITES`; darunter „API-Tokens aller Konten“ |
+| Mitglieder eines Bereichs | `components/MembersDialog.tsx` | Einladung per Mail mit freiem Anzeigenamen |
+| Server › Mail, Anmeldung | `pages/settings/ServerCards.tsx` (`MailCard`), `SignInCards.tsx` | Mailserver nach `MAIL_FIELDS`; Schalter „Zweiten Faktor für alle verlangen“ mit dem Hinweis des Moduls und „Passkeys erlaubt“ |
+
+Tests: `nexkonten.test.ts`, `nexpost.test.ts`, `nexui.vendored.test.ts` (Vorlagen der Module, ausgefüllt gegen den
+Testserver `test/fakeServer.ts`), `pages/accountPages.test.tsx` (Sitzung abgelaufen, Passwort vergessen). Playwright
+(`frontend/e2e`, zentral auszuführen): Einrichtungscode mit 16 Zeichen, „Username or email“, Verknüpfen im Dialog.
 
 ## 1. Bestand heute (0.8.0)
 
