@@ -13,6 +13,18 @@ zurück; das stimmt nicht ganz.
 
 ## 0. Stand (25.11.2026): Backend und Oberfläche angebunden
 
+**Nachgezogen auf konten 0.3.10, ui 0.1.2, oidc 1.1.1, post 0.1.2** (25.11.2026): Anmeldung über `login.sign_in`
+(der eigene Zweig „nur der Konto-Topf wartet“ ist weg, das Modul antwortet selbst 401); „5 frei“ heißt genau 5 (App-Tests
+angepasst, `emailaddr.SENDS_PER_HOUR` = 5); **Adresse entfernen nur mit Passwort** (`DELETE /api/me/email` nimmt
+`password`, ohne Passwort frische Anmeldung beim Anbieter; ersetzt „Entfernen geht immer“); **Profilbilder für alle
+angemeldeten Konten** (`avatars.may_see`, Web und `/api/app/1`; Namen bleiben bei der Regel gemeinsamer Bereiche);
+`accounts.password_changed_at` (Bestand leer) mit „Zuletzt geändert am“ unter Sicherheit; abgelaufene Einladungen bleiben
+in `GET /api/invites` mit `expired`, bis sie zurückgenommen sind; „Passwort vergessen“ schickt sofort, eine gescheiterte
+Mail kommt nicht in die Outbox (der Link verfällt); Fehler tragen `account_code` neben der alten Kennung, das Web liest
+sie über `accountErrorKeyOf`; Einladen mit `inviteRole: false`. Bereichseinladungen bleiben bei nextasks' eigener Mail:
+der Brief `invite_space` von post sagt „Mit dem Knopf legst du dein Konto an“, eine Bereichseinladung geht aber auch an
+Leute mit Konto (sie treten angemeldet bei).
+
 Backend und Oberfläche laufen auf **konten 0.3.9, oidc 1.1.0, post 0.1.1 und dem Bausatz ui 0.1.1** (Zweig `konten`).
 Die Abschnitte 1 bis 13 unten sind die Bestandsaufnahme vor dem Umbau (sie stimmt), die Modulfassungen darin sind
 veraltet; Abschnitt 6 beschreibt den Plan der Oberfläche, gebaut ist sie wie in der Tabelle „Oberfläche“ hier.
@@ -78,9 +90,6 @@ Home Assistant (WSL): 52 bestanden, ruff, `ruff format`, `mypy --strict` sauber.
 
 ### Offen
 
-- **Wer Profilbilder sieht:** nextasks zeigt Namen und Bilder weiter nur Konten mit gemeinsamem Bereich
-  (`services/visibility.py`, Vertrag 0.4); der Entwurf (Teil 2) sagt „alle angemeldeten Konten auf dem Server“. Nicht
-  umgestellt, weil es nextasks' eigene Datenschutzregel aufweicht: Entscheidung des Betreibers der Apps offen.
 - Sichtprüfung im Browser, Playwright, Probe auf einer Kopie der Live-Datenbank.
 
 ## 1. Bestand heute (0.8.0)
