@@ -124,7 +124,8 @@
         "title": "Über nextasks",
         "text": "Version, Lizenz, Herkunft und ob es eine neuere Version gibt."
       }
-    }
+    },
+    "things": "Aufgaben"
   },
   "server": {
     "proxyUnknown": "Anfragen kommen über einen Proxy, aber NEXTASKS_TRUSTED_PROXIES ist nicht gesetzt. Dann sieht nextasks alle als einen Absender: Wer oft falsch rät, bremst jeden aus, der sich in einem hier noch nie benutzten Browser anmeldet. Trag die Adresse des Proxys in NEXTASKS_TRUSTED_PROXIES ein. Steht kein Proxy davor, kannst du das ignorieren.",
@@ -147,15 +148,6 @@
     "builtIn": "eingebaut",
     "template": "Vorlage herunterladen",
     "upload": "Sprache hochladen",
-    "log": "Log",
-    "logHint": "Vier Stufen. Die beiden tiefen schalten sich nach einer Stunde selbst ab. Nie Inhalte von Aufgaben, Passwörter oder Schlüssel.",
-    "level": "Stufe",
-    "levels": {
-      "quiet": "Ruhig",
-      "normal": "Normal",
-      "detailed": "Ausführlich (1 Stunde)",
-      "trace": "Alles (1 Stunde)"
-    },
     "uploadMax": "Größte Datei (MB)",
     "uploadCeiling": "Höchstens {{mb}} MB (NEXTASKS_UPLOAD_MAX_MB).",
     "stripLocation": "Ort und Gerät aus Fotos entfernen",
@@ -209,16 +201,8 @@
     "remove": "Entfernen",
     "languageCode": "Sprachcode",
     "languageAdded": "Sprache hinzugefügt. Sie erscheint nach dem Neuladen unter Einstellungen, Profil.",
-    "allLevels": "Alle Stufen",
-    "logSearch": "Enthält …",
-    "refresh": "Aktualisieren",
-    "logEmpty": "Nichts im Log.",
-    "logClear": "Log leeren",
-    "logClearText": "Jede Zeile geht. Neue kommen wie bisher.",
-    "logUntil": "Um {{time}} zurück auf normal.",
     "files": "Dateien",
     "filesHint": "Dateien an Aufgaben: wie groß sie sein dürfen und was beim Hochladen herausfällt.",
-    "detail": "Ausführlichkeit",
     "ownSecondFactorFirst": "Richte zuerst deinen eigenen zweiten Faktor ein (Mein Konto, Sicherheit), sonst wärst du der Erste, der nicht mehr weiterkommt. Nicht betroffen ist, wer sich über einen Anbieter anmeldet, bei dem „{{trusts}}“ an ist.",
     "apiTokens": {
       "title": "API-Token",

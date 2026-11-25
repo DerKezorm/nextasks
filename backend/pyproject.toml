@@ -1,10 +1,13 @@
 [tool.ruff]
 target-version = "py313"
 line-length = 120
-# The shared sign-in module and its contract tests come unchanged from bauplaene/oidc and are linted there; the
-# references for repeating, the merge rule, order keys and push come unchanged from nextasks-ios/docs/pruefsaetze.
-extend-exclude = ["app/vendor/nexoidc", "tests/nexoidc", "app/services/wiederholung.py", "app/services/gleichstand.py",
-                  "app/services/position.py", "app/services/push_crypto.py"]
+# The shared sign-in, log, backup and key modules and their contract tests come unchanged from bauplaene and are
+# linted there; the references for repeating, the merge rule, order keys and push come unchanged from
+# nextasks-ios/docs/pruefsaetze.
+extend-exclude = ["app/vendor/nexoidc", "tests/nexoidc", "app/vendor/nexlog", "tests/nexlog",
+                  "app/vendor/nexsicherung", "tests/nexsicherung", "app/vendor/nexschluessel", "tests/nexschluessel",
+                  "app/services/wiederholung.py", "app/services/gleichstand.py", "app/services/position.py",
+                  "app/services/push_crypto.py"]
 
 [tool.ruff.lint]
 extend-select = ["E501", "E402", "S608", "B", "I"]
