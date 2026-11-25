@@ -171,3 +171,19 @@ def operator(client: TestClient) -> Account:
 def account(client: TestClient) -> Account:
     """The same as ``operator``, under the name the tests from nexlore use."""
     return _operator(client)
+
+
+def purge_deleted(account_id: int) -> None:
+    """A deleted account after its 30 days to bring it back: gone for good, as the hourly round leaves it
+    (``manage.purge_due``, konten 1.1.0)."""
+    from datetime import timedelta
+
+    from app.services.konten_store import KontenStore
+    from app.vendor.nexkonten import manage
+
+    with SessionLocal() as db:
+        row = db.get(Account, account_id)
+        assert row is not None and row.deleted_at is not None, "deleted, not yet gone"
+        row.deleted_at = row.deleted_at - timedelta(days=manage.DELETE_DAYS, minutes=1)
+        db.commit()
+        assert account_id in manage.purge_due(KontenStore(db))

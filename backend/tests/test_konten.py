@@ -22,7 +22,7 @@ from app.main import app
 from app.models import Account, ApiToken, AppDevice, Comment, Member, Reminder
 from app.models_accounts import FormerName
 from app.routers import auth as auth_router
-from app.services import apitokens, devices, mailer, settings_service
+from app.services import apitokens, devices, post_store, settings_service
 
 from .conftest import PASSWORD, TAB, make_account, sign_in
 from .sync_helpers import API, make_list, make_reminder, new_id, now_ms, person, put, shared_space
@@ -35,7 +35,7 @@ NEW = "A-long-enough-password"
 def post(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, Any]]:
     """A mail server and the public address are set; what is mailed lands in this list instead."""
     sent: list[tuple[str, Any]] = []
-    monkeypatch.setattr(mailer, "send_message", lambda _db, to, message, *a, **k: sent.append((to, message)))
+    monkeypatch.setattr(post_store, "send_letter", lambda _db, letter, *a, **k: sent.append((letter.to, letter)))
     with SessionLocal() as db:
         settings_service.save(db, {"smtp_host": "smtp.example.com", "smtp_from": "tasks@example.com",
                                    "public_url": PUBLIC})
@@ -139,7 +139,7 @@ def test_forgot_password_mails_a_link_to_an_address_that_counts_and_says_the_sam
 def test_without_a_mail_server_forgot_password_mails_nothing(client: TestClient,
                                                               monkeypatch: pytest.MonkeyPatch) -> None:
     sent: list[Any] = []
-    monkeypatch.setattr(mailer, "send_message", lambda *a, **k: sent.append(a))
+    monkeypatch.setattr(post_store, "send_letter", lambda *a, **k: sent.append(a))
     make_account("anna")
     assert client.get("/api/auth/methods").json()["forgot_mail"] is False
     assert stranger().post("/api/auth/forgot", json={"name": "anna"}).status_code == 202
@@ -231,7 +231,7 @@ def test_a_space_invitation_reaches_an_account_that_has_one_and_it_joins_signed_
 
 @pytest.fixture
 def postbox_free_mail(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(mailer, "send_message", lambda *a, **k: None)
+    monkeypatch.setattr(post_store, "send_letter", lambda *a, **k: None)
     with SessionLocal() as db:
         settings_service.save(db, {"smtp_host": "smtp.example.com", "smtp_from": "tasks@example.com",
                                    "public_url": PUBLIC})

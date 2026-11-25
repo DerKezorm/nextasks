@@ -30,7 +30,7 @@ from ..errors import detail, error
 from ..models import Account as AccountRow
 from ..models import Invite, Notice, Space, utcnow
 from ..security import MIN_PASSWORD, SESSION_COOKIE, brake, session_account
-from ..services import accounts, kontenpost, mailer, settings_service, spaces
+from ..services import accounts, kontenpost, post_store, settings_service, spaces
 from ..services.accounts import AccountError
 from ..services.konten_store import KontenStore
 from ..services.records import format_stamp
@@ -151,15 +151,16 @@ def invite(payload: InviteIn, request: Request, operator: OperatorAccount, db: D
     if payload.send:
         try:
             known = db.scalar(select(AccountRow).where(func.lower(AccountRow.email) == email.lower()).limit(1))
-            language = mailer.mail_language(known.language if known else "", known.browser_language if known else "",
-                                            operator.language, payload.language, operator.browser_language)
-            mailer.send_invite(db, email, link, by=operator.display_name or operator.name, space=None,
+            language = post_store.mail_language(known.language if known else "",
+                                                known.browser_language if known else "", operator.language,
+                                                payload.language, operator.browser_language)
+            post_store.send_invite(db, email, link, by=operator.display_name or operator.name, space=None,
                                until=row.expires_at.date(), language=language, days=payload.days)
             sent = True
             # Whoever comes through this link with this address proved it.
             row.mailed = True
             db.commit()
-        except mailer.MailError as exc:
+        except post_store.MailError as exc:
             db.delete(row)
             db.commit()
             raise error(exc.code, str(exc), 502) from exc
@@ -193,7 +194,7 @@ def invite_to_space(space_id: Annotated[str, PathParam(max_length=36)], payload:
     email = payload.email.strip()
     if not accounts.EMAIL_PATTERN.match(email):
         raise error("invalid_email", "This is not a mail address.", 422)
-    if not mailer.configured(db):
+    if not post_store.configured(db):
         raise error("mail_off", "No mail server is set up.", 409)
     if not settings_service.public_url(db):
         raise error("public_url_missing", "Mail needs the public address of nextasks; the operator sets it.", 409)
@@ -217,12 +218,12 @@ def invite_to_space(space_id: Annotated[str, PathParam(max_length=36)], payload:
         raise fail(exc) from exc
     link = link_of(db, request, token)
     known = db.scalar(select(AccountRow).where(func.lower(AccountRow.email) == email.lower()).limit(1))
-    language = mailer.mail_language(known.language if known else "", known.browser_language if known else "",
+    language = post_store.mail_language(known.language if known else "", known.browser_language if known else "",
                                     own.language, payload.language, own.browser_language)
     try:
-        mailer.send_invite(db, email, link, by=own.display_name or own.name, space=space.name,
+        post_store.send_invite(db, email, link, by=own.display_name or own.name, space=space.name,
                            until=row.expires_at.date(), language=language, days=7, member=known is not None)
-    except mailer.MailError as exc:
+    except post_store.MailError as exc:
         db.delete(row)
         db.commit()
         raise error(exc.code, str(exc), 502) from exc
@@ -377,7 +378,7 @@ def accept(token: Token, payload: AcceptIn, request: Request, response: Response
     # (konten 1.0.0): a failed mail leaves the address waiting, "Send the link again" in the profile sends it anew.
     try:
         kontenpost.send_now(db, accepted.mail, keep=False)
-    except mailer.MailError as exc:
+    except post_store.MailError as exc:
         logger.warning("Confirmation link not sent after an invitation code=%s", exc.code)
     account = db.get(AccountRow, int(accepted.account.id))
     assert account is not None

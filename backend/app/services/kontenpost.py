@@ -5,7 +5,7 @@ else English, and sends it.
 
 Two ways out, as in 0.8.0 for what somebody waits for:
 
-- ``send_now``: at once, through ``mailer.send_message`` (the link for a new address, a link for a new password, the
+- ``send_now``: at once, through ``post_store.send_letter`` (the link for a new address, a link for a new password, the
   invitation). A server that does not take it leaves the letter in the outbox for another try
   (``services/post_store.py``), unless the caller wants to hear it failed (``keep=False``).
 - ``queue``: into the outbox (a new sign-in, a new username, a changed address, a reset second factor), sent within a
@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 
 from ..models import OPERATOR, Account
 from ..vendor import nexkonten, nexpost
-from . import clock, mailer, settings_service
+from . import clock, post_store, settings_service
 from .post_store import PostStore
 
 logger = logging.getLogger("nextasks.mail")
@@ -48,7 +48,7 @@ def link_for(db: Session, mail: nexkonten.Mail) -> str:
 
 def can_mail(db: Session) -> bool:
     """A mail server and the public address (a link in a mail never points anywhere a request made up)."""
-    return mailer.configured(db) and bool(settings_service.public_url(db))
+    return post_store.configured(db) and bool(settings_service.public_url(db))
 
 
 def language_for(db: Session, account: Account | None) -> str:
@@ -80,7 +80,7 @@ def letter_of(db: Session, mail: nexkonten.Mail, *, by: str = "", where: str = "
 def queue(db: Session, mail: nexkonten.Mail | None, *, by: str = "", where: str = "", days: int = 0) -> bool:
     """Into the outbox (committed here); False when nothing went in (no mail, no server, an address the post module
     refuses)."""
-    if mail is None or not mailer.configured(db):
+    if mail is None or not post_store.configured(db):
         return False
     try:
         letter = letter_of(db, mail, by=by, where=where, days=days)
@@ -94,9 +94,9 @@ def queue(db: Session, mail: nexkonten.Mail | None, *, by: str = "", where: str 
 
 def send_now(db: Session, mail: nexkonten.Mail | None, *, days: int = 0, keep: bool = True) -> bool:
     """At once through the mail server. ``keep``: a mail the server did not take waits in the outbox for another
-    try (True: it counts as on its way). ``keep=False``: ``mailer.MailError`` for the caller. False when there is
+    try (True: it counts as on its way). ``keep=False``: ``post_store.MailError`` for the caller. False when there is
     nothing to send or no server."""
-    if mail is None or not mailer.configured(db):
+    if mail is None or not post_store.configured(db):
         return False
     try:
         letter = letter_of(db, mail, days=days)
@@ -104,10 +104,10 @@ def send_now(db: Session, mail: nexkonten.Mail | None, *, days: int = 0, keep: b
         logger.warning("Mail not sent kind=%s reason=%s", mail.kind, type(exc).__name__)
         if keep:
             return False
-        raise mailer.MailError("invalid_email", "This is not a mail address.") from exc
+        raise post_store.MailError("invalid_email", "This is not a mail address.") from exc
     try:
-        mailer.send_message(db, letter.to, letter)
-    except mailer.MailError:
+        post_store.send_letter(db, letter)
+    except post_store.MailError:
         if not keep:
             raise
         nexpost.outbox.queue(PostStore(db), letter)

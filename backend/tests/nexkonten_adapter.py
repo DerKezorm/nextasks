@@ -416,6 +416,50 @@ class Adapter(StandardAdapter):
             protocol.clear_caches()
             attempt.forget_used_states()
 
+    def age_deletion(self, account_id: Any, days: int) -> None:
+        from app.db import SessionLocal
+        from app.models import Account
+
+        with SessionLocal() as db:
+            row = db.get(Account, int(account_id))
+            assert row is not None and row.deleted_at is not None
+            row.deleted_at = row.deleted_at - timedelta(days=days)
+            db.commit()
+
+    def provider_active(self, on: bool) -> None:
+        """One enabled provider in nextasks' table of the module oidc, or none."""
+        from sqlalchemy import delete
+
+        from app.db import SessionLocal
+        from app.models import OidcProvider
+
+        with SessionLocal() as db:
+            db.execute(delete(OidcProvider).where(OidcProvider.slug == "contract"))
+            if on:
+                db.add(OidcProvider(slug="contract", label="Contract", issuer="https://auth.example.com/",
+                                    client_id="nextasks", client_secret_enc="", enabled=True))
+            db.commit()
+
+    def readiness(self, operator: Any) -> dict[str, Any]:
+        """nextasks' route ``/api/server/sign-in/readiness``, over https, signed in as ``operator``."""
+        from fastapi.testclient import TestClient
+
+        from app.db import SessionLocal
+        from app.main import app
+        from app.models import Account
+        from app.security import SESSION_COOKIE, start_session
+        from tests.conftest import TAB
+
+        with SessionLocal() as db:
+            row = db.get(Account, int(operator))
+            assert row is not None
+            token = start_session(db, row, "127.0.0.1", "tests")
+        with TestClient(app, base_url="https://testserver", headers=TAB) as client:
+            client.cookies.set(SESSION_COOKIE, token)
+            answer = client.get("/api/server/sign-in/readiness")
+        assert answer.status_code == 200, answer.text
+        return answer.json()
+
     def sign_in(self, typed: str, password: str) -> Any:
         """Through ``POST /api/auth/login`` (field ``name``) up to the session or the code of the second factor. The
         brake is emptied first: it counts in memory and would answer in a test that tries many."""

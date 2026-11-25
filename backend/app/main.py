@@ -53,6 +53,8 @@ from .routers import backups as backups_router
 from .routers import locales as locales_router
 from .routers import logs as logs_router
 from .routers import passkeys as passkeys_router
+from .routers import server_mail as server_mail_router
+from .routers import server_signin as server_signin_router
 from .routers import settings as settings_router
 from .routers import totp as totp_router
 from .security import HashingBusy, purge_sessions
@@ -71,14 +73,16 @@ from .services import (
     trash,
     webpush,
 )
+from .services.konten_store import KontenStore
 from .vendor.nexkonten import factor as konten_factor
+from .vendor.nexkonten import manage as konten_manage
 
 logger = logging.getLogger("nextasks")
 
 ROUTERS = [
     health, about, locales_router, logs_router, auth, totp_router, passkeys_router, oidc, accounts_router, invites,
     settings_router, backups_router, avatars_router, apitokens, v1, app_pairing, app1, notifications, stats,
-    focus, sweep, history,
+    focus, sweep, history, server_signin_router, server_mail_router,
 ]
 
 
@@ -109,6 +113,12 @@ async def _sweep_forever(stop: asyncio.Event) -> None:
         if rounds % 60 == 0:
             with SessionLocal() as db:
                 purge_sessions(db)
+            # Accounts deleted 30 days ago go for good (the shared account module, konten 1.1.0).
+            try:
+                with SessionLocal() as db:
+                    konten_manage.purge_due(KontenStore(db))
+            except Exception:
+                logger.exception("Removing deleted accounts failed")
         rounds += 1
         try:
             await asyncio.wait_for(stop.wait(), 60)

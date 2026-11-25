@@ -178,7 +178,7 @@ def due_round(now: datetime | None = None) -> int:
             key = f"{row.id}:{row.due_date}T{row.due_time}"
             for account_id in recipients(db, row):
                 account = db.get(Account, account_id)
-                if account is None or account.blocked_at is not None:
+                if account is None or account.shut:
                     continue
                 when = moment(row.due_date, row.due_time, account.timezone)
                 if not now - LATE < when <= now:
@@ -224,7 +224,7 @@ def _assigned(db: Session, reminder_id: str, people: list[int], actor_id: int) -
     members = set(spaces.member_ids(db, row.space_id))
     for account_id in people:
         account = db.get(Account, account_id)
-        if account_id == actor_id or account_id not in members or account is None or account.blocked_at:
+        if account_id == actor_id or account_id not in members or account is None or account.shut:
             continue
         language = spaces.language_of(account)
         text = with_note(_text(language, "assigned", name=_name(db, account_id, actor_id, language)), row, language)
@@ -323,7 +323,7 @@ def _commented(db: Session, comment_id: str) -> None:
     for event, people in (("mention", mentioned), ("comment", others)):
         for account_id in people:
             account = db.get(Account, account_id)
-            if account is None or account.blocked_at is not None:
+            if account is None or account.shut:
                 continue
             if event == "comment":
                 bundle = db.get(CommentBundle, (account_id, task.id))
@@ -356,7 +356,7 @@ def _tell_bundle(db: Session, bundle: CommentBundle) -> bool:
     opened = bundle.opened_at
     db.delete(bundle)
     db.commit()
-    if not events or account is None or task is None or account.blocked_at is not None or in_bin(db, task):
+    if not events or account is None or task is None or account.shut or in_bin(db, task):
         return False
     if db.get(Member, (task.space_id, account.id)) is None:
         return False
@@ -434,7 +434,7 @@ def bundle_round(now: datetime | None = None) -> int:
             events = list(bundle.events or [])
             db.delete(bundle)
             db.commit()
-            if account is None or list_row is None or not events or account.blocked_at is not None:
+            if account is None or list_row is None or not events or account.shut:
                 continue
             if db.get(Member, (list_row.space_id, account.id)) is None:
                 continue

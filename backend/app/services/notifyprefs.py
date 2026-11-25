@@ -196,7 +196,7 @@ def dispatch(db: Session, account: Account, event: str, key: str, make: Maker, s
     ``at_once`` the short channels are tried right here, as the push of an event was before; only a failure goes to
     the outbox for another try. Before the call nothing may wait to be committed (a push takes its time); the caller
     commits after. Returns how many were sent or queued (a key handled before counts as none)."""
-    if account.blocked_at is not None:
+    if account.shut:
         return 0
     base = settings_service.public_url(db)
     language = spaces.language_of(account)

@@ -15,7 +15,7 @@ from app.models import OPERATOR, Account, AuthSession, utcnow
 from app.security import MAX_FAILURES, SESSION_COOKIE, decrypt_secret, encrypt_secret, hash_token
 from app.services import settings_service
 
-from .conftest import PASSWORD, SETUP_CODE, TAB, make_account, sign_in
+from .conftest import PASSWORD, SETUP_CODE, TAB, make_account, purge_deleted, sign_in
 
 GOOD = "a long enough password"
 
@@ -229,6 +229,11 @@ def test_the_operator_manages_accounts(client: TestClient, operator: Account) ->
     assert anna_client.get("/api/auth/me").status_code == 401
     assert client.put(f"/api/accounts/{anna.id}/role", json={"role": "operator", "current_password": PASSWORD}).json()["role"] == OPERATOR
     assert client.request("DELETE", f"/api/accounts/{anna.id}", json={"current_password": PASSWORD}).status_code == 204
+    # Deleted, for 30 days to bring back (konten 1.1.0): listed with the day it goes, shut out at once.
+    listed = {row["name"]: row for row in client.get("/api/accounts").json()}
+    assert listed["anna"]["deleted_at"] and listed["anna"]["purge_at"]
+    assert anna_client.get("/api/auth/me").status_code == 401
+    purge_deleted(anna.id)
     assert [row["name"] for row in client.get("/api/accounts").json()] == ["tester"]
 
 

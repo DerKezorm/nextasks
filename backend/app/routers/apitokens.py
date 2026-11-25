@@ -146,7 +146,7 @@ class AnyTokenOut(BaseModel):
 def _any(row: ApiToken, owner: AccountRow | None) -> AnyTokenOut:
     return AnyTokenOut(id=row.id, account=owner.name if owner else "",
                        account_display=(owner.display_name or owner.name) if owner else "",
-                       account_blocked=bool(owner and owner.blocked_at is not None), name=row.name, level=row.level,
+                       account_blocked=bool(owner and owner.shut), name=row.name, level=row.level,
                        prefix=row.prefix, spaces=None if row.spaces is None else len(row.spaces),
                        created_at=row.created_at, last_used_at=row.last_used_at, expires_at=row.expires_at,
                        blocked=row.blocked_at is not None)

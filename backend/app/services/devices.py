@@ -263,7 +263,7 @@ def authenticate(db: Session, key: str | None) -> Caller | None:
     if row is None:
         return None
     account = db.get(Account, row.account_id)
-    if account is None or account.blocked_at is not None or totp.setup_required(db, account):
+    if account is None or account.shut or totp.setup_required(db, account):
         return None
     now = utcnow()
     if row.last_seen_at is None or now - row.last_seen_at >= SEEN_EVERY:

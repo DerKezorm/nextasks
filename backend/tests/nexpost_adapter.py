@@ -104,3 +104,27 @@ class Adapter(StandardAdapter):
             ),
             queued=0,
         )
+
+    def account(self, address: str, *, language: str, name: str, confirmed: bool) -> Any:
+        """An account of nextasks with this address: confirmed means it counts (proven by its link, as in 0.8.0)."""
+        from app.db import SessionLocal
+        from app.models import MEMBER, Account
+        from app.security import hash_password
+
+        with SessionLocal() as db:
+            row = Account(name=f"post{abs(hash(address)) % 10**8}", role=MEMBER, password_hash=hash_password(password()),
+                          email=address, email_confirmed=address if confirmed else "", language=language,
+                          display_name=name)
+            db.add(row)
+            db.commit()
+            return row.id
+
+    def client(self, role: str) -> Any:
+        from app.models import MEMBER, OPERATOR
+        from tests.conftest import make_account, new_client
+
+        if role == "anonymous":
+            return new_client()
+        name = "postop" if role == "operator" else "postmember"
+        return new_client(make_account(name, OPERATOR if role == "operator" else MEMBER))
+

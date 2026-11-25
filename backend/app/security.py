@@ -135,7 +135,7 @@ def session_account(db: Session, token: str | None) -> Account | None:
             db.commit()
         return None
     account = db.get(Account, int(session.account_id))
-    if account is None or account.blocked_at is not None:
+    if account is None or account.shut:
         return None
     if db.dirty or db.new:
         # ``current`` wrote the last use (at most every five minutes); the account's last use goes with it.

@@ -134,6 +134,12 @@ class Account(Base):
     locked_until: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
     #: Set when the operator blocked the account: no sign-in, sessions and devices end at once.
     blocked_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
+    #: Set when the operator deleted the account (the shared account module 1.1.0): shut out like a blocked one, for 30
+    #: days the operator brings it back, then it goes for good (``manage.purge_due`` in the hourly round).
+    deleted_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
+    #: Light, dark or as the device says (``light``, ``dark``, ``system``), for the account on every device; empty:
+    #: not chosen yet (the browser's value of before is taken once, ``profiles.adopt_theme``).
+    theme: Mapped[str] = mapped_column(String(16), default="", server_default="")
     #: The second factor (``services/totp.py``): the seed encrypted with the server secret, empty while off; the
     #: recovery codes as a JSON list of SHA-256 hashes; the time step of the last code taken (no replay).
     totp_secret_enc: Mapped[str] = mapped_column(Text, default="")
@@ -163,6 +169,11 @@ class Account(Base):
     #: "" for a picture the person set (and every picture of 0.8.0), ``provider`` for one taken from a sign-in
     #: provider: a provider's picture never replaces an own one.
     avatar_source: Mapped[str] = mapped_column(String(16), default="", server_default="")
+
+    @property
+    def shut(self) -> bool:
+        """Blocked or deleted: no way in, by no session, device, token or calendar program."""
+        return self.blocked_at is not None or self.deleted_at is not None
     #: The account's own preferences of the interface; only what it chose.
     preferences: Mapped[Any] = mapped_column(JSON, nullable=True)
     #: What the device cookies of this account are signed with (``security.device_token``): random per account, so

@@ -47,6 +47,7 @@ from ..models import (
     AppDevice,
     AppPairing,
     AuthSession,
+    OidcProvider,
     new_device_key,
     utcnow,
 )
@@ -80,6 +81,7 @@ from ..vendor.nexkonten import Account as KontoAccount
 from ..vendor.nexkonten.model2 import KIND_BROWSER, KIND_DEVICE, KIND_WAITING, STAGE_FULL
 from ..vendor.nexkonten.model2 import Passkey as PasskeyData
 from ..vendor.nexkonten.model2 import Session as SessionData
+from ..vendor.nexkonten.model3 import SignInSettings
 
 logger = logging.getLogger("nextasks.auth")
 
@@ -89,6 +91,7 @@ OWN = "own"
 #: already; "Passkeys allowed" is new and on from the start.
 SWITCH_FACTOR_REQUIRED = "two_factor_required"
 SWITCH_PASSKEYS = "passkeys_allowed"
+SWITCH_PASSWORD_LOGIN = "password_login"
 #: The authenticator being set up is sealed apart from a confirmed one.
 PENDING_TOTP_CONTEXT = "totp-pending"
 #: A paired iPhone or iPad (``app_devices``) in the list "Signed-in devices": its uid is its id with this in front.
@@ -197,7 +200,7 @@ class KontenStore:
                           else nexkonten.EMAIL_OWN),
             pending_email=pending_of(row),
             has_password=row.sign_in == SIGN_IN_PASSWORD and bool(row.password_hash),
-            blocked=row.blocked_at is not None,
+            blocked=row.shut,
             operator=row.role == OPERATOR,
             picture=picture,
             language=row.language or "",
@@ -205,6 +208,9 @@ class KontenStore:
             offered_email_provider=(row.provider_email_from or "") if offered else "",
             declined_email=row.provider_email_off or "",
             password_changed_at=_aware(row.password_changed_at) if row.password_changed_at else None,
+            blocked_at=_aware(row.blocked_at) if row.blocked_at else None,
+            deleted_at=_aware(row.deleted_at) if row.deleted_at else None,
+            theme=row.theme or "",
         )
 
     @staticmethod
@@ -939,6 +945,101 @@ class KontenStore:
             row.avatar_hash = ""
             row.avatar_source = ""
             self.db.flush()
+
+    # --- The operator's functions, the theme, the sign-in switches (konten 1.1.0, ``model3``) ----------------------
+    def active_operators(self) -> int:
+        return int(self.db.scalar(
+            select(func.count()).select_from(Account)
+            .where(Account.role == OPERATOR, Account.blocked_at.is_(None), Account.deleted_at.is_(None))
+        ) or 0)
+
+    def set_operator(self, account_id: AccountId, operator: bool) -> None:
+        row = self._row(account_id)
+        if row is not None:
+            row.role = OPERATOR if operator else MEMBER
+            self.db.flush()
+
+    def set_blocked(self, account_id: AccountId, at: datetime | None) -> None:
+        row = self._row(account_id)
+        if row is None:
+            return
+        row.blocked_at = at
+        if at is None:
+            row.failed_logins = 0
+            row.locked_until = None
+        self.db.flush()
+
+    def set_deleted(self, account_id: AccountId, at: datetime | None) -> None:
+        row = self._row(account_id)
+        if row is not None:
+            row.deleted_at = at
+            self.db.flush()
+
+    def shut_out(self, account_id: AccountId) -> None:
+        """What blocking ended in 0.8.0: every browser session and sign-in that waits, every paired iPhone, the key of
+        known browsers. API tokens and calendar subscriptions stay, refused while the account is shut
+        (``Account.shut``)."""
+        from ..vendor.nexkonten import factor
+        from . import totp
+
+        self.db.execute(delete(AppDevice).where(AppDevice.account_id == int(account_id)))
+        self.db.execute(delete(AuthSession).where(AuthSession.account_id == int(account_id)))
+        self.db.execute(delete(AppPairing).where(AppPairing.account_id == int(account_id)))
+        totp.forget_account(int(account_id))
+        factor.drop_waiting(int(account_id))
+        self.renew_device_key(account_id)
+
+    def deleted_before(self, moment: datetime) -> list[AccountId]:
+        return list(self.db.scalars(
+            select(Account.id).where(Account.deleted_at.is_not(None), Account.deleted_at <= moment)
+        ))
+
+    def purge_account(self, account_id: AccountId) -> None:
+        """As deleting did in 0.8.0 (``accounts.delete_account``): every space left (its reminders stay; where it was
+        the last manager, the member who joined first becomes manager), its space "Private" gone, the name reserved
+        for good."""
+        from . import accounts
+
+        row = self._row(account_id)
+        if row is not None:
+            accounts.delete_account(self.db, row)
+
+    def set_storage_limit(self, account_id: AccountId, limit: int | None) -> None:
+        """nextasks has no storage limit per account (the module's table): never called."""
+        raise NotImplementedError("nextasks has no storage limit per account")
+
+    def set_right(self, account_id: AccountId, right: str, allowed: bool) -> None:
+        """nextasks has no rights per account (the module's table): never called."""
+        raise NotImplementedError("nextasks has no rights per account")
+
+    def set_theme(self, account_id: AccountId, theme: str) -> None:
+        row = self._row(account_id)
+        if row is not None:
+            row.theme = theme
+            self.db.flush()
+
+    def sign_in_settings(self) -> SignInSettings:
+        from . import settings_service
+
+        return SignInSettings(
+            password_login=bool(settings_service.get(self.db, SWITCH_PASSWORD_LOGIN)),
+            factor_required=self.factor_required(),
+            passkeys_allowed=self.passkeys_allowed(),
+        )
+
+    def save_sign_in_settings(self, settings: SignInSettings) -> None:
+        from . import settings_service
+
+        settings_service.save(self.db, {
+            SWITCH_PASSWORD_LOGIN: settings.password_login,
+            SWITCH_FACTOR_REQUIRED: settings.factor_required,
+            SWITCH_PASSKEYS: settings.passkeys_allowed,
+        }, commit=False)
+
+    def active_providers(self) -> int:
+        return int(self.db.scalar(
+            select(func.count()).select_from(OidcProvider).where(OidcProvider.enabled.is_(True))
+        ) or 0)
 
     # --- Transaction ---------------------------------------------------------------------------------------------
     def commit(self) -> None:

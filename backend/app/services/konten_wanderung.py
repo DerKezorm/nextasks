@@ -7,6 +7,8 @@ a second start finds nothing to do, and 0.8.0 still runs on the result (it ignor
   never both get through). 0.8.0 always wrote them in lower case, so the index fits every database it made; should a
   database hold two names that differ only in case anyway, the index is left out with a warning and the start goes on
   (both still sign in with the name written exactly).
+- At the first start of the shared account module 1.1.0 (decided E23): every address that counts is marked proven, so
+  addresses of before the update need no link; only one entered from now on waits for its link.
 - Addresses get an index without regard to case, **not** a unique one: 0.8.0 let two accounts hold one address (only
   one of them could confirm it), and such a pair signs in by name only (the module, rule 3 of the draft).
 """
@@ -22,8 +24,15 @@ from sqlalchemy.engine import Engine
 logger = logging.getLogger("nextasks.db")
 
 
-def run(engine: Engine) -> None:
+def run(engine: Engine, *, first_110: bool = False) -> None:
     with engine.begin() as connection:
+        if first_110:
+            proven = connection.execute(text(
+                "UPDATE accounts SET email_confirmed = email WHERE email != '' "
+                "AND lower(email) = lower(email_counted) AND lower(coalesce(email_confirmed, '')) != lower(email)"
+            )).rowcount
+            if proven:
+                logger.info("Addresses of before marked as proven count=%s", proven)
         missing = [row[0] for row in connection.execute(text("SELECT id FROM auth_sessions WHERE uid IS NULL"))]
         for session_id in missing:
             connection.execute(text("UPDATE auth_sessions SET uid = :uid WHERE id = :id"),

@@ -62,7 +62,7 @@ from ..services import (
     emailaddr,
     kontenpost,
     locales,
-    mailer,
+    post_store,
     settings_service,
     spaces,
     totp,
@@ -283,7 +283,18 @@ def account_view(account: AccountRow, db: Session | None = None) -> dict[str, An
         "last_seen_at": account.last_seen_at.isoformat() if account.last_seen_at else None,
         "avatar": account.avatar_at.isoformat() if account.avatar_at else None,
         "avatar_hash": account.avatar_hash or None,
+        # Light, dark or as the device says, for the account on every device (konten 1.1.0); "" not chosen yet.
+        "theme": account.theme or "",
+        # The box "Address not confirmed yet" with "Send link" (konten 1.1.0, E23).
+        "email_needs_proof": _needs_proof(db, account),
     }
+
+
+def _needs_proof(db: Session | None, account: AccountRow) -> bool:
+    if db is None:
+        return False
+    konto = KontenStore(db).get_account(account.id)
+    return bool(konto) and nexkonten.profiles.needs_proof(konto, mail_server=post_store.configured(db))
 
 
 def known_device(db: Session, request: Request, response: Response, account: AccountRow) -> None:
@@ -531,7 +542,7 @@ def me(account: Account, db: DbSession, request: Request) -> dict[str, Any]:
     spared = session_by_provider(db, request.cookies.get(SESSION_COOKIE))
     return {
         **account_view(account, db),
-        "mail": mailer.configured(db),
+        "mail": post_store.configured(db),
         # A link for a new address can go out (a mail server and the public address); without, an address counts at
         # once.
         "mail_links": kontenpost.can_mail(db),
@@ -582,7 +593,7 @@ def change_address(db: Session, row: AccountRow, address: str, *, password: str,
     if changed.mail is not None:
         try:
             kontenpost.send_now(db, changed.mail, keep=False)
-        except mailer.MailError as exc:
+        except post_store.MailError as exc:
             profiles.withdraw_email_change(KontenStore(db), row.id)
             raise error(exc.code, "The mail server did not take the mail.", 409 if exc.code == "mail_off" else 502) \
                 from exc
@@ -737,6 +748,32 @@ def set_language(payload: LanguageIn, account: Account, db: DbSession) -> dict[s
     row.language = check_language(payload.language)
     db.commit()
     return account_view(row, db)
+
+
+class ThemeIn(BaseModel):
+    theme: str = Field(max_length=16)
+
+
+class BrowserThemeIn(BaseModel):
+    #: What this browser kept before (``localStorage``, raw); taken once while the account has chosen nothing.
+    value: str = Field(default="", max_length=40)
+
+
+@router.put("/me/theme", summary="Light, dark or as the device says, for the own account on every device")
+def set_theme(payload: ThemeIn, account: Account, db: DbSession) -> dict[str, Any]:
+    try:
+        profiles.change_theme(KontenStore(db), account.id, payload.theme)
+    except nexkonten.AccountError as exc:
+        raise fail(exc) from exc
+    row = db.get(AccountRow, account.id)
+    assert row is not None
+    db.refresh(row)
+    return account_view(row, db)
+
+
+@router.post("/me/theme/adopt", summary="Take the theme this browser kept, once, while the account has none")
+def adopt_theme(payload: BrowserThemeIn, account: Account, db: DbSession) -> dict[str, str]:
+    return {"theme": profiles.adopt_theme(KontenStore(db), account.id, payload.value)}
 
 
 #: What an account may set for itself, with the values allowed; the first one is the default.

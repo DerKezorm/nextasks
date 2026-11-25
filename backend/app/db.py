@@ -105,6 +105,11 @@ def refuse_old_database() -> None:
 
 def init_db() -> None:
     refuse_old_database()
+    # The first start of the shared account module 1.1.0 is the one that adds the column ``theme``: then the addresses
+    # of before are marked proven once (``konten_wanderung``, decided E23).
+    inspector = inspect(engine)
+    first_110 = inspector.has_table("accounts") and "theme" not in {
+        column["name"] for column in inspector.get_columns("accounts")}
     Base.metadata.create_all(engine)
     _add_missing_columns()
     # create_all makes the indexes of new tables only; one added to an existing table comes here.
@@ -114,7 +119,7 @@ def init_db() -> None:
     # What the shared account module needs of a database of an older version (only adding).
     from .services import konten_wanderung
 
-    konten_wanderung.run(engine)
+    konten_wanderung.run(engine, first_110=first_110)
     # The record of completions, filled once from what is done already (``services/completions.py``).
     from .services import completions
 

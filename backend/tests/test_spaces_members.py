@@ -14,7 +14,7 @@ from app.main import app
 from app.models import Invite, utcnow
 from app.services import records, settings_service
 
-from .conftest import PASSWORD
+from .conftest import PASSWORD, purge_deleted
 from .sync_helpers import API, WEB, changes, new_id, person, private_space, put, shared_space, state
 
 
@@ -153,6 +153,7 @@ def test_deleting_an_account_hands_the_space_to_the_member_who_joined_first() ->
     assert admin.post("/api/auth/login", json={"name": boss.name, "password": PASSWORD}).status_code == 200
     gone = admin.request("DELETE", f"/api/accounts/{anna_account.id}", json={"current_password": PASSWORD})
     assert gone.status_code == 204, gone.text
+    purge_deleted(anna_account.id)
     held = state(carl)
     assert held[("member", f"{space}:{ben_account.id}")]["data"]["role"] == "manager"
     assert ("member", f"{space}:{anna_account.id}") not in held

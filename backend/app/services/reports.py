@@ -209,7 +209,7 @@ def report_round(now: datetime | None = None) -> int:
             NotifyRoute.event.in_(notifyprefs.REPORTS), NotifyRoute.enabled.is_(True)).distinct()).all()
         for account_id, report in wanted:
             account = db.get(Account, account_id)
-            if account is None or account.blocked_at is not None:
+            if account is None or account.shut:
                 continue
             row = notifyprefs.schedule_row(db, account_id, report)
             db.commit()

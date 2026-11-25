@@ -16,12 +16,12 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
-from ..deps import DbSession, OperatorAccount, confirm_operator
+from ..deps import DbSession, OperatorAccount, confirm_operator, confirmed_without_password
 from ..errors import error
-from ..models import OPERATOR, ROLES, Member, utcnow
+from ..models import OPERATOR, ROLES, Member
 from ..models import Account as AccountRow
 from ..security import end_all_sessions
-from ..services import accounts, kontenpost, mailer, settings_service
+from ..services import accounts, kontenpost, post_store, settings_service
 from ..services.konten_store import KontenStore
 from ..services.oidc_store import linked_providers
 from ..vendor import nexkonten
@@ -97,6 +97,9 @@ def listed(db: DbSession, row: AccountRow, linked: dict[int, list[dict[str, obje
         "locked": accounts.is_locked(row),
         "blocked": row.blocked_at is not None,
         "blocked_at": row.blocked_at.isoformat() if row.blocked_at else None,
+        # Deleted, and the day it goes for good (konten 1.1.0: 30 days to bring it back).
+        "deleted_at": row.deleted_at.isoformat() if row.deleted_at else None,
+        "purge_at": nexkonten.manage.purge_at(row.deleted_at).isoformat() if row.deleted_at else None,
         "providers": linked.get(row.id, []),
     }
 
@@ -111,20 +114,41 @@ def list_accounts(_operator: OperatorAccount, db: DbSession) -> list[dict[str, A
     return [listed(db, row, linked, spaces) for row in db.scalars(select(AccountRow).order_by(AccountRow.created_at))]
 
 
-@router.delete("/{account_id}", status_code=204, summary="Delete an account for good (its tasks stay)")
+def _actor_confirmed(request: Request, db: DbSession, operator: OperatorAccount) -> bool:
+    """An operator without a password of its own confirms by a fresh sign-in at its provider (or is refused)."""
+    return confirmed_without_password(request, db, operator)
+
+
+def _manage(act: Any, request: Request, operator: OperatorAccount, db: DbSession, account_id: int,
+            password: str) -> Any:
+    """One of the shared module's account functions (konten 1.1.0, ``manage``): never on the own account, never the
+    last operator who can sign in, with the operator's own password."""
+    try:
+        return act(KontenStore(db), account_id, actor_id=operator.id, password=password,
+                   actor_confirmed=_actor_confirmed(request, db, operator))
+    except nexkonten.AccountError as exc:
+        raise fail(exc) from exc
+
+
+@router.delete("/{account_id}", status_code=204, summary="Delete an account; for 30 days it can be brought back")
 def delete_account(
     account_id: int, payload: OperatorConfirmIn, request: Request, operator: OperatorAccount, db: DbSession,
 ) -> None:
-    """It leaves every space (its reminders stay; where it was the last manager, the member who joined first becomes
-    manager), its space "Private" goes for good. Its username stays reserved for good (the draft: nobody inherits
-    another's mentions or history)."""
-    confirm_operator(request, db, operator, payload.current_password)
-    if account_id == operator.id:
-        raise error("cannot_delete_self", "You cannot delete your own account.", 409)
-    row = _row(db, account_id)
-    name = row.name
-    accounts.delete_account(db, row)
-    logger.warning("Account deleted name=%s by=%s", name, operator.name)
+    """Gone for everybody at once and shut out like a blocked account; for 30 days the operator brings it back
+    (``POST …/restore``). After them it goes for good (the hourly round, ``manage.purge_due``): it leaves every space
+    (its reminders stay; where it was the last manager, the member who joined first becomes manager), its space
+    "Private" goes, and its username stays reserved for good."""
+    removed = _manage(nexkonten.manage.remove, request, operator, db, account_id, payload.current_password)
+    logger.warning("Account deleted name=%s by=%s until=%s", removed.account.username, operator.name,
+                   removed.purge_at.isoformat(timespec="minutes"))
+
+
+@router.post("/{account_id}/restore", status_code=204, summary="Bring a deleted account back while its days run")
+def restore_account(
+    account_id: int, payload: OperatorConfirmIn, request: Request, operator: OperatorAccount, db: DbSession,
+) -> None:
+    restored = _manage(nexkonten.manage.restore, request, operator, db, account_id, payload.current_password)
+    logger.warning("Account brought back name=%s by=%s", restored.username, operator.name)
 
 
 @router.post("/{account_id}/sign-out", status_code=204, summary="End every session of an account")
@@ -139,39 +163,31 @@ def block_account(
     account_id: int, payload: OperatorConfirmIn, request: Request, operator: OperatorAccount, db: DbSession,
 ) -> None:
     """Blocked, the account gets in nowhere, by no session, device or token; its reminders stay where they are."""
-    confirm_operator(request, db, operator, payload.current_password)
-    if account_id == operator.id:
-        raise error("cannot_block_self", "You cannot block yourself.", 409)
-    row = _row(db, account_id)
-    row.blocked_at = utcnow()
-    db.commit()
-    end_all_sessions(db, row.id)
-    logger.warning("Account blocked name=%s by=%s", row.name, operator.name)
+    blocked = _manage(nexkonten.manage.block, request, operator, db, account_id, payload.current_password)
+    logger.warning("Account blocked name=%s by=%s", blocked.username, operator.name)
 
 
 @router.post("/{account_id}/unblock", status_code=204, summary="Let a blocked account in again")
 def unblock_account(
     account_id: int, payload: OperatorConfirmIn, request: Request, operator: OperatorAccount, db: DbSession,
 ) -> None:
-    confirm_operator(request, db, operator, payload.current_password)
-    row = _row(db, account_id)
-    row.blocked_at = None
-    db.commit()
-    logger.warning("Account unblocked name=%s by=%s", row.name, operator.name)
+    unblocked = _manage(nexkonten.manage.unblock, request, operator, db, account_id, payload.current_password)
+    logger.warning("Account unblocked name=%s by=%s", unblocked.username, operator.name)
 
 
-@router.put("/{account_id}/role", summary="Make an account operator or member")
+@router.put("/{account_id}/role", summary="Make an account operator or member (several operators are allowed)")
 def set_role(
     account_id: int, payload: RoleIn, request: Request, operator: OperatorAccount, db: DbSession,
 ) -> dict[str, Any]:
-    confirm_operator(request, db, operator, payload.current_password)
     if payload.role not in ROLES:
         raise error("invalid_role", "Unknown role.", 422)
+
+    def act(store: Any, target: int, **kw: Any) -> Any:
+        return nexkonten.manage.set_role(store, target, payload.role == OPERATOR, **kw)
+
+    _manage(act, request, operator, db, account_id, payload.current_password)
     row = _row(db, account_id)
-    if row.id == operator.id and payload.role != OPERATOR:
-        raise error("cannot_demote_self", "You cannot take the operator role from yourself.", 409)
-    row.role = payload.role
-    db.commit()
+    db.refresh(row)
     logger.warning("Role changed name=%s role=%s by=%s", row.name, payload.role, operator.name)
     return account_view(row, db)
 
@@ -209,7 +225,7 @@ def reset_link(
     if made.mail is not None:
         try:
             kontenpost.send_now(db, made.mail, days=payload.days, keep=False)
-        except mailer.MailError as exc:
+        except post_store.MailError as exc:
             resets.reset_mail_failed(KontenStore(db), row.id)
             raise error(exc.code, "The mail server did not take the mail.", 409 if exc.code == "mail_off" else 502) \
                 from exc

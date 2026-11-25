@@ -36,7 +36,7 @@ from app.db import SessionLocal, engine, init_db
 from app.main import app
 from app.models import Account, Member
 from app.security import MAX_FAILURES, SESSION_COOKIE
-from app.services import mailer, settings_service, totp
+from app.services import post_store, settings_service, totp
 from app.vendor import nexoidc
 from app.vendor.nexoidc import attempt, protocol
 
@@ -130,7 +130,8 @@ def provider() -> Iterator[Any]:
 def post(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, Any]]:
     """Mail is set up (the fixture has none) and goes into a list instead of out."""
     sent: list[tuple[str, Any]] = []
-    monkeypatch.setattr(mailer, "send_message", lambda _db, to, message, *a, **k: sent.append((to, message)))
+    # Every system mail goes through the shared post module since post 1.1.0 (``post_store.send_letter``).
+    monkeypatch.setattr(post_store, "send_letter", lambda _db, letter, *a, **k: sent.append((letter.to, letter)))
     with SessionLocal() as db:
         settings_service.save(db, {"smtp_host": "mail.example.com", "smtp_from": "tasks@example.com"})
     return sent

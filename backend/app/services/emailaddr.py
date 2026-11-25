@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from ..models import Account, OidcLink
 from ..vendor.nexkonten import brake
-from . import accounts, mailer, settings_service
+from . import accounts, post_store, settings_service
 from .konten_store import counts, pending_of, same
 
 logger = logging.getLogger("nextasks.email")
@@ -59,7 +59,7 @@ def clean(address: str) -> str:
 
 def cannot_mail(db: Session) -> str:
     """Why no link can go out, as an error code, or empty when it can."""
-    if not mailer.configured(db):
+    if not post_store.configured(db):
         return "mail_off"
     if not settings_service.public_url(db):
         return "public_url_missing"

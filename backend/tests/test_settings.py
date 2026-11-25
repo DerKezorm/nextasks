@@ -16,7 +16,7 @@ from app.config import get_settings
 from app.db import SessionLocal
 from app.models import Account, AuthSession, Setting
 from app.security import decrypt_secret
-from app.services import backup_hooks, backups, mailer, settings_service
+from app.services import backup_hooks, backups, post_store, settings_service
 from app.vendor.nexsicherung import restore
 
 from .conftest import PASSWORD, make_account, sign_in
@@ -162,9 +162,9 @@ def test_a_failing_mail_server_says_so_without_its_answer(
 
 def test_mail_off_without_a_server() -> None:
     with SessionLocal() as db:
-        assert mailer.configured(db) is False
-        with pytest.raises(mailer.MailError) as caught:
-            mailer.send_test(db, "dora@example.com")
+        assert post_store.configured(db) is False
+        with pytest.raises(post_store.MailError) as caught:
+            post_store.send_test(db, "dora@example.com")
     assert caught.value.code == "mail_off"
 
 

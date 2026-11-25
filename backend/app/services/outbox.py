@@ -111,7 +111,7 @@ def send_round(now: datetime | None = None) -> int:
         for row in due:
             account = db.get(Account, row.account_id)
             target = channels.ready(db, account, row.channel) if account is not None else None
-            if account is None or account.blocked_at is not None or target is None:
+            if account is None or account.shut or target is None:
                 # The address was removed or is unconfirmed now, the channel switched off: nothing to send to.
                 row.failed_at, row.last_error = now, "no_target"
                 db.commit()

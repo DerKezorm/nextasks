@@ -62,6 +62,12 @@ class Message:
     language: str = "en"
     #: Images the HTML shows by ``cid:`` (name → file name in ``app/static``).
     inline: dict[str, str] = field(default_factory=dict)
+    #: For mail since post 1.1.0: the heading and the HTML of the body, which the shared post module lays into its
+    #: frame (logo, footer, the link that unsubscribes), and the kind of the letter (``daily``, ``assigned`` …). Empty
+    #: in a message queued by an older version: then ``html`` goes as it is.
+    heading: str = ""
+    body_html: str = ""
+    kind: str = ""
     #: For the push channels: ``type`` (``due``, ``assigned``, ``changed``, ``daily`` …), ``reminder_id``, ``list_id``,
     #: ``collapse`` (a second message with the same one replaces the first).
     data: dict[str, Any] = field(default_factory=dict)
@@ -168,9 +174,9 @@ class MailChannel(Channel):
     icon = "mail"
 
     def available(self, db: Session) -> bool:
-        from . import mailer
+        from . import post_store
 
-        return mailer.configured(db)
+        return post_store.configured(db)
 
     def target(self, db: Session, account: Account) -> Target | None:
         from . import emailaddr
@@ -188,14 +194,29 @@ class MailChannel(Channel):
         return Status("ready", target.address, _say(MAIL_TEXTS, language, "ready_hint"))
 
     def deliver(self, db: Session, target: Target, message: Message) -> None:
-        from . import mailer, settings_service
+        """A letter of the app through the shared post module (post 1.1.0): nextasks' body in the module's frame, in
+        the language it was written in, with ``List-Unsubscribe`` and one click (RFC 8058) where it has the link."""
+        from ..vendor import nexpost
+        from . import post_store, settings_service
 
         if not settings_service.public_url(db):
             # Every message carries links; never one to an address a request made up.
             raise DeliveryError("public_url_missing")
         try:
-            mailer.send_message(db, target.address, message)
-        except mailer.MailError as exc:
+            if message.body_html:
+                letter = nexpost.app_letters.write(
+                    target.address, kind=message.kind or "notify", subject=message.title, language=message.language,
+                    text=message.text, body_html=message.body_html, heading=message.heading or message.title,
+                    unsubscribe=message.unsubscribe)
+            else:
+                letter = nexpost.app_letters.write(
+                    target.address, kind=message.kind or "notify", subject=message.title, language=message.language,
+                    text=message.text, html=message.html or "", unsubscribe=message.unsubscribe)
+        except (ValueError, nexpost.MailError) as exc:
+            raise DeliveryError("invalid_email") from exc
+        try:
+            post_store.send_letter(db, letter)
+        except post_store.MailError as exc:
             raise DeliveryError(exc.code) from exc
 
 

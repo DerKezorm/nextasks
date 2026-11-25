@@ -239,7 +239,7 @@ def login_code(payload: CodeIn, request: Request, response: Response, db: DbSess
         totp.finish_pending(token)
         _clear_pending_cookie(response)
         raise error("second_factor_expired", "Start again with your password.", 401)
-    if row.blocked_at is not None:
+    if row.shut:
         # Blocked between the password and the code: no session, and the same answer as after the password (A16).
         totp.finish_pending(token)
         _clear_pending_cookie(response)

@@ -20,7 +20,7 @@ from ..errors import error
 from ..models import Account as AccountRow
 from ..models import NotifyChannel
 from ..security import brake
-from ..services import channels, clock, emailaddr, kontenpost, mailer, notifyprefs, spaces, webpush
+from ..services import channels, clock, emailaddr, kontenpost, notifyprefs, post_store, spaces, webpush
 from ..services.konten_store import KontenStore
 from ..vendor import nexkonten
 from ..vendor.nexkonten import profiles
@@ -189,7 +189,25 @@ def resend_email(account: Account, db: DbSession) -> dict[str, Any]:
         raise fail(exc) from exc
     try:
         kontenpost.send_now(db, mail, keep=False)
-    except mailer.MailError as exc:
+    except post_store.MailError as exc:
+        profiles.withdraw_email_change(KontenStore(db), row.id)
+        status = 409 if exc.code == "mail_off" else 502
+        raise error(exc.code, "The mail server did not take the mail.", status) from exc
+    db.refresh(row)
+    return state(db, row)
+
+
+@router.post("/me/email/prove", summary="Mail a link that proves the address the account has (konten 1.1.0)")
+def prove_email(account: Account, db: DbSession) -> dict[str, Any]:
+    """The box "Address not confirmed yet" in the profile: an address that counts but was never proven by link."""
+    row = _own(db, account)
+    try:
+        mail = profiles.prove_email(KontenStore(db), row.id)
+    except nexkonten.AccountError as exc:
+        raise fail(exc) from exc
+    try:
+        kontenpost.send_now(db, mail, keep=False)
+    except post_store.MailError as exc:
         profiles.withdraw_email_change(KontenStore(db), row.id)
         status = 409 if exc.code == "mail_off" else 502
         raise error(exc.code, "The mail server did not take the mail.", status) from exc

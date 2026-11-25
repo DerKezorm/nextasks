@@ -16,7 +16,7 @@ from app.main import app
 from app.models import Account, utcnow
 from app.security import DEVICE_COOKIE, brake, device_token
 
-from .conftest import PASSWORD, make_account, new_client
+from .conftest import PASSWORD, make_account, new_client, purge_deleted
 
 NEW_PASSWORD = "another long password"
 
@@ -226,6 +226,7 @@ def test_a5_a_new_account_under_the_id_of_a_deleted_one_knows_none_of_its_browse
     browser = _known("zoe")
     deleted = client.request("DELETE", f"/api/accounts/{gone.id}", json={"current_password": PASSWORD})
     assert deleted.status_code == 204
+    purge_deleted(gone.id)
     after = make_account("zora")
     assert after.id == gone.id, "SQLite gives the id of the deleted last account again"
     assert _passes(browser, "zora") == 429

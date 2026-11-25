@@ -15,7 +15,7 @@ from app.models import Gone, SavedFilter, TilePref, utcnow
 from app.routers.app1 import features
 from app.services import records, trash
 
-from .conftest import PASSWORD, sign_in
+from .conftest import PASSWORD, purge_deleted, sign_in
 from .sync_helpers import (
     all_changes,
     batch,
@@ -263,6 +263,7 @@ def test_deleting_the_account_takes_its_filters_and_tile_settings_along(client: 
     assert put(robin, "tile_pref", TODAY, {"hidden": True})["ok"]
     answer = client.request("DELETE", f"/api/accounts/{sam_account.id}", json={"current_password": PASSWORD})
     assert answer.status_code == 204, answer.text
+    purge_deleted(sam_account.id)
     with SessionLocal() as db:
         assert db.get(SavedFilter, filter_id) is None
         assert db.get(TilePref, (sam_account.id, TODAY)) is None

@@ -130,7 +130,7 @@ def authenticate(db: Session, token: str | None) -> Caller | None:
     if row is None or row.blocked_at is not None or (row.expires_at is not None and row.expires_at <= now):
         return None
     account = db.get(Account, row.account_id)
-    if account is None or account.blocked_at is not None:
+    if account is None or account.shut:
         # Blocked means no way in at all, a token included.
         return None
     if totp.setup_required(db, account):

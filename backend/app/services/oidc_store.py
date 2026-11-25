@@ -268,7 +268,7 @@ class SqlStore:
             id=row.id,
             name=row.name,
             # Blocked: no way in, as with a password (its reminders stay where they are).
-            blocked=row.blocked_at is not None,
+            blocked=row.shut,
             has_password=row.sign_in == SIGN_IN_PASSWORD and bool(row.password_hash),
             has_second_factor=bool(row.totp_secret_enc),
         )

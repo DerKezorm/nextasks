@@ -386,7 +386,7 @@ def test_my_day_with_tasks_goes_out_once_with_its_parts(postbox: type[Postbox]) 
     assert "Dir neu zugewiesen:" in text and "Bring the parcel" in text and "alex" in text
     assert "Next week" not in text and "Only alex's" not in text
     html = html_of(mail)
-    assert "Pay the rent" in html and f'href="{PUBLIC}/account?tab=notifications"' in html
+    assert "Pay the rent" in html and f'href="{PUBLIC}/settings/notifications"' in html
     assert "Benachrichtigungen ändern" in html and "cid:logo" in html
     assert any(part.get_content_type() == "image/png" for part in mail.walk())
     assert reports.report_round(MORNING + timedelta(hours=1)) == 0, "one a day"
