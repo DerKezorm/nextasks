@@ -205,13 +205,24 @@ def cancel_email(account: Account, db: DbSession) -> dict[str, Any]:
     return state(db, row)
 
 
-@router.delete("/me/email", summary="Remove the own mail address (no more mail)")
-def remove_email(account: Account, db: DbSession) -> dict[str, Any]:
-    """Taking the address away needs no password (the draft: "Entfernen geht immer"; it sends nothing anywhere), as in
-    0.8.0; the old address hears of it where a mail can go."""
+class RemoveEmailIn(BaseModel):
+    #: The own password (an account without one: a fresh sign-in at its provider instead).
+    password: str = Field(default="", max_length=200)
+
+
+@router.delete("/me/email", summary="Remove the own mail address (no more mail); needs the own password")
+def remove_email(payload: RemoveEmailIn, request: Request, account: Account, db: DbSession) -> dict[str, Any]:
+    """Taking the own address away asks for the own password (konten 0.3.10, replaces "Entfernen geht immer"); an
+    account without one proves it by a fresh sign-in at its provider. The old address hears of it where a mail can
+    go."""
     row = _own(db, account)
-    changed = profiles.remove_email(KontenStore(db), row.id, actor_id=row.id, actor_confirmed=True,
-                                    mail=kontenpost.can_mail(db))
+    try:
+        fresh = confirmed_without_password(request, db, row)
+        changed = profiles.remove_email(KontenStore(db), row.id, actor_id=row.id, password=payload.password,
+                                        actor_confirmed=fresh, mail=kontenpost.can_mail(db))
+    except nexkonten.AccountError as exc:
+        db.rollback()
+        raise fail(exc) from exc
     kontenpost.queue(db, changed.notice)
     db.refresh(row)
     return state(db, row)

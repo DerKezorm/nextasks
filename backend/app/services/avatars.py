@@ -13,8 +13,8 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from ..models import OPERATOR, Account
-from . import media, visibility
+from ..models import Account
+from . import media
 
 logger = logging.getLogger("nextasks.accounts")
 
@@ -69,8 +69,8 @@ def make(data: bytes) -> bytes:
 
 
 def may_see(db: Session, viewer: Account, owner_id: int) -> bool:
-    """The account itself, whoever shares a space with it (``services/visibility``), and the operator, who manages
-    the accounts and sees each one's picture in the list of accounts."""
-    if db.get(Account, owner_id) is None:
-        return False
-    return viewer.role == OPERATOR or visibility.sees(db, viewer.id, owner_id)
+    """Every signed-in account of the server sees every picture (the shared account module, part 2: the same in every
+    nex app, never to somebody signed out). Display names keep nextasks' rule (``services/visibility``): who shares no
+    space with an account still does not learn its name."""
+    del viewer
+    return db.get(Account, owner_id) is not None

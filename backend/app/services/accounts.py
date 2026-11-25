@@ -160,6 +160,7 @@ def change_password(db: Session, account: Account, current: str, new: str) -> No
         # Taken before, and it ended the other sessions as if something had changed (Prüfgang E25).
         raise AccountError("password_unchanged", "The new password is the same as the current one.", 422)
     account.password_hash = hash_password(new)
+    account.password_changed_at = utcnow()
     db.commit()
     logger.info("Password changed name=%s", account.name)
 
@@ -289,8 +290,9 @@ def _tell_joined(db: Session, space: Space, joined: Account) -> None:
     outbox.wake()
 
 
-def invites_of(db: Session, *, space_id: str | None, all_spaces: bool = False) -> list[Invite]:
-    query = select(Invite).where(Invite.expires_at > utcnow())
+def invites_of(db: Session, *, space_id: str | None, all_spaces: bool = False, expired: bool = False) -> list[Invite]:
+    """Open invitations; with ``expired`` also those that ran out (they stay listed until withdrawn, konten 0.3.10)."""
+    query = select(Invite) if expired else select(Invite).where(Invite.expires_at > utcnow())
     if not all_spaces:
         query = query.where(Invite.space_id.is_(None) if space_id is None else Invite.space_id == space_id)
     return list(db.scalars(query.order_by(Invite.created_at)))

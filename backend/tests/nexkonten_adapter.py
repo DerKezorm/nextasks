@@ -181,6 +181,44 @@ class Adapter(StandardAdapter):
                 return ("known", row.id, sessions.add_mark("", mark))
         raise ValueError(kind)
 
+    def sign_in_from(self, typed: str, password: str, sender: str) -> tuple[int, Any]:
+        """Through nextasks' own route ``POST /api/auth/login``, the sender as the connection's address."""
+        from fastapi.testclient import TestClient
+
+        from app.main import app
+        from app.vendor.nexkonten import login
+
+        with TestClient(app, client=(sender, 50000)) as client:
+            answer = client.post("/api/auth/login", json={"name": typed, "password": password},
+                                 headers={"X-Nextasks-Client": "tab-contract0"})
+        if answer.status_code != 200:
+            return answer.status_code, None
+        body = answer.json()
+        if "id" in body:
+            return 200, body["id"]
+        with self.store() as store:
+            meant = login.resolve_login(store, typed)
+        return 200, meant.id if meant is not None else None
+
+    def listed_invites(self) -> list[dict[str, Any]]:
+        """Through nextasks' own route ``GET /api/invites`` as the first operator."""
+        from fastapi.testclient import TestClient
+
+        from app.db import SessionLocal
+        from app.main import app
+        from app.models import Account
+        from app.security import SESSION_COOKIE, start_session
+
+        with SessionLocal() as db:
+            operator = db.get(Account, self._operator_id())
+            assert operator is not None
+            token = start_session(db, operator, "127.0.0.1", "contract")
+        with TestClient(app) as client:
+            client.cookies.set(SESSION_COOKIE, token)
+            answer = client.get("/api/invites")
+        assert answer.status_code == 200, answer.text
+        return list(answer.json())
+
     def session_alive(self, handle: Any) -> bool:
         if handle is None:
             return False

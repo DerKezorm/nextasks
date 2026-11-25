@@ -53,6 +53,7 @@ from ..security import SESSION_COOKIE, hash_token, session_account, session_by_p
 from ..security import brake as sign_in_brake
 from ..services import (
     accounts,
+    avatars,
     changes,
     clock,
     cursor,
@@ -67,7 +68,6 @@ from ..services import (
     spaces,
     sync,
     totp,
-    visibility,
     webpush,
 )
 from ..services.devices import PairingError
@@ -453,7 +453,9 @@ def get_file(attachment_id: str, request: Request, found: Who) -> Response:
             responses={200: {"content": {"image/webp": {}}}})
 def avatar(account_id: int, request: Request, found: Who) -> Response:
     with SessionLocal() as db:
-        row = db.get(Account, account_id) if visibility.sees(db, found.id, account_id) else None
+        # Every signed-in account sees every picture (part 2 of the shared account module); names keep the rule of
+        # ``services/visibility``.
+        row = db.get(Account, account_id) if avatars.may_see(db, found, account_id) else None
         picture = row.avatar if row is not None else None
         digest = row.avatar_hash if row is not None else ""
     if not picture:

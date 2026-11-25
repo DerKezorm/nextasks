@@ -76,7 +76,7 @@ from ..vendor.nexkonten import login as konten_login
 from ..vendor.nexkonten import profiles, resets
 from ..vendor.nexkonten import sessions as konten_sessions
 from ..vendor.nexkonten import setup as konten_setup
-from ..vendor.nexkonten.brake import BRAKE, DOOR_FORGOT, door_key
+from ..vendor.nexkonten.brake import DOOR_FORGOT, door_key
 from ..vendor.nexoidc import providers
 
 logger = logging.getLogger("nextasks.auth")
@@ -193,6 +193,10 @@ def fail(exc: AccountError | nexkonten.AccountError) -> HTTPException:
     under the names 0.8.0 used where it had others (``public_code``); a brake answers 429 with ``Retry-After``."""
     code = getattr(exc, "public_code", exc.code)
     values = dict(getattr(exc, "extra", {}) or {})
+    if code != exc.code:
+        # The module's own code beside the old one (konten 0.3.10, ``as_dict``): the page tells an expired link from
+        # an invalid one although the old name is the same.
+        values["account_code"] = exc.code
     if exc.code == "too_many_attempts":
         wait = int(values.get("retry_after") or 1)
         return HTTPException(status_code=429, detail=detail(code, exc.message, **values),
@@ -248,6 +252,8 @@ def account_view(account: AccountRow, db: Session | None = None) -> dict[str, An
         "role": account.role,
         "sign_in": account.sign_in,
         "has_password": account.sign_in == SIGN_IN_PASSWORD and bool(account.password_hash),
+        # When the password was set last ("Last changed on", konten 0.3.10); None for passwords of 0.8.0.
+        "password_changed_at": account.password_changed_at.isoformat() if account.password_changed_at else None,
         "email": account.email,
         # The address counts (signing in, a forgotten password, mail); proven by a link; one waiting for its link.
         "email_confirmed": counts(account),
@@ -405,33 +411,21 @@ def methods(db: DbSession) -> dict[str, Any]:
 
 @router.post("/auth/login", summary="Sign in with username or email and password")
 def login(payload: LoginIn, request: Request, response: Response, db: DbSession) -> dict[str, Any]:
-    """The shared account module checks (``login.authenticate``): one answer for everything wrong, as long for an
-    unknown name as for a wrong password, failures counted at the account and its lock after ten (a browser that
-    signed in as the account before passes the lock).
-
-    The brake counts in the module's two pots, the sender (30 free) and the account it names (or what was typed, five
-    free); a browser that knows the account counts in a pot of its own. A full sender's pot answers 429 ``Retry-After``.
-    A full pot of the account answers like the lock of 0.8.0 (and of the module), ``wrong_credentials``, the same for
-    a name that is none: an installation of 0.8.0 knows that answer for an account under attack (test "Bestand")."""
+    """The shared account module checks (``login.sign_in``, since konten 0.3.10): one answer for everything wrong, as
+    long for an unknown name as for a wrong password, failures counted at the account and its lock after ten (a
+    browser that signed in as the account before passes the lock). The brake counts at the sender (30 free) and at
+    the account it names (or what was typed, five free); a browser that knows the account counts in a pot of its own.
+    A full sender's pot answers 429 ``Retry-After``; a waiting account answers ``wrong_credentials`` like the lock of
+    0.8.0 (test "Bestand")."""
     ip = client_ip(request)
     behind_unknown_proxy(request)
     store = KontenStore(db)
     meant = konten_login.resolve_login(store, payload.name)
     mark = browser_mark(db, request, int(meant.id)) if meant is not None else ""
-    known = meant.id if mark and meant is not None else None
-    keys = konten_login.attempt_key(store, payload.name, ip)
-    wait = BRAKE.claim(keys, browser=mark)
-    if wait:
-        if not mark and BRAKE.wait(keys[:1]) <= 0:
-            # Only the pot of the account (or of what was typed) waits: as long as a refusal, nothing counted.
-            store.check_password(None, payload.password)
-            raise fail(konten_login.wrong_credentials())
-        raise too_many(wait)
     try:
-        konto = konten_login.authenticate(store, payload.name, payload.password, known_browser=known)
+        konto = konten_login.sign_in(store, payload.name, payload.password, sender=ip, browser=mark)
     except nexkonten.AccountError as exc:
         raise fail(exc) from exc
-    BRAKE.succeeded(keys, browser=mark)
     account = db.get(AccountRow, int(konto.id))
     assert account is not None
     if not settings_service.get(db, "password_login") and account.role != OPERATOR:
@@ -471,10 +465,12 @@ def forgot(payload: ForgotIn, request: Request, background: BackgroundTasks, db:
     sender = client_ip(request)
 
     def send(mail: nexkonten.Mail) -> None:
+        # At once through the mail server (``nexpost.send.deliver``), never through the outbox: a mail the server does
+        # not take raises, and the module throws the link away (konten 0.3.10).
         from ..db import SessionLocal
 
         with SessionLocal() as own:
-            if not kontenpost.send_now(own, mail):
+            if not kontenpost.send_now(own, mail, keep=False):
                 raise RuntimeError("the mail did not go out")
 
     try:

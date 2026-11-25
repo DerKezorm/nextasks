@@ -26,9 +26,9 @@ logger = logging.getLogger("nextasks.email")
 
 OWN = "own"
 LINK_HOURS = 24
-#: Confirmation mails one account may cause before it waits: the module's brake at the door ``mail:<account>`` (five
-#: free; the sixth is counted and then waits).
-SENDS_PER_HOUR = brake.FREE["mail"] + 1
+#: Confirmation mails one account may cause before it waits: the module's brake at the door ``mail:<account>``
+#: (five free means five since konten 0.3.10; the sixth waits).
+SENDS_PER_HOUR = brake.FREE["mail"]
 MAX_LENGTH = 254
 
 __all__ = ["cannot_mail", "clean", "confirmed", "masked", "pending_of", "same", "suggestion", "view"]

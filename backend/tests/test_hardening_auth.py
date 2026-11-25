@@ -150,8 +150,7 @@ def test_sixty_wrong_passwords_at_once_count_no_more_than_the_lock_allows(
     for thread in threads:
         thread.join()
     brake.forget()
-    # The lock allows ten; the shared module's brake at the account holds the rest back before (five free, the sixth
-    # counted).
+    # The lock allows ten; the shared module's brake at the account holds the rest back before (five free).
     assert 0 < len(counted) <= 10
 
 

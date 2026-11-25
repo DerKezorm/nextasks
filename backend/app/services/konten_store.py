@@ -204,6 +204,7 @@ class KontenStore:
             offered_email=offered,
             offered_email_provider=(row.provider_email_from or "") if offered else "",
             declined_email=row.provider_email_off or "",
+            password_changed_at=_aware(row.password_changed_at) if row.password_changed_at else None,
         )
 
     @staticmethod
@@ -302,6 +303,7 @@ class KontenStore:
             role=OPERATOR if new.operator else MEMBER,
             sign_in=SIGN_IN_PASSWORD if new.password else SIGN_IN_OIDC,
             password_hash=hash_password(new.password) if new.password else "",
+            password_changed_at=utcnow() if new.password else None,
             language=new.language or "",
             whats_new_seen=__version__,
         )
@@ -378,6 +380,7 @@ class KontenStore:
             return
         # Through the ORM: a new password hash draws a new device key (``models._forget_devices``).
         row.password_hash = hash_password(password)
+        row.password_changed_at = utcnow()
         row.sign_in = SIGN_IN_PASSWORD
         row.failed_logins = 0
         row.locked_until = None

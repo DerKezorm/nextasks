@@ -1,7 +1,8 @@
-"""Who sees whom (``services/visibility.py``): an account learns display name and picture only of itself and of
-those it shares a space with, on every way out (the web, ``/api/app/1``, ``/api/v1``, mails and reports). Somebody
+"""Who sees whom (``services/visibility.py``): an account learns display names only of itself and of those it shares
+a space with, on every way out (the web, ``/api/app/1``, ``/api/v1``, mails and reports). Somebody
 named in what it sees but sharing nothing any more is a former member. The operator sees every account where accounts
-are managed.
+are managed. Pictures are the exception since the shared account module (part 2, decided 25.11.2026): every
+signed-in account sees every picture by its address, in every nex app the same; nothing tells whose it is.
 """
 
 from __future__ import annotations
@@ -50,14 +51,14 @@ def strangers() -> tuple[Account, TestClient, Account, TestClient, Account, Test
     return anna_account, anna, ben_account, ben, carl_account, carl
 
 
-def test_an_account_sees_neither_name_nor_picture_of_one_it_shares_no_space_with() -> None:
+def test_an_account_sees_no_name_of_one_it_shares_no_space_with_but_every_picture() -> None:
     anna_account, anna, ben_account, _ben, carl_account, _carl = strangers()
     # The web: display names by account name, and the pictures.
     assert anna.get("/api/people", params={"name": ["ben", "carl", "anna"]}).json() == {"anna": "Anna A.",
                                                                                           "ben": "Ben B."}
     assert anna.get(f"/api/avatars/{ben_account.id}").status_code == 200
-    assert anna.get(f"/api/avatars/{carl_account.id}").status_code == 404
-    assert anna.get(f"/api/avatars/{carl_account.id}").json() == anna.get("/api/avatars/999999").json()
+    assert anna.get(f"/api/avatars/{carl_account.id}").status_code == 200
+    assert anna.get("/api/avatars/999999").status_code == 404
     # /api/app/1, in the browser and on a device.
     _key, phone = _device(anna)
     for client in (anna, phone):
@@ -65,7 +66,7 @@ def test_an_account_sees_neither_name_nor_picture_of_one_it_shares_no_space_with
         assert set(seen) == {anna_account.id, ben_account.id}
         assert seen[ben_account.id]["name"] == "Ben B." and seen[ben_account.id]["avatar_hash"]
         assert client.get(f"{API}/people/{ben_account.id}/avatar").status_code == 200
-        assert client.get(f"{API}/people/{carl_account.id}/avatar").status_code == 404
+        assert client.get(f"{API}/people/{carl_account.id}/avatar").status_code == 200
     assert anna.get(f"/api/avatars/{anna_account.id}").status_code == 200, "oneself"
 
 
@@ -100,8 +101,9 @@ def test_a_task_of_a_former_member_keeps_saying_somebody_did_it_but_not_who() ->
     seen = people_of(anna)
     assert seen[carl_account.id] == {"id": carl_account.id, "name": None, "avatar_hash": None}
     assert seen[anna_account.id]["name"] == "anna"
-    assert anna.get(f"{API}/people/{carl_account.id}/avatar").status_code == 404
-    assert anna.get(f"/api/avatars/{carl_account.id}").status_code == 404
+    # Only the picture's address answers, to every signed-in account; the task still does not say whose it is.
+    assert anna.get(f"{API}/people/{carl_account.id}/avatar").status_code == 200
+    assert anna.get(f"/api/avatars/{carl_account.id}").status_code == 200
 
 
 def test_a_program_learns_the_name_only_of_those_the_account_shares_a_space_with() -> None:

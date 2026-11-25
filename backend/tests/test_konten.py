@@ -10,6 +10,7 @@ command; and renaming an account moves nothing that hangs on it (everything carr
 from __future__ import annotations
 
 import re
+from datetime import timedelta
 from typing import Any
 
 import pytest
@@ -310,3 +311,63 @@ def test_the_emergency_command_prints_a_link_that_sets_a_new_password(client: Te
     assert signed.post("/api/auth/login", json={"name": "boss", "password": NEW}).status_code == 200
     assert signed.get("/api/auth/me").json()["new_password_origin"] == "server"
     assert emergency.main(["reset-link", "nobody"]) == 1
+
+
+def test_taking_the_own_address_away_asks_for_the_password(client: TestClient) -> None:
+    """konten 0.3.10: removing the own address needs the own password (replaces "Entfernen geht immer")."""
+    anna = make_account("anna")
+    sign_in(client, anna)
+    assert client.put("/api/me/email", json={"address": "anna@example.com", "password": PASSWORD}).status_code == 200
+    refused = client.request("DELETE", "/api/me/email", json={"password": "not the password at all"})
+    assert refused.status_code == 401
+    assert client.get("/api/auth/me").json()["email"] == "anna@example.com"
+    assert client.request("DELETE", "/api/me/email", json={"password": PASSWORD}).status_code == 200
+    assert client.get("/api/auth/me").json()["email"] == ""
+
+
+def test_every_signed_in_account_sees_every_picture(client: TestClient) -> None:
+    """Part 2 of the shared account module (decided 25.11.2026): pictures for every signed-in account, not only for
+    those sharing a space; nobody signed out sees one."""
+    import io
+
+    from PIL import Image
+
+    anna = make_account("anna")
+    sign_in(client, anna)
+    out = io.BytesIO()
+    Image.new("RGB", (40, 40), (10, 120, 200)).save(out, "PNG")
+    assert client.put("/api/auth/avatar", content=out.getvalue()).status_code == 200
+    client.post("/api/auth/logout")
+    bob = make_account("bob")
+    sign_in(client, bob)
+    assert client.get(f"/api/avatars/{anna.id}").status_code == 200
+    client.post("/api/auth/logout")
+    client.cookies.clear()
+    assert client.get(f"/api/avatars/{anna.id}").status_code == 401
+
+
+def test_the_operators_list_keeps_an_expired_invitation_until_withdrawn(client: TestClient, operator: Any) -> None:
+    from app.db import SessionLocal
+    from app.models import Invite, utcnow
+
+    made = client.post("/api/invites", json={"days": 1, "email": "late@example.com", "send": False}).json()
+    with SessionLocal() as db:
+        row = db.get(Invite, made["id"])
+        assert row is not None
+        row.expires_at = utcnow() - timedelta(minutes=1)
+        db.commit()
+    listed = {entry["id"]: entry for entry in client.get("/api/invites").json()}
+    assert listed[made["id"]]["expired"] is True
+    assert client.delete(f"/api/invites/{made['id']}").status_code == 204
+    assert made["id"] not in {entry["id"] for entry in client.get("/api/invites").json()}
+
+
+def test_the_password_says_when_it_was_changed_last(client: TestClient) -> None:
+    """konten 0.3.10: "Last changed on" under Security. An account written like one of 0.8.0 has no date; a new
+    password sets it."""
+    anna = make_account("anna")
+    sign_in(client, anna)
+    assert client.get("/api/auth/me").json()["password_changed_at"] is None
+    new = "Another-long-enough-password"
+    assert client.put("/api/auth/password", json={"current": PASSWORD, "new": new}).status_code == 204
+    assert client.get("/api/auth/me").json()["password_changed_at"] is not None

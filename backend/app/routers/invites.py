@@ -65,6 +65,7 @@ def _invite_view(invite: Invite, db: DbSession) -> dict[str, Any]:
         "by": by.name if by else None,
         "created_at": format_stamp(invite.created_at),
         "expires_at": format_stamp(invite.expires_at),
+        "expired": accounts.expired(invite),
     }
 
 
@@ -111,7 +112,8 @@ class InviteIn(BaseModel):
 
 @router.get("/invites", summary="Open invitations into nextasks (operator)")
 def list_invites(_operator: OperatorAccount, db: DbSession) -> list[dict[str, Any]]:
-    return [_invite_view(invite, db) for invite in accounts.invites_of(db, space_id=None)]
+    # Run out ones stay listed with ``expired`` until the operator withdraws them (konten 0.3.10, ``OPEN_INVITES``).
+    return [_invite_view(invite, db) for invite in accounts.invites_of(db, space_id=None, expired=True)]
 
 
 @router.post("/invites", status_code=201, summary="Invite into nextasks without a space (operator)")

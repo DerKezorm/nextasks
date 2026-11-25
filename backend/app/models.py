@@ -152,6 +152,9 @@ class Account(Base):
     new_password_origin: Mapped[str] = mapped_column(String(16), default="", server_default="")
     #: The password was set through a link of the operator or of the emergency command: the page says so once.
     password_reset_notice: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    #: When the password was set last (konten 0.3.10, "Last changed on" under Security); empty for every password of
+    #: 0.8.0, which never noted it.
+    password_changed_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
     #: The profile picture (``services/avatars.py``): a square WebP drawn anew, loaded only when asked for.
     avatar: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, deferred=True)
     avatar_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)

@@ -108,11 +108,12 @@ def test_an_expired_session_is_gone(client: TestClient) -> None:
 
 
 def test_the_brake_holds_a_guesser_back(client: TestClient) -> None:
-    """The shared module's brake at the account: five free, the sixth counted, then the account's pot waits. While it
+    """The shared module's brake at the account: five free (exactly five since konten 0.3.10), then the account's pot
+    waits. While it
     waits even the right password is refused, as by the lock of 0.8.0 (``wrong_credentials``): otherwise the brake
     would tell when a guess was right."""
     make_account("anna")
-    for _ in range(6):
+    for _ in range(5):
         assert client.post("/api/auth/login", json={"name": "anna", "password": "wrong password"}).status_code == 401
     held = client.post("/api/auth/login", json={"name": "anna", "password": PASSWORD})
     assert held.status_code == 401 and held.json()["detail"]["code"] == "wrong_credentials"
@@ -191,8 +192,8 @@ def test_changing_the_password_ends_the_other_sessions(client: TestClient) -> No
 def test_a_wrong_current_password_counts_like_a_wrong_sign_in(client: TestClient) -> None:
     anna = make_account("anna")
     sign_in(client, anna)
-    # The shared module's count at the door ``confirm:<account>``: five free, the sixth counted, then it waits.
-    for _ in range(6):
+    # The shared module's count at the door ``confirm:<account>``: five free (exactly five since 0.3.10), then it waits.
+    for _ in range(5):
         client.put("/api/auth/password", json={"current": "guess guess guess", "new": GOOD})
     held = client.put("/api/auth/password", json={"current": PASSWORD, "new": GOOD})
     assert held.status_code == 429

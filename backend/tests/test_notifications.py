@@ -338,7 +338,8 @@ def test_a_queued_message_waits_for_a_confirmed_address(postbox: type[Postbox]) 
         assert row is not None
         notifyprefs.dispatch(db, row, "joined", "k", lambda *_: channels.Message("Hello", "text"))
         db.commit()
-    browser.delete("/api/me/email")
+    # Taking the address away asks for the own password (konten 0.3.10).
+    assert browser.request("DELETE", "/api/me/email", json={"password": PASSWORD}).status_code == 200
     before = len(postbox.sent)
     assert outbox.send_round() == 0
     assert len(postbox.sent) == before, "removed address: nothing goes out"
@@ -585,7 +586,7 @@ def test_nobody_sees_or_changes_the_notifications_of_another(postbox: type[Postb
     assert mail_channel(alex)["address"] == "" and "robin@example.test" not in str(seen)
     # Every change acts on the caller: alex turning "daily" off leaves robin's on.
     alex.put("/api/notify/routes", json={"event": "daily", "channel": "mail", "on": False})
-    alex.delete("/api/me/email")
+    alex.request("DELETE", "/api/me/email", json={"password": PASSWORD})
     mine = robin.get("/api/notify").json()
     assert mine["routes"]["daily"] == ["mail"] and mine["schedules"]["daily"]["time"] == "06:30"
     assert mail_channel(robin)["confirmed"] is True
