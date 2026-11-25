@@ -135,27 +135,57 @@ export type Me = {
   display_name: string
   role: 'operator' | 'member'
   sign_in: 'password' | 'oidc'
+  /** The account has a password of its own (else it signs in through a provider only). */
+  has_password?: boolean
   email: string
+  /** The address counts (signing in, a forgotten password); a new one waiting for its link; the name before. */
+  email_confirmed?: boolean
+  pending_email?: string
+  former_name?: string
+  /** The address a sign-in provider knows the account by, offered on the profile (konten 0.3.4), and whose it is. */
+  provider_email?: string
+  provider_email_from?: string
   language: string
+  timezone?: string
   two_factor: boolean
   two_factor_recovery_left: number
+  /** The module's state of the second factor (`factor.state`): none, required, active, passkey. */
+  factor_state?: string
+  /** NEXTASKS_SECOND_FACTOR_OFF holds: no second factor is asked of anybody. */
+  second_factor_off?: boolean
+  /** How many passkeys the account has. */
+  passkeys?: number
   avatar: string | null
   version: string
   whats_new_seen: string
+  created_at?: string
+  last_seen_at?: string | null
   shares_allowed?: boolean
   mail?: boolean
+  /** A link for a new address can go out (a mail server and the public address); without, an address counts at once. */
+  mail_links?: boolean
   second_factor_setup_required?: boolean
   /** A password account without a second factor of its own, signed in at a provider that checks it: its API tokens
    * wait until it sets one up (they come without that provider). */
   keys_wait_for_second_factor?: boolean
   upload_max_mb?: number
+  min_password?: number
+  /** The operator allows passkeys (on from the start). */
+  passkeys_allowed?: boolean
+  /** A mail when a browser signs in for the first time (on from the start). */
+  new_sign_in_mail?: boolean
+  /** A password set through a link: the page lists what still has access, until put away. */
+  new_password_origin?: string
+  /** The password was set through the operator's (or the server's) link: the page says so until put away. */
+  password_reset_notice?: boolean
 }
 
-export type SetupState = { needs_setup: boolean; code_required: boolean; signed_in: boolean; version: string; min_password: number }
+export type SetupState = { needs_setup: boolean; code_required: boolean; signed_in: boolean; version: string; min_password: number; data_dir?: string }
 /** A button of the sign-in and invitation pages: an active provider of the list (the shared module's `public_list`). */
 export type ProviderButton = { slug: string; label: string }
-/** `providers`: the buttons, in the operator's order. */
-export type Methods = { password: boolean; providers: ProviderButton[] }
+/** `providers`: the buttons, in the operator's order; `passkeys`: signing in with a passkey is allowed; `forgot_mail`:
+ * "Forgot your password?" sends a link (a mail server is set up). */
+export type Methods = { password: boolean; providers: ProviderButton[]; passkeys?: boolean; forgot_mail?: boolean }
 /** An active provider and whether the own account is linked to it (My account, Security). */
 export type MyProvider = { slug: string; label: string; linked: boolean; managed: string }
 /** A provider as the operator's list shows it; never the secret, only whether one is stored. */
@@ -208,21 +238,148 @@ export type AddressQuestion = { count: number; address: string; hand: number }
 
 export const authApi = {
   setupState: () => api<SetupState>('/api/setup'),
-  setup: (name: string, password: string, code: string, language: string) =>
-    api<Me>('/api/setup', { method: 'POST', body: { name, password, code, language } }),
+  setup: (body: { display_name: string; name: string; email: string; password: string; password_confirm: string; code: string; language: string }) =>
+    api<Me>('/api/setup', { method: 'POST', body }),
   methods: () => api<Methods>('/api/auth/methods'),
-  login: (name: string, password: string) => api<Me | { second_factor: true }>('/api/auth/login', { method: 'POST', body: { name, password } }),
+  login: (name: string, password: string, remember = true) =>
+    api<Me | { second_factor: true; passkey?: boolean; code?: boolean }>('/api/auth/login', { method: 'POST', body: { name, password, remember } }),
+  /** "Forgot your password?": the same answer whatever was typed. */
+  forgot: (name: string) => api<{ sent: boolean }>('/api/auth/forgot', { method: 'POST', body: { name } }),
   code: (code: string) => api<Me>('/api/auth/login/totp', { method: 'POST', body: { code } }),
   cancelCode: () => api<void>('/api/auth/login/totp/cancel', { method: 'POST' }),
   logout: () => api<void>('/api/auth/logout', { method: 'POST' }),
+  logoutEverywhere: () => api<void>('/api/auth/logout-all', { method: 'POST' }),
   me: () => api<Me>('/api/auth/me'),
   language: (language: string) => api<Me>('/api/me/language', { method: 'PUT', body: { language } }),
-  profile: (display_name: string) => api<Me>('/api/me/profile', { method: 'PUT', body: { display_name } }),
-  password: (current: string, next: string) => api<void>('/api/auth/password', { method: 'PUT', body: { current, new: next } }),
+  avatar: (picture: Blob) => api<Me>('/api/auth/avatar', { method: 'PUT', raw: picture }),
+  removeAvatar: () => api<Me>('/api/auth/avatar', { method: 'DELETE' }),
+  /** Display name, username and address with one "Save"; a new username or address with the own password. */
+  profile: (change: { display_name?: string; email?: string; name?: string; password?: string }) =>
+    api<Me>('/api/me/profile', { method: 'PUT', body: change }),
+  /** The link for the waiting address once more, or the waiting address forgotten (the notification state back). */
+  resendEmail: () => api<unknown>('/api/me/email/resend', { method: 'POST' }),
+  withdrawEmail: () => api<unknown>('/api/me/email/pending', { method: 'DELETE' }),
+  newSignInMail: (on: boolean) => api<Me>('/api/me/new-sign-in-mail', { method: 'PUT', body: { on } }),
+  sessions: () => api<SessionEntry[]>('/api/auth/sessions'),
+  endSession: (uid: string) => api<void>(`/api/auth/sessions/${encodeURIComponent(uid)}`, { method: 'DELETE' }),
+  access: () => api<{ origin: string; access: AccessEntry[] }>('/api/auth/access'),
+  disconnectAll: () => api<{ disconnected: number }>('/api/auth/access/disconnect', { method: 'POST' }),
+  accessSeen: () => api<Me>('/api/auth/access/seen', { method: 'POST' }),
+  resetNoticeSeen: () => api<Me>('/api/me/password-reset-notice/seen', { method: 'POST' }),
+  password: (current: string, next: string, confirm: string) =>
+    api<void>('/api/auth/password', { method: 'PUT', body: { current, new: next, password_confirm: confirm } }),
   whatsNewSeen: () => api<Me>('/api/me/whats-new/seen', { method: 'POST' }),
   myProviders: () => api<MyProvider[]>('/api/oidc/me'),
   linkStart: (slug: string, password: string) => api<{ url: string }>(`/api/oidc/${encodeURIComponent(slug)}/link`, { method: 'POST', body: { password } }),
   unlink: (slug: string) => api<void>(`/api/oidc/${encodeURIComponent(slug)}/link`, { method: 'DELETE' }),
+  /** Takes the address a provider knows the account by, or stops the page from offering it. */
+  takeProviderEmail: (password = '') => api<Me>('/api/oidc/me/address', { method: 'POST', body: { password } }),
+  declineProviderEmail: () => api<void>('/api/oidc/me/address', { method: 'DELETE' }),
+}
+
+/** A browser or a paired iPhone in "Signed-in devices". */
+export type SessionEntry = {
+  uid: string
+  kind: string
+  label: string
+  address: string
+  created_at: string
+  last_seen_at: string | null
+  current: boolean
+  device: boolean
+}
+
+/** What still has access after a password set through a link: devices, API tokens, passkeys. */
+export type AccessEntry = { id: string; kind: string; label: string; last_used_at: string | null }
+
+/** A passkey of the own account. */
+export type PasskeyEntry = { uid: string; name: string; created_at: string; last_used_at: string | null }
+
+export const passkeysApi = {
+  list: () => api<PasskeyEntry[]>('/api/auth/passkeys'),
+  beginAdd: (password: string) =>
+    api<{ token: string; options: Record<string, unknown> }>('/api/auth/passkeys/begin', { method: 'POST', body: { password } }),
+  finishAdd: (token: string, credential: unknown, name: string) =>
+    api<PasskeyEntry>('/api/auth/passkeys/finish', { method: 'POST', body: { token, credential, name } }),
+  remove: (uid: string, password: string) => api<unknown>(`/api/auth/passkeys/${encodeURIComponent(uid)}`, { method: 'DELETE', body: { password } }),
+  beginSignIn: () => api<{ token: string; options: Record<string, unknown> }>('/api/auth/passkey/begin', { method: 'POST' }),
+  finishSignIn: (token: string, credential: unknown) => api<Me>('/api/auth/passkey/finish', { method: 'POST', body: { token, credential } }),
+}
+
+/** A link for a new password (the person's own, the operator's, or the server's emergency command). */
+export const resetApi = {
+  offer: (token: string) => api<{ name: string; username?: string; min_password: number; expires_at: string }>(`/api/reset/${encodeURIComponent(token)}`),
+  use: (token: string, password: string, confirm: string) =>
+    api<void>(`/api/reset/${encodeURIComponent(token)}`, { method: 'POST', body: { password, password_confirm: confirm } }),
+}
+
+/** What an invitation offers on its page (`GET /api/invite/{token}`): the space and who invites, and the fields of a
+ * new account as the shared module fills them (display name, a suggested username, the address). */
+export type InviteOffer = {
+  space: string | null
+  role: string | null
+  by?: string | null
+  min_password: number
+  signed_in_as: string | null
+  display_name?: string
+  name?: string
+  email?: string
+  /** Signing in with a password is on. */
+  password?: boolean
+}
+
+/** An open invitation into nextasks, as the operator's list shows it. */
+export type Invite = { id: number; email: string; display_name?: string; by?: string; created_at?: string; expires_at: string; expired?: boolean }
+
+export const invitesApi = {
+  offer: (token: string) => api<InviteOffer>(`/api/invite/${encodeURIComponent(token)}`),
+  /** A new account through the invitation (also into a space); the answer names the space it joined, if any. */
+  accept: (token: string, body: { display_name: string; name: string; email: string; password: string; password_confirm: string }) =>
+    api<Me & { space_id?: string | null }>(`/api/invite/${encodeURIComponent(token)}`, { method: 'POST', body }),
+  list: () => api<Invite[]>('/api/invites'),
+  make: (body: { days: number; email: string; display_name: string; send: boolean; language: string }) =>
+    api<Invite & { link: string; sent: boolean }>('/api/invites', { method: 'POST', body }),
+  withdraw: (id: number) => api<void>(`/api/invites/${id}`, { method: 'DELETE' }),
+}
+
+/** A provider an account is linked to, as a mark in the operator's list (the shared sign-in blueprint 04). */
+export type LinkedProvider = { id: number; slug: string; label: string; managed: string }
+
+/** One account of the operator's list (`GET /api/accounts`): the own view without the private parts, and what the
+ * list needs (the spaces it is in, a doubled address, its second factor, its providers). */
+export type AccountRow = Me & {
+  spaces?: number
+  email_duplicate?: boolean
+  authenticator?: boolean
+  locked: boolean
+  blocked?: boolean
+  blocked_at?: string | null
+  providers?: LinkedProvider[]
+}
+
+/** What a reset of the second factor would take away (the shared module's `factor.reset_overview`). */
+export type FactorResetOverview = { authenticator: boolean; recovery_codes: number; passkeys: { uid: string; name: string }[]; devices: { uid: string; label: string }[] }
+
+export const accountsApi = {
+  list: () => api<AccountRow[]>('/api/accounts'),
+  remove: (id: number, current_password: string) => api<void>(`/api/accounts/${id}`, { method: 'DELETE', body: { current_password } }),
+  block: (id: number, current_password: string) => api<void>(`/api/accounts/${id}/block`, { method: 'POST', body: { current_password } }),
+  unblock: (id: number, current_password: string) => api<void>(`/api/accounts/${id}/unblock`, { method: 'POST', body: { current_password } }),
+  role: (id: number, role: 'operator' | 'member', current_password: string) =>
+    api<AccountRow>(`/api/accounts/${id}/role`, { method: 'PUT', body: { role, current_password } }),
+  /** A one-time link with which the person sets a new password themselves; the operator never knows it. */
+  resetLink: (id: number, days: number, current_password: string) =>
+    api<{ link: string | null; sent?: boolean; expires_at: string }>(`/api/accounts/${id}/reset-link`, { method: 'POST', body: { days, current_password } }),
+  /** Another username or display name; the address only taken away, never set (the operator's own password). */
+  rename: (id: number, name: string, current_password: string) =>
+    api<AccountRow>(`/api/accounts/${id}/name`, { method: 'PUT', body: { name, current_password } }),
+  displayName: (id: number, display_name: string, current_password: string) =>
+    api<AccountRow>(`/api/accounts/${id}/display-name`, { method: 'PUT', body: { display_name, current_password } }),
+  removeEmail: (id: number, current_password: string) => api<AccountRow>(`/api/accounts/${id}/email`, { method: 'DELETE', body: { current_password } }),
+  signOut: (id: number) => api<void>(`/api/accounts/${id}/sign-out`, { method: 'POST' }),
+  resetOverview: (id: number) => api<FactorResetOverview>(`/api/accounts/${id}/totp/reset`),
+  resetSecondFactor: (id: number, current_password: string, disconnect_devices = true, remove_passkeys = true) =>
+    api<void>(`/api/accounts/${id}/totp/reset`, { method: 'POST', body: { current_password, disconnect_devices, remove_passkeys } }),
 }
 
 /** The operator's provider list and the authentik button (Settings, Server, Sign-in; the shared module's routes). */

@@ -25,10 +25,8 @@
     "copy": "Kopieren",
     "copied": "Kopiert",
     "save": "Speichern",
-    "final": "Das lässt sich nicht rückgängig machen."
-  },
-  "account": {
-    "operator": "Betreiber"
+    "final": "Das lässt sich nicht rückgängig machen.",
+    "done": "Fertig"
   },
   "members": {
     "title": "Mitglieder",
@@ -130,10 +128,7 @@
   },
   "server": {
     "proxyUnknown": "Anfragen kommen über einen Proxy, aber NEXTASKS_TRUSTED_PROXIES ist nicht gesetzt. Dann sieht nextasks alle als einen Absender: Wer oft falsch rät, bremst jeden aus, der sich in einem hier noch nie benutzten Browser anmeldet. Trag die Adresse des Proxys in NEXTASKS_TRUSTED_PROXIES ein. Steht kein Proxy davor, kannst du das ignorieren.",
-    "accounts": "Konten",
-    "accountsHint": "Konten kommen nur per Einladung.",
     "member": "Mitglied",
-    "twoFactorRequired": "Zweiten Faktor verlangen",
     "backups": "Sicherung",
     "backupsHint": "Aufgaben, Dateien und Datenbank in einem Archiv. Wiederherstellen zeigt zuerst einen Probelauf.",
     "schedule": "Automatisch",
@@ -167,54 +162,8 @@
     "stripLocationHint": "Handys schreiben in jedes Foto, wo und womit es entstand. Ab Werk an.",
     "mail": "Mail",
     "mailHint": "Für Einladungen, zum Bestätigen von Mailadressen und für die Berichte und Benachrichtigungen, die jede Person unter Einstellungen, Benachrichtigungen wählt. Ohne Server reicht der Link zum Kopieren.",
-    "smtpHost": "Server",
-    "smtpSecurity": "Verschlüsselung",
-    "smtpUser": "Benutzer",
-    "smtpFrom": "Absender",
-    "none": "keine",
-    "mailTest": "Testmail an",
-    "send": "Senden",
-    "mailSent": "Die Testmail ist raus.",
-    "mailLastOk": "Letzte Mail: {{when}}",
-    "mailLastError": "Letzter Fehler: {{error}} ({{when}})",
-    "secretKept": "Bleibt; nur zum Ändern tippen.",
-    "twoFactorRequiredHint": "Jedes Konto, das sich mit Passwort anmeldet, muss ihn einrichten, bevor es weiterkommt. Konten vom Anbieter bringen dessen eigenen mit. Ein Konto mit Passwort ist ebenfalls nicht betroffen, wenn es über einen Anbieter kommt, bei dem „{{trusts}}“ an ist.",
     "forAccount": "{{name}}: {{action}}",
-    "withTwoFactor": "zweiter Faktor",
-    "locked": "eine Weile gesperrt",
-    "makeOperator": "Zum Betreiber machen",
-    "makeMember": "Zum Mitglied machen",
-    "newPassword": "Neues Passwort",
-    "resetTwoFactor": "Zweiten Faktor entfernen",
-    "signOutEverywhere": "Überall abmelden",
-    "deleteAccount": "Löschen",
-    "passwordGiven": "Das neue Passwort, einmal weiterzugeben:",
     "confirm": {
-      "role": {
-        "title": "Rolle von {{name}} ändern?",
-        "text": "Betreiber ändern jede Einstellung dieses Servers.",
-        "button": "Rolle ändern"
-      },
-      "delete": {
-        "title": "{{name}} löschen?",
-        "text": "Das Konto wird gelöscht und lässt sich nicht zurückholen. Seine Aufgaben bleiben in ihren Bereichen.",
-        "button": "Konto löschen"
-      },
-      "password": {
-        "title": "Neues Passwort für {{name}}?",
-        "text": "Ein zufälliges wird erzeugt; jede Anmeldung des Kontos endet.",
-        "button": "Passwort erzeugen"
-      },
-      "reset": {
-        "title": "Zweiten Faktor von {{name}} entfernen?",
-        "text": "Für ein verlorenes Handy: Das Konto meldet sich nur mit Passwort an, bis es einen neuen einrichtet.",
-        "button": "Entfernen"
-      },
-      "signout": {
-        "title": "{{name}} überall abmelden?",
-        "text": "Jeder Browser des Kontos muss sich neu anmelden.",
-        "button": "Abmelden"
-      },
       "backup_restore": {
         "title": "Diese Sicherung wiederherstellen?",
         "text": "Der jetzige Stand wird vorher gesichert. nextasks startet neu, alle melden sich neu an.",
@@ -234,22 +183,6 @@
         "title": "Diese Sicherung löschen?",
         "text": "Sie lässt sich nicht zurückholen.",
         "button": "Löschen"
-      },
-      "unblock": {
-        "title": "{{name}} entsperren?",
-        "text": "{{name}} kann sich danach wieder anmelden, mit dem eigenen Passwort oder über den Anmeldeanbieter.",
-        "button": "Entsperren"
-      },
-      "promote": {
-        "text": "{{name}} darf dann jede Einstellung dieses Servers ändern."
-      },
-      "demote": {
-        "text": "{{name}} wird Mitglied und kommt nicht mehr an die Einstellungen des Servers."
-      },
-      "block": {
-        "title": "{{name}} sperren?",
-        "text": "{{name}} kommt danach nirgends mehr hinein: keine Anmeldung, kein API-Token. Die Aufgaben bleiben zugewiesen und lassen sich neu zuweisen. Entsperren geht jederzeit.",
-        "button": "Sperren"
       }
     },
     "backupMade": "Sicherung erstellt.",
@@ -283,22 +216,10 @@
     "logClear": "Log leeren",
     "logClearText": "Jede Zeile geht. Neue kommen wie bisher.",
     "logUntil": "Um {{time}} zurück auf normal.",
-    "signInBy": {
-      "password": "Passwort",
-      "oidc": "Anbieter"
-    },
     "files": "Dateien",
     "filesHint": "Dateien an Aufgaben: wie groß sie sein dürfen und was beim Hochladen herausfällt.",
-    "smtpPort": "Port",
     "detail": "Ausführlichkeit",
-    "inviteTitle": "Zu nextasks einladen",
-    "inviteText": "Ein Link für ein neues Konto, noch ohne Bereich: Die Person legt eigene an oder wird später eingeladen. In einen Bereich lädt dessen Verwalter unter Mitglieder ein.",
-    "blocked": "gesperrt",
-    "noPassword": "ohne Passwort",
-    "givePassword": "Passwort setzen",
-    "unblock": "Entsperren",
     "ownSecondFactorFirst": "Richte zuerst deinen eigenen zweiten Faktor ein (Mein Konto, Sicherheit), sonst wärst du der Erste, der nicht mehr weiterkommt. Nicht betroffen ist, wer sich über einen Anbieter anmeldet, bei dem „{{trusts}}“ an ist.",
-    "block": "Sperren",
     "apiTokens": {
       "title": "API-Token",
       "text": "Damit verbinden Konten nextasks mit Programmen: nexmail macht Mails zu Aufgaben, nexdeck zeigt eine Karte mit den fälligen Aufgaben, dazu Home Assistant, n8n oder eigene Skripte. Ein Token kann nie mehr als sein Konto, und nur in seinen Bereichen. Ab Werk aus.",
@@ -327,8 +248,6 @@
       "order": "{{name}} verschieben (Pfeiltasten hoch und runter)",
       "more": "Mehr"
     },
-    "unlinkProvider": "Verknüpfung mit {{name}} lösen",
-    "unlinkText": "{{name}} meldet sich danach nicht mehr über {{provider}} an, bis sich das Konto wieder verknüpft. Das Konto erfährt davon.",
     "app": {
       "title": "iPhone-App und Einladungen",
       "text": "Was Geräte und Verwalter von Bereichen dürfen.",
@@ -339,46 +258,32 @@
       "invites": "Einladungen in Bereiche",
       "invitesHint": "Aus: Verwalter können keine Einladungslinks mehr erstellen.",
       "noAddress": "Ohne öffentliche Adresse (Anmeldung) nimmt die App die Adresse, unter der dieser Browser nextasks öffnet."
-    }
+    },
+    "twoFactorExempt": "Nicht betroffen ist, wer sich über einen Anbieter anmeldet, bei dem „{{trusts}}“ an ist."
   },
   "errors": {
-    "avatar_not_a_picture": "Das ist kein Bild, das nextasks annimmt (JPEG, PNG, WebP, GIF, HEIC oder AVIF).",
-    "avatar_too_large": "Das Bild ist zu groß.",
     "invalid_input": "Die Eingabe ist nicht gültig.",
     "sign_in_required": "Bitte erst anmelden.",
     "locale_unusable": "Diese Sprachdatei lässt sich nicht verwenden.",
     "client_required": "Die Anfrage sagte nicht, aus welchem Tab sie kam. Lade die Seite neu.",
-    "wrong_credentials": "Anmeldename oder Passwort stimmt nicht.",
     "account_locked": "Zu viele falsche Passwörter. Das Konto wartet eine Viertelstunde.",
-    "too_many_attempts": "Zu viele Versuche. Kurz warten und noch einmal.",
-    "password_login_off": "Die Anmeldung mit Passwort ist abgeschaltet.",
-    "password_too_short": "Das Passwort ist zu kurz.",
     "current_password_missing": "Gib dein jetziges Passwort ein.",
-    "name_taken": "Diesen Anmeldenamen gibt es schon.",
-    "already_set_up": "nextasks ist schon eingerichtet.",
     "unknown_language": "Diese Sprache hat nextasks nicht.",
-    "invite_invalid": "Diese Einladung gilt nicht mehr.",
     "already_member": "Du hast schon ein Konto.",
     "operator_only": "Das darf nur der Betreiber.",
     "last_manager": "Der Bereich braucht mindestens einen Verwalter. Mach erst jemand anderen zum Verwalter.",
     "no_such_account": "Ein Konto mit diesem Namen gibt es nicht.",
     "not_a_member": "Dieses Konto ist nicht im Bereich.",
     "invalid_role": "Unbekanntes Recht.",
-    "invalid_days": "Bitte eine der angebotenen Laufzeiten wählen.",
-    "invalid_email": "Das ist keine Mailadresse.",
     "invalid_url": "Gib eine Adresse an, die mit http:// oder https:// beginnt.",
     "public_url_change": "Die Rückleitadresse bei authentik ändert sich. Bestätige, um die neue Adresse zu speichern.",
     "public_url_invalid": "Diese Adresse lässt sich nicht verwenden. Prüf, wie sie geschrieben ist.",
     "public_url_needed": "nextasks konnte die Adresse nicht behalten. Versuch es noch einmal oder trag sie unter Anmeldung ein.",
-    "mail_off": "Es ist kein Mailserver eingetragen.",
-    "mail_failed": "Der Mailserver hat die Mail nicht angenommen.",
     "push_failed": "Der Push-Dienst hat die Mitteilung nicht angenommen.",
     "no_browser": "Kein Browser nimmt Mitteilungen an.",
     "no_device": "Kein gekoppeltes Gerät nimmt Mitteilungen an.",
     "channel_unavailable": "Diesen Weg hat der Betreiber nicht eingerichtet.",
     "channel_not_confirmed": "Bestätige erst deine Mailadresse.",
-    "email_link_invalid": "Dieser Link gilt nicht mehr. Trag die Adresse noch einmal ein, dann kommt ein neuer.",
-    "email_taken": "Ein anderes Konto hat diese Adresse schon bestätigt.",
     "email_nothing_waits": "Es wartet keine Adresse auf ihre Bestätigung.",
     "unsubscribe_invalid": "Dieser Link gilt nicht.",
     "cannot_delete_self": "Das eigene Konto kannst du nicht löschen.",
@@ -390,8 +295,6 @@
     "totp_enabled": "Der zweite Faktor ist schon an.",
     "totp_not_enabled": "Der zweite Faktor ist nicht an.",
     "totp_enrolment_expired": "Das Einrichten hat zu lange gedauert. Fang neu an.",
-    "totp_code_wrong": "Der Code stimmt nicht. Prüfe die Uhrzeit auf dem Handy und nimm den nächsten.",
-    "second_factor_expired": "Zu viele falsche Codes oder zu lange gewartet. Fang mit dem Passwort neu an.",
     "second_factor_unavailable": "Der zweite Faktor lässt sich auf dieser Installation nicht prüfen. Bitte den Betreiber, ihn zurückzusetzen.",
     "second_factor_setup_required": "Richte zuerst deinen zweiten Faktor ein.",
     "own_second_factor_first": "Richte zuerst deinen eigenen zweiten Faktor ein, auf deiner Kontoseite.",
@@ -400,12 +303,10 @@
     "api_off": "Der Betreiber hat API-Token nicht eingeschaltet.",
     "too_many_tokens": "Ein Konto hat höchstens 20 Token.",
     "operator_network": "Die Einstellungen des Betreibers sind nur aus dem Heimnetz erreichbar.",
-    "display_name_taken": "Ein anderes Konto heißt schon so.",
     "display_name_invalid": "Ein Anzeigename darf keine Steuer- oder unsichtbaren Zeichen enthalten.",
     "public_url_missing": "Für Mails braucht nextasks seine öffentliche Adresse; der Betreiber trägt sie unter Einstellungen ein.",
     "internal_error": "Das hat nicht geklappt.",
     "network": "Keine Verbindung zum Server.",
-    "name_missing": "Gib einen Namen an.",
     "password_missing": "Gib das Passwort an.",
     "too_large": "Die Datei ist größer als erlaubt ({{max_mb}} MB).",
     "too_many_pixels": "Das Bild hat mehr Pixel, als nextasks annimmt (höchstens {{max_million}} Millionen).",
@@ -415,10 +316,8 @@
     "invalid_title": "Der Titel ist leer oder zu lang.",
     "invalid_name": "Gib einen Namen ein.",
     "invalid_color": "Diese Farbe bietet nextasks nicht an.",
-    "wrong_password": "Das Passwort stimmt nicht.",
     "not_found": "Das gibt es nicht (mehr).",
     "forbidden": "Das darfst du hier nicht.",
-    "setup_code_wrong": "Der Einrichtungscode stimmt nicht. Er steht im Log des Servers.",
     "assignee_no_access": "Diese Person kann in diesem Bereich nicht arbeiten.",
     "invalid_day": "Dieses Datum gibt es nicht.",
     "invalid_app": "Dorthin kann nextasks nicht verknüpfen.",
@@ -436,14 +335,11 @@
     "not_connecting": "Fang mit Adresse und Code an.",
     "already_connected": "nextasks ist schon verbunden.",
     "emergency_code_wrong": "Dieser Notfallcode gilt nicht.",
-    "account_blocked": "Dieses Konto ist gesperrt. Bitte den Betreiber, es freizugeben.",
     "connecting_already": "Eine Verbindung ist schon angefangen: fortsetzen oder abbrechen.",
-    "invalid_account_name": "Ein Anmeldename hat 2 bis 64 Zeichen: Buchstaben ohne Umlaute, Ziffern, Punkt, Bindestrich oder Unterstrich, keine Leerzeichen.",
     "cannot_block_self": "Dich selbst kannst du nicht sperren.",
     "backups_emergency_only": "Im Verbund lädt und löscht nur das Notkonto Sicherungen.",
     "comment_too_long": "Ein Kommentar hat höchstens 5000 Zeichen.",
     "forTask": "„{{title}}“: {{text}}",
-    "invite_expired": "Diese Einladung ist abgelaufen. Frag nach einer neuen.",
     "choose_spaces": "Wähle die Bereiche, die das Token sehen darf, oder ausdrücklich alle.",
     "token_reads_only": "Dieses Token liest nur. Für Änderungen leg eines an, das schreibt.",
     "bad_preference": "Diesen Wert bietet nextasks nicht an.",
@@ -471,17 +367,11 @@
     "due_changed": "Die Fälligkeit wurde inzwischen geändert.",
     "parent_missing": "Die Liste oder der Bereich dazu fehlt auf dem Server.",
     "gone": "Das wurde endgültig gelöscht.",
-    "invalid": "Der Server hat die Änderung nicht angenommen."
+    "invalid": "Der Server hat die Änderung nicht angenommen.",
+    "login_missing": "Gib deinen Benutzernamen oder deine E-Mail ein."
   },
   "auth": {
-    "name": "Anmeldename",
-    "password": "Passwort",
-    "passwordHint": "Mindestens 12 Zeichen.",
     "setup": {
-      "title": "nextasks einrichten",
-      "text": "Das erste Konto betreibt diesen Server: Es lädt andere ein und darf jede Einstellung ändern.",
-      "code": "Einrichtungscode",
-      "codeHint": "Er steht im Log des Servers (docker logs nextasks), oder NEXTASKS_SETUP_TOKEN setzen.",
       "submit": "Konto anlegen"
     },
     "login": {
@@ -493,8 +383,6 @@
     "code": {
       "title": "Zweiter Faktor",
       "text": "Der Code aus deiner Authenticator-App, oder ein Wiederherstellungscode.",
-      "label": "Code",
-      "hint": "Sechs Ziffern, oder ein Wiederherstellungscode vom Papier.",
       "back": "Zurück zum Passwort"
     },
     "invite": {
@@ -510,12 +398,20 @@
       "toApp": "Zu nextasks",
       "intoSpaceBy": "{{by}} lädt dich in den Bereich „{{space}}“ ein ({{role}}).",
       "intoAppBy": "{{by}} lädt dich zu nextasks ein.",
-      "name": "Anmeldename",
-      "nameHint": "2 bis 64 Zeichen: Buchstaben ohne Umlaute, Ziffern, Punkt, Bindestrich oder Unterstrich, keine Leerzeichen. Den Namen, den andere sehen, änderst du danach unter Mein Konto.",
       "expiredTitle": "Einladung abgelaufen",
       "expiredText": "Diese Einladung ist abgelaufen. Frag nach einer neuen."
     },
-    "backToLogin": "Zur Anmeldung"
+    "backToLogin": "Zur Anmeldung",
+    "reset": {
+      "text": "Neues Passwort für {{name}}.",
+      "submit": "Passwort setzen",
+      "doneTitle": "Passwort gesetzt",
+      "doneText": "Melde dich jetzt mit dem neuen Passwort an.",
+      "invalidTitle": "Link nicht gültig",
+      "invalidText": "Dieser Link ist schon benutzt oder gilt nicht mehr. Frag den Betreiber nach einem neuen.",
+      "expiredTitle": "Link abgelaufen",
+      "expiredText": "Dieser Link ist abgelaufen. Frag nach einem neuen."
+    }
   },
   "roles": {
     "read": "Lesen",
@@ -580,35 +476,17 @@
   },
   "me": {
     "profile": {
-      "displayName": "Anzeigename",
-      "displayHint": "So sehen dich andere. Leer zeigt deinen Anmeldenamen {{name}}; mit ihm meldest du dich weiter an.",
-      "displaySave": "Speichern",
-      "displaySaved": "Anzeigename gespeichert.",
-      "name": "Anmeldename",
-      "email": "E-Mail",
-      "upload": "Bild hochladen",
-      "change": "Anderes Bild",
-      "remove": "Entfernen",
       "saved": "Bild gespeichert.",
       "removed": "Bild entfernt.",
-      "hint": "Ein Foto vom Handy oder von der Kamera. Es wird quadratisch zugeschnitten, und von der Datei bleibt nur das Bild: kein Ort, kein Gerät.",
-      "displayHintPassword": "So sehen dich andere. Leer zeigt deinen Anmeldenamen {{name}}; mit ihm meldest du dich weiter an.",
-      "title": "Profil",
-      "roleLine": "Rolle: {{role}}"
+      "done": "Profil gespeichert."
     },
     "password": {
-      "title": "Passwort",
       "current": "Jetziges Passwort",
       "new": "Neues Passwort",
       "submit": "Passwort ändern",
-      "done": "Passwort geändert. Andere Browser müssen sich neu anmelden.",
-      "again": "Passwort noch einmal",
-      "mismatch": "Die beiden Passwörter sind nicht gleich.",
-      "change": "Ändern"
+      "done": "Passwort geändert. Andere Browser müssen sich neu anmelden."
     },
     "sessions": {
-      "text": "Meldet dich überall ab außer hier, etwa nach einem verlorenen Handy.",
-      "submit": "Überall sonst abmelden",
       "done": "Alle anderen Browser sind abgemeldet."
     },
     "role": {
@@ -620,9 +498,6 @@
     "keysWaitLink": "Zweiten Faktor einrichten",
     "linkedTo": "Dein Konto ist mit {{name}} verknüpft.",
     "unlinkedFrom": "Nicht mehr mit {{name}} verknüpft.",
-    "security": {
-      "title": "Anmeldung und Sicherheit"
-    },
     "signOut": {
       "title": "Abmelden",
       "text": "Beendet deine Sitzung in diesem Browser. Deine Aufgaben bleiben, wie sie sind.",
@@ -633,20 +508,15 @@
       "title": "Aussehen",
       "appearance": "Darstellung",
       "appearanceHint": "(nur auf diesem Gerät)",
-      "language": "Sprache",
       "languageHint": "(gilt auf allen deinen Geräten)",
       "browser": "Wie der Browser",
       "byOperator": "(vom Betreiber)"
-    }
+    },
+    "emailTaken": "Die Adresse des Anbieters gilt jetzt für dein Konto.",
+    "emailDeclined": "Diese Adresse wird dir nicht mehr angeboten."
   },
   "twofactor": {
-    "title": "Zweiter Faktor",
-    "lead": "Neben dem Passwort ein Code aus einer App auf dem Handy (jede Authenticator-App, die einen QR-Code nimmt). Wiederherstellungscodes auf Papier bringen dich hinein, wenn das Handy weg ist.",
     "provider": "Du meldest dich über den Anbieter an; dort gilt sein zweiter Faktor.",
-    "off": "Aus.",
-    "on_one": "An. Noch {{count}} Wiederherstellungscode.",
-    "on_other": "An. Noch {{count}} Wiederherstellungscodes.",
-    "enable": "Einrichten",
     "scan": "Scanne diesen Code mit der App oder tippe den Schlüssel darunter ein. Dann gib den Code ein, den die App zeigt, und dein Passwort.",
     "qr": "QR-Code für die Authenticator-App",
     "secret": "Schlüssel zum Eintippen:",
@@ -658,28 +528,9 @@
     "codesCopy": "Kopieren",
     "codesDownload": "Als Datei speichern",
     "codesDone": "Ich habe sie",
-    "renew": "Neue Wiederherstellungscodes",
     "renewText": "Die alten Wiederherstellungscodes gelten dann nicht mehr. Gib dein Passwort ein, um neue zu erzeugen.",
-    "disable": "Ausschalten",
     "disableText": "Danach meldet dich das Passwort allein an. Gib es ein, um den zweiten Faktor auszuschalten.",
     "lowCodes": "Nur noch wenige Wiederherstellungscodes. Erzeuge neue, solange du dich noch anmelden kannst."
-  },
-  "invite": {
-    "valid": "Gültig für",
-    "days_one": "{{count}} Tag",
-    "days_other": "{{count}} Tage",
-    "email": "Mailadresse (freiwillig)",
-    "noMail": "Ohne Mailserver verschickt nextasks nichts: Kopiere den Link und gib ihn selbst weiter.",
-    "send": "Link per Mail schicken",
-    "create": "Einladungslink erstellen",
-    "copy": "Kopieren",
-    "sent": "An {{email}} geschickt.",
-    "once": "Der Link gilt einmal. Er wird nur jetzt gezeigt.",
-    "until": "bis {{when}}",
-    "withdraw": "Zurückziehen",
-    "noEmail": "keine Adresse",
-    "into": "Gleich in Bereich",
-    "intoSpace": "in „{{space}}“ ({{role}})"
   },
   "priority": {
     "0": "Keine",
@@ -1617,7 +1468,9 @@
       "suggestion": "Dein Anmeldeanbieter kennt dich als {{address}}.",
       "useSuggestion": "Diese Adresse bestätigen",
       "noPublic": "Für Mails braucht nextasks seine öffentliche Adresse; der Betreiber trägt sie unter Einstellungen ein.",
-      "removed": "Adresse entfernt. nextasks schickt dir keine Mails mehr."
+      "removed": "Adresse entfernt. nextasks schickt dir keine Mails mehr.",
+      "none": "Noch keine bestätigte Adresse.",
+      "inProfile": "Adresse im Profil ändern"
     },
     "reportsTitle": "Berichte",
     "reportsText": "Ein Bericht ohne Inhalt kommt nicht.",
@@ -1648,7 +1501,7 @@
     "title": "Mailadresse bestätigen",
     "busy": "Einen Moment …",
     "done": "Bestätigt. nextasks schickt Mails ab jetzt an {{email}}.",
-    "toSettings": "Zu den Benachrichtigungen"
+    "toProfile": "Zum Profil"
   },
   "unsubscribe": {
     "title": "Abbestellen",
@@ -1664,7 +1517,6 @@
     "textBy": "{{name}} lädt dich in den Bereich „{{space}}“ ein.",
     "accept": "Einladung annehmen",
     "already": "Du bist schon Mitglied. Zum Bereich",
-    "create": "Konto anlegen und beitreten",
     "signIn": "Ich habe schon ein Konto",
     "unknownTitle": "Dieser Link gilt nicht",
     "unknownText": "Die Einladung ist abgelaufen, schon benutzt oder zurückgezogen. Bitte um einen neuen Link."
@@ -2060,5 +1912,12 @@
     "more": "Dazunehmen",
     "pulse": "Reihum: {{names}}",
     "share": "{{name}} {{count}}"
+  },
+  "accounts": {
+    "spaces": "Bereiche",
+    "removeTasks_zero": "Aufgaben bleiben in ihren Bereichen.",
+    "removeTasks_one": "Aufgaben bleiben in ihren Bereichen; das Konto ist in einem Bereich.",
+    "removeTasks_other": "Aufgaben bleiben in ihren Bereichen; das Konto ist in {{count}} Bereichen.",
+    "withdrawn": "Einladung zurückgenommen."
   }
 }
