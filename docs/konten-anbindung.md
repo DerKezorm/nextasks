@@ -1,6 +1,6 @@
 # Anbindung des Kontenmoduls (`nexkonten`) an nextasks
 
-Stand 24.11.2026, Zweig `konten`. Vorbereitung, noch nichts angebunden. Maßgeblich sind der Entwurf in nexlore
+Stand 25.11.2026, Zweig `konten`. Backend angebunden (Abschnitt 0), Oberfläche folgt. Maßgeblich sind der Entwurf in nexlore
 (`Development/nexapps/Baupläne/Entwurf Konten, Einrichtung und Anmeldung.md`) und die Schnittstelle des Moduls
 (`bauplaene/konten/SCHNITTSTELLE.md`, Zweig `konten`, Fassung 0.1.0, dazu `oidc` 1.1.0). Wo dieser Plan von beiden
 abweicht oder etwas offen lässt, steht es unter „Passt das Modul?“ und „Offene Fragen“.
@@ -10,6 +10,28 @@ Grundsatz: **Für niemanden, der nextasks 0.8.0 benutzt, fällt ein Weg hinein w
 haben**, eine Adresse dient heute nur den Mitteilungen, und es gibt einen Weg, den der Entwurf nicht kennt: **der
 Betreiber setzt ein Passwort selbst** (Konten › „Neues Passwort“). Der Entwurf sagt, nextasks habe gar keinen Weg
 zurück; das stimmt nicht ganz.
+
+## 0. Stand (25.11.2026): Backend angebunden
+
+Das Backend läuft auf **konten 0.3.9, oidc 1.1.0, post 0.1.1** (Zweig `konten`). Die Oberfläche zieht ein eigener
+Schritt nach; die Abschnitte 1 bis 13 unten sind die Bestandsaufnahme vor dem Umbau (sie stimmt), die Modulfassungen
+darin sind veraltet.
+
+| Teil | Wo | Was |
+|---|---|---|
+| Store | `services/konten_store.py` | `KontenStore` über `accounts`, `invites`, `auth_sessions`, `app_devices` (Art `device`, uid `device-<id>`), `api_tokens`, `password_resets`, `former_names`, `passkeys`, `setup_claims`, `failed_unknown`; alte Fehlerkennungen über `OLD_CODES` (`name_taken`, `invalid_account_name`, `invalid_email`) |
+| Adresse | `accounts.email_confirmed` (Text, per Link **bewiesen**, wie 0.8.0) und neu `accounts.email_counted` (Text, **zählt** ohne Link) | zählt = Adresse gleich einer der beiden; im Bestand ist `email_counted` leer, es zählen genau die bestätigten Adressen. Wartende Adresse bleibt in `email_pending*` (Links `nxm_…` von 0.8.0 gelten weiter) |
+| Wanderung | `db.init_db` + `services/konten_wanderung.py` | nur ergänzend: neue Spalten (Sicherung davor), neue Tabellen, `uid` für alte Sitzungen, eindeutiger Index `lower(name)` nach dem Zählen, Index `lower(email)` nicht eindeutig. 0.8.0 läuft auf dem Ergebnis weiter (Rückweg) |
+| Post | `services/post_store.py`, `services/kontenpost.py`, Tabelle `mail_outbox` | Hinweise (neue Anmeldung, Benutzername, Adresse geändert, Faktor zurückgesetzt) über den Postausgang, Arbeiter in der Minutenrunde (`post_store.run_due`); Links, auf die jemand wartet (Bestätigung, neues Passwort, Passwort vergessen) sofort, bei Fehler Postausgang bzw. 502. `notify_outbox` bleibt für nextasks' Berichte |
+| Routen | `routers/auth.py`, `routers/accounts.py` (neu, Betreiber), `routers/invites.py`, `routers/notifications.py` (Adresse), `routers/totp.py`, `routers/passkeys.py` (neu), `routers/oidc.py` | Feldnamen von 0.8.0 bleiben; `PUT /api/accounts/{id}/password` antwortet 410 `use_reset_link` |
+| Notfall | `python -m app.emergency reset-link <Benutzername oder E-Mail> [--days 1\|7\|30]` | Link auf der Konsole, `origin = server` |
+| Nothammer | `NEXTASKS_SECOND_FACTOR_OFF` | `second_factor_off` in `/api/auth/me` |
+
+Eigene Entscheidungen beim Bau: Bremse der Anmeldung über die beiden Töpfe des Moduls; wartet nur der Topf des
+Kontos (bzw. der Eingabe), antwortet die Anmeldung wie die Sperre `wrong_credentials` (401) statt 429, damit der Test
+„Bestand“ unverändert grün bleibt; der volle Topf des Absenders antwortet 429. Einladungen in einen Bereich gehen mit
+nextasks' eigener Mail (sie nennt den Bereich), die des Betreibers über post. `DELETE /api/me/email` braucht kein
+Passwort („Entfernen geht immer“). Gelöschte Konten: Name in `former_names` ohne Konto, für immer reserviert.
 
 ## 1. Bestand heute (0.8.0)
 
