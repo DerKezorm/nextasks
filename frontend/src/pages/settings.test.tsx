@@ -86,8 +86,8 @@ describe('the settings', () => {
       'Profile',
       'Security',
       'Appearance',
-      'Connections',
       'Notifications',
+      'Connections',
       'General',
       'Sign-in',
       'Mail',
@@ -107,12 +107,12 @@ describe('the settings', () => {
     const nav = page.querySelector('[data-testid="settings-nav"]')!
     expect([...nav.querySelectorAll('p[id^="settings-group-"]')].map((head) => head.textContent)).toEqual(['My account'])
     expect(nav.querySelector('[data-testid="settings-nav-general"]')).toBeNull()
-    expect([...page.querySelectorAll('[data-testid="settings-jump"] option')].map((option) => option.getAttribute('value'))).toEqual([
+    expect([...nav.querySelectorAll('[data-testid^="settings-nav-"]')].map((entry) => entry.getAttribute('data-testid')?.slice('settings-nav-'.length))).toEqual([
       'profile',
       'security',
       'appearance',
-      'connections',
       'notifications',
+      'connections',
       'about',
     ])
     for (const area of ['sign-in', 'mail', 'storage', 'accounts', 'log']) {
@@ -178,10 +178,14 @@ describe('the settings', () => {
   it('put light, dark and system under Appearance, with the keys there too', async () => {
     const { server } = smallWorld()
     const page = await mount(server, '/settings/appearance')
-    const looks = page.querySelector('#looks')!
+    // "Aussehen" first (konten 1.1.0 `AppearanceCard`), kept at the account on every device.
+    const looks = page.querySelector('[data-card="appearance"]')!
+    expect(page.querySelector('[data-card]')).toBe(looks)
     expect([...looks.querySelectorAll('[role="radio"]')].map((choice) => choice.textContent)).toEqual(['Light', 'Dark', 'As the system'])
     await click(button(looks, 'Light'))
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    await settle()
+    expect(server.requests.some((r) => r.method === 'PUT' && r.path === '/api/me/theme')).toBe(true)
     await click(button(looks, 'Dark'))
     expect(document.documentElement.getAttribute('data-theme')).toBeNull()
     await click(page.querySelector('[data-testid="keys-open"]'))
@@ -191,13 +195,13 @@ describe('the settings', () => {
   it('draw every switch as a box in a row, never a sliding switch', async () => {
     const { server } = smallWorld()
     const page = await mount(server, '/settings/general')
-    const switches = [...page.querySelectorAll('input[role="switch"]')] as HTMLInputElement[]
+    // Every switch a box to tick in a row with its label (`CheckboxRow`), none a sliding switch (ui 1.1.0, E11).
+    const switches = [...page.querySelectorAll('input[type="checkbox"]')] as HTMLInputElement[]
     expect(switches.length).toBeGreaterThan(3)
-    expect(switches.every((entry) => entry.type === 'checkbox' && entry.closest('label') !== null)).toBe(true)
-    expect(page.querySelector('.nt-switch')).toBeNull()
-    expect(page.querySelector('#api-tokens')?.textContent).toContain('Accounts may create API tokens')
-    expect(page.querySelector('#app')).not.toBeNull()
-    expect(page.querySelector('#languages')).not.toBeNull()
+    expect(switches.every((entry) => !!entry.id && page.querySelector(`label[for="${entry.id}"]`) !== null)).toBe(true)
+    expect(page.querySelector('[role="switch"], .nt-switch')).toBeNull()
+    // The cards in the plan's order: limits, features for all accounts, interfaces (the API, the iPhone app), languages.
+    expect([...page.querySelectorAll('[data-card]')].map((card) => card.getAttribute('data-card'))).toEqual(['limits', 'features', 'interfaces', 'languages'])
   })
 })
 
@@ -207,7 +211,7 @@ describe('the ways that must stay', () => {
     server.accounts.get(robin)!.setupRequired = true
     const page = await mount(server, '/today')
     expect(where.path).toBe('/settings/security')
-    expect(page.querySelector('[data-testid="sign-out-card"]')).not.toBeNull()
+    expect(page.querySelector('[data-card="sign-out"]')).not.toBeNull()
   })
 
   it('keep "New space" when every space is hidden, and only then in the head of the hidden ones', async () => {

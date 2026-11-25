@@ -1,6 +1,7 @@
 /**
- * Light or dark mode, or as the system is set (as in nexlore: a new browser without a choice follows the system). The
- * colors behind it live solely in styles/index.css, this only holds which mode is active.
+ * Light or dark mode, or as the system is set. Since konten 1.1.0 the choice belongs to the account, on every device
+ * (`Me.theme`, Settings › Appearance); this browser keeps the last one it showed, for the sign-in pages and the first
+ * paint. The colors behind it live solely in styles/index.css, this only holds which mode is active.
  */
 
 export type Theme = 'dark' | 'light'
@@ -13,6 +14,15 @@ function systemTheme(): Theme {
     return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
   } catch {
     return 'dark'
+  }
+}
+
+/** What this browser kept, as it is ("" for nothing): the account takes it once (konten 1.1.0, ``adopt_theme``). */
+export function storedRaw(): string {
+  try {
+    return localStorage.getItem(KEY) ?? ''
+  } catch {
+    return ''
   }
 }
 

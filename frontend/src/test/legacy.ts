@@ -110,6 +110,18 @@ export function calls(name: string): Call[] {
 }
 
 /** The parts of `api/client` the store uses, wired to `fake`; the rest stays as it is. */
+function signInView() {
+  return {
+    password_login: fake.settings.password_login !== false,
+    factor_required: !!fake.settings.two_factor_required,
+    passkeys_allowed: fake.settings.passkeys_allowed !== false,
+    password_may_go_off: fake.providers.some((entry) => entry.enabled),
+    factor_may_go_on: true,
+    second_factor_off: false,
+    public_url: String(fake.settings.public_url ?? ''),
+  }
+}
+
 export function clientMock(real: Record<string, unknown>) {
   ApiError = real.ApiError as ErrorClass
   let next = 100
@@ -135,6 +147,18 @@ export function clientMock(real: Record<string, unknown>) {
       if (path === '/api/oidc/authentik/setup') return answer('authentik', [options.body], () => fake.authentikRuns.shift() ?? { steps: fake.authentikSteps })
       if (path === '/api/auth/me') return answer('me', [], () => ({ id: fake.me }))
       return realApi(path, options)
+    },
+    // Server › Sign-in (konten 1.1.0): the switches as the fake's settings hold them.
+    signInApi: {
+      read: () => answer('signIn', [], () => signInView()),
+      save: (change: Record<string, unknown>, password = '') =>
+        answer('saveSignIn', [change, password], () => {
+          if ('factor_required' in change) fake.settings.two_factor_required = change.factor_required
+          if ('password_login' in change) fake.settings.password_login = change.password_login
+          if ('passkeys_allowed' in change) fake.settings.passkeys_allowed = change.passkeys_allowed
+          return signInView()
+        }),
+      readiness: () => answer('readiness', [], () => ({ state: 'ok', open: 0, points: [] })),
     },
     authApi: {
       ...(real.authApi as object),

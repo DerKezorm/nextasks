@@ -1,7 +1,8 @@
-// Settings, Server, Sign-in as the shared sign-in blueprint lays it out (part 04): three cards, the provider form as a
-// dialog with its fields in the blueprint's order, adding, editing and removing with the question that names the
-// accounts, and the steps of the authentik button by their names with
-// the reason of a failure. The step names and reasons come from the shared module (`STEP_KEYS`, `REASONS` in
+// Settings, Server, Sign-in as the plan "Einstellungen" lays it out, the whole page from the shared modules (konten
+// 1.1.0 `SignInPage`, oidc 1.2.0 `SignInProviders`): its cards in order, the provider form as a dialog, adding, editing
+// and removing with the question that names the accounts, and the steps of the authentik button by their names with
+// the reason of a failure. What the cards draw is the modules' (their tests: `nexkonten.cards.test.tsx`,
+// `nexoidc.cards.test.tsx`); this file holds nextasks' wiring to them. The step names and reasons come from the shared module (`STEP_KEYS`, `REASONS` in
 // backend/app/vendor/nexoidc/authentik.py), so a name the language files lack shows up here, not on the operator's
 // screen.
 import { act } from 'react'
@@ -13,8 +14,7 @@ import oidcDe from '../vendor/nexoidc/oidc.de.json'
 import oidcEn from '../vendor/nexoidc/oidc.en.json'
 import { calls, emptyAddress, fake, hold, resetFake } from '../test/legacy'
 import { button, click, mount, settle, type, unmount } from '../test/legacyHarness'
-import { useServerSettings } from './settings/ServerCards'
-import { SignInPart } from './settings/SignInCards'
+import { SignInArea } from './settings/SignInArea'
 
 vi.mock('../api/client', async (importOriginal) => (await import('../test/legacy')).clientMock(await importOriginal()))
 /** Whether the operator has an own second factor; the requirement switch shows another hint without one. */
@@ -42,8 +42,7 @@ beforeEach(() => {
 afterEach(unmount)
 
 function SignIn() {
-  const server = useServerSettings()
-  return <SignInPart server={server} />
+  return <SignInArea />
 }
 
 function entry(change: Partial<OidcProvider> = {}): OidcProvider {
@@ -61,21 +60,29 @@ async function page(language: Language = 'en'): Promise<HTMLElement> {
 }
 
 const headings = (shown: HTMLElement) => [...shown.querySelectorAll('h2')].map((heading) => heading.textContent)
+/** The labels of a form in their order (fields, boxes to tick, the redirect address to copy). */
 const labels = (shown: ParentNode) =>
-  [...shown.querySelectorAll('label span:first-child, [data-testid="provider-form"] > div > span')]
+  [...shown.querySelectorAll('label, span[aria-hidden]')]
     .map((label) => label.textContent)
     .filter((label, index, all) => label !== all[index - 1])
-const rows = (shown: HTMLElement) => [...shown.querySelectorAll('[data-testid="authentik-steps"] li')].map((row) => row.textContent)
+/** The field or box to tick a label names (by its `for`, or the field inside it). */
+const named = (shown: ParentNode, text: string) => {
+  const label = [...shown.querySelectorAll('label')].find((entry) => entry.textContent === text)
+  return (label?.htmlFor ? document.getElementById(label.htmlFor) : label?.querySelector('input')) as HTMLInputElement | null
+}
+/** A step as "✓name" or "✗name reason": the module marks the outcome on the row (`data-ok`) and draws a symbol. */
+const rows = (shown: HTMLElement) => [...shown.querySelectorAll('[data-testid="authentik-steps"] li')].map((row) => `${row.getAttribute('data-ok') === 'true' ? '✓' : '✗'}${row.textContent}`)
 const dialog = () => document.querySelector('[role="dialog"]') as HTMLElement
 
 describe('Settings, Server, Sign-in', () => {
   it.each(['en', 'de'] as const)('has three cards in %s, the empty list says what to do', async (language) => {
     const shown = await page(language)
     const words = TEXTS[language]
-    expect(headings(shown)).toEqual([words.admin.signInTitle, words.admin.providersTitle, words.authentik.title])
+    // "Ready for the internet?" first (konten 1.1.0), then the card "Sign-in" and the module oidc's two.
+    expect(headings(shown)).toEqual([i18n.t('account.ready.title'), words.admin.signInTitle, words.admin.providersTitle, words.authentik.title])
     expect(shown.textContent).toContain(words.admin.empty)
     // No provider active: the password sign-in cannot be turned off.
-    const password = shown.querySelector(`input[aria-label="${words.admin.password}"]`) as HTMLInputElement
+    const password = named(shown, words.admin.password) as HTMLInputElement
     expect(password.checked && password.disabled).toBe(true)
   })
 
@@ -91,8 +98,8 @@ describe('Settings, Server, Sign-in', () => {
     expect(dialog().textContent).toContain(words.slugHint)
     expect((dialog().querySelector(`input[aria-label="${words.redirect}"]`) as HTMLInputElement).value).toBe('https://tasks.example.com/api/oidc/microsoft-entra/callback')
     // Off from the start: new people; on: the provider checks the second factor.
-    expect((dialog().querySelector(`input[aria-label="${words.autoCreate}"]`) as HTMLInputElement).checked).toBe(false)
-    expect((dialog().querySelector(`input[aria-label="${words.trustsSecondFactor}"]`) as HTMLInputElement).checked).toBe(true)
+    expect((named(dialog(), words.autoCreate) as HTMLInputElement).checked).toBe(false)
+    expect((named(dialog(), words.trustsSecondFactor) as HTMLInputElement).checked).toBe(true)
   })
 
   it('adds a provider through the dialog, with the defaults of the blueprint', async () => {
@@ -339,9 +346,9 @@ describe('the authentik steps', () => {
   it('asks before the public address of card 1 changes what authentik knows, and saves on yes', async () => {
     fake.addressAsks = { count: 2, address: 'https://tasks.example.com/api/oidc/authentik/callback', hand: 0 }
     const shown = await page()
-    const field = shown.querySelector(`input[aria-label="${oidcEn.oidc.admin.address}"], #sign-in input[type="text"], #sign-in input:not([type])`) as HTMLInputElement
+    const field = shown.querySelector(`[data-testid="sign-in-address"] input`) as HTMLInputElement
     await type(field, 'https://new.example.com')
-    await click(button(shown.querySelector('#sign-in') as HTMLElement, i18n.t('common.save')))
+    await click(button(shown.querySelector(`[data-testid="sign-in-address"]`) as HTMLElement, i18n.t("common.save")))
     await settle()
     expect(dialog().textContent).toContain(i18n.t('oidc.admin.addressChangeConfirm', { address: fake.addressAsks.address }))
     expect(dialog().textContent).not.toContain(oidcEn.oidc.admin.addressChangeHand_other.slice(0, 20))
@@ -356,19 +363,13 @@ describe('the authentik steps', () => {
 })
 
 describe('the second factor requirement', () => {
+  // One hint from the module at the switch (plan "Einstellungen", Anmeldung 3): nextasks' own sentence about the
+  // provider switch that exempts a sign-in went with its card.
   for (const language of ['de', 'en'] as const) {
-    for (const own of [true, false]) {
-      it(`names the provider switch that exempts a sign-in (${language}, ${own ? 'with' : 'without'} an own factor)`, async () => {
-        viewer.two_factor = own
-        const shown = await page(language)
-        // With an own factor: the module's hint at the switch (konten 0.3.2), then nextasks' sentence about the exemption.
-        const trusts = { trusts: i18n.t('oidc.admin.trustsSecondFactor') }
-        const hint = own ? `${i18n.t('account.factorRequiredSwitchHint')} ${i18n.t('server.twoFactorExempt', trusts)}` : i18n.t('server.ownSecondFactorFirst', trusts)
-        expect(shown.textContent).toContain(hint)
-        // The words of the switch itself, between the quotes of the sentence: not a gap.
-        const [open, close] = language === 'de' ? ['„', '“'] : ['“', '”']
-        expect(shown.textContent).toContain(`${open}${i18n.t('oidc.admin.trustsSecondFactor')}${close}`)
-      })
-    }
+    it(`shows the module's hint at the switch (${language})`, async () => {
+      const shown = await page(language)
+      expect(shown.textContent).toContain(i18n.t('account.factorRequiredSwitchHint'))
+      expect(shown.textContent).not.toContain(i18n.t('server.twoFactorExempt', { trusts: i18n.t('oidc.admin.trustsSecondFactor') }))
+    })
   }
 })

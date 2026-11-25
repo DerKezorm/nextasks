@@ -130,6 +130,10 @@ export function upload<T>(path: string, query: Record<string, string | number>, 
 // ---- Types ----------------------------------------------------------------------------------------------------------
 
 export type Me = {
+  /** Light, dark or as the device says, for the account on every device (konten 1.1.0); "" not chosen yet. */
+  theme?: string
+  /** The box "Address not confirmed yet" with "Send link" shows (konten 1.1.0, E23). */
+  email_needs_proof?: boolean
   id: number
   name: string
   display_name: string
@@ -262,6 +266,12 @@ export const authApi = {
   resendEmail: () => api<unknown>('/api/me/email/resend', { method: 'POST' }),
   withdrawEmail: () => api<unknown>('/api/me/email/pending', { method: 'DELETE' }),
   newSignInMail: (on: boolean) => api<Me>('/api/me/new-sign-in-mail', { method: 'PUT', body: { on } }),
+  /** A link that proves the address the account has (the box "Address not confirmed yet", konten 1.1.0). */
+  proveEmail: () => api<unknown>('/api/me/email/prove', { method: 'POST' }),
+  /** Light, dark or as the device says, for the account on every device (konten 1.1.0). */
+  theme: (theme: string) => api<Me>('/api/me/theme', { method: 'PUT', body: { theme } }),
+  /** Once, while the account has none: the value this browser kept before. */
+  adoptTheme: (value: string) => api<{ theme: string }>('/api/me/theme/adopt', { method: 'POST', body: { value } }),
   sessions: () => api<SessionEntry[]>('/api/auth/sessions'),
   endSession: (uid: string) => api<void>(`/api/auth/sessions/${encodeURIComponent(uid)}`, { method: 'DELETE' }),
   access: () => api<{ origin: string; access: AccessEntry[] }>('/api/auth/access'),
@@ -356,6 +366,9 @@ export type AccountRow = Me & {
   locked: boolean
   blocked?: boolean
   blocked_at?: string | null
+  /** Deleted (konten 1.1.0) and the day it goes for good: until then the operator brings it back. */
+  deleted_at?: string | null
+  purge_at?: string | null
   providers?: LinkedProvider[]
 }
 
@@ -367,6 +380,8 @@ export const accountsApi = {
   remove: (id: number, current_password: string) => api<void>(`/api/accounts/${id}`, { method: 'DELETE', body: { current_password } }),
   block: (id: number, current_password: string) => api<void>(`/api/accounts/${id}/block`, { method: 'POST', body: { current_password } }),
   unblock: (id: number, current_password: string) => api<void>(`/api/accounts/${id}/unblock`, { method: 'POST', body: { current_password } }),
+  /** A deleted account back while its 30 days run (konten 1.1.0). */
+  restore: (id: number, current_password: string) => api<void>(`/api/accounts/${id}/restore`, { method: 'POST', body: { current_password } }),
   role: (id: number, role: 'operator' | 'member', current_password: string) =>
     api<AccountRow>(`/api/accounts/${id}/role`, { method: 'PUT', body: { role, current_password } }),
   /** A one-time link with which the person sets a new password themselves; the operator never knows it. */
@@ -408,6 +423,24 @@ export const oidcApi = {
   /** "Use it only": the address becomes the public one; 409 `public_url_change` asks first, `confirm` answers it. */
   saveAddress: (public_url: string, confirm = false) =>
     api<AuthentikAddress>('/api/oidc/authentik/address', { method: 'POST', body: { public_url, confirm } }),
+}
+
+/** Server › Sign-in (konten 1.1.0, `signin.view` and the public address). */
+export type SignInSettingsView = {
+  password_login: boolean
+  factor_required: boolean
+  passkeys_allowed: boolean
+  password_may_go_off: boolean
+  factor_may_go_on: boolean
+  second_factor_off: boolean
+  public_url: string
+}
+
+export const signInApi = {
+  read: () => api<SignInSettingsView>('/api/server/sign-in'),
+  save: (change: Partial<Pick<SignInSettingsView, 'password_login' | 'factor_required' | 'passkeys_allowed'>>, password = '') =>
+    api<SignInSettingsView>('/api/server/sign-in', { method: 'PUT', body: { ...change, password } }),
+  readiness: <T,>() => api<T>('/api/server/sign-in/readiness'),
 }
 
 export type ApiToken = {

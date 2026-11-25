@@ -185,8 +185,8 @@ const APP_ACCOUNTS_RENDER: { list?: () => Promise<Shown> } = {
 describe('nextasks keeps the module\'s rules in its own answers', () => {
   it('takes nothing away from the list of 0.8.0: role, block, the second factor, signing out, providers, deleting', () => {
     expect(APP_CAPS).toMatchObject({ roles: true, blocking: true, factorReset: true, signOut: true, unlink: true, remove: true, resetLink: true })
-    // nextasks deletes for good; its tasks stay in their spaces.
-    expect(APP_CAPS.restore).toBe(false)
+    // Deleting keeps the account 30 days to bring back (konten 1.1.0, `capsOf`); after them it goes, its tasks stay.
+    expect(APP_CAPS.restore).toBe(true)
   })
 })
 
@@ -205,7 +205,9 @@ function leaves(tree: Tree, prefix = ''): [string, string][] {
 }
 
 // Every value a text of the module asks for (since 0.3.10 also name, day and providers, the words of 0.3.9).
-const values = { username: 'kim', email: 'kim@example.com', provider: 'Pocket ID', name: 'Kim', day: '25.11.2026', providers: 'Pocket ID, Entra' }
+// TODO konten 1.1.0: the template gives the placeholders new in 1.1.0 no values (things, used, limit, address, networks,
+// proxies, proxy, variable …); the module fills them in its next copy, then these go.
+const values = { username: 'kim', email: 'kim@example.com', provider: 'Pocket ID', name: 'Kim', day: '25.11.2026', providers: 'Pocket ID, Entra', things: 'Aufgaben', used: '2 GB', limit: '5 GB', address: 'https://tasks.example.com', networks: '192.0.2.0/24', proxies: '192.0.2.1', proxy: '192.0.2.1', variable: 'NEXTASKS_TRUSTED_PROXIES', status: '403', seen: 'https://tasks.example.com', zone: 'UTC', days: '30' }
 const fill: Record<string, string | number> = { ...kontenVariables(APP_NAME), ...values }
 /** Plural keys (``days_one``, ``recoveryLeft_other``) are asked by their base with a count that picks them. */
 const PLURAL = /_(one|other)$/

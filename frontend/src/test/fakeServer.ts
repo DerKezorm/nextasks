@@ -1045,6 +1045,11 @@ export class FakeServer {
       return { status: 204 }
     }
     if (path === '/api/auth/me') return { status: 200, body: this.oldMe(me) }
+    if (path === '/api/me/theme' && method === 'PUT') {
+      ;(me as { theme?: string }).theme = String(body.theme ?? '')
+      return { status: 200, body: this.oldMe(me) }
+    }
+    if (path === '/api/me/theme/adopt' && method === 'POST') return { status: 200, body: { theme: (me as { theme?: string }).theme || 'system' } }
     if (path === '/api/me/language' && method === 'PUT') {
       me.language = String(body.language ?? me.language)
       return { status: 200, body: this.oldMe(me) }
@@ -1081,6 +1086,29 @@ export class FakeServer {
     if (path === '/api/admin/api-tokens') return { status: 200, body: [] }
     if (path === '/api/accounts') return { status: 200, body: [...this.accounts.values()].map((a) => ({ ...this.oldMe(a), locked: false, created_at: this.iso(), last_seen_at: null, providers: [], ...this.listed.get(a.id) })) }
     if (path === '/api/invites' || path === '/api/backups') return { status: 200, body: [] }
+    if (path === '/api/server/mail') {
+      const set = this.settings as Record<string, unknown>
+      if (method === 'PUT') {
+        const change = body as Record<string, unknown>
+        Object.assign(set, { smtp_host: change.host, smtp_port: change.port, smtp_security: change.security, smtp_user: change.user, smtp_from: change.sender, smtp_sender_name: change.sender_name })
+      }
+      return { status: 200, body: { host: set.smtp_host ?? '', port: set.smtp_port ?? 587, security: set.smtp_security ?? 'starttls', user: set.smtp_user ?? '', password_set: !!set.smtp_password_set, sender: set.smtp_from ?? '', sender_name: set.smtp_sender_name ?? '', sender_name_default: 'nextasks', ca_file: '', configured: !!set.smtp_host, warnings: [], last_ok_at: null, last_error: '', last_error_at: null, waiting: 0 } }
+    }
+    if (path === '/api/connections/interfaces') {
+      const set = this.settings as Record<string, unknown>
+      if (method === 'PUT') {
+        const change = body as Record<string, boolean>
+        if ('api' in change) set.api_tokens_allowed = change.api
+        if ('app' in change) set.app_enabled = change.app
+        if ('pairing' in change) set.app_pairing_allowed = change.pairing
+      }
+      return { status: 200, body: { api: !!set.api_tokens_allowed, app: set.app_enabled !== false, pairing: set.app_pairing_allowed !== false } }
+    }
+    if (path === '/api/connections/keys' && method === 'GET') {
+      const set = this.settings as Record<string, unknown>
+      return { status: 200, body: { app: 'nextasks', api: !!set.api_tokens_allowed, mcp: null, programs: false, api_path: '/api/v1', mcp_path: null, keys_wait: false, warn_days: 7, kinds: [{ id: 'api', prefix: 'ntk_', creatable: true, editable: true, rights: ['read', 'write'], default_right: 'read', options: [], areas: [], areas_required: false, expiry_days: [30, 90, 365, null], default_days: 90, default_days_by_right: {}, max_keys: 20, count: 0, name_max: 100 }], keys: [], address: 'https://tasks.example.com' } }
+    }
+    if (path === '/api/connections/admin/keys') return { status: 200, body: { keys: [] } }
     if (path === '/api/server/storage') return { status: 200, body: { app: 'nextasks', used: 0, parts: [], complete: true, total: 0, disk_used: 0, free: 0, nearly_full: false, where: {}, network: [] } }
     if (path === '/api/server/storage/backups') return { status: 200, body: { schedule: { every: 'daily', time: '03:00', keep: 7 }, zone: 'UTC', last: null, count: 0, kept: 0, failure: null, running: false, restore_failure: null, restored: null, restore: 'restart', download_password: false, backups: [] } }
     if (path === '/api/logs') return { status: 200, body: [] }

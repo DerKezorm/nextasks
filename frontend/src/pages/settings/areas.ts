@@ -1,13 +1,12 @@
 /**
- * The areas of the settings, as nexnotes' (`pages/settings/areas.ts` there), each with its own address
- * (`/settings/<slug>`): "My account" for every account, "Server" for the operator only, and "About nextasks"
- * (`/settings/about`) for everyone at the end of the navigation, outside the groups. `/settings` is the profile. What
- * both apps have stands in the same area as in nexnotes; nextasks' own parts (notifications, the iPhone app, the
- * spaces and the sidebar) in the area their subject belongs to. The addresses of before (`/account?tab=…`, `/about`,
+ * The areas of the settings (plan "Einstellungen"), each with its own address (`/settings/<slug>`): "Mein Konto" for
+ * every account (Profile, Security, Appearance, Notifications, Connections), "Server" for the operator only (General,
+ * Sign-in, Mail, Storage and backups, Accounts, Log), and "Über nextasks" (`/settings/about`) for everyone, set apart
+ * at the end. Titles and lines of the shared areas come from the ui kit (`areaText`). `/settings` alone is the list on
+ * a phone and the profile beside it on a wider page. The addresses of before (`/account?tab=…`, `/about`,
  * `/settings?tab=…&sub=…`) lead to their area.
  */
-import { Bell, HardDrive, Info, KeyRound, Mail, Palette, Plug, ScrollText, ShieldCheck, SlidersHorizontal, UserRound, Users, type LucideIcon } from 'lucide-react'
-
+import type { IconLike } from '../../vendor/nexui'
 import type { Me } from '../../api/client'
 
 type Role = Me['role']
@@ -15,27 +14,28 @@ type Role = Me['role']
 export type AreaSlug = 'profile' | 'security' | 'appearance' | 'connections' | 'notifications' | 'general' | 'sign-in' | 'mail' | 'storage' | 'accounts' | 'log' | 'about'
 export type AreaGroup = 'account' | 'server'
 
-export type Area = { slug: AreaSlug; group: AreaGroup; icon: LucideIcon; key: string }
+/** `own`: an area of nextasks alone, its title and line under `settings.areas.<slug>` of nextasks' words. */
+export type Area = { slug: AreaSlug; group: AreaGroup; icon: IconLike; own?: boolean }
 
-/** In the order of the navigation; `key` names the texts `settings.areas.<key>.title` and `.text`. */
+/** In the order of the navigation (plan "Einstellungen", "Reihenfolge Mein Konto" and "Reihenfolge Server"). */
 export const AREAS: Area[] = [
-  { slug: 'profile', group: 'account', icon: UserRound, key: 'profile' },
-  { slug: 'security', group: 'account', icon: ShieldCheck, key: 'security' },
-  { slug: 'appearance', group: 'account', icon: Palette, key: 'appearance' },
-  { slug: 'connections', group: 'account', icon: Plug, key: 'connections' },
-  { slug: 'notifications', group: 'account', icon: Bell, key: 'notifications' },
-  { slug: 'general', group: 'server', icon: SlidersHorizontal, key: 'general' },
-  { slug: 'sign-in', group: 'server', icon: KeyRound, key: 'signIn' },
-  { slug: 'mail', group: 'server', icon: Mail, key: 'mail' },
-  { slug: 'storage', group: 'server', icon: HardDrive, key: 'storage' },
-  { slug: 'accounts', group: 'server', icon: Users, key: 'accounts' },
-  { slug: 'log', group: 'server', icon: ScrollText, key: 'log' },
+  { slug: 'profile', group: 'account', icon: 'UserRound' },
+  { slug: 'security', group: 'account', icon: 'ShieldCheck' },
+  { slug: 'appearance', group: 'account', icon: 'Palette' },
+  { slug: 'notifications', group: 'account', icon: 'Bell' },
+  { slug: 'connections', group: 'account', icon: 'Plug' },
+  { slug: 'general', group: 'server', icon: 'SlidersHorizontal' },
+  { slug: 'sign-in', group: 'server', icon: 'KeyRound' },
+  { slug: 'mail', group: 'server', icon: 'Mail' },
+  { slug: 'storage', group: 'server', icon: 'HardDrive' },
+  { slug: 'accounts', group: 'server', icon: 'Users' },
+  { slug: 'log', group: 'server', icon: 'ScrollText' },
 ]
 
 export const GROUPS: AreaGroup[] = ['account', 'server']
 
 /** "About nextasks": an area of every account, below the groups (its `group` only says who may open it). */
-export const ABOUT_AREA: Area = { slug: 'about', group: 'account', icon: Info, key: 'about' }
+export const ABOUT_AREA: Area = { slug: 'about', group: 'account', icon: 'Info' }
 
 /** The area of an address, the groups' and "About nextasks". */
 export function findArea(slug: AreaSlug): Area | undefined {

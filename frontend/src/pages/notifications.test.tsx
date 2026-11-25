@@ -36,7 +36,8 @@ describe('notifications', () => {
     expect(box(page, 'route-daily-mail').disabled).toBe(true)
     expect(page.querySelector('[data-testid="mail-input"]')).toBeNull()
     expect(page.querySelectorAll('[data-testid="routes"] tbody tr[data-testid^="row-"]')).toHaveLength(6)
-    expect(page.textContent).not.toContain('Connections”')
+    // "iPhone and iPad" in "Auf welchem Weg" leads to Connections (plan "Einstellungen", E4).
+    expect(page.querySelector('[data-testid="notify-devices"]')?.getAttribute('href')).toBe('/settings/connections')
   })
 
   it('carry on the browsers and the app what came there before, greyed until there is one, and switch it per channel', async () => {
@@ -94,7 +95,7 @@ describe('notifications', () => {
     expect(page.querySelector('[data-testid="channel-mail"]')?.textContent).toContain('Confirm an address first')
 
     // The address lives in the profile now (konten): the card "Mail" leads there.
-    expect(page.querySelector('[data-testid="mail-to-profile"]')?.getAttribute('href')).toBe('/settings/profile')
+    expect(page.querySelector('[data-testid="notify-mail-change"]')?.getAttribute('href')).toBe('/settings/profile')
     await unmount()
     const profile = await mount(server, '/settings/profile')
     const email = profile.querySelector('input[autocomplete="email"]')
@@ -110,7 +111,7 @@ describe('notifications', () => {
     server.confirmMail(server.mails.at(-1)!.token!)
     await unmount()
     const again = await mount(server, '/settings/notifications')
-    expect(again.querySelector('[data-testid="mail-address"]')?.textContent).toContain('robin@example.test')
+    expect(again.querySelector('[data-testid="notify-mail"]')?.textContent).toContain('robin@example.test')
     await click(again.querySelector('[data-testid="route-daily-mail"]'))
     expect(server.notifyOf(robin).routes.daily).toEqual(['mail'])
     expect((again.querySelector('[data-testid="route-daily-mail"]') as HTMLInputElement).checked).toBe(true)
@@ -124,13 +125,13 @@ describe('notifications', () => {
     server.webpush.push({ id: 7, account: robin, endpoint: 'https://push.example.com/a', agent: 'Mozilla/5.0 (Windows NT 10.0) Chrome/141.0', since: '2026-11-01T09:00:00Z' })
     server.webpush.push({ id: 8, account: robin, endpoint: 'https://push.example.com/b', agent: 'Mozilla/5.0 (Android 15; Mobile) Firefox/144.0', since: '2026-11-02T09:00:00Z' })
     const page = await mount(server, '/settings/notifications')
-    const rows = [...page.querySelectorAll('[data-testid="browsers"] li')]
-    expect(rows.map((row) => row.querySelector('span span')?.textContent)).toEqual(['Chrome on Windows', 'Firefox on Android'])
+    const rows = [...page.querySelectorAll('[data-testid="notify-browser-row"]')]
+    expect(rows.map((row) => ['Chrome on Windows', 'Firefox on Android'].find((name) => row.textContent?.includes(name)))).toEqual(['Chrome on Windows', 'Firefox on Android'])
     expect(page.querySelector('[data-testid="channel-webpush"]')?.textContent).toContain('2 browsers')
     expect(box(page, 'route-due-webpush').disabled).toBe(false)
-    await click(button(page, 'Remove Firefox on Android'))
+    await click(rows[1].querySelector('[data-testid^="notify-remove-"]'))
     expect(server.webpush.map((entry) => entry.id)).toEqual([7])
-    expect(page.querySelectorAll('[data-testid="browsers"] li')).toHaveLength(1)
+    expect(page.querySelectorAll('[data-testid="notify-browser-row"]')).toHaveLength(1)
     expect(page.querySelector('[data-testid="push-ios"]')?.textContent).toContain('Add to Home Screen')
   })
 
@@ -146,7 +147,7 @@ describe('notifications', () => {
       const page = await mount(server, '/settings/notifications')
       const head = page.querySelector('[data-testid="channel-webpush"]')!
       expect(head.querySelector('[data-testid="push-toggle-head"]')?.textContent).toBe('Turn on here')
-      expect(page.querySelector('[data-testid="push-toggle"]')).not.toBeNull()
+      expect(page.querySelector('[data-testid="notify-browser-on"]')).not.toBeNull()
     } finally {
       delete (navigator as unknown as { serviceWorker?: unknown }).serviceWorker
     }

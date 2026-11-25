@@ -69,12 +69,6 @@
   "settings": {
     "title": "Settings",
     "saved": "Saved.",
-    "ownPassword": "Your password",
-    "jump": "Settings page",
-    "groups": {
-      "account": "My account",
-      "server": "Server"
-    },
     "areas": {
       "profile": {
         "title": "Profile",
@@ -128,7 +122,6 @@
     "things": "tasks"
   },
   "server": {
-    "proxyUnknown": "Requests come through a proxy, but NEXTASKS_TRUSTED_PROXIES is not set. nextasks then sees everybody as one sender: whoever guesses wrong often slows down everyone signing in from a browser not used here before. Put the proxy's address into NEXTASKS_TRUSTED_PROXIES. If no proxy stands in front of nextasks, you can ignore this.",
     "member": "Member",
     "languages": "Languages",
     "languagesHint": "German and English are built in. Add more as a JSON file; missing texts fall back to English.",
@@ -140,7 +133,6 @@
     "stripLocation": "Remove location and device from photos",
     "stripLocationHint": "Phones write into every photo where it was taken and with what. On by default.",
     "mail": "Mail",
-    "mailHint": "For invitations, for confirming mail addresses, and for the reports and notifications each person chooses under Settings, Notifications. Without a server, the link to copy is enough.",
     "backupContent": "{{tasks}}, {{files}}",
     "backupTasks_zero": "no tasks",
     "backupTasks_one": "one task",
@@ -150,54 +142,21 @@
     "backupFiles_other": "{{count}} files",
     "texts_one": "one text",
     "texts_other": "{{count}} texts",
-    "remove": "Remove",
     "languageCode": "Language code",
     "languageAdded": "Language added. It shows under Settings, Profile after reloading.",
     "files": "Files",
     "filesHint": "Files on tasks: how large they may be and what is removed when uploading.",
-    "ownSecondFactorFirst": "Set up your own second factor first (My account, Security), or you would be the first one who cannot go on. Not affected is whoever signs in through a provider for which “{{trusts}}” is on.",
-    "apiTokens": {
-      "title": "API tokens",
-      "text": "Accounts connect nextasks with programs this way: nexmail turns mails into tasks, nexdeck shows a card with the tasks due, and Home Assistant, n8n or scripts of your own. A token never does more than its account, and only in its spaces. Off by default.",
-      "allow": "Accounts may create API tokens",
-      "allowHint": "Every account creates its own tokens under Settings, Connections.",
-      "account": "Account",
-      "token": "Token",
-      "level": "Level",
-      "spaces": "Spaces",
-      "used": "Last used",
-      "allSpaces": "all",
-      "someSpaces_one": "{{count}} space",
-      "someSpaces_other": "{{count}} spaces",
-      "blocked": "blocked",
-      "accountBlocked": "account blocked",
-      "block": "Block",
-      "blockNamed": "Block token {{name}} of {{account}}",
-      "blockTitle": "Block the token “{{name}}” of {{account}}?",
-      "blockText": "The token then answers like none, for good. The account sees it as “blocked by the operator” and may create a new one while API tokens are on.",
-      "offHint": "Switch API tokens off and every token answers 401. The tokens stay and work again when you switch them on. Tokens of blocked or deleted accounts never count.",
-      "allTitle": "API tokens of all accounts",
-      "allText": "Per token the account, name, level, spaces and last use. Never the token itself.",
-      "none": "No account has made an API token yet."
-    },
-    "providers": {
-      "order": "Move {{name}} (arrow keys up and down)",
-      "more": "More"
-    },
     "app": {
-      "title": "iPhone app and invitations",
-      "text": "What devices and managers of spaces may do.",
-      "enabled": "Allow the iPhone app",
-      "enabledHint": "Off: connected devices get no answers any more, but stay connected.",
-      "pairing": "Connect new devices",
-      "pairingHint": "Off: no further iPhones can be connected.",
       "invites": "Invitations to spaces",
-      "invitesHint": "Off: managers can no longer create invitation links.",
-      "noAddress": "Without a public address (Sign-in) the app uses the address this browser opens nextasks at."
+      "invitesHint": "Off: managers can no longer create invitation links."
     },
-    "twoFactorExempt": "Not affected: whoever signs in through a provider for which “{{trusts}}” is on.",
     "backupHolds": "Tasks, files and the database in one archive. Restoring shows a dry run first.",
-    "restoreChanges": "A restore would add {{add}}, change {{change}} and remove {{remove}}."
+    "restoreChanges": "A restore would add {{add}}, change {{change}} and remove {{remove}}.",
+    "limits": "Limits",
+    "features": "Features for all accounts",
+    "featuresHint": "What every account may use in nextasks.",
+    "mailText": "Through this server nextasks sends invitations, links to confirm and for a new password, notices about your account, “My day”, the weekly report and notifications about tasks and comments.",
+    "whatYouSee": "As the operator you see names, sign-in, role, when an account was last there, how many spaces it has and its API keys, but never the tasks, notes, comments or attachments of other accounts."
   },
   "errors": {
     "invalid_input": "The input is not valid.",
@@ -380,35 +339,14 @@
   "sidebarPrefs": {
     "title": "Sidebar",
     "text": "Which collections and filters the sidebar shows. Hidden filters stay here and can still be edited. The setting is yours only, on all your devices.",
-    "hide": "Hide “{{name}}”",
-    "show": "Show “{{name}}”",
     "noFilters": "No filter of your own yet."
   },
   "about": {
     "subtitle": "Tasks for families and small groups, on your own server.",
     "version": "Version",
-    "whatsNew": "What's new",
-    "newer": "Version {{version}} is out",
-    "licence": "Licence",
-    "source": "Source code",
     "releases": "Releases",
-    "releasesLink": "All versions and what changed",
     "project": "Project page",
-    "report": "Found a problem?",
-    "reportLink": "Report it on GitHub",
-    "builtWith": "Built with",
     "updates": {
-      "title": "Updates",
-      "text": "Whether a newer version of nextasks is out.",
-      "daily": "Check once a day",
-      "dailyHint": "Asks GitHub for the newest release. Off: only when you press the button.",
-      "now": "Check now",
-      "current": "This is the newest version.",
-      "none": "No release found yet.",
-      "notYet": "Not checked yet.",
-      "off": "The daily check is off.",
-      "toRelease": "What is new",
-      "checkedAt": "last checked {{when}}",
       "whatGoesOut": "Only the question goes out: a request to api.github.com for the newest release of nextasks, with no names, tasks or settings. It is the only call nextasks makes on its own."
     }
   },
@@ -427,25 +365,10 @@
     "sessions": {
       "done": "Every other browser is signed out."
     },
-    "role": {
-      "operator": "Operator",
-      "member": "Member"
-    },
     "setupFirst": "The operator requires a second factor. Set it up here, then you can go on.",
-    "keysWait": "Works only once you set up a second factor.",
-    "keysWaitLink": "Set up a second factor",
     "linkedTo": "Your account is linked to {{name}}.",
     "unlinkedFrom": "No longer linked to {{name}}.",
-    "signOut": {
-      "title": "Sign out",
-      "text": "Ends your session in this browser. Your tasks stay as they are.",
-      "provider": "You stay signed in with your sign-in provider; only nextasks signs you out.",
-      "button": "Sign out"
-    },
     "looks": {
-      "title": "Look",
-      "appearance": "Appearance",
-      "appearanceHint": "(on this device only)",
       "languageHint": "(on all your devices)",
       "browser": "As the browser",
       "byOperator": "(by the operator)"
@@ -515,50 +438,7 @@
     "fromTask": "From “{{list}}” · {{space}}"
   },
   "apiTokens": {
-    "title": "API tokens",
-    "text": "For programs such as nexmail, nexdeck, Home Assistant or n8n. A token never sees more than your account, and only its spaces. A token never deletes anything for good.",
-    "none": "No tokens yet.",
-    "new": "New token",
-    "name": "Name, so you know it again",
-    "level": "What the token may do",
-    "levels": {
-      "read": "Read only",
-      "readHint": "Spaces, lists, tasks and the numbers for a dashboard.",
-      "write": "Read and write",
-      "writeHint": "Also creates, changes, ticks off, reopens and trashes tasks. Only in spaces where you may write."
-    },
-    "where": "Spaces",
-    "allSpaces": "Every space I may see, later ones too",
-    "someSpaces": "Only these",
-    "chooseOne": "Choose at least one space, or all of them above.",
-    "lifetime": "Expires",
-    "lifetimeDays": {
-      "30": "in 30 days",
-      "90": "in 90 days",
-      "365": "in a year"
-    },
-    "lifetimeNever": "never",
-    "make": "Create",
-    "shownOnce": "Token “{{name}}” made. It is shown only now. Copy it into your program; nextasks keeps only a checksum.",
-    "header": "As a header in n8n or nexdeck (HTTP Request, Header Auth)",
-    "tryIt": "To try it",
-    "never": "never expires",
-    "runsOut": "expires on {{day}}",
-    "ranOut": "expired on {{day}}",
-    "blocked": "blocked by the operator",
-    "delete": "Delete",
-    "deleteNamed": "Delete token {{name}}",
-    "off": "The operator has not switched API tokens on. Ask them if you want to connect nextasks with nexmail, nexdeck or n8n.",
-    "offOperator": "Switch them on under Settings, General.",
-    "whatItDoes": "What the API does",
-    "whatItDoesText": "Every request carries the token in the header Authorization: Bearer, the answers are JSON. Reading: spaces, lists, tasks and the numbers for a dashboard. With “Read and write” also creating, changing, ticking off, reopening and trashing tasks; every device sees it at once. Deleting for good, members and rights are never touched through the API.",
-    "docs": "Full description of the API",
-    "copyNamed": "Copy: {{what}}",
-    "done": "Got it",
-    "spacesAll": "all spaces",
-    "spacesNone": "no space any more",
-    "used": "last used {{when}}",
-    "unused": "never used"
+    "where": "Spaces"
   },
   "whatsNew": {
     "title": "New in nextasks {{version}}",
@@ -1349,24 +1229,14 @@
     "saved": "Saved."
   },
   "push": {
-    "title": "Browser",
-    "text": "Notifications arrive also while nextasks is closed. What arrives is chosen in the table above.",
-    "thisBrowser": "This browser:",
-    "stateOn": "on",
-    "stateOff": "off",
     "on": "Turn on notifications",
     "off": "Turn off notifications",
     "denied": "The browser blocked notifications for this site. Allow them in the browser settings.",
     "unsupported": "This browser cannot receive notifications.",
     "iosHint": "On iPhone and iPad, notifications in the browser only arrive when nextasks is on the Home Screen as an app (Share › Add to Home Screen).",
-    "list": "Browsers with notifications",
-    "none": "No browser yet.",
     "browserOn": "{{browser}} on {{system}}",
     "unknown": "Unknown browser",
     "since": "since {{when}}",
-    "current": "this browser",
-    "remove": "Remove",
-    "removeName": "Remove {{name}}",
     "onHere": "Turn on here",
     "offHere": "Turn off here",
     "deniedShort": "Blocked in this browser, see below.",
@@ -1381,7 +1251,11 @@
     "update": "A new version of nextasks is here.",
     "reload": "Reload",
     "offline": "No connection to the server. nextasks keeps trying and loads as soon as the network is back.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "installTitle": "Install on this device",
+    "installed": "nextasks runs as an app on this device already.",
+    "firefox": "Firefox cannot install web apps. Chrome, Edge or Safari can.",
+    "other": "This browser does not offer installing right now. In Chrome and Edge it is in the menu, in Safari under Share."
   },
   "notify": {
     "title": "Notifications",

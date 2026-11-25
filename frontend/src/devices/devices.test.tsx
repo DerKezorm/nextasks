@@ -21,8 +21,8 @@ describe('Settings, Connections, Devices', () => {
     server.devices.push({ id: 'other', account: alex, name: 'Alex’s iPhone', created_at: hour, last_seen: hour })
     const page = await mount(server, '/settings/connections')
     const cards = [...page.querySelectorAll('section[id]')].map((section) => section.id)
-    expect(cards.indexOf('devices')).toBe(0)
-    expect(cards).toContain('api-tokens')
+    // The order of the plan "Einstellungen" (Verbindungen): devices, installing on this device, the API keys.
+    expect(cards).toEqual(['devices', 'install', 'api-keys'])
     expect(card(page).querySelector('h2')?.textContent).toBe('Devices')
     const rows = [...card(page).querySelectorAll('[data-testid="device-row"]')]
     expect(rows.map((row) => row.querySelector('[data-testid="device-name"]')?.textContent)).toEqual(['Robin’s iPhone', 'iPad'])
@@ -32,11 +32,13 @@ describe('Settings, Connections, Devices', () => {
     expect(card(page).textContent).not.toMatch(/iOS app|notifications on/)
     for (const row of rows) {
       expect(row.querySelector('svg')).not.toBeNull()
-      expect(row.querySelector('button')?.className).toContain('nt-btn-ghost')
+      // A small danger button with its symbol and words (ui 1.1.0).
+      const button = row.querySelector('button')!
+      expect([button.getAttribute('data-kind'), button.getAttribute('data-size'), button.getAttribute('data-icon')]).toEqual(['danger', 'sm', 'Unplug'])
     }
     expect(card(page).querySelector('[data-testid="devices-none"]')).toBeNull()
     expect(card(page).querySelector('[data-testid="devices-connect"]')?.textContent).toBe('Connect iPhone or iPad')
-    expect(card(page).querySelector('[data-testid="devices-connect"]')?.className).toContain('nt-btn-accent')
+    expect(card(page).querySelector('[data-testid="devices-connect"]')?.getAttribute('data-kind')).toBe('primary')
   })
 
   it('says so when no device is connected, the button to connect stays', async () => {
@@ -56,12 +58,14 @@ describe('Settings, Connections, Devices', () => {
     expect(disconnect.getAttribute('aria-label')).toBe('Disconnect “Test phone”')
     await click(disconnect)
     let asked = document.querySelector('[data-testid="confirm-dialog"]')!
-    expect(asked.closest('[role="dialog"]')?.getAttribute('aria-label')).toBe('Disconnect “Test phone”?')
+    const window = asked.closest('[role="dialog"]') ?? asked
+    const named = window.getAttribute('aria-label') ?? document.getElementById(window.getAttribute('aria-labelledby') ?? '')?.textContent
+    expect(named).toBe('Disconnect “Test phone”?')
     expect(asked.textContent).toContain('From now on the device cannot reach your tasks. To connect it again, scan a new code.')
     // "Cancel" first, the danger on the right.
-    const buttons = [...asked.querySelectorAll('button')]
+    const buttons = [...asked.querySelectorAll('button[data-kind]')]
     expect(buttons.map((b) => b.textContent)).toEqual(['Cancel', 'Disconnect'])
-    expect(buttons[1].className).toContain('nt-btn-danger')
+    expect(buttons[1].getAttribute('data-kind')).toBe('danger')
     await click(buttons[0])
     await settle()
     expect(document.querySelector('[data-testid="confirm-dialog"]')).toBeNull()
@@ -70,7 +74,7 @@ describe('Settings, Connections, Devices', () => {
 
     await click(card(page).querySelector('[data-testid="device-disconnect"]'))
     asked = document.querySelector('[data-testid="confirm-dialog"]')!
-    await click(asked.querySelector('[data-testid="confirm-go"]'))
+    await click(asked.querySelectorAll('button[data-kind]')[1])
     await settle()
     expect(server.requests.some((r) => r.method === 'DELETE' && r.path === '/api/app-devices/phone')).toBe(true)
     expect(server.devices).toHaveLength(0)

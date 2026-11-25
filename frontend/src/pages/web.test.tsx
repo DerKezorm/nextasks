@@ -696,7 +696,8 @@ describe('hiding a space (space_pref)', () => {
   it('is switched in the settings (Appearance), one switch per space', async () => {
     const { server, family, robin } = world()
     const page = await mount(server, '/settings/appearance')
-    const toggle = page.querySelector<HTMLInputElement>('#spaces input[aria-label="Family"]')!
+    const label = [...page.querySelectorAll('[data-card="spaces"] label')].find((entry) => entry.textContent === 'Family') as HTMLLabelElement
+    const toggle = document.getElementById(label.htmlFor) as HTMLInputElement
     expect(toggle.checked).toBe(true)
     await click(toggle)
     await settle()
@@ -858,7 +859,11 @@ describe('spaces and people', () => {
   it('switches the iPhone app and invitations off for the operator', async () => {
     const { server } = world()
     const page = await mount(server, '/settings/general')
-    const toggle = (label: string) => [...page.querySelectorAll('label')].find((l) => l.textContent?.startsWith(label))?.querySelector('input')
+    const toggle = (label: string) => {
+      const found = [...page.querySelectorAll('label')].find((l) => l.textContent?.startsWith(label))
+      return found ? document.getElementById(found.htmlFor) : null
+    }
+    await settle()
     await click(toggle('Invitations to spaces'))
     expect(server.settings.invites_enabled).toBe(false)
     await click(toggle('Allow the iPhone app'))
@@ -957,24 +962,26 @@ describe('own filters and the sidebar overview (filter, tile_pref)', () => {
     const { server, robin } = world()
     const secret = server.addFilter(robin, 'Secret', {}, { hidden: true })
     const page = await mount(server, '/settings/appearance')
-    const card = page.querySelector('#sidebar')!
-    expect([...card.querySelectorAll('[data-testid^="pref-tile-"][data-testid$="-eye"]')]).toHaveLength(7)
-    const eye = card.querySelector('[data-testid="pref-tile-today-eye"]')!
-    expect(eye.getAttribute('aria-pressed')).toBe('true')
-    expect(eye.getAttribute('aria-label')).toBe('Hide “Today”')
-    await click(eye)
+    // Shown or hidden as a box to tick in a row with its name (`CheckboxRow`, ui 1.1.0), no longer an eye.
+    const card = page.querySelector('[data-card="sidebar"]')!
+    const box = (testId: string) => card.querySelector<HTMLInputElement>(`input[data-testid="${testId}"]`)
+    const nameOf = (input: HTMLInputElement | null) => (input ? card.querySelector(`label[for="${input.id}"]`)?.textContent : null)
+    expect([...card.querySelectorAll('input[data-testid^="pref-tile-"]')]).toHaveLength(7)
+    expect(box('pref-tile-today')?.checked).toBe(true)
+    expect(nameOf(box('pref-tile-today'))).toBe('Today')
+    await click(box('pref-tile-today'))
     await settle()
     expect(server.rows.get(`tile_pref:${robin}:${TILE_IDS.today}`)?.data.hidden).toBe(true)
     expect(page.querySelector('aside [data-testid="tile-today"]')).toBeNull()
-    expect(card.querySelector('[data-testid="pref-tile-today-eye"]')?.getAttribute('aria-pressed')).toBe('false')
+    expect(box('pref-tile-today')?.checked).toBe(false)
 
     expect(filterRow(page, 'Secret')).toBeNull()
-    expect(card.querySelector('[data-testid="pref-filter-Secret-eye"]')?.getAttribute('aria-pressed')).toBe('false')
-    await click(card.querySelector('[data-testid="pref-filter-Secret-eye"]'))
+    expect(box('pref-filter-Secret')?.checked).toBe(false)
+    await click(box('pref-filter-Secret'))
     await settle()
     expect(server.rows.get(`filter:${robin}:${secret}`)?.data.hidden).toBe(false)
     expect(filterRow(page, 'Secret')).not.toBeNull()
-    await click(card.querySelector('[data-testid="pref-filter-Secret-eye"]'))
+    await click(box('pref-filter-Secret'))
     await settle()
     expect(filterRow(page, 'Secret')).toBeNull()
     // Still to be changed from here.

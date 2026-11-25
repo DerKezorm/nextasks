@@ -86,7 +86,7 @@ export function PasskeysBox({ signedInByPassword, allowed = true }: { signedInBy
           onConfirm={() => void act()}
         >
           {adding && <Field label={t('account.passkeyName')} value={label} onChange={(event) => setLabel(event.target.value)} maxLength={100} />}
-          {signedInByPassword && <Field label={t('account.currentPassword')} value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" />}
+          {signedInByPassword && <Field label={t('account.password')} value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" />}
         </ConfirmDialog>
       )}
     </Box>

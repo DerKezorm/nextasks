@@ -55,7 +55,7 @@ import {
 } from '../../vendor/nexkonten/konten'
 import { Avatar, Badge, Button, ButtonGroup, Card, CheckboxRow, ConfirmDialog, Dialog, Facts, Field, Notice, Row, Rows, SelectField, type IconName } from '../../vendor/nexui'
 import { APP_CAPS, APP_OWN_ACTIONS, listedOf } from './accountList'
-import { Feedback, useAction } from './ui'
+import { Outcome as Feedback, useAction } from './actions'
 
 /** A day as nextasks writes it in the list ("25.11.2026"). */
 function day(value: string, lang: string): string {
@@ -384,6 +384,7 @@ function ConfirmAct({ row, name, pending, operatorHasPassword, onCancel, onDone 
           if (base === 'account.unlinkProvider' && act.provider) await oidcApi.unlinkAccount(row.id, Number(act.provider.id), password)
           if (base === 'account.block') await accountsApi.block(row.id, password)
           if (base === 'account.unblock') await accountsApi.unblock(row.id, password)
+          if (base === 'account.restore') await accountsApi.restore(row.id, password)
           if (base === 'account.remove') {
             await accountsApi.remove(row.id, password)
             gone = true
@@ -394,7 +395,7 @@ function ConfirmAct({ row, name, pending, operatorHasPassword, onCancel, onDone 
     >
       {lines}
       {asksPassword && operatorHasPassword && (
-        <Field label={t('account.currentPassword')} type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
+        <Field label={t('account.password')} type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
       )}
       <Feedback problem={action.problem} />
     </ConfirmDialog>
@@ -437,7 +438,7 @@ function NameDialog({ row, field, operatorHasPassword, onClose, onSaved }: {
           hints={[field === 'name' ? t('account.usernameRules') : t('account.displayNameHint')]}
         />
         <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{t(confirmLine(operatorHasPassword))}</p>
-        {operatorHasPassword && <Field label={t('account.currentPassword')} type="password" autoComplete="current-password" value={own} onChange={(event) => setOwn(event.target.value)} />}
+        {operatorHasPassword && <Field label={t('account.password')} type="password" autoComplete="current-password" value={own} onChange={(event) => setOwn(event.target.value)} />}
         <Feedback problem={action.problem} />
         <div className="flex flex-wrap justify-end gap-2">
           <AccountButton name="cancel" onClick={onClose}>
@@ -524,7 +525,7 @@ function ResetLinkDialog({ row, name, mailServer, operatorHasPassword, onClose }
             options={RESET_DAYS.map((value) => ({ value: String(value), label: t('account.days', { count: value }) }))}
           />
           <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{t(confirmLine(operatorHasPassword))}</p>
-          {operatorHasPassword && <Field label={t('account.currentPassword')} type="password" autoComplete="current-password" value={own} onChange={(event) => setOwn(event.target.value)} />}
+          {operatorHasPassword && <Field label={t('account.password')} type="password" autoComplete="current-password" value={own} onChange={(event) => setOwn(event.target.value)} />}
           <Feedback problem={action.problem} />
           <div className="flex flex-wrap justify-end gap-2">
             <AccountButton name="cancel" onClick={onClose}>

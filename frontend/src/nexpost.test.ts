@@ -30,7 +30,9 @@ function leaves(tree: Tree, prefix = ''): [string, string][] {
   })
 }
 
-const values = { email: 'kim@example.com', when: 'today', error: 'mail_unreachable' }
+// TODO post 1.1.0: the template gives the placeholders new in 1.1.0 no values (count …); the module fills them in its
+// next copy, then this goes.
+const values = { email: 'kim@example.com', when: 'today', error: 'mail_unreachable', count: '3' }
 const fill: Record<string, string> = { ...postVariables(APP_NAME), ...values }
 
 describe('the post texts', () => {
@@ -67,14 +69,15 @@ describe("nextasks' mail server card", () => {
     server.settings = { ...server.settings, smtp_host: 'mail.example.com', smtp_port: 587, smtp_security: 'starttls', smtp_user: 'robot', smtp_password_set: true, smtp_from: 'tasks@example.com' }
     const page = await mount(server, '/settings/mail')
     const form = page.querySelector('[data-testid="mail-form"]')!
-    const labels = [...form.querySelectorAll('label > span:first-child')].map((label) => label.textContent)
+    // The card of the module post (1.1.0): every field named by its label.
+    const labels = [...form.querySelectorAll('label')].map((label) => label.textContent)
     const words: Record<(typeof MAIL_FIELDS)[number], string> = { server: 'mail.server', port: 'mail.port', security: 'mail.security', user: 'mail.user', password: 'mail.password', sender: 'mail.sender', senderName: 'mail.senderName' }
     expect(labels).toEqual(MAIL_FIELDS.map((field) => i18n.t(words[field])))
-    expect(form.querySelector('[data-testid="mail-unencrypted"]')).toBeNull()
+    expect(form.querySelector('[data-testid="mail-warning"]')).toBeNull()
     await choose(form.querySelector('select'), 'tls')
     expect((form.querySelector('input[type="number"]') as HTMLInputElement).value).toBe('465')
     await choose(form.querySelector('select'), 'none')
     expect((form.querySelector('input[type="number"]') as HTMLInputElement).value).toBe('25')
-    expect(form.querySelector('[data-testid="mail-unencrypted"]')?.textContent).toBe(i18n.t('mail.warningUnencrypted'))
+    expect(form.querySelector('[data-testid="mail-warning"]')?.textContent).toBe(i18n.t('mail.warningUnencrypted'))
   })
 })

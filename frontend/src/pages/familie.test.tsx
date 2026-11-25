@@ -244,7 +244,7 @@ describe('Someday', () => {
   it('hides on this device only, from the settings', async () => {
     const { server } = smallWorld()
     const page = await mount(server, '/settings/appearance')
-    await click(page.querySelector('[data-testid="pref-tile-someday-eye"]'))
+    await click(page.querySelector('[data-testid="pref-tile-someday"]'))
     expect(page.querySelector('[data-testid="tile-someday"]')).toBeNull()
     expect([...server.rows.values()].some((r) => r.kind === 'tile_pref')).toBe(false)
   })

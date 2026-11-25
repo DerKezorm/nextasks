@@ -9,7 +9,7 @@
  * Below it the parts of the channels that need more than a head: the mail address (its state, changed in the profile),
  * and this browser (on or off) with the list of browsers that take notifications.
  */
-import { AtSign, Bell, Globe, Mail, Smartphone, Trash2, Zap, type LucideIcon } from 'lucide-react'
+import { Bell, Globe, Mail, Smartphone, Zap, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -22,8 +22,8 @@ import { disablePush, enablePush, ownEndpointMark, pushState, type PushState } f
 import { useAuth } from '../state/auth'
 import { useEngine, useSyncState } from '../state/sync'
 import { AppError } from '../sync/transport'
+import { Card, Notice, NotifyWays } from '../vendor/nexui'
 import { Done } from './Field'
-import { Section } from './Section'
 
 export type Browser = { id: number; browser: string; system: string; since: string | null; last_ok_at: string | null; mark: string }
 
@@ -127,12 +127,13 @@ function useBrowserPush(channel: NotifyChannel | undefined, reload: () => Promis
 type BrowserPushState = ReturnType<typeof useBrowserPush>
 
 export function NotificationsPart() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [state, setState] = useState<NotifyState | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
   const [done, setDone] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const narrow = useNarrow()
+  const pwa = usePwa()
 
   const load = useCallback(() => api<NotifyState>('/api/notify').then(setState, (error) => setProblem(errorText(codeOf(error)))), [])
   const push = useBrowserPush(state?.channels.find((channel) => channel.kind === 'webpush'), load)
@@ -167,28 +168,62 @@ export function NotificationsPart() {
   const cards = narrow || state.channels.length > MOST_COLUMNS
   const rows: Rows = { state, busy, turn, schedule, push }
 
+  const { ios, standalone } = pwa
+  const name = (entry: Browser) => (entry.browser && entry.system ? t('push.browserOn', { browser: entry.browser, system: entry.system }) : entry.browser || entry.system || t('push.unknown'))
   return (
-    <div className="space-y-6" data-testid="notifications">
-      <p className="text-sm text-mist-400">{t('notify.lead')}</p>
-      <div aria-live="polite">
-        {problem && (
-          <p role="alert" className="rounded-lg border border-bad-500/30 bg-bad-500/10 px-3 py-2 text-sm text-bad-500">
-            {problem}
-          </p>
-        )}
+    <>
+      <div aria-live="polite" className="empty:hidden" data-testid="notifications">
+        {problem && <Notice tone="danger">{problem}</Notice>}
         <Done text={done} />
       </div>
+      {/* "Auf welchem Weg" first, from the ui kit (plan "Einstellungen", Benachrichtigungen): the ways nextasks has. */}
+      <NotifyWays
+        subtitle={t('notify.lead')}
+        mail={mail?.available ? { address: mail.confirmed && mail.address ? mail.address : t('notify.mail.none'), confirmed: !!(mail.confirmed && mail.address), href: '/settings/profile' } : undefined}
+        browser={
+          browser && push.offered && (push.here === 'on' || push.here === 'off')
+            ? { on: push.here === 'on', onTurnOn: () => push.toggle(true), onTurnOff: () => push.toggle(false), busy }
+            : undefined
+        }
+        browsers={
+          browser
+            ? {
+                items: push.browsers.map((entry) => ({
+                  id: String(entry.id),
+                  name: name(entry),
+                  detail: entry.since ? t('push.since', { when: moment(entry.since, i18n.language) }) : undefined,
+                  current: !!push.mine && push.mine === entry.mark,
+                })),
+                busy,
+                onRemove: (id) => {
+                  const entry = push.browsers.find((found) => String(found.id) === id)
+                  if (entry && push.mine && push.mine === entry.mark) push.toggle(false)
+                  else void run(() => api<NotifyState>(`/api/notify/browsers/${id}`, { method: 'DELETE' }))
+                },
+              }
+            : undefined
+        }
+        devices={state.channels.some((channel) => channel.kind === 'app') ? { href: '/settings/connections' } : undefined}
+      >
+        {mail?.pending && <Notice tone="warn">{t('account.emailPending', { email: mail.pending })}</Notice>}
+        {mail?.available && mail.can_send === false && <Notice tone="warn">{t('notify.mail.noPublic')}</Notice>}
+        {browser && push.here === 'unsupported' && <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{t('push.unsupported')}</p>}
+        {browser && push.here === 'denied' && <Notice tone="warn">{t('push.denied')}</Notice>}
+        {push.problem && <Notice tone="danger">{push.problem}</Notice>}
+        {browser && (
+          <p className={'m-0 text-xs ' + (ios && !standalone ? 'text-[var(--nexui-warn)]' : 'text-[var(--nexui-text-muted)]')} data-testid="push-ios">
+            {t('push.iosHint')}
+          </p>
+        )}
+        {mail && <LastDelivery channel={mail} />}
+        {browser && <LastDelivery channel={browser} />}
+      </NotifyWays>
 
-      <Section icon={Zap} title={t('notify.tableTitle')}>
+      {/* nextasks' own: what comes which way (E18). */}
+      <Card id="routes" icon={Zap} title={t('notify.tableTitle')} subtitle={`${t('notify.reportsText')} ${t('notify.zone', { zone: state.timezone })}`}>
         {cards ? <RouteCards {...rows} /> : <RouteTable {...rows} />}
-        <p className="mt-3 text-xs text-mist-500">
-          {t('notify.reportsText')} {t('notify.zone', { zone: state.timezone })}
-        </p>
-      </Section>
-
-      {mail?.available && <MailAddress channel={mail} />}
-      {browser && <BrowserPush channel={browser} busy={busy} run={run} push={push} />}
-    </div>
+      </Card>
+    </>
   )
 }
 
@@ -403,110 +438,15 @@ function ScheduleFields({ report, value, busy, onChange }: { report: string; val
   )
 }
 
-/**
- * The card "Mail": which address mail goes to and its state, and a link to the profile, where the address lives now
- * (the shared account module: E-Mail in the profile, with "Waiting for confirmation", "Send the link again" and
- * "Withdraw"). Under it when the channel delivered last.
- */
-function MailAddress({ channel }: { channel: NotifyChannel }) {
-  const { t } = useTranslation()
-  const canSend = channel.can_send !== false
-  return (
-    <Section icon={AtSign} title={t('notify.mail.title')} id="mail">
-      <p className="mb-3 text-sm text-mist-400">{t('notify.mail.text')}</p>
-      {channel.confirmed && channel.address ? (
-        <p className="mb-3 flex flex-wrap items-center gap-2 text-sm" data-testid="mail-address">
-          <span className="font-medium text-mist-100">{channel.address}</span>
-          <span className="rounded-full bg-accent-500/15 px-2 py-0.5 text-xs text-accent-400">{t('notify.mail.confirmed')}</span>
-        </p>
-      ) : (
-        <p className="mb-3 text-sm text-mist-400" data-testid="mail-address-none">
-          {t('notify.mail.none')}
-        </p>
-      )}
-      {channel.pending && (
-        <p className="mb-3 text-sm text-mist-300" data-testid="mail-pending">
-          {t('account.emailPending', { email: channel.pending })}
-        </p>
-      )}
-      {!canSend && <p className="mb-3 text-sm text-warn-500">{t('notify.mail.noPublic')}</p>}
-      <Link to="/settings/profile" className="text-sm font-medium text-accent-400 hover:underline" data-testid="mail-to-profile">
-        {t('notify.mail.inProfile')}
-      </Link>
-      <LastDelivery channel={channel} />
-    </Section>
-  )
-}
-
 /** When the channel delivered last, and its last failure. */
 function LastDelivery({ channel }: { channel: NotifyChannel }) {
   const { t, i18n } = useTranslation()
   if (!channel.last_ok_at && !channel.last_error) return null
   return (
-    <p className="mt-3 text-xs text-mist-500" data-testid={`${channel.kind}-status`}>
+    <p className="m-0 text-xs text-[var(--nexui-text-muted)]" data-testid={`${channel.kind}-status`}>
       {channel.last_ok_at && t('notify.lastOk', { when: moment(channel.last_ok_at, i18n.language) })}
       {channel.last_ok_at && channel.last_error && ' · '}
       {channel.last_error && channel.last_error_at && <span className="text-bad-500">{t('notify.lastError', { error: errorText(channel.last_error), when: moment(channel.last_error_at, i18n.language) })}</span>}
     </p>
-  )
-}
-
-/** This browser on or off (web push), and every browser that takes notifications, with "Remove". */
-function BrowserPush({ channel, busy, run, push }: { channel: NotifyChannel; busy: boolean; run: Run; push: BrowserPushState }) {
-  const { t, i18n } = useTranslation()
-  const { ios, standalone } = usePwa()
-  const { here: shownHere, mine, problem, offered, toggle, browsers } = push
-  const name = (entry: Browser) => (entry.browser && entry.system ? t('push.browserOn', { browser: entry.browser, system: entry.system }) : entry.browser || entry.system || t('push.unknown'))
-  return (
-    <Section icon={Globe} title={t('push.title')} id="browser">
-      <p className="mb-3 text-sm text-mist-400">{t('push.text')}</p>
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-ink-700 px-3 py-2.5" data-testid="push-here">
-        <span className="flex-1 text-sm text-mist-100">
-          {t('push.thisBrowser')}{' '}
-          <span className={shownHere === 'on' ? 'font-semibold text-ok-500' : 'font-semibold text-mist-400'}>{shownHere === 'on' ? t('push.stateOn') : t('push.stateOff')}</span>
-        </span>
-        {offered && (shownHere === 'off' || shownHere === 'on') && (
-          <button type="button" className={'nt-btn ' + (shownHere === 'on' ? 'nt-btn-ghost' : 'nt-btn-accent')} disabled={busy} onClick={() => toggle(shownHere !== 'on')} data-testid="push-toggle">
-            {shownHere === 'on' ? t('push.off') : t('push.on')}
-          </button>
-        )}
-      </div>
-      {shownHere === 'unsupported' && <p className="mt-2 text-sm text-mist-500">{t('push.unsupported')}</p>}
-      {shownHere === 'denied' && <p className="mt-2 text-sm text-warn-500">{t('push.denied')}</p>}
-      {problem && <p className="mt-2 text-xs text-bad-500">{problem}</p>}
-      <p className={'mt-2 text-xs ' + (ios && !standalone ? 'text-warn-500' : 'text-mist-500')} data-testid="push-ios">
-        {t('push.iosHint')}
-      </p>
-
-      <h3 className="mt-5 mb-2 text-sm font-semibold text-mist-100">{t('push.list')}</h3>
-      {browsers.length === 0 && <p className="text-sm text-mist-500">{t('push.none')}</p>}
-      <ul className="divide-y divide-ink-700 rounded-xl border border-ink-700 empty:hidden" data-testid="browsers">
-        {browsers.map((entry) => {
-          const current = !!mine && mine === entry.mark
-          return (
-            <li key={entry.id} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-              <Globe className="h-4 w-4 shrink-0 text-mist-500" aria-hidden />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-mist-100">
-                  {name(entry)}
-                  {current && <span className="ml-2 rounded-full bg-accent-500/15 px-2 py-0.5 text-xs text-accent-400">{t('push.current')}</span>}
-                </span>
-                {entry.since && <span className="text-xs text-mist-500">{t('push.since', { when: moment(entry.since, i18n.language) })}</span>}
-              </span>
-              <button
-                type="button"
-                className="nt-btn nt-btn-ghost h-8 px-3 text-xs font-medium not-disabled:hover:border-bad-500/50 not-disabled:hover:text-bad-500"
-                disabled={busy}
-                aria-label={t('push.removeName', { name: name(entry) })}
-                onClick={() => (current ? toggle(false) : void run(() => api<NotifyState>(`/api/notify/browsers/${entry.id}`, { method: 'DELETE' })))}
-              >
-                <Trash2 className="h-3.5 w-3.5" /> {t('push.remove')}
-              </button>
-            </li>
-          )
-        })}
-      </ul>
-      <LastDelivery channel={channel} />
-    </Section>
   )
 }

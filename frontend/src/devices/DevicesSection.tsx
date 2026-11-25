@@ -6,14 +6,13 @@
  * nextasks' server names no kind of device and nothing about notifications (`DeviceOut`: id, name, created_at,
  * last_seen), so every row has the phone's symbol and neither kind nor "Mitteilungen an".
  */
-import { Smartphone } from 'lucide-react'
+import { QrCode } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Problem } from '../components/Field'
 import { ago } from '../lib/time'
-import { Card } from '../pages/settings/ui'
+import { Button, Buttons, Card, ConfirmDialog, Row, Rows } from '../vendor/nexui'
 import { devicesApi, problemOf, type AppDevice } from './api'
 import { ConnectDialog } from './ConnectDialog'
 
@@ -41,38 +40,40 @@ export function DevicesSection() {
   }
 
   return (
-    <Card id="devices" icon={Smartphone} title={t('devices.section.title')} text={t('devices.section.text')}>
+    <Card id="devices" icon="Smartphone" title={t('devices.section.title')} subtitle={t('devices.section.text')}>
       <Problem text={problem} />
       {devices && devices.length === 0 && (
-        <p className="text-sm text-mist-500" data-testid="devices-none">
+        <p className="m-0 text-sm text-[var(--nexui-text-muted)]" data-testid="devices-none">
           {t('devices.section.none')}
         </p>
       )}
       {devices && devices.length > 0 && (
-        <ul className="flex flex-col" data-testid="devices-list">
+        <Rows label={t('devices.section.title')} testId="devices-list">
           {devices.map((device) => (
-            <li key={device.id} className="flex items-center gap-3 border-b border-ink-800 py-2.5 last:border-0" data-testid="device-row">
-              <Smartphone className="h-5 w-5 shrink-0 text-mist-300" strokeWidth={1.8} aria-hidden />
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="truncate text-sm text-mist-100" data-testid="device-name">
-                  {device.name}
-                </span>
-                <span className="text-xs text-mist-500" data-testid="device-meta">
+            <Row
+              key={device.id}
+              icon="Smartphone"
+              testId="device-row"
+              name={<span data-testid="device-name">{device.name}</span>}
+              sub={
+                <span data-testid="device-meta">
                   {device.last_seen ? t('devices.section.lastSeen', { when: ago(new Date(device.last_seen).getTime(), i18n.language) }) : t('devices.section.neverSeen')}
                 </span>
-              </span>
-              <button type="button" className="nt-btn nt-btn-ghost" onClick={() => setLeaving(device)} aria-label={t('devices.section.disconnectName', { name: device.name })} data-testid="device-disconnect">
-                {t('devices.section.disconnect')}
-              </button>
-            </li>
+              }
+              action={
+                <Button kind="danger" size="sm" icon="Unplug" onClick={() => setLeaving(device)} aria-label={t('devices.section.disconnectName', { name: device.name })} testId="device-disconnect">
+                  {t('devices.section.disconnect')}
+                </Button>
+              }
+            />
           ))}
-        </ul>
+        </Rows>
       )}
-      <div>
-        <button type="button" className="nt-btn nt-btn-accent" onClick={() => setConnecting(true)} data-testid="devices-connect">
+      <Buttons>
+        <Button kind="primary" icon={QrCode} onClick={() => setConnecting(true)} testId="devices-connect">
           {t('devices.section.connect')}
-        </button>
-      </div>
+        </Button>
+      </Buttons>
       {connecting && (
         <ConnectDialog
           onClose={() => {
@@ -83,13 +84,17 @@ export function DevicesSection() {
       )}
       {leaving && (
         <ConfirmDialog
-          question={{
-            title: t('devices.section.disconnectTitle', { name: leaving.name }),
-            text: t('devices.section.disconnectText'),
-            confirm: t('devices.section.disconnect'),
-            run: () => void disconnect(leaving),
+          title={t('devices.section.disconnectTitle', { name: leaving.name })}
+          text={t('devices.section.disconnectText')}
+          confirm={{ label: t('devices.section.disconnect'), kind: 'danger', icon: 'Unplug' }}
+          cancel={t('common.cancel')}
+          closeLabel={t('common.close')}
+          testId="confirm-dialog"
+          onCancel={() => setLeaving(null)}
+          onConfirm={() => {
+            void disconnect(leaving)
+            setLeaving(null)
           }}
-          onClose={() => setLeaving(null)}
         />
       )}
     </Card>

@@ -1,15 +1,12 @@
 /**
- * nextasks as an installed app (`lib/pwa.ts`): the line "New version – reload" when a new version waits, the entry
- * "Install as app" under Settings › Profile when the browser offers it, and on iPhone and iPad the
- * hint "Share › Add to Home Screen". In the installed app none of it shows but the new version.
+ * nextasks as an installed app (`lib/pwa.ts`): the line "New version – reload" when a new version waits, and the page
+ * without network. Installing has its card under Settings › Connections (`InstallCard.tsx`).
  */
-import { Download, RefreshCw, Share, WifiOff } from 'lucide-react'
-import { useState } from 'react'
+import { RefreshCw, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { install, takeUpdate, usePwa } from '../lib/pwa'
+import { takeUpdate, usePwa } from '../lib/pwa'
 import { Logo } from './Logo'
-import { Section } from './Section'
 
 export function UpdateBanner() {
   const { t } = useTranslation()
@@ -23,38 +20,6 @@ export function UpdateBanner() {
         {t('pwa.reload')}
       </button>
     </p>
-  )
-}
-
-/** Settings › Profile: what installing gives, and the button or the hint. Nothing when there is nothing to do. */
-export function InstallSection() {
-  const { t } = useTranslation()
-  const { installable, ios, standalone } = usePwa()
-  const [asked, setAsked] = useState(false)
-  if (standalone || (!installable && !ios && !asked)) return null
-  return (
-    <Section icon={Download} title={t('pwa.title')}>
-      <p className="mb-3 text-sm text-mist-400">{t('pwa.text')}</p>
-      {installable && (
-        <button
-          type="button"
-          className="nt-btn nt-btn-accent"
-          data-testid="install"
-          onClick={() => {
-            setAsked(true)
-            void install()
-          }}
-        >
-          <Download className="h-4 w-4" /> {t('pwa.install')}
-        </button>
-      )}
-      {!installable && ios && (
-        <p className="flex items-start gap-2 text-sm text-mist-200" data-testid="install-ios">
-          <Share className="mt-0.5 h-4 w-4 shrink-0 text-accent-400" aria-hidden /> {t('pwa.iosHint')}
-        </p>
-      )}
-      {!installable && !ios && asked && <p className="text-sm text-mist-500">{t('pwa.asked')}</p>}
-    </Section>
   )
 }
 

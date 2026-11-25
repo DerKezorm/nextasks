@@ -10,15 +10,14 @@
  * The profile saves display name, username and address with one button; a new username or address asks for the own
  * password first, an account without one for a fresh sign-in at its provider (konten 0.3.7).
  */
-import { KeyRound, LogOut, ShieldCheck, UserRound } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { KeyRound, ShieldCheck, UserRound } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { api, authApi, type Me, type MyProvider } from '../../api/client'
 import { TimeZone } from '../../components/AccountParts'
 import { AccountButton } from '../../components/AccountButton'
-import { InstallSection } from '../../components/AppInstall'
 import { Avatar } from '../../components/Avatar'
 import { browserLanguage, changeLanguage, languageOptions, type LanguageOption } from '../../i18n'
 import { confirmOf } from '../../lib/accountButton'
@@ -28,15 +27,17 @@ import { usePasswordConfirm } from '../../lib/passwordConfirm'
 import { useAuth } from '../../state/auth'
 import { confirmLine, DISPLAY_NAME_MAX, EMAIL_MAX, FIELDS, PAGES, PASSWORD_MIN, passwordChanged, screenFields, SECOND_FACTOR_STATE, USERNAME_MAX } from '../../vendor/nexkonten/konten'
 import { Badge, Box, Card, CheckboxRow, ConfirmDialog, Field, Notice, Row, Rows, SelectField } from '../../vendor/nexui'
+import { SignOutCard, UnconfirmedEmailBox } from '../../vendor/nexkonten/AccountCards'
 import { pagePart } from './accountPages'
 import { Notice as Done, PasskeysBox, RemainingAccess, SecondFactorOffNotice, SessionsBox } from './SecurityBoxes'
-import { saveAsFile } from './ui'
+import { saveAsFile } from './actions'
 
 /** The part of "My account" an area of the settings shows. */
 export type AccountPart = 'profile' | 'security'
 
 export function AccountTab({ part }: { part: AccountPart }) {
   const { t, i18n } = useTranslation()
+  const translate = useMemo(() => (key: string, values?: Record<string, unknown>) => t(key, values), [t])
   const { me, setMe, refresh } = useAuth()
   const [params] = useSearchParams()
   const [name, setName] = useState(me?.display_name ?? '')
@@ -220,6 +221,17 @@ export function AccountTab({ part }: { part: AccountPart }) {
                 }
               />
             )}
+            {me.email_needs_proof && !me.pending_email && (
+              <UnconfirmedEmailBox
+                t={translate}
+                email={me.email}
+                errorText={problemText}
+                onSend={async () => {
+                  await authApi.proveEmail()
+                  await refresh()
+                }}
+              />
+            )}
             <div>
               <AccountButton name="account.save" type="submit" testId="profile-save" disabled={busy || unchanged}>
                 {t(PAGES.profile.saveButton)}
@@ -241,7 +253,7 @@ export function AccountTab({ part }: { part: AccountPart }) {
                 setOwn('')
               }}
             >
-              {withPassword && <Field label={t('account.currentPassword')} value={own} onChange={(event) => setOwn(event.target.value)} type="password" autoComplete="current-password" />}
+              {withPassword && <Field label={t('account.password')} value={own} onChange={(event) => setOwn(event.target.value)} type="password" autoComplete="current-password" />}
             </ConfirmDialog>
           )}
           {me.provider_email && (
@@ -275,7 +287,7 @@ export function AccountTab({ part }: { part: AccountPart }) {
                 setOwn('')
               }}
             >
-              <Field label={t('account.currentPassword')} value={own} onChange={(event) => setOwn(event.target.value)} type="password" autoComplete="current-password" />
+              <Field label={t('account.password')} value={own} onChange={(event) => setOwn(event.target.value)} type="password" autoComplete="current-password" />
             </ConfirmDialog>
           )}
           <SelectField
@@ -296,20 +308,16 @@ export function AccountTab({ part }: { part: AccountPart }) {
               }, '')
             }}
           />
+          {/* The time zone of the account under the language (plan "Einstellungen", E14): due times are meant in it. */}
+          <TimeZone />
           <p className="m-0 text-xs leading-4 text-[var(--nexui-text-muted)]" data-testid="profile-role">
             {t(pagePart('profile', 'role').title)}: {t(me.role === 'operator' ? 'account.roleOperator' : 'account.roleMember')}
           </p>
         </Card>
       )}
 
-      {/* nextasks' own parts come after the module's (`pageOrder`): the time zone, installing, signing out. */}
-      {part === 'profile' && (
-        <>
-          <TimeZone />
-          <InstallSection />
-          <SignOutCard viaProvider={me.sign_in === 'oidc'} />
-        </>
-      )}
+      {/* "Abmelden" of the module after the profile (plan "Einstellungen", Profil): its sentence with nextasks' word. */}
+      {part === 'profile' && <SignOut viaProvider={me.sign_in === 'oidc'} />}
 
       {part === 'security' && (
         <Card id="security" icon={ShieldCheck} title={t(PAGES.security.title)}>
@@ -454,14 +462,14 @@ export function AccountTab({ part }: { part: AccountPart }) {
                 )
               }}
             >
-              <Field label={t('account.currentPassword')} value={linkPassword} onChange={(event) => setLinkPassword(event.target.value)} type="password" autoComplete="current-password" />
+              <Field label={t('account.password')} value={linkPassword} onChange={(event) => setLinkPassword(event.target.value)} type="password" autoComplete="current-password" />
             </ConfirmDialog>
           )}
         </Card>
       )}
 
       {/* While the second factor is still to be set up, Security is the only page open: the way out has to be here too. */}
-      {part === 'security' && me.second_factor_setup_required && <SignOutCard viaProvider={me.sign_in === 'oidc'} />}
+      {part === 'security' && me.second_factor_setup_required && <SignOut viaProvider={me.sign_in === 'oidc'} />}
     </div>
   )
 }
@@ -470,20 +478,14 @@ export function AccountTab({ part }: { part: AccountPart }) {
  * "Sign out", the one button for it, here at the end of the profile as in nexnotes; on a phone the settings are the
  * same page. A provider's own session stays: only nextasks ends.
  */
-function SignOutCard({ viaProvider }: { viaProvider: boolean }) {
+/** "Abmelden" of the shared account module (konten 1.1.0 `SignOutCard`): its sentence with nextasks' word for what it
+ * keeps; with a provider the line that the provider keeps its own session. */
+function SignOut({ viaProvider }: { viaProvider: boolean }) {
   const { t } = useTranslation()
   const { signOut } = useAuth()
   const navigate = useNavigate()
-  return (
-    <Card id="sign-out" icon={LogOut} title={t('me.signOut.title')} subtitle={t('me.signOut.text')} testId="sign-out-card">
-      {viaProvider && <p className="m-0 text-xs leading-4 text-[var(--nexui-text-muted)]">{t('me.signOut.provider')}</p>}
-      <div>
-        <AccountButton name="signOut" testId="sign-out" onClick={() => void signOut().then(() => navigate('/login', { replace: true }))}>
-          {t('me.signOut.button')}
-        </AccountButton>
-      </div>
-    </Card>
-  )
+  const translate = useMemo(() => (key: string, values?: Record<string, unknown>) => t(key, values), [t])
+  return <SignOutCard t={translate} things={t('settings.things')} provider={viaProvider} onSignOut={() => signOut().then(() => navigate('/login', { replace: true }))} />
 }
 
 /** Below this many recovery codes the account is told to make new ones. */
@@ -594,7 +596,7 @@ function SecondFactor({ me }: { me: Me }) {
               {enrolment.secret.replace(/(.{4})/g, '$1 ').trim()}
             </code>
             <Field label={t('twofactor.code')} value={digits} onChange={(event) => setDigits(event.target.value)} autoComplete="one-time-code" autoFocus mono />
-            <Field label={t('account.currentPassword')} value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" hints={[t('twofactor.passwordHint')]} />
+            <Field label={t('account.password')} value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" hints={[t('twofactor.passwordHint')]} />
             {problem && <Notice tone="danger">{problem}</Notice>}
             <div className="flex flex-wrap gap-2">
               <AccountButton name="cancel" onClick={close}>
@@ -628,7 +630,7 @@ function SecondFactor({ me }: { me: Me }) {
             })
           }
         >
-          <Field label={t('account.currentPassword')} value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" />
+          <Field label={t('account.password')} value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" />
         </ConfirmDialog>
       )}
 
@@ -693,7 +695,7 @@ function SecondFactor({ me }: { me: Me }) {
             })
           }
         >
-          <Field label={t('account.currentPassword')} value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" />
+          <Field label={t('account.password')} value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" />
         </ConfirmDialog>
       )}
     </>

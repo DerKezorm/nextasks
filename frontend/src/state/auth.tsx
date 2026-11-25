@@ -13,6 +13,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 import { ApiError, authApi, SIGNED_OUT_EVENT, type Me } from '../api/client'
 import i18n, { changeLanguage } from '../i18n'
+import { applyMode, storedRaw, type Mode } from '../lib/theme'
 
 /** `offline`: the server did not answer (no network, or it is down); asked again until it does. */
 type Status = 'loading' | 'setup' | 'signedOut' | 'signedIn' | 'offline'
@@ -51,6 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('signedIn')
     // The account's language wins over the browser's.
     if (next.language && next.language !== i18n.language) void changeLanguage(next.language)
+    // Light, dark or as the device says, for the account on every device (konten 1.1.0). An account that has chosen
+    // nothing yet takes this browser's choice of before once.
+    if (next.theme === 'light' || next.theme === 'dark' || next.theme === 'system') applyMode(next.theme as Mode)
+    else if (next.theme === '') void authApi.adoptTheme(storedRaw()).then((taken) => applyMode(taken.theme as Mode), () => undefined)
   }, [])
 
   const refresh = useCallback(async () => {

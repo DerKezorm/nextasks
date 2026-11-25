@@ -3,7 +3,6 @@
  * (pairing by QR code or code, the devices signed in) moved to `devices/`, as in nexnotes; notifications in this
  * browser (web push) to "Notifications" (`components/Notifications.tsx`), as the channel "Browser".
  */
-import { Clock3 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -11,7 +10,7 @@ import { ApiError } from '../api/client'
 import { errorText } from '../lib/errors'
 import { useEngine, useSyncState } from '../state/sync'
 import { AppError } from '../sync/transport'
-import { Section } from './Section'
+import { Button, Buttons, Notice, SelectField } from '../vendor/nexui'
 
 function codeOf(error: unknown): string {
   return error instanceof ApiError || error instanceof AppError ? error.code : 'internal_error'
@@ -25,6 +24,8 @@ function zones(): string[] {
   }
 }
 
+/** The account's time zone in the profile card, under the language (plan "Einstellungen", E14): a choice of every
+ * zone, and the browser's own one click away when it differs. */
 export function TimeZone() {
   const { t } = useTranslation()
   const engine = useEngine()
@@ -44,24 +45,24 @@ export function TimeZone() {
     )
   }
   return (
-    <Section icon={Clock3} title={t('zone.title')}>
-      <p className="mb-3 text-sm text-mist-400">{t('zone.text')}</p>
-      <div className="flex flex-wrap items-center gap-2">
-        <select aria-label={t('zone.title')} className="nt-field w-auto max-w-full px-2" value={current} onChange={(e) => save(e.target.value)} data-testid="timezone">
-          {options.map((zone) => (
-            <option key={zone} value={zone}>
-              {zone}
-            </option>
-          ))}
-        </select>
-        {browser && browser !== current && (
-          <button type="button" className="nt-btn nt-btn-ghost" onClick={() => save(browser)}>
+    <div className="flex flex-col gap-2">
+      <SelectField
+        label={t('zone.title')}
+        value={current}
+        hints={[t('zone.text')]}
+        error={problem ?? undefined}
+        data-testid="timezone"
+        options={options.map((zone) => ({ value: zone, label: zone }))}
+        onChange={(event) => save(event.target.value)}
+      />
+      {browser && browser !== current && (
+        <Buttons>
+          <Button kind="secondary" size="sm" icon="Globe" onClick={() => save(browser)} testId="timezone-browser">
             {t('zone.useBrowser', { zone: browser })}
-          </button>
-        )}
-      </div>
-      {saved && <p className="mt-2 text-xs text-ok-500">{t('zone.saved')}</p>}
-      {problem && <p className="mt-2 text-xs text-bad-500">{problem}</p>}
-    </Section>
+          </Button>
+        </Buttons>
+      )}
+      {saved && <Notice tone="ok">{t('zone.saved')}</Notice>}
+    </div>
   )
 }
