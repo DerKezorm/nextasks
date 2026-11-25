@@ -48,9 +48,11 @@ from ..config import get_settings
 from ..db import SessionLocal
 from ..deps import (
     Account,
+    DbSession,
     OperatorAccount,
     client_ip,
     confirm_operator,
+    confirmed_without_password,
     reauth_failed,
     reauth_guard,
     reauth_succeeded,
@@ -60,12 +62,15 @@ from ..models import SIGN_IN_PASSWORD, Notice
 from ..models import Account as AccountRow
 from ..security import SESSION_COOKIE, brake, session_account
 from ..services import accounts, logs, totp
+from ..services.konten_store import KontenStore
 from ..services.oidc_store import SqlStore
+from ..vendor import nexkonten
+from ..vendor.nexkonten import profiles
 from ..vendor.nexoidc import OidcError, ProviderInvalid, authentik, flow, providers
 from ..vendor.nexoidc import accounts as oidc_accounts
 from ..vendor.nexoidc import attempt as attempts
 from ..vendor.nexoidc.config import current
-from .auth import PENDING_COOKIE, OperatorConfirmIn, secure_cookie, sign_in
+from .auth import PENDING_COOKIE, OperatorConfirmIn, account_view, change_address, fail, secure_cookie, sign_in
 
 router = APIRouter(prefix="/api/oidc", tags=["oidc"])
 logger = logging.getLogger("nextasks.oidc")
@@ -330,7 +335,7 @@ async def _returned(slug: str, request: Request) -> RedirectResponse:
         response = _redirect(flow.arrived(arrival, landing), request)
         response.delete_cookie(NEXT_COOKIE, path=current().cookie_path)
         # The module logged the sign-in with its provider already; ``sign_in`` adds nextasks's own line.
-        sign_in(s.db, request, response, row, by_provider=arrival.provider.trusts_second_factor)
+        sign_in(s.db, request, response, row, by_provider=arrival.provider.trusts_second_factor, tell=True)
         return response
 
 
@@ -398,6 +403,41 @@ def unlink(slug: Annotated[str, Path(max_length=40)], account: Account) -> None:
             oidc_accounts.unlink(s, account.id, entry.id)
         except OidcError as exc:
             raise error(exc.code, exc.message, 409) from exc
+
+
+class TakeAddressIn(BaseModel):
+    #: The own password (an account without one: a fresh sign-in at its provider).
+    password: str = Field(default="", max_length=200)
+
+
+@router.post("/me/address", summary="Take the address a provider knows the own account by")
+def take_offered_address(
+    request: Request, account: Account, db: DbSession, payload: TakeAddressIn | None = None
+) -> dict[str, Any]:
+    """A change of address through the shared module (``profiles.take_offered_email``): with the own password, and
+    with a mail server the address waits for its link."""
+    row = db.get(AccountRow, account.id)
+    assert row is not None
+    offer = KontenStore.offered(row)
+    if not offer:
+        raise error("no_offer", "There is no address to take.", 409)
+    try:
+        fresh = confirmed_without_password(request, db, row)
+        change_address(db, row, offer, password=payload.password if payload else "", fresh=fresh)
+        KontenStore(db).set_offered_email(row.id, "")
+        db.commit()
+    except nexkonten.AccountError as exc:
+        db.rollback()
+        raise fail(exc) from exc
+    logger.info("Account took its provider's address name=%s", row.name)
+    db.refresh(row)
+    return account_view(row, db)
+
+
+@router.delete("/me/address", status_code=204, summary="Do not offer the provider's address any more")
+def decline_offered_address(account: Account, db: DbSession) -> None:
+    """"No, thanks", for good and for exactly this address (``profiles.dismiss_offered_email``)."""
+    profiles.dismiss_offered_email(KontenStore(db), account.id)
 
 
 @router.delete("/admin/accounts/{account_id}/links/{provider_id}", status_code=204,

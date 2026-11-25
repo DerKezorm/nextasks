@@ -10,16 +10,21 @@ from __future__ import annotations
 import logging
 from typing import Annotated, Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi import Path as PathParam
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from ..deps import Account, DbSession
+from ..deps import Account, DbSession, client_ip, confirmed_without_password, too_many
 from ..errors import error
 from ..models import Account as AccountRow
 from ..models import NotifyChannel
-from ..services import channels, clock, emailaddr, notifyprefs, spaces, webpush
+from ..security import brake
+from ..services import channels, clock, emailaddr, kontenpost, mailer, notifyprefs, spaces, webpush
+from ..services.konten_store import KontenStore
+from ..vendor import nexkonten
+from ..vendor.nexkonten import profiles
+from .auth import change_address, fail
 
 logger = logging.getLogger("nextasks.notify")
 
@@ -94,10 +99,6 @@ def _choice_error(exc: notifyprefs.ChoiceError) -> Exception:
     return error(exc.code, exc.message, exc.status)
 
 
-def _address_error(exc: emailaddr.AddressError) -> Exception:
-    return error(exc.code, exc.message, exc.status)
-
-
 @router.get("/notify", summary="The own notifications: channels, choices, report times")
 def read(account: Account, db: DbSession) -> dict[str, Any]:
     return state(db, _own(db, account))
@@ -146,43 +147,73 @@ def remove_browser(subscription_id: int, account: Account, db: DbSession) -> dic
 
 
 # --- The mail address ------------------------------------------------------------------------------------------------
+#
+# Through the shared account module (``vendor/nexkonten``, ``services/konten_store.py``): a new address needs the own
+# password (an account without one: a fresh sign-in at its provider); with a mail server and the public address it
+# waits for the link mailed to it (at once: a server that does not take it leaves nothing waiting), without them it
+# counts at once. The paths and fields of 0.8.0 stay; the link of 0.8.0 (``nxm_…``) keeps working.
 
 
 class EmailIn(BaseModel):
     address: str = Field(max_length=320)
+    #: The own password (since the shared account module); an account without one confirms by a fresh sign-in.
+    password: str = Field(default="", max_length=200)
 
 
-@router.put("/me/email", summary="Enter the own mail address; it counts once the link mailed to it is opened")
-def set_email(payload: EmailIn, account: Account, db: DbSession) -> dict[str, Any]:
+@router.put("/me/email", summary="Enter the own mail address (with the password); with a mail server it waits for "
+                                 "its link")
+def set_email(payload: EmailIn, request: Request, account: Account, db: DbSession) -> dict[str, Any]:
     row = _own(db, account)
+    address = payload.address.strip()
+    if not address:
+        raise error("invalid_email", "This is not a mail address.", 422)
     try:
-        sent = emailaddr.request(db, row, payload.address)
-    except emailaddr.AddressError as exc:
-        raise _address_error(exc) from exc
-    return {**state(db, row), "sent": sent}
+        fresh = confirmed_without_password(request, db, row)
+        pending = change_address(db, row, address, password=payload.password, fresh=fresh)
+    except nexkonten.AccountError as exc:
+        db.rollback()
+        raise fail(exc) from exc
+    db.refresh(row)
+    return {**state(db, row), "sent": bool(pending)}
 
 
 @router.post("/me/email/resend", summary="Mail the link for the waiting address once more")
 def resend_email(account: Account, db: DbSession) -> dict[str, Any]:
     row = _own(db, account)
     try:
-        emailaddr.resend(db, row)
-    except emailaddr.AddressError as exc:
-        raise _address_error(exc) from exc
+        mail = profiles.resend_email_link(KontenStore(db), row.id)
+    except nexkonten.AccountError as exc:
+        if exc.code == "no_pending_email":
+            # The code of 0.8.0.
+            raise error("email_nothing_waits", "No address waits for its confirmation.", 404) from exc
+        raise fail(exc) from exc
+    try:
+        kontenpost.send_now(db, mail, keep=False)
+    except mailer.MailError as exc:
+        profiles.withdraw_email_change(KontenStore(db), row.id)
+        status = 409 if exc.code == "mail_off" else 502
+        raise error(exc.code, "The mail server did not take the mail.", status) from exc
+    db.refresh(row)
     return state(db, row)
 
 
 @router.delete("/me/email/pending", summary="Forget the address that waits for its confirmation")
 def cancel_email(account: Account, db: DbSession) -> dict[str, Any]:
     row = _own(db, account)
-    emailaddr.cancel(db, row)
+    profiles.withdraw_email_change(KontenStore(db), row.id)
+    db.refresh(row)
     return state(db, row)
 
 
 @router.delete("/me/email", summary="Remove the own mail address (no more mail)")
 def remove_email(account: Account, db: DbSession) -> dict[str, Any]:
+    """Taking the address away needs no password (the draft: "Entfernen geht immer"; it sends nothing anywhere), as in
+    0.8.0; the old address hears of it where a mail can go."""
     row = _own(db, account)
-    emailaddr.remove(db, row)
+    changed = profiles.remove_email(KontenStore(db), row.id, actor_id=row.id, actor_confirmed=True,
+                                    mail=kontenpost.can_mail(db))
+    kontenpost.queue(db, changed.notice)
+    db.refresh(row)
     return state(db, row)
 
 
@@ -190,13 +221,38 @@ class ConfirmIn(BaseModel):
     token: str = Field(max_length=100)
 
 
-@router.post("/email/confirm", summary="The link from the mail: the waiting address counts (no sign-in needed)")
-def confirm_email(payload: ConfirmIn, db: DbSession) -> dict[str, str]:
+def _link_brake(request: Request) -> str:
+    return "email-link:" + client_ip(request)
+
+
+@router.get("/email/{token}", summary="Which address a confirmation link confirms (no sign-in needed)")
+def email_link_state(token: Annotated[str, PathParam(max_length=100)], db: DbSession) -> dict[str, Any]:
     try:
-        row = emailaddr.confirm(db, payload.token)
-    except emailaddr.AddressError as exc:
-        raise _address_error(exc) from exc
-    return {"email": row.email}
+        change = profiles.email_change_state(KontenStore(db), token)
+    except nexkonten.AccountError as exc:
+        raise fail(exc) from exc
+    return {"email": change.address}
+
+
+@router.post("/email/confirm", summary="The link from the mail: the waiting address counts (no sign-in needed)")
+def confirm_email(payload: ConfirmIn, request: Request, db: DbSession) -> dict[str, str]:
+    key = _link_brake(request)
+    wait = brake.wait_seconds(key)
+    if wait:
+        raise too_many(wait)
+    try:
+        changed = profiles.confirm_email(KontenStore(db), payload.token)
+    except nexkonten.AccountError as exc:
+        if exc.code in ("email_link_invalid", "email_link_expired"):
+            brake.failed(key)
+        if exc.code == "email_link_expired":
+            # 0.8.0 knew one answer for a link that does not work any more.
+            raise error("email_link_invalid", "This link does not work any more.", 404) from exc
+        raise fail(exc) from exc
+    kontenpost.queue(db, changed.notice)
+    logger.info("Address confirmed name=%s address=%s", changed.account.username,
+                emailaddr.masked(changed.account.email))
+    return {"email": changed.account.email}
 
 
 # --- Unsubscribing ---------------------------------------------------------------------------------------------------

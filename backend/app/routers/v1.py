@@ -111,6 +111,9 @@ class SpaceBrief(BaseModel):
 
 
 class MeOut(BaseModel):
+    #: The account's fixed key: a program that remembers whom it speaks for keeps this, not the username (which the
+    #: person may change; Home Assistant hangs its entry on it).
+    id: int
     name: str
     display_name: str
     #: ``read`` or ``write``.
@@ -370,8 +373,9 @@ def me(found: Reader) -> MeOut:
         rows = [db.get(SpaceRow, space_id) for space_id in sight.space_ids]
     spaces = sorted((row for row in rows if row is not None and row.deleted_at is None),
                     key=lambda row: row.name.casefold())
-    return MeOut(name=found.account.name, display_name=found.account.display_name or found.account.name,
-                 level=found.level, time_zone=sight.zone_name,
+    return MeOut(id=found.account.id, name=found.account.name,
+                 display_name=found.account.display_name or found.account.name, level=found.level,
+                 time_zone=sight.zone_name,
                  spaces=[SpaceBrief(id=row.id, name=row.name) for row in spaces], version=__version__,
                  features=FEATURES)
 

@@ -47,10 +47,12 @@ from .routers import (
     sweep,
     v1,
 )
+from .routers import accounts as accounts_router
 from .routers import avatars as avatars_router
 from .routers import backups as backups_router
 from .routers import locales as locales_router
 from .routers import logs as logs_router
+from .routers import passkeys as passkeys_router
 from .routers import settings as settings_router
 from .routers import totp as totp_router
 from .security import HashingBusy, purge_sessions
@@ -63,17 +65,19 @@ from .services import (
     notify,
     oidc_store,
     outbox,
+    post_store,
     settings_service,
     totp,
     trash,
     webpush,
 )
+from .vendor.nexkonten import factor as konten_factor
 
 logger = logging.getLogger("nextasks")
 
 ROUTERS = [
-    health, about, locales_router, logs_router, auth, totp_router, oidc, invites, settings_router, backups_router,
-    avatars_router, apitokens, v1, app_pairing, app1, notifications, stats,
+    health, about, locales_router, logs_router, auth, totp_router, passkeys_router, oidc, accounts_router, invites,
+    settings_router, backups_router, avatars_router, apitokens, v1, app_pairing, app1, notifications, stats,
     focus, sweep, history,
 ]
 
@@ -92,11 +96,16 @@ def _write_log_mode(mode: str, until: datetime | None) -> None:
 
 
 async def _sweep_forever(stop: asyncio.Event) -> None:
-    """Enrolments and sign-ins waiting for their second factor run out; what ran out goes from memory, ended
-    sessions from the database once an hour (they stayed until someone showed them again)."""
+    """Sign-ins waiting for their second factor run out; what ran out goes from memory, ended sessions from the
+    database once an hour (they stayed until someone showed them again). System mail waiting in the outbox of the
+    shared post module goes out (in a thread: SMTP blocks)."""
     rounds = 0
     while not stop.is_set():
         totp.sweep()
+        try:
+            await asyncio.to_thread(post_store.run_due)
+        except Exception:
+            logger.exception("Outbox round failed")
         if rounds % 60 == 0:
             with SessionLocal() as db:
                 purge_sessions(db)
@@ -144,6 +153,9 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     logger.info("nextasks %s started", __version__)
     with SessionLocal() as db:
         accounts.announce_setup_code(db)
+    # NEXTASKS_SECOND_FACTOR_OFF: a warning in the log while the emergency hammer holds.
+    konten_factor.announce_switched_off()
+    with SessionLocal() as db:
         # The key pair of web push, made once (``features`` names ``webpush`` from then on).
         webpush.server_key(db)
     try:

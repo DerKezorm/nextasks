@@ -20,6 +20,7 @@ from ..models import SIGN_IN_PASSWORD
 from ..models import Account as AccountRow
 from ..security import encrypt_secret
 from ..services import accounts, mailer, settings_service
+from ..services.konten_store import KontenStore
 from ..services.oidc_store import SqlStore
 from ..vendor.nexoidc import authentik, providers
 
@@ -40,6 +41,10 @@ class SettingsOut(BaseModel):
     smtp_user: str
     smtp_password_set: bool
     smtp_from: str
+    #: The name system mail goes out under ("" for nextasks; the shared post module).
+    smtp_sender_name: str = ""
+    #: Passkeys may be added and used to sign in (on from the start).
+    passkeys_allowed: bool = True
     api_tokens_allowed: bool
     upload_max_mb: int
     upload_ceiling_mb: int
@@ -73,6 +78,8 @@ class SettingsIn(BaseModel):
     #: Empty removes the password; left out keeps it.
     smtp_password: str | None = Field(default=None, max_length=500)
     smtp_from: str | None = Field(default=None, max_length=255)
+    smtp_sender_name: str | None = Field(default=None, max_length=100)
+    passkeys_allowed: bool | None = None
     api_tokens_allowed: bool | None = None
     upload_max_mb: int | None = Field(default=None, ge=1, le=100_000)
     strip_location: bool | None = None
@@ -105,6 +112,8 @@ def _view(db: DbSession) -> SettingsOut:
         smtp_user=values["smtp_user"],
         smtp_password_set=bool(values["smtp_password_enc"]),
         smtp_from=values["smtp_from"],
+        smtp_sender_name=str(values.get("smtp_sender_name") or ""),
+        passkeys_allowed=bool(values.get("passkeys_allowed", True)),
         api_tokens_allowed=bool(values["api_tokens_allowed"]),
         upload_max_mb=settings_service.upload_max_mb(db),
         upload_ceiling_mb=get_settings().upload_max_mb,
@@ -148,7 +157,7 @@ def save(payload: SettingsIn, request: Request, operator: OperatorAccount, db: D
             if value and not accounts.EMAIL_PATTERN.match(value):
                 raise error("invalid_email", "This is not a mail address.", 422)
         elif key == "two_factor_required" and value and operator.sign_in == SIGN_IN_PASSWORD and not (
-            operator.totp_secret_enc
+            operator.totp_secret_enc or KontenStore(db).passkeys_of(operator.id)
         ):
             # Else the operator would be the first one sent to the account page, with nothing else in reach.
             raise error("own_second_factor_first", "Set up your own second factor first.", 409)
@@ -156,6 +165,9 @@ def save(payload: SettingsIn, request: Request, operator: OperatorAccount, db: D
             if not providers.public_list(SqlStore(db)):
                 # Without a provider nobody but the operator could sign in any more, and invitations would fail.
                 raise error("provider_first", "Set up a sign-in provider first.", 409)
+        elif key == "smtp_sender_name":
+            # One line: the name stands in the From header (the shared post module makes it one line again).
+            value = " ".join(str(value).split())
         elif key == "upload_max_mb":
             value = min(int(value), get_settings().upload_max_mb)
         elif key == "smtp_password":
