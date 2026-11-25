@@ -1015,6 +1015,8 @@ export class FakeServer {
       return { status: 204 }
     }
     if (path === '/api/me/email' && method === 'DELETE') {
+      // Taken away only with the own password (konten 0.3.10).
+      if (body.password !== me.password) return error(401, 'wrong_password')
       const own = this.notifyOf(me.id)
       Object.assign(own, { address: '', confirmed: false, pending: '' })
       return { status: 200, body: this.notifyState(me) }
