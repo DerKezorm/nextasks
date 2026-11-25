@@ -361,9 +361,9 @@ describe('the second factor requirement', () => {
       it(`names the provider switch that exempts a sign-in (${language}, ${own ? 'with' : 'without'} an own factor)`, async () => {
         viewer.two_factor = own
         const shown = await page(language)
-        const hint = i18n.t(own ? 'server.twoFactorRequiredHint' : 'server.ownSecondFactorFirst', {
-          trusts: i18n.t('oidc.admin.trustsSecondFactor'),
-        })
+        // With an own factor: the module's hint at the switch (konten 0.3.2), then nextasks' sentence about the exemption.
+        const trusts = { trusts: i18n.t('oidc.admin.trustsSecondFactor') }
+        const hint = own ? `${i18n.t('account.factorRequiredSwitchHint')} ${i18n.t('server.twoFactorExempt', trusts)}` : i18n.t('server.ownSecondFactorFirst', trusts)
         expect(shown.textContent).toContain(hint)
         // The words of the switch itself, between the quotes of the sentence: not a gap.
         const [open, close] = language === 'de' ? ['„', '“'] : ['“', '”']

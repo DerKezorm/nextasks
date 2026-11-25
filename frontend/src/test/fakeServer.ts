@@ -141,6 +141,10 @@ export class FakeServer {
   waitMs = 25_000
   /** Answers on their way. */
   pending = 0
+  /** No account yet: the page sets nextasks up (`GET /api/setup` says so). */
+  needsSetup = false
+  /** What the operator's list (`GET /api/accounts`) adds to an account's row: address, second factor, providers. */
+  listed = new Map<number, Record<string, unknown>>()
   private waiters = new Set<() => void>()
   private nextAccount = 1
 
@@ -761,16 +765,33 @@ export class FakeServer {
     return error(404, 'not_found')
   }
 
-  /** A new account through a space invitation (`POST /api/invite/{secret}` {name, password}): signed in and member. */
+  /** What an invitation offers on its page (`GET /api/invite/{secret}`): the space, who invites, and the fields of a
+   * new account as the shared account module fills them (no display name given: empty; no address). */
+  private inviteOffer(secret: string): Answer {
+    const invite = this.invites.get(secret)
+    if (!invite || invite.used || Date.parse(invite.expires_at) < this.clock()) return error(404, 'invite_invalid')
+    const space = this.row('space', invite.space_id)
+    const by = this.accounts.get(invite.created_by)
+    const me = this.session !== null ? this.accounts.get(this.session) : undefined
+    return {
+      status: 200,
+      body: { space: space?.data.name ?? null, role: 'member', by: by?.name ?? null, min_password: 12, signed_in_as: me?.username ?? null, display_name: '', name: '', email: '', password: true },
+    }
+  }
+
+  /** A new account through a space invitation (`POST /api/invite/{secret}` {display_name, name, email, password,
+   * password_confirm}; an older page sends only name and password): signed in and member. */
   private joinWithAccount(secret: string, body: Data): Answer {
     const invite = this.invites.get(secret)
     if (!invite || invite.used || Date.parse(invite.expires_at) < this.clock()) return error(404, 'invite_unknown')
     const name = typeof body.name === 'string' ? body.name.trim() : ''
+    const shown = typeof body.display_name === 'string' && body.display_name.trim() ? body.display_name.trim() : name
     const password = typeof body.password === 'string' ? body.password : ''
-    if (!name) return error(422, 'invalid_input', { fields: ['name'] })
-    if (password.length < 10) return error(422, 'password_too_short', { min: 10 })
+    if (!name) return error(422, 'invalid_account_name')
+    if (password.length < 12) return error(422, 'password_too_short', { minimum: 12 })
+    if (typeof body.password_confirm === 'string' && body.password_confirm !== password) return error(422, 'password_mismatch')
     if ([...this.accounts.values()].some((a) => a.username === name.toLowerCase())) return error(409, 'name_taken')
-    this.session = this.addAccount(name, { password, operator: false })
+    this.session = this.addAccount(shown, { password, operator: false, username: name.toLowerCase() })
     this.join(invite.space_id, this.session, 'member')
     invite.used = true
     return { status: 200, body: { space_id: invite.space_id } }
@@ -779,22 +800,45 @@ export class FakeServer {
   // ---- The old paths the frame needs ------------------------------------------------------------------------------------
 
   oldMe(account: Account): Record<string, unknown> {
+    // The address of the account lives with its notifications here (the real server keeps both on the account).
+    const own = this.notify.get(account.id)
     return {
       id: account.id,
       name: account.username,
       display_name: account.name,
       role: account.operator ? 'operator' : 'member',
       sign_in: 'password',
-      email: '',
+      has_password: true,
+      email: own?.confirmed ? own.address : '',
+      email_confirmed: !!own?.confirmed,
+      pending_email: own?.pending ?? '',
+      // What a sign-in provider knows the account by, offered in the profile (konten 0.3.3).
+      provider_email: own && !own.confirmed ? own.suggestion : '',
+      provider_email_from: own && !own.confirmed && own.suggestion ? 'Pocket ID' : '',
       language: account.language,
       two_factor: false,
       two_factor_recovery_left: 0,
+      factor_state: 'none',
+      passkeys: 0,
+      passkeys_allowed: true,
+      new_sign_in_mail: true,
+      min_password: 12,
       second_factor_setup_required: !!account.setupRequired,
       avatar: null,
       version: 'dev',
       whats_new_seen: 'dev',
       mail: !!this.settings.smtp_host,
     }
+  }
+
+  /** A new address of the own account (profile, a provider's offer): with a mail server it waits for its link. */
+  private changeAddress(me: Account, address: string): Answer | null {
+    if (!this.settings.smtp_host) return error(409, 'mail_off')
+    if (!this.settings.public_url) return error(409, 'public_url_missing')
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) return error(422, 'invalid_email')
+    this.notifyOf(me.id).pending = address
+    this.mails.push({ to: address, kind: 'confirm', token: `nxm_${this.mails.length + 1}fake` })
+    return null
   }
 
   /** The notifications of one account, made on first use: mail off, the browsers and the app on for what they
@@ -882,11 +926,15 @@ export class FakeServer {
 
   private old(method: string, path: string, body: Data): Answer | null {
     const me = this.session !== null ? this.accounts.get(this.session) : undefined
-    if (path === '/api/setup' && method === 'GET') return { status: 200, body: { needs_setup: false, code_required: false, signed_in: !!me, version: 'dev', min_password: 10 } }
-    if (path === '/api/auth/methods') return { status: 200, body: { password: true, providers: [] } }
+    if (path === '/api/setup' && method === 'GET') return { status: 200, body: { needs_setup: this.needsSetup, code_required: this.needsSetup, signed_in: !!me, version: 'dev', min_password: 12 } }
+    // "Forgot your password?" by mail needs a mail server and the public address, as on the real server.
+    if (path === '/api/auth/methods') return { status: 200, body: { password: true, providers: [], passkeys: true, forgot_mail: !!this.settings.smtp_host && !!this.settings.public_url } }
+    // "Forgot your password?": the same answer whatever was typed.
+    if (path === '/api/auth/forgot' && method === 'POST') return { status: 202, body: { sent: true } }
+    if (path.startsWith('/api/reset/') && method === 'GET') return { status: 200, body: { name: 'kim', username: 'kim', min_password: 12, expires_at: this.iso(this.clock() + 86_400_000) } }
     if (path === '/api/auth/login' && method === 'POST') {
       const found = [...this.accounts.values()].find((a) => a.username === String(body.name ?? '').toLowerCase() && a.password === body.password)
-      if (!found) return error(401, 'wrong_password')
+      if (!found) return error(401, 'wrong_credentials')
       this.session = found.id
       return { status: 200, body: this.oldMe(found) }
     }
@@ -949,14 +997,22 @@ export class FakeServer {
       return { status: 200, body: this.notifyState(me) }
     }
     if (path === '/api/me/email' && method === 'PUT') {
-      if (!this.settings.smtp_host) return error(409, 'mail_off')
-      if (!this.settings.public_url) return error(409, 'public_url_missing')
-      const own = this.notifyOf(me.id)
-      const address = String(body.address ?? '').trim()
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) return error(422, 'invalid_email')
-      own.pending = address
-      this.mails.push({ to: address, kind: 'confirm', token: `nxm_${this.mails.length + 1}fake` })
+      if (body.password !== me.password) return error(401, 'wrong_password')
+      const refused = this.changeAddress(me, String(body.address ?? '').trim())
+      if (refused) return refused
       return { status: 200, body: { ...this.notifyState(me), sent: true } }
+    }
+    if (path === '/api/oidc/me/address' && method === 'POST') {
+      const own = this.notifyOf(me.id)
+      if (!own.suggestion) return error(404, 'not_found')
+      if (body.password !== me.password) return error(401, 'wrong_password')
+      const refused = this.changeAddress(me, own.suggestion)
+      if (refused) return refused
+      return { status: 200, body: this.oldMe(me) }
+    }
+    if (path === '/api/oidc/me/address' && method === 'DELETE') {
+      this.notifyOf(me.id).suggestion = ''
+      return { status: 204 }
     }
     if (path === '/api/me/email' && method === 'DELETE') {
       const own = this.notifyOf(me.id)
@@ -992,9 +1048,26 @@ export class FakeServer {
       return { status: 200, body: this.oldMe(me) }
     }
     if (path === '/api/me/profile' && method === 'PUT') {
+      // One "Save" for display name, username and address; a new username or address with the own password.
+      const name = typeof body.name === 'string' ? body.name.trim().toLowerCase() : me.username
+      const email = typeof body.email === 'string' ? body.email.trim() : undefined
+      const own = this.notify.get(me.id)
+      const newAddress = email !== undefined && email.toLowerCase() !== (own?.confirmed ? own.address : '').toLowerCase()
+      if ((name !== me.username || newAddress) && body.password !== me.password) return error(401, 'wrong_password')
+      if (name !== me.username && [...this.accounts.values()].some((a) => a.id !== me.id && a.username === name)) return error(409, 'name_taken')
+      if (newAddress) {
+        const refused = this.changeAddress(me, email ?? '')
+        if (refused) return refused
+      }
+      me.username = name
       me.name = String(body.display_name ?? me.name)
       return { status: 200, body: this.oldMe(me) }
     }
+    if (path === '/api/auth/sessions') return { status: 200, body: [{ uid: 'this', kind: 'browser', label: 'Firefox on Linux', address: '', created_at: this.iso(), last_seen_at: this.iso(), current: true, device: false }] }
+    if (path === '/api/auth/passkeys') return { status: 200, body: [] }
+    if (path === '/api/auth/totp/setup') return { status: 200, body: { waiting: false } }
+    if (path === '/api/auth/access') return { status: 200, body: { origin: '', access: [] } }
+    if (path === '/api/me/new-sign-in-mail' && method === 'PUT') return { status: 200, body: this.oldMe(me) }
     if (path === '/api/settings') {
       if (!me.operator) return error(403, 'forbidden')
       if (method === 'PUT') Object.assign(this.settings, body)
@@ -1004,7 +1077,7 @@ export class FakeServer {
     if (path === '/api/oidc/admin/providers') return { status: 200, body: [] }
     if (path === '/api/api-tokens') return { status: 200, body: { allowed: true, tokens: [], choices: [] } }
     if (path === '/api/admin/api-tokens') return { status: 200, body: [] }
-    if (path === '/api/accounts') return { status: 200, body: [...this.accounts.values()].map((a) => ({ ...this.oldMe(a), locked: false, created_at: this.iso(), last_seen_at: null })) }
+    if (path === '/api/accounts') return { status: 200, body: [...this.accounts.values()].map((a) => ({ ...this.oldMe(a), locked: false, created_at: this.iso(), last_seen_at: null, providers: [], ...this.listed.get(a.id) })) }
     if (path === '/api/invites' || path === '/api/backups') return { status: 200, body: [] }
     if (path === '/api/logs') return { status: 200, body: { entries: [], level: 'info' } }
     if (path === '/api/about') return { status: 200, body: { version: 'dev', license: 'AGPL-3.0', repo_url: 'https://github.com/example/nextasks', releases_url: 'https://github.com/example/nextasks/releases', project_url: '' } }
@@ -1074,6 +1147,7 @@ export class FakeServer {
     if (invite) return this.inviteCall(method, invite[1], invite[2])
     const join = path.match(/^\/api\/invite\/([^/]+)$/)
     if (join && method === 'POST') return this.joinWithAccount(join[1], json)
+    if (join && method === 'GET') return this.inviteOffer(join[1])
     if (!path.startsWith(BASE)) return this.old(method, path, json) ?? error(404, 'not_found')
     if (account === null) return error(401, 'not_signed_in')
     if (headers['x-nextasks-client'] !== undefined && headers['x-nextasks-client'] !== 'web') return error(403, 'bad_client')

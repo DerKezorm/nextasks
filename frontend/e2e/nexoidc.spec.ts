@@ -47,14 +47,17 @@ test('33: sign-in through the provider button ends in a session', async ({ page,
   expect(invite.ok(), await invite.text()).toBe(true)
   const token = new URL((await invite.json()).link).pathname.split('/').pop()!
   const outside = await request.newContext({ baseURL })
-  const joined = await outside.post(`/api/invite/${token}`, { data: { name: 'ossie', password: PASSWORD }, headers: TAB })
+  const joined = await outside.post(`/api/invite/${token}`, {
+    data: { display_name: 'Ossie', name: 'ossie', password: PASSWORD, password_confirm: PASSWORD },
+    headers: TAB,
+  })
   expect(joined.ok(), await joined.text()).toBe(true)
   await outside.dispose()
   await fetch(`${ISSUER}/next`, { method: 'POST', body: JSON.stringify({ sub: 'ossie-33', preferred_username: 'someone-else' }) })
   const own = await browser.newContext({ storageState: { cookies: [], origins: [] } })
   const ossie = await own.newPage()
   await ossie.goto('/login')
-  await ossie.getByLabel('Sign-in name').fill('ossie')
+  await ossie.getByLabel('Username or email').fill('ossie')
   await ossie.getByLabel('Password').fill(PASSWORD)
   await ossie.getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(ossie).not.toHaveURL(/\/login/)
@@ -62,8 +65,10 @@ test('33: sign-in through the provider button ends in a session', async ({ page,
   const row = ossie.getByTestId('my-providers').locator('li').filter({ hasText: 'Stand-in 33' })
   await expect(row).toContainText('Not linked')
   await row.getByRole('button', { name: 'Link' }).click()
-  await row.getByLabel('Password').fill(PASSWORD)
-  await row.getByRole('button', { name: 'Link' }).click()
+  // Linking asks for the own password in a dialog of the shared kit.
+  const asked = ossie.getByRole('dialog')
+  await asked.getByLabel('Current password').fill(PASSWORD)
+  await asked.getByRole('button', { name: 'Link' }).click()
   await expect(ossie).toHaveURL(/\/account\?linked=standin33/)
   // The provider by the name on its button, not by the short name in the address.
   await expect(ossie.getByText('Your account is linked to Stand-in 33.')).toBeVisible()

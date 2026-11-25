@@ -61,7 +61,7 @@ export default defineConfig({
         // Never GitHub from a test: port 9 refuses at once.
         NEXTASKS_UPDATE_URL: 'http://127.0.0.1:9/releases/latest',
         // The code the first account brings; global-setup.ts sends it.
-        NEXTASKS_SETUP_TOKEN: 'e2e-setup-code',
+        NEXTASKS_SETUP_TOKEN: 'e2e-setup-code-0001',
       },
     },
     {

@@ -839,10 +839,17 @@ describe('spaces and people', () => {
     server.session = null
     const page = await mount(server, `/invite/${secret}`)
     expect(page.textContent).toContain('Robin invites you to the space “Family”.')
-    await type(page.querySelector('input[autocomplete="username"]'), 'Kim')
-    await type(page.querySelector('input[autocomplete="new-password"]'), 'a-long-password')
-    await submit(page.querySelector('input[autocomplete="username"]'))
+    // The fields of the shared account module: display name, the username following it, the address, the password
+    // twice (konten SCREENS.invite).
+    await type(page.querySelector('input[autocomplete="name"]'), 'Kim')
+    expect((page.querySelector('input[autocomplete="username"]') as HTMLInputElement).value).toBe('kim')
+    const passwords = page.querySelectorAll('input[autocomplete="new-password"]')
+    expect(passwords).toHaveLength(2)
+    await type(passwords[0], 'A-long-enough-password')
+    await type(passwords[1], 'A-long-enough-password')
+    await submit(passwords[0])
     const kim = [...server.accounts.values()].find((a) => a.name === 'Kim')!
+    expect(kim.username).toBe('kim')
     expect(server.member(family, kim.id)).toBeDefined()
     const firstList = [...server.rows.values()].find((r) => r.kind === 'list' && r.data.space_id === family)!
     expect(where.path).toBe(`/lists/${firstList.id}`)
@@ -858,13 +865,15 @@ describe('spaces and people', () => {
     expect(server.settings.app_enabled).toBe(false)
   })
 
-  it('invites a new account into nextasks without promising a space it cannot choose', async () => {
+  it('invites a new account into nextasks without promising a space or a role it cannot choose', async () => {
+    // The module's dialog "Invite a person" (konten 0.3.9, INVITE_DIALOG) without the role: nextasks' invitation makes
+    // a member, and a space's managers invite into their space themselves.
     const { server } = world()
     const page = await mount(server, '/settings/accounts')
-    const card = page.querySelector('#invite')
-    expect(card?.textContent).toContain('without a space yet')
-    expect([...(card?.querySelectorAll('label') ?? [])].map((l) => l.textContent)).not.toContain('Space')
-    expect(card?.textContent).not.toMatch(/with that right/)
+    await click(page.querySelector('[data-testid="invite-open"]'))
+    const dialog = document.querySelector('[data-testid="invite-dialog"]')
+    expect([...(dialog?.querySelectorAll('label') ?? [])].map((l) => l.textContent)).toEqual(['Email', 'Display name', 'Valid for'])
+    expect(dialog?.textContent).not.toMatch(/Space|Role|with that right/)
   })
 
   it('pairs an iPhone with a QR code and shows it among the devices', async () => {

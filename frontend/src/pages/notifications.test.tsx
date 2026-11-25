@@ -2,7 +2,7 @@
 // browser, iPhone/iPad) with its state; without a mail server mail is greyed with the reason, the address is confirmed
 // by a link before mail can be turned on, the browsers and the app carry what they carried before, choices and times
 // go to the server, a narrow screen gets cards with boxes, a link from a mail confirms or unsubscribes, and
-// managers invite into a space by mail.
+// managers invite into a space by mail. The address itself is entered in the profile (the shared account module).
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { smallWorld } from '../test/fakeServer'
@@ -93,10 +93,19 @@ describe('notifications', () => {
     expect(daily.disabled).toBe(true)
     expect(page.querySelector('[data-testid="channel-mail"]')?.textContent).toContain('Confirm an address first')
 
-    await type(page.querySelector('[data-testid="mail-input"]'), 'robin@example.test')
-    await submit(page.querySelector('[data-testid="mail-input"]'))
+    // The address lives in the profile now (konten): the card "Mail" leads there.
+    expect(page.querySelector('[data-testid="mail-to-profile"]')?.getAttribute('href')).toBe('/settings/profile')
+    await unmount()
+    const profile = await mount(server, '/settings/profile')
+    const email = profile.querySelector('input[autocomplete="email"]')
+    await type(email, 'robin@example.test')
+    await submit(email!.closest('form'))
+    // A new address asks for the own password first, once, in a dialog.
+    const asked = document.querySelector('[role="dialog"]')!
+    await type(asked.querySelector('input[type="password"]'), 'password-123')
+    await submit(asked.querySelector('form'))
     expect(server.mails.at(-1)).toMatchObject({ to: 'robin@example.test', kind: 'confirm' })
-    expect(page.querySelector('[data-testid="mail-pending"]')?.textContent).toContain('robin@example.test')
+    expect(profile.querySelector('[data-testid="email-pending"]')?.textContent).toContain('robin@example.test')
 
     server.confirmMail(server.mails.at(-1)!.token!)
     await unmount()
@@ -143,12 +152,17 @@ describe('notifications', () => {
     }
   })
 
-  it('offer the address the sign-in provider knows', async () => {
+  it('offer the address the sign-in provider knows, in the profile, taken with the password', async () => {
     const { server, robin } = withMail()
     server.notifyOf(robin).suggestion = 'robin@example.test'
-    const page = await mount(server, '/settings/notifications')
-    expect(page.querySelector('[data-testid="mail-suggestion"]')?.textContent).toContain('robin@example.test')
-    await click(button(page.querySelector('[data-testid="mail-suggestion"]')!, 'Confirm this address'))
+    const page = await mount(server, '/settings/profile')
+    const offer = page.querySelector('[data-testid="mail-offer"]')!
+    expect(offer.textContent).toContain('robin@example.test')
+    expect(offer.textContent).toContain('Use the address from Pocket ID?')
+    await click(button(offer, 'Use it'))
+    const asked = document.querySelector('[role="dialog"]')!
+    await type(asked.querySelector('input[type="password"]'), 'password-123')
+    await submit(asked.querySelector('form'))
     expect(server.mails.at(-1)).toMatchObject({ to: 'robin@example.test', kind: 'confirm' })
   })
 

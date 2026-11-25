@@ -161,7 +161,9 @@ describe('the settings', () => {
     expect(where.path).toMatch(/^\/login/)
   })
 
-  it('say that the profile is saved in one green line, no box, as nexnotes', async () => {
+  it('say that the profile is saved in the green notice of the shared kit, as nexnotes now', async () => {
+    // Display name, username and address save with one button (konten 0.3.7); the profile is the module's page, built
+    // from the kit, whose success is its notice in the tone "ok" (nexnotes' profile since the module).
     const { server } = smallWorld()
     const page = await mount(server, '/settings/profile')
     const area = page.querySelector('[data-testid="settings-area-profile"]')!
@@ -169,9 +171,8 @@ describe('the settings', () => {
     await type(name, 'Robin R.')
     await submit(name!.closest('form'))
     const saved = area.querySelector('[role="status"]') as HTMLElement
-    expect(saved.textContent).toBe('Display name saved.')
-    expect(saved.className).toContain('text-ok-500')
-    expect(saved.className).not.toMatch(/\b(?:border|bg-|rounded)/)
+    expect(saved.textContent).toBe('Profile saved.')
+    expect(saved.className).toContain('var(--nexui-ok)')
   })
 
   it('put light, dark and system under Appearance, with the keys there too', async () => {
