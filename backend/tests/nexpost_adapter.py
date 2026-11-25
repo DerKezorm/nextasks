@@ -35,6 +35,33 @@ class Adapter(StandardAdapter):
         with SessionLocal() as db:
             yield PostStore(db)
 
+    def new_sign_in_letter(self, where: str, sender: str) -> Any:
+        """An account with a confirmed address signs in through nextasks' route ``POST /api/auth/login`` from a browser
+        it does not know; the letter nextasks queues for it (``kontenpost.queue``), caught with ``catch_mail``."""
+        from fastapi.testclient import TestClient
+
+        from app.db import SessionLocal
+        from app.main import app
+        from app.models import OPERATOR, SIGN_IN_PASSWORD, Account
+        from app.security import hash_password
+        from app.services import settings_service
+        from app.vendor.nexpost import testing
+
+        secret = password()
+        with SessionLocal() as db:
+            settings_service.save(db, {"smtp_host": "mail.example.com", "smtp_from": "tasks@example.com",
+                                       "public_url": "https://tasks.example.com"})
+            db.add(Account(name="kim", display_name="Kim", role=OPERATOR, sign_in=SIGN_IN_PASSWORD,
+                           password_hash=hash_password(secret), email="kim@example.com",
+                           email_confirmed="kim@example.com", timezone="Europe/Berlin"))
+            db.commit()
+        with testing.catch_mail() as caught, TestClient(app, client=(sender, 50000)) as client:
+            answer = client.post("/api/auth/login", json={"name": "kim", "password": secret},
+                                 headers={"X-Nextasks-Client": "tab-contract0", "User-Agent": where})
+            assert answer.status_code == 200, answer.text
+        [letter] = [letter for letter in caught.letters if letter.kind == "new_sign_in"]
+        return letter
+
     def raw_text(self) -> str:
         from sqlalchemy import text
 

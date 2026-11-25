@@ -610,6 +610,22 @@ def test_bad_choices_are_refused(postbox: type[Postbox]) -> None:
 # --- Invitations into a space by mail ----------------------------------------------------------------------------------
 
 
+def test_an_invitation_into_a_space_tells_an_account_it_joins_with_it(postbox: type[Postbox]) -> None:
+    """post 1.0.0, ``member``: the address belongs to an account already; the letter says it joins with it."""
+    mail_server()
+    _alex_account, alex = person("alex")
+    sam_account, _sam = person("sam")
+    with SessionLocal() as db:
+        db.execute(update(Account).where(Account.id == sam_account.id).values(email="sam@example.test"))
+        db.commit()
+    family = shared_space(alex)
+    answer = alex.post(f"/api/spaces/{family}/invites", json={"email": "sam@example.test", "language": "de"})
+    assert answer.status_code == 201, answer.text
+    mail = postbox.sent[-1]
+    assert mail["Subject"] == "alex lädt dich zu Family in nextasks ein"
+    assert "mit deinem Konto bei" in text_of(mail) and "Konto an" not in text_of(mail)
+
+
 def test_a_manager_mails_an_invitation_into_a_space(postbox: type[Postbox]) -> None:
     mail_server()
     _alex_account, alex = person("alex")
@@ -620,8 +636,9 @@ def test_a_manager_mails_an_invitation_into_a_space(postbox: type[Postbox]) -> N
     made = answer.json()
     assert made["sent"] is True and made["link"].startswith(f"{PUBLIC}/invite/")
     mail = postbox.sent[-1]
-    assert mail["To"] == "sam@example.test" and mail["Subject"] == "alex lädt dich zu nextasks ein"
-    assert "„Family“" in text_of(mail) and made["link"] in text_of(mail)
+    # The post module's letter names the space (post 1.0.0); sam has no account: the button makes one.
+    assert mail["To"] == "sam@example.test" and mail["Subject"] == "alex lädt dich zu Family in nextasks ein"
+    assert "Konto an" in text_of(mail) and made["link"] in text_of(mail)
     assert "List-Unsubscribe" not in mail
     member = robin.post(f"/api/spaces/{family}/invites", json={"email": "sam@example.test"})
     assert member.status_code == 403, "members do not invite"

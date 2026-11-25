@@ -156,22 +156,20 @@ def mail_language(*choices: str | None) -> str:
 
 
 def send_invite(db: Session, to: str, link: str, *, by: str, space: str | None, until: date | None = None,
-                language: str = "en", days: int = 0) -> None:
-    """The invitation, at once, in the receiver's language. Into nextasks (the operator's) as the shared post module
-    writes it. Into a space nextasks' own letter of 0.8.0 stays (``messages.invite``): the post module's invitation
-    has no place for the space, and the person must read where they are invited to (nothing of 0.8.0 goes)."""
+                language: str = "en", days: int = 0, member: bool = False) -> None:
+    """The invitation, at once, in the receiver's language, as the shared post module writes it. Into a space it names
+    the space (post 1.0.0, ``space``); ``member``: the address belongs to an account already, which joins with it
+    ("join with your account" instead of "make your account"). ``until`` is kept for callers of 0.8.0."""
     from ..vendor import nexpost
 
+    del until
+    values: dict[str, object] = {"by": by, "valid": nexpost.letters.validity(language, days=days) if days else ""}
     if space:
-        base = settings_service.public_url(db)
-        send_message(db, to, messages.invite(language, base=base, link=link, by=by, space=space, until=until))
-        return
+        values["space"] = space
+        if member:
+            values["member"] = "1"
     try:
-        letter = nexpost.letters.compose(
-            "invite", to, language=language,
-            values={"by": by, "valid": nexpost.letters.validity(language, days=days) if days else ""},
-            link=link,
-        )
+        letter = nexpost.letters.compose("invite", to, language=language, values=values, link=link)
     except nexpost.MailError as exc:
         raise MailError("invalid_email", "This is not a mail address.") from exc
     send_message(db, to, letter)

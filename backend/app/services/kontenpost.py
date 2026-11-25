@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 
 from ..models import OPERATOR, Account
 from ..vendor import nexkonten, nexpost
-from . import mailer, settings_service
+from . import clock, mailer, settings_service
 from .post_store import PostStore
 
 logger = logging.getLogger("nextasks.mail")
@@ -33,7 +33,13 @@ PAGES = {
 }
 
 
+#: The page Security, where the button "See signed-in devices" of the mail "New sign-in" leads (post 1.0.0).
+SECURITY_PAGE = "/settings/security"
+
+
 def link_for(db: Session, mail: nexkonten.Mail) -> str:
+    if mail.kind == nexkonten.MAIL_NEW_SIGN_IN:
+        return f"{settings_service.public_url(db)}{SECURITY_PAGE}"
     page = PAGES.get(mail.kind)
     if not page or not mail.token:
         return ""
@@ -64,8 +70,11 @@ def language_for(db: Session, account: Account | None) -> str:
 def letter_of(db: Session, mail: nexkonten.Mail, *, by: str = "", where: str = "", days: int = 0) -> nexpost.Letter:
     """The letter of a mail of the account module; ``ValueError``/``MailError`` for an address it refuses."""
     account = db.get(Account, int(mail.account_id)) if str(mail.account_id).isdigit() else None
+    # The moment of a new sign-in in the person's own zone (the profile's, else the server's); never an address of
+    # the net anywhere in the letter (post 1.0.0).
+    zone = (account.timezone if account is not None else "") or clock.zone_name()
     return nexpost.letters.from_account_mail(mail, language=language_for(db, account), link=link_for(db, mail),
-                                             by=by, where=where, days=days)
+                                             by=by, where=where, days=days, time_zone=zone)
 
 
 def queue(db: Session, mail: nexkonten.Mail | None, *, by: str = "", where: str = "", days: int = 0) -> bool:

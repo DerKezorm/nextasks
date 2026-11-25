@@ -219,6 +219,47 @@ class Adapter(StandardAdapter):
         assert answer.status_code == 200, answer.text
         return list(answer.json())
 
+    def forgot_through_route(self, typed: str, *, mail_fails: bool) -> tuple[list[str], int]:
+        """Through nextasks' own route ``POST /api/auth/forgot`` with a mail server and the public address; nextasks
+        sends through ``nexpost.send.deliver`` (``mailer._deliver``), which ``catch_mail`` catches."""
+        from fastapi.testclient import TestClient
+        from sqlalchemy import func, select
+
+        from app.db import SessionLocal
+        from app.main import app
+        from app.models_accounts import MailOutbox
+        from app.services import settings_service
+        from app.vendor.nexpost import testing
+
+        with SessionLocal() as db:
+            settings_service.save(db, {"smtp_host": "mail.example.com", "smtp_from": "tasks@example.com",
+                                       "public_url": "https://tasks.example.com"})
+            before = int(db.scalar(select(func.count()).select_from(MailOutbox)) or 0)
+        with testing.catch_mail(fail=mail_fails) as caught, TestClient(app) as client:
+            answer = client.post("/api/auth/forgot", json={"name": typed},
+                                 headers={"X-Nextasks-Client": "tab-contract0"})
+            assert answer.status_code == 202, answer.text
+        with SessionLocal() as db:
+            after = int(db.scalar(select(func.count()).select_from(MailOutbox)) or 0)
+        return [letter.to for letter in caught.sent], after - before
+
+    def picture_status(self, owner: Any, viewer: Any | None) -> int:
+        """Through nextasks' own route ``GET /api/avatars/{id}``, signed in as ``viewer`` or as nobody."""
+        from fastapi.testclient import TestClient
+
+        from app.db import SessionLocal
+        from app.main import app
+        from app.models import Account
+        from app.security import SESSION_COOKIE, start_session
+
+        with TestClient(app) as client:
+            if viewer is not None:
+                with SessionLocal() as db:
+                    row = db.get(Account, int(viewer))
+                    assert row is not None
+                    client.cookies.set(SESSION_COOKIE, start_session(db, row, "127.0.0.1", "contract"))
+            return client.get(f"/api/avatars/{int(owner)}").status_code
+
     def session_alive(self, handle: Any) -> bool:
         if handle is None:
             return False

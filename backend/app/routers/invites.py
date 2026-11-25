@@ -221,7 +221,7 @@ def invite_to_space(space_id: Annotated[str, PathParam(max_length=36)], payload:
                                     own.language, payload.language, own.browser_language)
     try:
         mailer.send_invite(db, email, link, by=own.display_name or own.name, space=space.name,
-                           until=row.expires_at.date(), language=language, days=7)
+                           until=row.expires_at.date(), language=language, days=7, member=known is not None)
     except mailer.MailError as exc:
         db.delete(row)
         db.commit()
@@ -373,8 +373,12 @@ def accept(token: Token, payload: AcceptIn, request: Request, response: Response
         if exc.code in ("username_taken", "email_taken", "display_name_taken", "invite_invalid"):
             brake.failed(key)
         raise fail(exc) from exc
-    # Another address than the invitation's waits for its link (with a mail server).
-    kontenpost.send_now(db, accepted.mail)
+    # Another address than the invitation's waits for its link (with a mail server). At once, never into the outbox
+    # (konten 1.0.0): a failed mail leaves the address waiting, "Send the link again" in the profile sends it anew.
+    try:
+        kontenpost.send_now(db, accepted.mail, keep=False)
+    except mailer.MailError as exc:
+        logger.warning("Confirmation link not sent after an invitation code=%s", exc.code)
     account = db.get(AccountRow, int(accepted.account.id))
     assert account is not None
     logger.info("Invite used name=%s space_id=%s", account.name, space_id)
