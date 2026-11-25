@@ -89,7 +89,9 @@ describe('Settings, Connections, Devices', () => {
     await click(card(page).querySelector('[data-testid="devices-connect"]'))
     await settle()
     const open = dialog()!
-    expect(open.closest('[role="dialog"]')?.getAttribute('aria-label')).toBe('Connect iPhone or iPad')
+    // The window of the ui kit (E31), named by its title.
+    const shell = open.closest('[role="dialog"]')!
+    expect(shell.getAttribute('aria-label') ?? document.getElementById(shell.getAttribute('aria-labelledby') ?? '')?.textContent).toBe('Connect iPhone or iPad')
     expect(open.querySelector('[data-testid="devices-qr"]')?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/)
     expect(open.querySelector('[data-testid="devices-qr"]')?.getAttribute('alt')).toBe('QR code to connect')
     expect([...open.querySelectorAll('ol li')].map((li) => li.textContent)).toEqual([
@@ -101,7 +103,8 @@ describe('Settings, Connections, Devices', () => {
     const address = open.querySelector('[data-testid="devices-address"]')!
     expect(address.textContent).toBe(`Without a camera: in the app under “Code”, enter the address tasks.example.com and the code ${first.code}.`)
     expect(open.querySelector('[data-testid="devices-code"]')?.textContent).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/)
-    expect(open.textContent).toContain('Valid for 10 minutes · new code')
+    expect(open.textContent).toContain('Valid for 10 minutes')
+    expect(document.querySelector('[data-testid="devices-renew"]')?.textContent).toBe('new code')
 
     await click(open.querySelector('[data-testid="devices-renew"]'))
     await settle()

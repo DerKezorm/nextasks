@@ -9,8 +9,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 
-import { Dialog } from '../components/Dialog'
 import { Problem } from '../components/Field'
+import { Button, Buttons, Dialog } from '../vendor/nexui'
 import { devicesApi, problemOf, qrSource, type Pairing } from './api'
 
 /** How often the dialog asks whether the code was taken. */
@@ -75,7 +75,7 @@ export function ConnectDialog({ onClose }: { onClose: () => void }) {
 
   const host = pairing ? hostOf(pairing.address) : ''
   return (
-    <Dialog title={t('devices.connect.title')} onClose={close} wide>
+    <Dialog title={t('devices.connect.title')} onClose={close} closeLabel={t('common.close')} wide>
       <div className="flex flex-wrap gap-6" data-testid="devices-connect-dialog">
         <div className="flex w-[220px] flex-none flex-col items-center gap-2.5">
           <div className="h-[220px] w-[220px] rounded-[12px] bg-white p-3.5">
@@ -86,34 +86,32 @@ export function ConnectDialog({ onClose }: { onClose: () => void }) {
               </p>
             )}
           </div>
-          <span className="text-xs text-mist-500">
-            {t('devices.connect.valid')} ·{' '}
-            <button type="button" className="text-accent-400 hover:underline" onClick={() => void make()} data-testid="devices-renew">
-              {t('devices.connect.renew')}
-            </button>
-          </span>
+          <span className="text-xs text-[var(--nexui-text-muted)]">{t('devices.connect.valid')}</span>
+          <Button kind="secondary" size="sm" icon="RefreshCw" onClick={() => void make()} testId="devices-renew">
+            {t('devices.connect.renew')}
+          </Button>
         </div>
         <div className="flex min-w-[240px] flex-1 flex-col gap-3.5">
-          <ol className="list-decimal space-y-1 pl-5 text-sm leading-relaxed text-mist-300">
+          <ol className="m-0 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-[var(--nexui-text)]">
             <li>{t('devices.connect.step1')}</li>
             <li>{t('devices.connect.step2')}</li>
             <li>{t('devices.connect.step3')}</li>
           </ol>
           {pairing && !expired && (
-            <p className="rounded-[10px] border border-ink-700 bg-ink-900 px-3.5 py-3 text-[13px] leading-relaxed text-mist-400" data-testid="devices-address">
+            <p className="m-0 rounded-[12px] border border-solid border-[var(--nexui-line)] px-4 py-3 text-[13px] leading-relaxed text-[var(--nexui-text-muted)]" data-testid="devices-address">
               <Trans
                 i18nKey="devices.connect.noCamera"
                 values={{ host, code: pairing.code }}
-                components={{ b: <strong className="text-mist-100" />, code: <strong className="font-mono tracking-wider text-mist-100" data-testid="devices-code" /> }}
+                components={{ b: <strong className="text-[var(--nexui-text)]" />, code: <strong className="font-mono tracking-wider text-[var(--nexui-text)]" data-testid="devices-code" /> }}
               />
             </p>
           )}
           <Problem text={problem} />
-          <div className="flex justify-end">
-            <button type="button" className="nt-btn nt-btn-ghost" onClick={close} data-testid="devices-close">
+          <Buttons end>
+            <Button kind="secondary" icon="X" onClick={close} testId="devices-close">
               {t('common.close')}
-            </button>
-          </div>
+            </Button>
+          </Buttons>
         </div>
       </div>
     </Dialog>
