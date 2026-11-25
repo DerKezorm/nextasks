@@ -50,6 +50,7 @@ from .routers import (
 from .routers import accounts as accounts_router
 from .routers import avatars as avatars_router
 from .routers import backups as backups_router
+from .routers import connections as connections_router
 from .routers import locales as locales_router
 from .routers import logs as logs_router
 from .routers import passkeys as passkeys_router
@@ -83,6 +84,7 @@ ROUTERS = [
     health, about, locales_router, logs_router, auth, totp_router, passkeys_router, oidc, accounts_router, invites,
     settings_router, backups_router, avatars_router, apitokens, v1, app_pairing, app1, notifications, stats,
     focus, sweep, history, server_signin_router, server_mail_router,
+    connections_router,
 ]
 
 
