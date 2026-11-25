@@ -1,4 +1,5 @@
 import { avatarUrl } from '../api/client'
+import { avatarPlaceholder } from '../vendor/nexkonten/konten'
 
 const COLORS = ['#60a5fa', '#f472b6', '#4ade80', '#fbbf24', '#a78bfa', '#2dd4bf', '#fb923c', '#f87171']
 
@@ -10,13 +11,17 @@ export function personColor(name: string): string {
   return COLORS[hash % COLORS.length]
 }
 
-/** The round letter: a tint of the person's colour behind, the colour mixed with the text colour in front. The pure
- * colour on its tint read 1.2 to 1.9 to 1 in the light theme (Prüfgang G7); mixed, it is 5 to 1 or more in both. */
+/** A picture's stand-in as the account module draws it everywhere (server, iPhone, the operator's list): the first
+ * letter of the shown name on a hue from that name, saturation, lightness and text colour from the kit's variables. */
 // eslint-disable-next-line react-refresh/only-export-components
-export function letterColors(color: string): { background: string; color: string } {
+export function placeholder(shown: string): { letter: string; style: { background: string; color: string } } {
+  const { letter, hue } = avatarPlaceholder(shown)
   return {
-    background: `color-mix(in srgb, ${color} 24%, var(--color-ink-850))`,
-    color: `color-mix(in srgb, ${color} 45%, var(--color-mist-100))`,
+    letter,
+    style: {
+      background: `hsl(${hue} var(--nexui-avatar-saturation) var(--nexui-avatar-lightness))`,
+      color: 'var(--nexui-avatar-text)',
+    },
   }
 }
 
@@ -34,10 +39,10 @@ export function Avatar({
   const classes = 'grid shrink-0 place-items-center overflow-hidden rounded-full font-semibold ' + (ring ? 'ring-2 ring-ink-950 ' : '') + className
   const url = avatarUrl(person)
   if (url) return <img src={url} alt="" title={shown} className={classes + ' object-cover'} />
-  const color = personColor(person.name)
+  const stand = placeholder(shown)
   return (
-    <span title={shown} className={classes} style={letterColors(color)}>
-      {person.gone ? '?' : (shown.trim()[0] ?? '?').toUpperCase()}
+    <span title={shown} className={classes} style={stand.style}>
+      {person.gone ? '?' : stand.letter}
     </span>
   )
 }

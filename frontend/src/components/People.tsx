@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 
 import { APP_BASE } from '../sync/transport'
 import type { Person } from '../sync/types'
-import { letterColors, personColor } from './Avatar'
+import { placeholder } from './Avatar'
 
 const pictures = new Map<string, Promise<string | null>>()
 
@@ -47,8 +47,8 @@ export function PersonAvatar({ person, id, className = 'h-6 w-6 text-[11px]', ri
   const classes = 'grid shrink-0 place-items-center overflow-hidden rounded-full font-semibold ' + (ring ? 'ring-2 ring-ink-850 ' : '') + className
   if (url && url.key === key && url.url) return <img src={url.url} alt="" title={name} className={classes + ' object-cover'} />
   return (
-    <span title={name} className={classes} style={letterColors(personColor(name))} aria-hidden>
-      {person?.name ? (person.name.trim()[0] ?? '?').toUpperCase() : '?'}
+    <span title={name} className={classes} style={placeholder(name).style} aria-hidden>
+      {person?.name ? placeholder(person.name).letter : '?'}
     </span>
   )
 }
