@@ -1,19 +1,20 @@
 /**
  * The operator's part of the settings, the cards of the group "Server" (`SettingsAreas.tsx` picks them, as nexnotes'):
  * General (files, the switch for API tokens, the iPhone app and invitations, languages), Sign-in (in
- * `SignInCards.tsx`), Mail, Storage and backups, Accounts (with every API token) and the Log. Everything here is the
+ * `SignInCards.tsx`), Mail, Storage and backups, every API token (under Accounts, the list itself is `AccountsTab.tsx`)
+ * and the Log. Everything here is the
  * server's; it applies to all.
  */
-import { Download, Files, Globe, History, Info, KeyRound, Mail, RotateCcw, ShieldCheck, Smartphone, Trash2, Upload, Users } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Download, Files, Globe, History, Info, KeyRound, Mail, RotateCcw, ShieldCheck, Smartphone, Trash2, Upload } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { ApiError, api, apiTokensApi, oidcApi, passwordHeader, type AddressQuestion, type AnyApiToken, type Me } from '../../api/client'
-import { Avatar } from '../../components/Avatar'
+import { ApiError, api, apiTokensApi, passwordHeader, type AddressQuestion, type AnyApiToken } from '../../api/client'
 import { Done } from '../../components/Field'
-import { byLanguageName, forgetAddedLanguages, SHIPPED, templateFile } from '../../i18n'
+import i18n, { byLanguageName, forgetAddedLanguages, SHIPPED, templateFile } from '../../i18n'
 import { useAuth } from '../../state/auth'
-import { Button, Card, Confirm, CopyLink, Feedback, Input, saveAsFile, Select, Toggle, useAction } from './ui'
+import { MAIL_FIELDS, mailErrorKey, portFor, SECURITY, SECURITY_LABELS, warnUnencrypted } from '../../vendor/nexpost/post'
+import { Button, Card, Confirm, Feedback, Input, saveAsFile, Select, Toggle, useAction } from './ui'
 import { pause, serverAnswers, untilBack } from '../../lib/restart'
 import { errorText } from '../../lib/errors'
 import { moment } from '../../lib/time'
@@ -37,6 +38,10 @@ export type ServerSettings = {
   smtp_user: string
   smtp_password_set: boolean
   smtp_from: string
+  /** The name the mails come from; empty: nextasks (post). */
+  smtp_sender_name?: string
+  /** Signing in with passkeys is allowed (on from the start). */
+  passkeys_allowed?: boolean
   api_tokens_allowed: boolean
   upload_max_mb: number
   upload_ceiling_mb: number
@@ -86,216 +91,6 @@ export function useServerSettings() {
     return ok ? asked.question : null
   }
   return { settings, save, saveAddress, reload, ...action }
-}
-
-/** A provider an account is linked to, as a mark in the list (the shared sign-in blueprint 04). */
-type LinkedProvider = { id: number; slug: string; label: string; managed: string }
-type AccountRow = Me & { locked: boolean; blocked?: boolean; has_password?: boolean; created_at: string; last_seen_at: string | null; providers?: LinkedProvider[] }
-type OpenInvite = { id: number; email: string; expires_at: string }
-const DAYS = ['1', '7', '30'] as const
-
-/** The accounts, and invitations into nextasks without a space (a space's managers invite into their space). */
-export function AccountsCard() {
-  const { t, i18n } = useTranslation()
-  const { me } = useAuth()
-  const [list, setList] = useState<AccountRow[]>([])
-  // Inviting into nextasks without a space, as nexlore's: how long, to which address, and the open invitations.
-  const [days, setDays] = useState<(typeof DAYS)[number]>('7')
-  const [email, setEmail] = useState('')
-  const [send, setSend] = useState(true)
-  const [made, setMade] = useState<{ link: string; sent: boolean; email: string } | null>(null)
-  const [invites, setInvites] = useState<OpenInvite[]>([])
-  const [asking, setAsking] = useState<{ kind: 'role' | 'delete' | 'password' | 'reset' | 'signout' | 'block' | 'unblock'; account: AccountRow } | null>(null)
-  /** The operator takes an account's link to a provider, with the own password; the account is told (blueprint 01). */
-  const [unlinking, setUnlinking] = useState<{ account: AccountRow; provider: LinkedProvider } | null>(null)
-  const [newPassword, setNewPassword] = useState('')
-  const { busy, problem, done, run } = useAction()
-  const load = useCallback(() => {
-    api<AccountRow[]>('/api/accounts').then(setList, () => undefined)
-    api<OpenInvite[]>('/api/invites').then(setInvites, () => undefined)
-  }, [])
-  useEffect(load, [load])
-  // Each button names its account for a screen reader, not five times "Delete" in a row (Prüfgang G6).
-  const forRow = (row: AccountRow, action: string) => t('server.forAccount', { name: row.display_name || row.name, action })
-  return (
-    <Card id="accounts" icon={Users} title={t('server.accounts')} text={t('server.accountsHint')}>
-      <ul className="divide-y divide-ink-700 rounded-xl border border-ink-700">
-        {list.map((row) => (
-          <li key={row.id} data-testid={`account-row-${row.name}`} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-            <Avatar person={row} className="h-8 w-8 text-sm" />
-            {/* Wide enough to read: when the buttons crowd it, they move below instead of cutting it (Prüfgang G6). */}
-            <div className="min-w-[15rem] flex-1 basis-[15rem]">
-              <div className="truncate text-sm font-medium text-mist-100">
-                {row.display_name || row.name}
-                {row.display_name && <span className="ml-1 text-xs font-normal text-mist-500">@{row.name}</span>}
-                {row.id === me?.id && <span className="ml-1.5 text-xs font-normal text-mist-500">{t('members.you')}</span>}
-              </div>
-              <div data-testid="account-status" className="text-xs break-words text-mist-500">
-                {row.role === 'operator' ? t('account.operator') : t('server.member')} · {t(`server.signInBy.${row.sign_in}`)}
-                {row.two_factor ? ' · ' + t('server.withTwoFactor') : ''}
-                {row.locked ? ' · ' + t('server.locked') : ''}
-                {row.blocked ? ' · ' + t('server.blocked') : ''}
-                {row.has_password === false && !row.blocked ? ' · ' + t('server.noPassword') : ''}
-              </div>
-              {(row.providers ?? []).length > 0 && (
-                <div className="mt-1 flex flex-wrap gap-1" data-testid="account-providers">
-                  {(row.providers ?? []).map((provider) => (
-                    <span key={provider.id} className="rounded-full border border-ink-700 px-2 text-[11px] text-mist-400">
-                      {provider.label}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            {row.id !== me?.id && (
-              <div className="flex flex-wrap gap-1.5">
-                <Button small label={forRow(row, row.role === 'operator' ? t('server.makeMember') : t('server.makeOperator'))} onClick={() => setAsking({ kind: 'role', account: row })}>
-                  {row.role === 'operator' ? t('server.makeMember') : t('server.makeOperator')}
-                </Button>
-                {/* Also for accounts without one (after leaving nexsuite): a password is how they get in again (B4). */}
-                <Button small label={forRow(row, row.has_password === false ? t('server.givePassword') : t('server.newPassword'))} onClick={() => setAsking({ kind: 'password', account: row })}>
-                  {row.has_password === false ? t('server.givePassword') : t('server.newPassword')}
-                </Button>
-                {row.blocked ? (
-                  <Button small label={forRow(row, t('server.unblock'))} onClick={() => setAsking({ kind: 'unblock', account: row })}>
-                    {t('server.unblock')}
-                  </Button>
-                ) : (
-                  <Button small danger label={forRow(row, t('server.block'))} onClick={() => setAsking({ kind: 'block', account: row })}>
-                    {t('server.block')}
-                  </Button>
-                )}
-                {row.two_factor && (
-                  <Button small label={forRow(row, t('server.resetTwoFactor'))} onClick={() => setAsking({ kind: 'reset', account: row })}>
-                    {t('server.resetTwoFactor')}
-                  </Button>
-                )}
-                <Button small label={forRow(row, t('server.signOutEverywhere'))} onClick={() => setAsking({ kind: 'signout', account: row })}>
-                  {t('server.signOutEverywhere')}
-                </Button>
-                {(row.providers ?? []).filter((provider) => provider.managed !== 'nexsuite').map((provider) => (
-                  <Button key={provider.id} small label={forRow(row, t('server.unlinkProvider', { name: provider.label }))} onClick={() => setUnlinking({ account: row, provider })}>
-                    {t('server.unlinkProvider', { name: provider.label })}
-                  </Button>
-                ))}
-                <Button small danger label={forRow(row, t('server.deleteAccount'))} onClick={() => setAsking({ kind: 'delete', account: row })}>
-                  {t('server.deleteAccount')}
-                </Button>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
-      <div id="invite" className="scroll-mt-6">
-        <h3 className="mt-2 text-sm font-semibold text-mist-100">{t('server.inviteTitle')}</h3>
-        <p className="text-xs text-mist-500">{t('server.inviteText')}</p>
-        <form
-          className="mt-2 grid gap-2 sm:grid-cols-3"
-          onSubmit={(event) => {
-            event.preventDefault()
-            void run(async () => {
-              setMade(await api<{ link: string; sent: boolean; email: string }>('/api/invites', { method: 'POST', body: { days: Number(days), email: email.trim(), send: send && !!email.trim(), language: i18n.language } }))
-              load()
-            })
-          }}
-        >
-          <Select label={t('invite.valid')} value={days} options={DAYS.map((value) => ({ value, label: t('invite.days', { count: Number(value) }) }))} onChange={setDays} />
-          <Input label={t('invite.email')} value={email} onChange={setEmail} type="email" className="sm:col-span-2" hint={me?.mail ? undefined : t('invite.noMail')} />
-          {me?.mail && email.trim() && (
-            <label className="flex items-center gap-2 text-xs text-mist-400 sm:col-span-3">
-              <input type="checkbox" checked={send} onChange={(event) => setSend(event.target.checked)} className="accent-accent-500" />
-              {t('invite.send')}
-            </label>
-          )}
-          <div className="sm:col-span-3">
-            <Button type="submit" accent busy={busy}>
-              {t('invite.create')}
-            </Button>
-          </div>
-        </form>
-        {made && (
-          <div className="mt-3 space-y-1">
-            <CopyLink value={made.link} label={t('invite.copy')} />
-            <p className="text-xs text-mist-500">{made.sent ? t('invite.sent', { email: made.email }) : t('invite.once')}</p>
-          </div>
-        )}
-        {invites.length > 0 && (
-          <ul className="mt-3 divide-y divide-ink-700 rounded-xl border border-ink-700 text-xs" data-testid="open-invites">
-            {invites.map((invite) => (
-              <li key={invite.id} className="flex items-center gap-3 px-4 py-2 text-mist-300">
-                <span className="flex-1">
-                  {invite.email || t('invite.noEmail')}
-                  {' · '}{t('invite.until', { when: new Date(invite.expires_at).toLocaleDateString(i18n.language) })}
-                </span>
-                <Button
-                  small
-                  danger
-                  busy={busy}
-                  onClick={() =>
-                    void run(async () => {
-                      await api(`/api/invites/${invite.id}`, { method: 'DELETE' })
-                      load()
-                    })
-                  }
-                >
-                  {t('invite.withdraw')}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <Feedback problem={problem} done={done} />
-      {asking && (
-        <Confirm
-          title={t(`server.confirm.${asking.kind}.title`, { name: asking.account.display_name || asking.account.name })}
-          text={t(asking.kind === 'role' ? (asking.account.role === 'operator' ? 'server.confirm.demote.text' : 'server.confirm.promote.text') : `server.confirm.${asking.kind}.text`, { name: asking.account.display_name || asking.account.name })}
-          confirm={t(`server.confirm.${asking.kind}.button`)}
-          danger={asking.kind === 'delete' || asking.kind === 'block'}
-          password={me?.sign_in === 'password' && asking.kind !== 'signout'}
-          onCancel={() => setAsking(null)}
-          onConfirm={async (password) => {
-            const id = asking.account.id
-            if (asking.kind === 'role') await api(`/api/accounts/${id}/role`, { method: 'PUT', body: { role: asking.account.role === 'operator' ? 'member' : 'operator', current_password: password } })
-            if (asking.kind === 'delete') await api(`/api/accounts/${id}`, { method: 'DELETE', body: { current_password: password } })
-            if (asking.kind === 'reset') await api(`/api/accounts/${id}/totp/reset`, { method: 'POST', body: { current_password: password } })
-            if (asking.kind === 'signout') await api(`/api/accounts/${id}/sign-out`, { method: 'POST' })
-            if (asking.kind === 'unblock') await api(`/api/accounts/${id}/unblock`, { method: 'POST', body: { current_password: password } })
-            if (asking.kind === 'block') await api(`/api/accounts/${id}/block`, { method: 'POST', body: { current_password: password } })
-            if (asking.kind === 'password') {
-              const fresh = Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => 'abcdefghjkmnpqrstuvwxyz23456789'[b % 31]).join('')
-              await api(`/api/accounts/${id}/password`, { method: 'PUT', body: { password: fresh, current_password: password } })
-              setNewPassword(fresh)
-              setAsking(null)
-              return
-            }
-            setAsking(null)
-            load()
-          }}
-        />
-      )}
-      {unlinking && (
-        <Confirm
-          title={t('server.unlinkProvider', { name: unlinking.provider.label })}
-          text={t('server.unlinkText', { name: unlinking.account.display_name || unlinking.account.name, provider: unlinking.provider.label })}
-          confirm={t('server.unlinkProvider', { name: unlinking.provider.label })}
-          danger
-          password={me?.sign_in === 'password'}
-          onCancel={() => setUnlinking(null)}
-          onConfirm={async (password) => {
-            await oidcApi.unlinkAccount(unlinking.account.id, unlinking.provider.id, password)
-            setUnlinking(null)
-            load()
-          }}
-        />
-      )}
-      {newPassword && !asking && (
-        <p className="text-sm text-mist-300">
-          {t('server.passwordGiven')} <code className="rounded bg-ink-950 px-1.5 py-0.5 font-mono">{newPassword}</code>
-        </p>
-      )}
-    </Card>
-  )
 }
 
 /** The switch for API tokens, under General as nexnotes' switch "API": what it lets accounts do, what switching off does. */
@@ -420,38 +215,89 @@ export function FilesCard({ server }: { server: Server }) {
   )
 }
 
+/**
+ * The mail server, as the shared module `post` lays the card out for every nex app (`MAIL_FIELDS`): server, port,
+ * encryption (the port follows it unless typed), user, password (kept when left empty), sender address and sender name
+ * (empty: nextasks); a clear warning without encryption; a test mail; when mail went out last and the last failure.
+ */
 export function MailCard({ server }: { server: Server }) {
   const { t, i18n } = useTranslation()
   const s = server.settings
   const [draft, setDraft] = useState<Change>({})
+  /** The operator typed a port: switching the encryption leaves it alone. */
+  const [portTyped, setPortTyped] = useState(false)
   const [to, setTo] = useState('')
   const test = useAction()
   if (!s) return null
   const value = { ...s, ...draft }
+  const fields: Record<(typeof MAIL_FIELDS)[number], ReactNode> = {
+    server: <Input key="server" label={t('mail.server')} value={value.smtp_host} onChange={(smtp_host) => setDraft({ ...draft, smtp_host })} placeholder="smtp.example.com" />,
+    port: (
+      <Input
+        key="port"
+        label={t('mail.port')}
+        type="number"
+        value={String(value.smtp_port)}
+        onChange={(port) => {
+          setPortTyped(true)
+          setDraft({ ...draft, smtp_port: Number(port) })
+        }}
+      />
+    ),
+    security: (
+      <Select
+        key="security"
+        label={t('mail.security')}
+        value={value.smtp_security}
+        onChange={(smtp_security) => setDraft({ ...draft, smtp_security, smtp_port: portFor(smtp_security, value.smtp_port, portTyped) })}
+        options={SECURITY.map((entry) => ({ value: entry, label: t(SECURITY_LABELS[entry]) }))}
+      />
+    ),
+    user: <Input key="user" label={t('mail.user')} value={value.smtp_user} onChange={(smtp_user) => setDraft({ ...draft, smtp_user })} />,
+    password: (
+      <Input
+        key="password"
+        label={t('mail.password')}
+        type="password"
+        autoComplete="new-password"
+        value={draft.smtp_password ?? ''}
+        onChange={(smtp_password) => setDraft({ ...draft, smtp_password })}
+        hint={s.smtp_password_set ? t('mail.passwordKept') : undefined}
+      />
+    ),
+    sender: <Input key="sender" label={t('mail.sender')} value={value.smtp_from} onChange={(smtp_from) => setDraft({ ...draft, smtp_from })} placeholder="tasks@example.com" />,
+    senderName: (
+      <Input
+        key="senderName"
+        label={t('mail.senderName')}
+        value={value.smtp_sender_name ?? ''}
+        onChange={(smtp_sender_name) => setDraft({ ...draft, smtp_sender_name })}
+        hint={t('mail.senderNameHint')}
+        maxLength={100}
+      />
+    ),
+  }
+  const warn = warnUnencrypted({ security: value.smtp_security, user: value.smtp_user, password: draft.smtp_password ?? '', passwordSet: s.smtp_password_set })
   return (
     <Card id="mail" icon={Mail} title={t('server.mail')} text={t('server.mailHint')}>
+      {!s.smtp_host && <p className="text-sm text-mist-400">{t('mail.noServer')}</p>}
       <form
         className="grid gap-2 sm:grid-cols-2"
+        data-testid="mail-form"
         onSubmit={(event) => {
           event.preventDefault()
-          void server.save(draft, t('settings.saved')).then(() => setDraft({}))
+          void server.save(draft, t('settings.saved')).then(() => {
+            setDraft({})
+            setPortTyped(false)
+          })
         }}
       >
-        <Input label={t('server.smtpHost')} value={value.smtp_host} onChange={(smtp_host) => setDraft({ ...draft, smtp_host })} placeholder="smtp.example.com" />
-        <Input label={t('server.smtpPort')} type="number" value={String(value.smtp_port)} onChange={(port) => setDraft({ ...draft, smtp_port: Number(port) })} />
-        <Select
-          label={t('server.smtpSecurity')}
-          value={value.smtp_security}
-          onChange={(smtp_security) => setDraft({ ...draft, smtp_security })}
-          options={[
-            { value: 'starttls', label: 'STARTTLS' },
-            { value: 'tls', label: 'TLS' },
-            { value: 'none', label: t('server.none') },
-          ]}
-        />
-        <Input label={t('server.smtpUser')} value={value.smtp_user} onChange={(smtp_user) => setDraft({ ...draft, smtp_user })} />
-        <Input label={t('auth.password')} type="password" autoComplete="new-password" value={draft.smtp_password ?? ''} onChange={(smtp_password) => setDraft({ ...draft, smtp_password })} placeholder={s.smtp_password_set ? t('server.secretKept') : ''} />
-        <Input label={t('server.smtpFrom')} value={value.smtp_from} onChange={(smtp_from) => setDraft({ ...draft, smtp_from })} placeholder="tasks@example.com" />
+        {MAIL_FIELDS.map((field) => fields[field])}
+        {warn && (
+          <p role="note" className="rounded-[9px] border border-warn-500/40 bg-warn-500/10 px-3 py-2 text-sm text-warn-500 sm:col-span-2" data-testid="mail-unencrypted">
+            {t('mail.warningUnencrypted')}
+          </p>
+        )}
         <div className="sm:col-span-2">
           <Button type="submit" accent busy={server.busy}>
             {t('common.save')}
@@ -463,24 +309,32 @@ export function MailCard({ server }: { server: Server }) {
         className="flex flex-wrap items-end gap-2"
         onSubmit={(event) => {
           event.preventDefault()
-          void test.run(() => api('/api/settings/mail-test', { method: 'POST', body: { to, language: i18n.language } }), t('server.mailSent'))
+          void test.run(() => api('/api/settings/mail-test', { method: 'POST', body: { to, language: i18n.language } }), t('mail.testSent', { email: to.trim() }))
         }}
       >
-        <Input label={t('server.mailTest')} value={to} onChange={setTo} placeholder="you@example.com" className="min-w-60 flex-1" />
+        <Input label={t('account.email')} type="email" value={to} onChange={setTo} placeholder="you@example.com" className="min-w-60 flex-1" />
         <Button type="submit" busy={test.busy} disabled={!to.trim()}>
-          {t('server.send')}
+          {t('mail.test')}
         </Button>
       </form>
       <Feedback problem={test.problem} done={test.done} />
       {(s.mail_last_ok_at || s.mail_last_error) && (
         <p className="text-xs text-mist-500" data-testid="mail-last">
-          {s.mail_last_ok_at && t('server.mailLastOk', { when: moment(s.mail_last_ok_at, i18n.language) })}
+          {s.mail_last_ok_at && t('mail.lastOk', { when: moment(s.mail_last_ok_at, i18n.language) })}
           {s.mail_last_ok_at && s.mail_last_error && ' · '}
-          {s.mail_last_error && s.mail_last_error_at && <span className="text-bad-500">{t('server.mailLastError', { error: errorText(s.mail_last_error), when: moment(s.mail_last_error_at, i18n.language) })}</span>}
+          {s.mail_last_error && s.mail_last_error_at && (
+            <span className="text-bad-500">{t('mail.lastError', { error: mailErrorText(s.mail_last_error), when: moment(s.mail_last_error_at, i18n.language) })}</span>
+          )}
         </p>
       )}
     </Card>
   )
+}
+
+/** The last failure of the mail server in words: a code of `post` by its sentence, an older one as nextasks says it. */
+function mailErrorText(code: string): string {
+  const key = mailErrorKey(code)
+  return key === 'mail.error.unknown' ? errorText(code) : i18n.t(key)
 }
 
 type Backup = { name: string; size: number; created: string; kind: string; note: string; tasks: number; files: number; version: string; uploaded?: boolean }
@@ -505,6 +359,8 @@ export function BackupsCard({ server }: { server: Server }) {
   if (!s) return null
   const size = (bytes: number) => (bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`)
   const forBackup = (entry: Backup, action: string) => t('server.forAccount', { name: moment(entry.created, i18n.language), action })
+  /** The question before a backup is restored, downloaded, uploaded or deleted (`server.confirm.backup_…`). */
+  const question = asking ? `backup_${asking.kind}` : ''
   return (
     <Card id="backups" icon={History} title={t('server.backups')} text={t('server.backupsHint')}>
       <div className="flex flex-wrap items-end gap-2">
@@ -606,9 +462,9 @@ export function BackupsCard({ server }: { server: Server }) {
       <Feedback problem={action.problem} done={action.done} />
       {asking && (
         <Confirm
-          title={t(`server.confirm.backup_${asking.kind}.title`)}
-          text={t(`server.confirm.backup_${asking.kind}.text`)}
-          confirm={t(`server.confirm.backup_${asking.kind}.button`)}
+          title={t(`server.confirm.${question}.title`)}
+          text={t(`server.confirm.${question}.text`)}
+          confirm={t(`server.confirm.${question}.button`)}
           danger={asking.kind !== 'download' && asking.kind !== 'upload'}
           password={me?.sign_in === 'password'}
           onCancel={() => setAsking(null)}

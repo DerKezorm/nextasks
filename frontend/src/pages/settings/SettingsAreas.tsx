@@ -7,10 +7,11 @@ import { ApiTokens } from '../../components/ApiTokens'
 import { NotificationsPart } from '../../components/Notifications'
 import { DevicesSection } from '../../devices/DevicesSection'
 import { AboutArea } from './AboutArea'
+import { AccountsTab } from './AccountsTab'
 import { AccountTab } from './AccountTab'
 import type { AreaSlug } from './areas'
 import { LookCards } from './LookCards'
-import { AccountsCard, AllApiTokensCard, ApiTokensSwitchCard, AppCard, BackupsCard, FilesCard, LanguagesCard, LogCard, MailCard, ProxyHint, useServerSettings } from './ServerCards'
+import { AllApiTokensCard, ApiTokensSwitchCard, AppCard, BackupsCard, FilesCard, LanguagesCard, LogCard, MailCard, ProxyHint, useServerSettings } from './ServerCards'
 import { SignInPart } from './SignInCards'
 
 type ServerArea = 'general' | 'sign-in' | 'mail' | 'storage' | 'accounts'
@@ -63,7 +64,7 @@ function ServerCardsOf({ area }: { area: ServerArea }) {
       {area === 'storage' && <BackupsCard server={server} />}
       {area === 'accounts' && (
         <>
-          <AccountsCard />
+          <AccountsTab />
           <AllApiTokensCard />
         </>
       )}
