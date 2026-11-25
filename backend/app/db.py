@@ -17,6 +17,7 @@ from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import NullPool
 
+from . import models_accounts  # noqa: F401  (its tables belong to the schema of every start)
 from .config import get_settings
 from .models import Base
 
@@ -110,6 +111,10 @@ def init_db() -> None:
     for table in Base.metadata.sorted_tables:
         for table_index in table.indexes:
             table_index.create(engine, checkfirst=True)
+    # What the shared account module needs of a database of an older version (only adding).
+    from .services import konten_wanderung
+
+    konten_wanderung.run(engine)
     # The record of completions, filled once from what is done already (``services/completions.py``).
     from .services import completions
 

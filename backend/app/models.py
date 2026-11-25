@@ -29,6 +29,8 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event,
+    false,
+    true,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
@@ -108,6 +110,16 @@ class Account(Base):
     email_pending: Mapped[str] = mapped_column(String(255), default="")
     email_pending_hash: Mapped[str] = mapped_column(String(64), default="")
     email_pending_until: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
+    #: The address that **counts** without a link (the shared account module, ``services/konten_store.py``): one an
+    #: invitation brought, one set without a mail server, the one of the setup. ``email_confirmed`` stays the address
+    #: proven by a link. Empty for every account of 0.8.0: there only the confirmed address counts.
+    email_counted: Mapped[str] = mapped_column(String(255), default="", server_default="")
+    #: The address a sign-in provider knows the account by, only offered to an account with a password ("Use the
+    #: address from <provider>?", the shared account module); ``provider_email_from`` the provider's name as on its
+    #: button; ``provider_email_off`` the address the person said "No, thanks" to, for good.
+    provider_email: Mapped[str] = mapped_column(String(255), default="", server_default="")
+    provider_email_from: Mapped[str] = mapped_column(String(80), default="", server_default="")
+    provider_email_off: Mapped[str] = mapped_column(String(255), default="", server_default="")
     #: The interface language chosen in the account menu; empty: the browser's.
     language: Mapped[str] = mapped_column(String(16), default="")
     #: The browser's language at the last sign-in (``de``, ``en``): what the server writes in for the account while
@@ -127,11 +139,27 @@ class Account(Base):
     totp_secret_enc: Mapped[str] = mapped_column(Text, default="")
     totp_recovery: Mapped[str] = mapped_column(Text, default="")
     totp_last_step: Mapped[int] = mapped_column(Integer, default=0)
+    #: An authenticator being set up (the shared account module): its seed sealed in a context of its own, waiting ten
+    #: minutes for its first code; it survives a restart between the QR code and that code. Never a factor yet.
+    totp_pending: Mapped[str] = mapped_column(Text, default="", server_default="")
+    totp_pending_until: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
+    #: The random user handle of the account's passkeys (WebAuthn), made with the first passkey and kept.
+    passkey_handle: Mapped[str] = mapped_column(String(64), default="", server_default="")
+    #: "A mail at a new sign-in" (on from the start): a browser that never signed in as the account before.
+    new_sign_in_mail: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    #: The password was set through a link: where it came from (``self``, ``operator``, ``server``), "" for none. The
+    #: account page lists the ways in that stayed ("These devices still have access") until put away.
+    new_password_origin: Mapped[str] = mapped_column(String(16), default="", server_default="")
+    #: The password was set through a link of the operator or of the emergency command: the page says so once.
+    password_reset_notice: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     #: The profile picture (``services/avatars.py``): a square WebP drawn anew, loaded only when asked for.
     avatar: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, deferred=True)
     avatar_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
     #: SHA-256 (hex) of ``avatar``: the ``ETag`` of ``/people/{id}/avatar``; empty without a picture.
     avatar_hash: Mapped[str] = mapped_column(String(64), default="")
+    #: "" for a picture the person set (and every picture of 0.8.0), ``provider`` for one taken from a sign-in
+    #: provider: a provider's picture never replaces an own one.
+    avatar_source: Mapped[str] = mapped_column(String(16), default="", server_default="")
     #: The account's own preferences of the interface; only what it chose.
     preferences: Mapped[Any] = mapped_column(JSON, nullable=True)
     #: What the device cookies of this account are signed with (``security.device_token``): random per account, so
@@ -178,6 +206,17 @@ class AuthSession(Base):
     #: Began at a provider that checks the second factor itself (the entry says so): the operator's demand for a
     #: second factor of the own does not hold in this sign-in, only in one with the password.
     by_provider: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    #: The id the list "Signed-in devices" names the session by (the token's hash never leaves the server). Sessions
+    #: of 0.8.0 get one at the first start (``services/konten_wanderung``).
+    uid: Mapped[str | None] = mapped_column(String(32), nullable=True, unique=True, index=True)
+    #: "Stay signed in": 30 days from the last use, sliding; without it the session ends with the browser and lives
+    #: at most 12 hours. Sessions of 0.8.0 were all remembered.
+    remember: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    #: ``full``, or ``setup`` (a session that may only set up the second factor; nextasks keeps that rule in
+    #: ``deps.require_account`` and starts full sessions only).
+    stage: Mapped[str] = mapped_column(String(8), default="full", server_default="full")
+    #: ``browser`` (the shared account module's kinds; nextasks' paired devices are ``app_devices``). 0.8.0: browsers.
+    kind: Mapped[str] = mapped_column(String(8), default="browser", server_default="browser")
 
 
 class OidcProvider(Base):
@@ -640,6 +679,10 @@ class Invite(Base):
     space_id: Mapped[str | None] = mapped_column(ForeignKey("spaces.id", ondelete="CASCADE"), nullable=True,
                                                  index=True)
     email: Mapped[str] = mapped_column(String(255), default="")
+    #: What the one who invites gives as the display name (the form shows it); invitations of 0.8.0 have none.
+    display_name: Mapped[str] = mapped_column(String(80), default="", server_default="")
+    #: The link went by mail to ``email``: whoever comes through it with that address proved it.
+    mailed: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     created_by: Mapped[int | None] = mapped_column(ForeignKey("accounts.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow)
     expires_at: Mapped[datetime] = mapped_column(UtcDateTime)
