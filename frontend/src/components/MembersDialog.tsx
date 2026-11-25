@@ -16,6 +16,7 @@ import { moment } from '../lib/time'
 import { useAuth } from '../state/auth'
 import { useEngine, useView } from '../state/sync'
 import { AppError } from '../sync/transport'
+import { DISPLAY_NAME_MAX } from '../vendor/nexkonten/konten'
 import { Dialog } from './Dialog'
 import { personName, PersonAvatar } from './People'
 import { useShell } from './Shell'
@@ -41,6 +42,8 @@ export function MembersDialog({ spaceId, onClose }: { spaceId: string; onClose: 
   const { me } = useAuth()
   const shell = useShell()
   const [email, setEmail] = useState('')
+  /** How the person is called (free; the invited person sees it in the form and may change it). */
+  const [shownName, setShownName] = useState('')
 
   const load = useCallback(() => {
     if (!manager) return
@@ -151,10 +154,11 @@ export function MembersDialog({ spaceId, onClose }: { spaceId: string; onClose: 
                   const to = email.trim()
                   if (!to) return
                   void run(async () => {
-                    const made = await api<{ link: string }>(`/api/spaces/${spaceId}/invites`, { method: 'POST', body: { email: to, language: i18n.language } })
+                    const made = await api<{ link: string }>(`/api/spaces/${spaceId}/invites`, { method: 'POST', body: { email: to, display_name: shownName.trim(), language: i18n.language } })
                     setLink(made.link)
                     setCopied(false)
                     setEmail('')
+                    setShownName('')
                     showNotice({ text: t('members.mailSent', { email: to }) })
                     load()
                   })
@@ -163,6 +167,10 @@ export function MembersDialog({ spaceId, onClose }: { spaceId: string; onClose: 
                 <label className="min-w-56 flex-1 text-sm">
                   <span className="font-medium text-mist-100">{t('members.mailTitle')}</span>
                   <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" aria-label={t('members.mailAddress')} className="nt-field mt-1" />
+                </label>
+                <label className="min-w-56 flex-1 text-sm">
+                  <span className="font-medium text-mist-100">{t('account.displayName')}</span>
+                  <input value={shownName} onChange={(e) => setShownName(e.target.value)} maxLength={DISPLAY_NAME_MAX} autoComplete="off" className="nt-field mt-1" data-testid="invite-display-name" />
                 </label>
                 <button type="submit" disabled={busy || !email.trim()} className="nt-btn nt-btn-ghost">
                   <Mail className="h-4 w-4" /> {t('members.mailSend')}

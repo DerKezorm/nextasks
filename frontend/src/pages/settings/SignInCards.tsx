@@ -3,7 +3,8 @@
  * nex app (part 04). Order, wording and behaviour come from there; the parts (card, switch, field, button, question)
  * are nextasks's own.
  *
- * 1. Sign-in: password sign-in (locked on while no provider is active), the public address, the second factor.
+ * 1. Sign-in: password sign-in (locked on while no provider is active), the public address, the second factor for
+ *    all and whether passkeys are allowed (the shared account module's switches, `SECTIONS.operatorSignIn`).
  * 2. Sign-in providers: the list with its marks, the drag handle, and the form as a dialog.
  * 3. authentik in one step: address, token, "Set up", the blueprint, and the steps with the reason of a failure.
  */
@@ -29,6 +30,7 @@ import {
   slugFromLabel,
   type AuthentikAddress,
 } from '../../vendor/nexoidc/oidc'
+import { SecondFactorOffNotice } from './SecurityBoxes'
 import type { useServerSettings } from './ServerCards'
 import { Button, Card, Confirm, CopyLink, Feedback, Input, Toggle, useAction } from './ui'
 
@@ -36,6 +38,7 @@ type Server = ReturnType<typeof useServerSettings>
 
 /** The whole part: the list is loaded once and shared, the button changes it too. */
 export function SignInPart({ server }: { server: Server }) {
+  const { me } = useAuth()
   const [providers, setProviders] = useState<OidcProvider[] | null>(null)
   const load = useCallback(async () => setProviders(await oidcApi.providers()), [])
   useEffect(() => {
@@ -48,6 +51,7 @@ export function SignInPart({ server }: { server: Server }) {
   const publicUrl = server.settings?.public_url ?? ''
   return (
     <>
+      <SecondFactorOffNotice on={me?.second_factor_off} />
       <SignInCard server={server} anyActive={active} />
       <ProvidersCard providers={providers} reload={load} publicUrl={publicUrl} />
       <AuthentikCard publicUrl={publicUrl} coupled={coupled} reload={load} addressChanged={server.reload} />
@@ -104,13 +108,15 @@ export function SignInCard({ server, anyActive }: { server: Server; anyActive: b
           {t('common.save')}
         </Button>
       </form>
+      {/* The operator's switches of the shared account module (`SECTIONS.operatorSignIn`), each with its hint. */}
       <Toggle
-        label={t('server.twoFactorRequired')}
-        hint={ownFirst ? t('server.ownSecondFactorFirst', trusts) : t('server.twoFactorRequiredHint', trusts)}
+        label={t('account.factorRequiredSwitch')}
+        hint={ownFirst ? t('server.ownSecondFactorFirst', trusts) : `${t('account.factorRequiredSwitchHint')} ${t('server.twoFactorExempt', trusts)}`}
         checked={s.two_factor_required}
         disabled={ownFirst}
         onChange={(two_factor_required) => void server.save({ two_factor_required })}
       />
+      <Toggle label={t('account.passkeysAllowed')} checked={s.passkeys_allowed !== false} onChange={(passkeys_allowed) => void server.save({ passkeys_allowed })} />
       <Feedback problem={server.problem} done={server.done ?? saved} />
       {asking && (
         <Confirm
