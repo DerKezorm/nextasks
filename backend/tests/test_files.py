@@ -130,7 +130,7 @@ def _picture() -> bytes:
     return out.getvalue()
 
 
-def test_a_profile_picture_is_seen_by_those_who_share_a_space_with_its_hash_as_etag() -> None:
+def test_a_profile_picture_is_seen_by_every_signed_in_account_with_its_hash_as_etag() -> None:
     anna_account, anna = person("anna")
     _ben, ben = person("ben")
     _carl, carl = person("carl")
@@ -143,7 +143,9 @@ def test_a_profile_picture_is_seen_by_those_who_share_a_space_with_its_hash_as_e
     assert picture.status_code == 200 and picture.headers["etag"] == f'"{digest}"'
     assert picture.headers["content-type"] == "image/webp"
     assert ben.get(f"{API}/people/{anna_account.id}/avatar", headers={"If-None-Match": f'"{digest}"'}).status_code == 304
-    assert carl.get(f"{API}/people/{anna_account.id}/avatar").status_code == 404
+    # Every signed-in account sees every picture (part 2 of the shared account module); only the name stays with
+    # those sharing a space.
+    assert carl.get(f"{API}/people/{anna_account.id}/avatar").status_code == 200
 
 
 def test_the_backup_carries_the_files_and_the_tables_of_the_new_model(tmp_path: Any) -> None:

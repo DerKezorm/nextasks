@@ -82,14 +82,15 @@ def test_only_pictures_come_in(client: TestClient, account: object) -> None:
     assert anna.put("/api/auth/avatar", content=photo(kind="WEBP")).status_code == 200
 
 
-def test_seen_by_oneself_the_operator_and_those_sharing_a_space(client: TestClient, account: object) -> None:
-    """A family app: only who shares a space with an account sees its picture (and the operator, who manages it)."""
+def test_seen_by_every_signed_in_account(client: TestClient, account: object) -> None:
+    """Every signed-in account sees every picture (part 2 of the shared account module, 25.11.2026; before, only who
+    shared a space). Display names keep the rule of shared spaces."""
     anna, bob, carl = person("anna"), person("bob"), person("carl")
     assert anna.put("/api/auth/avatar", content=photo()).status_code == 200
     address = f"/api/avatars/{me(anna)['id']}"
     assert client.get(address).status_code == 200, "the operator"
     assert anna.get(address).status_code == 200, "oneself"
-    assert bob.get(address).status_code == 404, "no shared space"
+    assert bob.get(address).status_code == 200, "no shared space"
     shared_space(anna, bob)
     assert bob.get(address).status_code == 200, "a shared space"
     # An account without a picture and one that does not exist answer alike.
