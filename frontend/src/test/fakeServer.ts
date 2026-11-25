@@ -1081,6 +1081,8 @@ export class FakeServer {
     if (path === '/api/admin/api-tokens') return { status: 200, body: [] }
     if (path === '/api/accounts') return { status: 200, body: [...this.accounts.values()].map((a) => ({ ...this.oldMe(a), locked: false, created_at: this.iso(), last_seen_at: null, providers: [], ...this.listed.get(a.id) })) }
     if (path === '/api/invites' || path === '/api/backups') return { status: 200, body: [] }
+    if (path === '/api/server/storage') return { status: 200, body: { app: 'nextasks', used: 0, parts: [], complete: true, total: 0, disk_used: 0, free: 0, nearly_full: false, where: {}, network: [] } }
+    if (path === '/api/server/storage/backups') return { status: 200, body: { schedule: { every: 'daily', time: '03:00', keep: 7 }, zone: 'UTC', last: null, count: 0, kept: 0, failure: null, running: false, restore_failure: null, restored: null, restore: 'restart', download_password: false, backups: [] } }
     if (path === '/api/logs') return { status: 200, body: [] }
     if (path === '/api/logs/level') return { status: 200, body: { mode: 'normal', until: null, fixed_by_env: false, variable: 'NEXTASKS_LOG_LEVEL', modes: ['quiet', 'normal', 'detailed', 'trace'], durations: [30, 60, 120, 480] } }
     if (path === '/api/about') return { status: 200, body: { version: 'dev', license: 'AGPL-3.0', repo_url: 'https://github.com/example/nextasks', releases_url: 'https://github.com/example/nextasks/releases', project_url: '' } }

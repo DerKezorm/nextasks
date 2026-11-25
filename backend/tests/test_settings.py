@@ -16,7 +16,8 @@ from app.config import get_settings
 from app.db import SessionLocal
 from app.models import Account, AuthSession, Setting
 from app.security import decrypt_secret
-from app.services import backups, mailer, settings_service
+from app.services import backup_hooks, backups, mailer, settings_service
+from app.vendor.nexsicherung import restore
 
 from .conftest import PASSWORD, make_account, sign_in
 
@@ -176,7 +177,7 @@ def test_a_backup_keeps_the_secret_key_and_a_restore_signs_everybody_out(
         client.put("/api/settings", json=MAIL)
         name = backups.create().name
         key_file.write_text("a key made later", encoding="utf-8")
-        monkeypatch.setattr(backups, "restart_soon", lambda: None)
+        monkeypatch.setattr(restore, "restart_soon", lambda: None)
         assert client.post(f"/api/backups/{name}/restore", json={"password": PASSWORD}).status_code == 202
         with SessionLocal() as db:
             assert db.scalar(select(AuthSession)) is not None
@@ -199,5 +200,4 @@ def test_backups_to_keep_go_up_to_365_as_the_interface_offers(client: TestClient
     assert answer.status_code == status, answer.text
     if status == 200:
         assert answer.json()["backup_keep"] == value
-        with SessionLocal() as db:
-            assert backups.keep(db) == value
+        assert backup_hooks.NextasksHooks().load_schedule().keep == value

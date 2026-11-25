@@ -130,19 +130,6 @@
   "server": {
     "proxyUnknown": "Anfragen kommen über einen Proxy, aber NEXTASKS_TRUSTED_PROXIES ist nicht gesetzt. Dann sieht nextasks alle als einen Absender: Wer oft falsch rät, bremst jeden aus, der sich in einem hier noch nie benutzten Browser anmeldet. Trag die Adresse des Proxys in NEXTASKS_TRUSTED_PROXIES ein. Steht kein Proxy davor, kannst du das ignorieren.",
     "member": "Mitglied",
-    "backups": "Sicherung",
-    "backupsHint": "Aufgaben, Dateien und Datenbank in einem Archiv. Wiederherstellen zeigt zuerst einen Probelauf.",
-    "schedule": "Automatisch",
-    "off": "aus",
-    "daily": "jede Nacht",
-    "weekly": "jede Woche",
-    "keep": "Behalten",
-    "backupNow": "Jetzt sichern",
-    "restore": "Wiederherstellen",
-    "uploadBackup": "Sicherung hochladen",
-    "uploaded": "hochgeladen",
-    "uploadedHint": "Hochgeladen. Sie steht jetzt in der Liste: erst prüfen, dann wiederherstellen.",
-    "download": "Herunterladen",
     "languages": "Sprachen",
     "languagesHint": "Deutsch und Englisch sind eingebaut. Weitere als JSON-Datei hinzufügen, fehlende Texte fallen auf Englisch zurück.",
     "builtIn": "eingebaut",
@@ -154,36 +141,6 @@
     "stripLocationHint": "Handys schreiben in jedes Foto, wo und womit es entstand. Ab Werk an.",
     "mail": "Mail",
     "mailHint": "Für Einladungen, zum Bestätigen von Mailadressen und für die Berichte und Benachrichtigungen, die jede Person unter Einstellungen, Benachrichtigungen wählt. Ohne Server reicht der Link zum Kopieren.",
-    "forAccount": "{{name}}: {{action}}",
-    "confirm": {
-      "backup_restore": {
-        "title": "Diese Sicherung wiederherstellen?",
-        "text": "Der jetzige Stand wird vorher gesichert. nextasks startet neu, alle melden sich neu an.",
-        "button": "Wiederherstellen"
-      },
-      "backup_download": {
-        "title": "Diese Sicherung herunterladen?",
-        "text": "Sie enthält jede Aufgabe, jede Datei und jedes Konto. Sie ist nicht verschlüsselt.",
-        "button": "Herunterladen"
-      },
-      "backup_upload": {
-        "title": "Sicherung hochladen?",
-        "text": "Die Datei kommt in die Liste der Sicherungen. Wiederhergestellt wird erst, wenn du es dort bestätigst.",
-        "button": "Hochladen"
-      },
-      "backup_delete": {
-        "title": "Diese Sicherung löschen?",
-        "text": "Sie lässt sich nicht zurückholen.",
-        "button": "Löschen"
-      }
-    },
-    "backupMade": "Sicherung erstellt.",
-    "noBackups": "Noch keine Sicherungen.",
-    "kinds": {
-      "manual": "von Hand",
-      "scheduled": "geplant",
-      "update": "vor einer Änderung"
-    },
     "backupContent": "{{tasks}}, {{files}}",
     "backupTasks_zero": "keine Aufgabe",
     "backupTasks_one": "eine Aufgabe",
@@ -191,11 +148,6 @@
     "backupFiles_zero": "keine Datei",
     "backupFiles_one": "eine Datei",
     "backupFiles_other": "{{count}} Dateien",
-    "check": "Prüfen",
-    "checkOk": "Vollständig: {{tasks}}, {{files}}. Wiederherstellen würde {{add}} hinzufügen und {{remove}} entfernen.",
-    "checkBad": "Beschädigt: Diese Sicherung lässt sich nicht wiederherstellen.",
-    "deleteBackup": "Löschen",
-    "restarting": "nextasks startet mit der Sicherung neu. Die Seite lädt gleich neu.",
     "texts_one": "ein Text",
     "texts_other": "{{count}} Texte",
     "remove": "Entfernen",
@@ -243,7 +195,9 @@
       "invitesHint": "Aus: Verwalter können keine Einladungslinks mehr erstellen.",
       "noAddress": "Ohne öffentliche Adresse (Anmeldung) nimmt die App die Adresse, unter der dieser Browser nextasks öffnet."
     },
-    "twoFactorExempt": "Nicht betroffen ist, wer sich über einen Anbieter anmeldet, bei dem „{{trusts}}“ an ist."
+    "twoFactorExempt": "Nicht betroffen ist, wer sich über einen Anbieter anmeldet, bei dem „{{trusts}}“ an ist.",
+    "backupHolds": "Aufgaben, Dateien und Datenbank in einem Archiv. Wiederherstellen zeigt zuerst einen Probelauf.",
+    "restoreChanges": "Wiederherstellen würde {{add}} hinzufügen, {{change}} ändern und {{remove}} entfernen."
   },
   "errors": {
     "invalid_input": "Die Eingabe ist nicht gültig.",

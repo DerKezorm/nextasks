@@ -125,8 +125,16 @@ def _share_tls_context() -> None:
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     logs.setup()
+    # The shared backup module on this data folder (a test may have moved it since the import).
+    backups.configure()
+    # What a copy or an upload stopped half way left (hidden work files, an empty archive) goes first.
+    backups.tidy_at_start()
+    # Said at every start while it lasts: a database on a share can lose tasks.
+    backups.warn_at_start()
     backups.apply_pending()
     init_db()
+    # A restore that failed at this start: the operators hear it once (the log; the page says it too).
+    backups.report_failed_restore()
     private.tighten_all()
     logs.attach_store(_read_log_mode, _write_log_mode)
     logs.apply_stored_mode()

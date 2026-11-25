@@ -159,7 +159,9 @@ MAX_BODY = 16 * 1024 * 1024
 #: Where another limit holds, checked while streaming: ``/batch`` takes 2 MB (``vertrag-block1.md``); an upload's
 #: limit is the operator's setting, checked by the route while the file arrives, this is only the ceiling above it.
 LARGE_BODIES = {"/api/app/1/batch": 2 * 1024 * 1024, "/api/app/1/files": 51 * 1024 * 1024,
-                "/api/backups/upload": 64 * 1024**3}
+                "/api/backups/upload": 64 * 1024**3,
+                # The same upload on the way of the shared module sicherung (Settings, Storage and backups).
+                "/api/server/storage/backups/upload": 64 * 1024**3}
 
 
 class BodyTooLarge(Exception):

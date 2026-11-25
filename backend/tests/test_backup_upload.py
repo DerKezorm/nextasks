@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 from app import middleware
 from app.models import Account
 from app.services import backups
+from app.vendor import nexsicherung
 
 from .conftest import PASSWORD, make_account, new_client
 
@@ -45,7 +46,7 @@ def test_an_uploaded_backup_joins_the_list_checks_whole_and_restores(client: Tes
     answer = client.post("/api/backups/upload", content=archive, headers=_header())
     assert answer.status_code == 201, answer.text
     name = answer.json()["name"]
-    assert name.endswith("-upload.zip") and backups.NAME.match(name)
+    assert name.endswith("-upload.zip") and nexsicherung.current().name_pattern.match(name)
     listed = {entry["name"]: entry for entry in client.get("/api/backups").json()}
     assert listed[name]["uploaded"] is True and listed[name]["note"] == "before the move"
     assert client.post(f"/api/backups/{name}/check").json()["usable"] is True

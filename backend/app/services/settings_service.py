@@ -15,8 +15,10 @@ from ..vendor.nexoidc import flow
 DEFAULTS: dict[str, Any] = {
     "log_mode": "normal",
     "log_mode_until": None,
-    #: off | daily | weekly. Daily in the night unless the operator decides otherwise.
+    #: off | daily | weekly | monthly (the shared module sicherung). Daily in the night unless the operator decides
+    #: otherwise, at 03:00 in the server's zone; 7 kept.
     "backup_schedule": "daily",
+    "backup_time": "03:00",
     "backup_keep": 7,
     #: Largest attachment, in MB; never above ``NEXTASKS_UPLOAD_MAX_MB`` (at most 50).
     "upload_max_mb": 50,

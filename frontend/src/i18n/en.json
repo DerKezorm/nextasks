@@ -130,19 +130,6 @@
   "server": {
     "proxyUnknown": "Requests come through a proxy, but NEXTASKS_TRUSTED_PROXIES is not set. nextasks then sees everybody as one sender: whoever guesses wrong often slows down everyone signing in from a browser not used here before. Put the proxy's address into NEXTASKS_TRUSTED_PROXIES. If no proxy stands in front of nextasks, you can ignore this.",
     "member": "Member",
-    "backups": "Backup",
-    "backupsHint": "Tasks, files and the database in one archive. Restoring shows a dry run first.",
-    "schedule": "Automatically",
-    "off": "off",
-    "daily": "every night",
-    "weekly": "every week",
-    "keep": "Keep",
-    "backupNow": "Back up now",
-    "restore": "Restore",
-    "uploadBackup": "Upload a backup",
-    "uploaded": "uploaded",
-    "uploadedHint": "Uploaded. It is in the list now: check it first, then restore.",
-    "download": "Download",
     "languages": "Languages",
     "languagesHint": "German and English are built in. Add more as a JSON file; missing texts fall back to English.",
     "builtIn": "built in",
@@ -154,36 +141,6 @@
     "stripLocationHint": "Phones write into every photo where it was taken and with what. On by default.",
     "mail": "Mail",
     "mailHint": "For invitations, for confirming mail addresses, and for the reports and notifications each person chooses under Settings, Notifications. Without a server, the link to copy is enough.",
-    "forAccount": "{{name}}: {{action}}",
-    "confirm": {
-      "backup_restore": {
-        "title": "Restore this backup?",
-        "text": "The present state is kept as a backup first. nextasks restarts, everybody signs in again.",
-        "button": "Restore"
-      },
-      "backup_download": {
-        "title": "Download this backup?",
-        "text": "It contains every task, file and account. It is not encrypted.",
-        "button": "Download"
-      },
-      "backup_upload": {
-        "title": "Upload a backup?",
-        "text": "The file joins the list of backups. Nothing is restored until you confirm it there.",
-        "button": "Upload"
-      },
-      "backup_delete": {
-        "title": "Delete this backup?",
-        "text": "It cannot be brought back.",
-        "button": "Delete"
-      }
-    },
-    "backupMade": "Backup made.",
-    "noBackups": "No backups yet.",
-    "kinds": {
-      "manual": "by hand",
-      "scheduled": "scheduled",
-      "update": "before a change"
-    },
     "backupContent": "{{tasks}}, {{files}}",
     "backupTasks_zero": "no tasks",
     "backupTasks_one": "one task",
@@ -191,11 +148,6 @@
     "backupFiles_zero": "no files",
     "backupFiles_one": "one file",
     "backupFiles_other": "{{count}} files",
-    "check": "Check",
-    "checkOk": "Complete: {{tasks}}, {{files}}. A restore would add {{add}} and remove {{remove}}.",
-    "checkBad": "Damaged: this backup cannot be restored.",
-    "deleteBackup": "Delete",
-    "restarting": "nextasks restarts with the backup. The page reloads in a moment.",
     "texts_one": "one text",
     "texts_other": "{{count}} texts",
     "remove": "Remove",
@@ -243,7 +195,9 @@
       "invitesHint": "Off: managers can no longer create invitation links.",
       "noAddress": "Without a public address (Sign-in) the app uses the address this browser opens nextasks at."
     },
-    "twoFactorExempt": "Not affected: whoever signs in through a provider for which “{{trusts}}” is on."
+    "twoFactorExempt": "Not affected: whoever signs in through a provider for which “{{trusts}}” is on.",
+    "backupHolds": "Tasks, files and the database in one archive. Restoring shows a dry run first.",
+    "restoreChanges": "A restore would add {{add}}, change {{change}} and remove {{remove}}."
   },
   "errors": {
     "invalid_input": "The input is not valid.",

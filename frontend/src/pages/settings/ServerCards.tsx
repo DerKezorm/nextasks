@@ -5,17 +5,14 @@
  * and the Log. Everything here is the
  * server's; it applies to all.
  */
-import { Download, Files, Globe, History, KeyRound, Mail, RotateCcw, ShieldCheck, Smartphone, Trash2, Upload } from 'lucide-react'
+import { Download, Files, Globe, KeyRound, Mail, Smartphone, Trash2, Upload } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { ApiError, api, apiTokensApi, passwordHeader, type AddressQuestion, type AnyApiToken } from '../../api/client'
-import { Done } from '../../components/Field'
+import { ApiError, api, apiTokensApi, type AddressQuestion, type AnyApiToken } from '../../api/client'
 import i18n, { byLanguageName, forgetAddedLanguages, SHIPPED, templateFile } from '../../i18n'
-import { useAuth } from '../../state/auth'
 import { MAIL_FIELDS, mailErrorKey, portFor, SECURITY, SECURITY_LABELS, warnUnencrypted } from '../../vendor/nexpost/post'
 import { Button, Card, Confirm, Feedback, Input, saveAsFile, Select, Toggle, useAction } from './ui'
-import { pause, serverAnswers, untilBack } from '../../lib/restart'
 import { errorText } from '../../lib/errors'
 import { moment } from '../../lib/time'
 
@@ -335,164 +332,6 @@ export function MailCard({ server }: { server: Server }) {
 function mailErrorText(code: string): string {
   const key = mailErrorKey(code)
   return key === 'mail.error.unknown' ? errorText(code) : i18n.t(key)
-}
-
-type Backup = { name: string; size: number; created: string; kind: string; note: string; tasks: number; files: number; version: string; uploaded?: boolean }
-type Brief = { usable: boolean; tasks: number; files: number; would_add: number; would_change: number; would_remove: number; damaged: string[]; created: string }
-
-export function BackupsCard({ server }: { server: Server }) {
-  const { t, i18n } = useTranslation()
-  const { me } = useAuth()
-  const [list, setList] = useState<Backup[]>([])
-  const [brief, setBrief] = useState<(Brief & { name: string }) | null>(null)
-  const [asking, setAsking] = useState<{ kind: 'restore' | 'download' | 'delete' | 'upload'; name: string; file?: File } | null>(null)
-  const picker = useRef<HTMLInputElement>(null)
-  const [keep, setKeep] = useState<string | null>(null)
-  const [restarting, setRestarting] = useState(false)
-  const [uploaded, setUploaded] = useState(false)
-  const action = useAction()
-  const load = useCallback(() => {
-    api<Backup[]>('/api/backups').then(setList, () => undefined)
-  }, [])
-  useEffect(load, [load])
-  const s = server.settings
-  if (!s) return null
-  const size = (bytes: number) => (bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`)
-  const forBackup = (entry: Backup, action: string) => t('server.forAccount', { name: moment(entry.created, i18n.language), action })
-  /** The question before a backup is restored, downloaded, uploaded or deleted (`server.confirm.backup_…`). */
-  const question = asking ? `backup_${asking.kind}` : ''
-  return (
-    <Card id="backups" icon={History} title={t('server.backups')} text={t('server.backupsHint')}>
-      <div className="flex flex-wrap items-end gap-2">
-        <Select
-          label={t('server.schedule')}
-          value={s.backup_schedule}
-          onChange={(backup_schedule) => void server.save({ backup_schedule })}
-          options={[
-            { value: 'off', label: t('server.off') },
-            { value: 'daily', label: t('server.daily') },
-            { value: 'weekly', label: t('server.weekly') },
-          ]}
-          className="w-48"
-        />
-        <form
-          className="flex items-end gap-2"
-          onSubmit={(event) => {
-            event.preventDefault()
-            void server.save({ backup_keep: Math.max(1, Math.min(365, Number(keep ?? s.backup_keep) || 7)) }, t('settings.saved'))
-          }}
-        >
-          <Input label={t('server.keep')} type="number" min={1} max={365} value={keep ?? String(s.backup_keep)} onChange={setKeep} className="w-28" />
-          <Button type="submit" busy={server.busy}>
-            {t('common.save')}
-          </Button>
-        </form>
-        <span className="ml-auto flex flex-wrap gap-2">
-          <>
-              <input
-                ref={picker}
-                type="file"
-                accept=".zip,application/zip"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0]
-                  event.target.value = ''
-                  if (file) setAsking({ kind: 'upload', name: file.name, file })
-                }}
-              />
-              <Button onClick={() => picker.current?.click()}>
-                <Upload className="h-4 w-4" strokeWidth={1.8} aria-hidden />
-                {t('server.uploadBackup')}
-              </Button>
-          </>
-          <Button
-            accent
-            busy={action.busy}
-            onClick={() =>
-              void action.run(async () => {
-                await api('/api/backups', { method: 'POST', body: { note: '' } })
-                load()
-              }, t('server.backupMade'))
-            }
-          >
-            {t('server.backupNow')}
-          </Button>
-        </span>
-      </div>
-      <Feedback problem={server.problem} done={server.done} />
-      <ul className="divide-y divide-ink-700 rounded-xl border border-ink-700 text-sm">
-        {list.length === 0 && <li className="px-4 py-3 text-mist-500">{t('server.noBackups')}</li>}
-        {list.map((entry) => (
-          <li key={entry.name} className="flex flex-wrap items-center gap-2 px-4 py-2.5">
-            <div className="min-w-0 flex-1">
-              <div className="text-mist-100">{moment(entry.created, i18n.language)}</div>
-              <div className="text-xs text-mist-500">
-                {entry.uploaded ? t('server.uploaded') : t(`server.kinds.${entry.kind}`)} · {t('server.backupContent', { tasks: t('server.backupTasks', { count: entry.tasks }), files: t('server.backupFiles', { count: entry.files }) })} · {size(entry.size)} · {entry.version}
-              </div>
-            </div>
-            {/* Words, not four bare symbols (Prüfgang G10); each names its backup for a screen reader. */}
-            <div className="flex flex-wrap gap-1.5">
-              <Button small label={forBackup(entry, t('server.check'))} onClick={() => void action.run(async () => setBrief({ ...(await api<Brief>(`/api/backups/${entry.name}/check`, { method: 'POST' })), name: entry.name }))}>
-                <ShieldCheck className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden />
-                {t('server.check')}
-              </Button>
-              <Button small label={forBackup(entry, t('server.download'))} onClick={() => setAsking({ kind: 'download', name: entry.name })}>
-                <Download className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden />
-                {t('server.download')}
-              </Button>
-              <Button small label={forBackup(entry, t('server.restore'))} onClick={() => setAsking({ kind: 'restore', name: entry.name })}>
-                <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden />
-                {t('server.restore')}
-              </Button>
-              <Button small danger label={forBackup(entry, t('server.deleteBackup'))} onClick={() => setAsking({ kind: 'delete', name: entry.name })}>
-                <Trash2 className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden />
-                {t('server.deleteBackup')}
-              </Button>
-            </div>
-          </li>
-        ))}
-      </ul>
-      {brief && (
-        <div className={'rounded-xl border px-4 py-3 text-sm ' + (brief.usable ? 'border-ok-500/40 bg-ok-500/10 text-mist-200' : 'border-bad-500/40 bg-bad-500/10 text-bad-500')}>
-          {brief.usable ? t('server.checkOk', { tasks: t('server.backupTasks', { count: brief.tasks }), files: t('server.backupFiles', { count: brief.files }), add: t('server.backupFiles', { count: brief.would_add }), remove: t('server.backupFiles', { count: brief.would_remove }) }) : t('server.checkBad')}
-        </div>
-      )}
-      <Done text={uploaded ? t('server.uploadedHint') : null} />
-      {restarting && <p className="rounded-xl border border-warn-500/40 bg-warn-500/10 px-4 py-3 text-sm text-warn-500">{t('server.restarting')}</p>}
-      <Feedback problem={action.problem} done={action.done} />
-      {asking && (
-        <Confirm
-          title={t(`server.confirm.${question}.title`)}
-          text={t(`server.confirm.${question}.text`)}
-          confirm={t(`server.confirm.${question}.button`)}
-          danger={asking.kind !== 'download' && asking.kind !== 'upload'}
-          password={me?.sign_in === 'password'}
-          onCancel={() => setAsking(null)}
-          onConfirm={async (password) => {
-            if (asking.kind === 'download') {
-              const blob = await api<Blob>(`/api/backups/${asking.name}/download`, { method: 'POST', body: { password }, blob: true })
-              saveAsFile(asking.name, blob)
-            }
-            if (asking.kind === 'delete') {
-              await api(`/api/backups/${asking.name}`, { method: 'DELETE', body: { password } })
-              load()
-            }
-            if (asking.kind === 'upload' && asking.file) {
-              await api('/api/backups/upload', { method: 'POST', raw: asking.file, headers: { 'X-Nextasks-Password': passwordHeader(password) } })
-              load()
-              setUploaded(true)
-            }
-            if (asking.kind === 'restore') {
-              await api(`/api/backups/${asking.name}/restore`, { method: 'POST', body: { password } })
-              setRestarting(true)
-              void untilBack(serverAnswers, pause).then(() => window.location.reload())
-            }
-            setAsking(null)
-          }}
-        />
-      )}
-    </Card>
-  )
 }
 
 type Locale = { code: string; name: string; keys: number }

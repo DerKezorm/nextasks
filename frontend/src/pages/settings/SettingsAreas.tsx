@@ -12,8 +12,9 @@ import { AccountTab } from './AccountTab'
 import type { AreaSlug } from './areas'
 import { LogCard } from './LogCard'
 import { LookCards } from './LookCards'
-import { AllApiTokensCard, ApiTokensSwitchCard, AppCard, BackupsCard, FilesCard, LanguagesCard, MailCard, ProxyHint, useServerSettings } from './ServerCards'
+import { AllApiTokensCard, ApiTokensSwitchCard, AppCard, FilesCard, LanguagesCard, MailCard, ProxyHint, useServerSettings } from './ServerCards'
 import { SignInPart } from './SignInCards'
+import { StorageArea } from './StorageArea'
 
 type ServerArea = 'general' | 'sign-in' | 'mail' | 'storage' | 'accounts'
 
@@ -62,7 +63,7 @@ function ServerCardsOf({ area }: { area: ServerArea }) {
       )}
       {area === 'sign-in' && <SignInPart server={server} />}
       {area === 'mail' && <MailCard server={server} />}
-      {area === 'storage' && <BackupsCard server={server} />}
+      {area === 'storage' && <StorageArea />}
       {area === 'accounts' && (
         <>
           <AccountsTab />
