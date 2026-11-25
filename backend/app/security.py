@@ -12,7 +12,7 @@ import os
 import secrets
 import threading
 import time
-from datetime import timedelta
+from datetime import datetime
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
@@ -83,43 +83,63 @@ def new_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-def start_session(db: Session, account: Account, ip: str, user_agent: str, *, by_provider: bool = False) -> str:
-    """Creates a browser session and returns the token for the cookie. ``by_provider``: it began at a provider the
-    entry trusts with the second factor."""
-    token = new_token()
-    db.add(
-        AuthSession(
-            token_hash=hash_token(token),
-            account_id=account.id,
-            expires_at=utcnow() + timedelta(days=get_settings().session_days),
-            ip=ip[:64],
-            user_agent=user_agent[:255],
-            by_provider=by_provider,
-        )
+def start_session(db: Session, account: Account, ip: str, user_agent: str, *, by_provider: bool = False,
+                  remember: bool = True) -> str:
+    """Creates a browser session (the shared account module, ``sessions.start``) and returns the token for the
+    cookie. ``remember``: "Stay signed in", 30 days from the last use; without it at most 12 hours and a cookie that
+    ends with the browser (``session_cookie_age``). ``by_provider``: it began at a provider the entry trusts with the
+    second factor (the module's ``provider_checked``)."""
+    from .services.konten_store import KontenStore
+    from .vendor.nexkonten import sessions
+
+    started = sessions.start(
+        KontenStore(db),
+        account.id,
+        cookie_name=SESSION_COOKIE,
+        secure=False,
+        remember=remember,
+        provider_checked=by_provider,
+        label=user_agent[:255],
+        address=ip[:64],
     )
     account.last_seen_at = utcnow()
     db.commit()
-    return token
+    return started.token
+
+
+def session_cookie_age(remember: bool) -> int | None:
+    """How long the browser keeps the session cookie: "Stay signed in" outlives the session (the server decides),
+    otherwise the cookie ends with the browser."""
+    from .vendor.nexkonten import sessions
+
+    return sessions.REMEMBER_COOKIE_DAYS * 86400 if remember else None
 
 
 def session_account(db: Session, token: str | None) -> Account | None:
+    """The account of a browser session (``sessions.current``: run out is out, "Stay signed in" slides), or None.
+    A blocked account is out at once."""
     if not token:
         return None
-    session = db.scalar(select(AuthSession).where(AuthSession.token_hash == hash_token(token)))
-    if session is None:
-        return None
-    now = utcnow()
-    if session.expires_at <= now:
-        db.delete(session)
+    from .services.konten_store import KontenStore
+    from .vendor.nexkonten import model2, sessions
+
+    row = db.scalar(select(AuthSession).where(AuthSession.token_hash == hash_token(token)))
+    if row is not None and row.expires_at <= utcnow():
+        # A session that ran out goes at its next showing (and in the hourly sweep).
+        db.delete(row)
         db.commit()
         return None
-    account = db.get(Account, session.account_id)
+    session = sessions.current(KontenStore(db), token)
+    if session is None or session.kind != model2.KIND_BROWSER:
+        if db.dirty:
+            db.commit()
+        return None
+    account = db.get(Account, int(session.account_id))
     if account is None or account.blocked_at is not None:
         return None
-    # Only every few minutes: the interface asks often.
-    if (now - session.last_seen_at).total_seconds() > 300:
-        session.last_seen_at = now
-        account.last_seen_at = now
+    if db.dirty or db.new:
+        # ``current`` wrote the last use (at most every five minutes); the account's last use goes with it.
+        account.last_seen_at = utcnow()
         db.commit()
     return account
 
@@ -129,6 +149,21 @@ def session_by_provider(db: Session, token: str | None) -> bool:
     if not token:
         return False
     return bool(db.scalar(select(AuthSession.by_provider).where(AuthSession.token_hash == hash_token(token))))
+
+
+def session_uid(db: Session, token: str | None) -> str:
+    """The id of the session of this cookie in the list "Signed-in devices", "" for none."""
+    if not token:
+        return ""
+    row = db.scalar(select(AuthSession).where(AuthSession.token_hash == hash_token(token)))
+    return (row.uid or f"s{row.id}") if row is not None else ""
+
+
+def session_created_at(db: Session, token: str | None) -> datetime | None:
+    """When the browser session of this cookie began (a fresh sign-in at a provider confirms for five minutes)."""
+    if not token:
+        return None
+    return db.scalar(select(AuthSession.created_at).where(AuthSession.token_hash == hash_token(token)))
 
 
 def end_session(db: Session, token: str | None) -> None:
@@ -204,9 +239,13 @@ class Brake:
             self._fails.pop(key, None)
 
     def forget(self) -> None:
-        """For the tests."""
+        """For the tests: this brake and the one of the shared account module (sign-in, forgotten password, setup
+        code, the doors)."""
+        from .vendor.nexkonten.brake import BRAKE
+
         with self._lock:
             self._fails.clear()
+        BRAKE.forget()
 
 
 brake = Brake()
@@ -223,6 +262,11 @@ def _server_key() -> bytes:
     return hashlib.sha256(b"nextasks-secrets:" + secret).digest()
 
 
+def server_key() -> bytes:
+    """The server's own key (from ``secret.key``): signs the marks of known browsers and the recovery codes."""
+    return _server_key()
+
+
 DEVICE_COOKIE = "nextasks_device" + get_settings().cookie_name_suffix()
 DEVICE_DAYS = 365
 
@@ -232,10 +276,9 @@ def _device_mark(account_id: int, key: str, nonce: str) -> str:
 
 
 def device_token(db: Session, account: Account) -> str:
-    """A browser that signed in once as this account: it may still sign in while the account is locked against the
-    rest of the world, and it passes the brake per sender. Signed with the server's key and the account's own
-    ``device_key`` (drawn anew on a new password, a block or unblock, "sign out everywhere" and a reset second
-    factor); nothing about the browser is stored."""
+    """The cookie of 0.8.0 for a browser that signed in as this account (``<id>.<nonce>.<mark>``). Since the shared
+    account module the cookie holds the module's marks (``routers/auth.known_device``); this form is still read for
+    one version (``device_of``), and the tests make one to prove it."""
     if not account.device_key:
         account.device_key = new_device_key()
         db.commit()

@@ -31,6 +31,8 @@ DEFAULTS: dict[str, Any] = {
     #: Every account that signs in with a password needs a second factor; until it has one, it reaches only its
     #: account page. Accounts from OIDC bring their provider's.
     "two_factor_required": False,
+    #: Passkeys may be added and used to sign in (the shared account module): on from the start.
+    "passkeys_allowed": True,
     #: Tokens for programs such as n8n or nexdeck (``/api/v1``): closed until the operator opens it.
     "api_tokens_allowed": False,
     #: Ask GitHub once a day whether a newer nextasks is out (services/updates). Only the question goes out, so on.
@@ -43,6 +45,8 @@ DEFAULTS: dict[str, Any] = {
     "smtp_user": "",
     "smtp_password_enc": "",
     "smtp_from": "",
+    #: The name system mail goes out under; empty: "nextasks" (the shared post module).
+    "smtp_sender_name": "",
     #: The last mail the server took and the last failure (an error code), as ISO times: shown at the mail server.
     "mail_last_ok_at": None,
     "mail_last_error": "",

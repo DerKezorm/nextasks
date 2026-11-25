@@ -1,10 +1,12 @@
 """Mail through the operator's SMTP server.
 
 Off until the operator enters a server: the link to copy is always enough for an invitation. What goes out: the
-invitation, the operator's test mail, the link that confirms an address (``services/emailaddr.py``), and the reports
-and events people chose (``services/notifyprefs.py``, sent by ``services/outbox.py``). The texts are in
-``services/messages.py``. Every mail is plain text plus HTML with the nextasks mark inline; a report or event carries
-``List-Unsubscribe`` with one click (RFC 8058).
+reports and events people chose (``services/notifyprefs.py``, sent by ``services/outbox.py``, texts in
+``services/messages.py``), and the system mail of the shared post module (``vendor/nexpost``): the invitation, the
+operator's test mail, the links for a new address or a new password and the notices about an account
+(``services/kontenpost.py``). Every mail is plain text plus HTML with the nextasks mark inline; a report or event
+carries ``List-Unsubscribe`` with one click (RFC 8058). ``send_message`` is the one door for both: a letter of the post
+module goes out through the post module, a message of nextasks' own through ``build``.
 
 Invitation and test mail go out in the language of whoever receives it (Prüfgang 05.10.2026, decision 8): the account
 that has the address already, else the language of whoever invites (or tests), else the language of their page, else
@@ -27,7 +29,8 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from ..security import decrypt_secret
-from . import messages, settings_service
+from ..vendor.nexpost import Letter
+from . import messages, post_store, settings_service
 from .channels import Message
 
 logger = logging.getLogger("nextasks.mail")
@@ -115,8 +118,32 @@ def build(to: str, message: Message) -> EmailMessage:
     return mail
 
 
-def send_message(db: Session, to: str, message: Message) -> None:
+def send_message(db: Session, to: str, message: Message | Letter) -> None:
+    """One mail, at once. A letter of the post module goes out through it (its sender name, its logo, its codes); a
+    message of nextasks' own through ``build``. ``MailError`` with ``mail_off``, ``invalid_email`` or
+    ``mail_failed``."""
+    if isinstance(message, Letter):
+        _deliver(db, message)
+        return
     _send(db, build(to, message))
+
+
+def _deliver(db: Session, letter: Letter) -> None:
+    from ..vendor import nexpost
+
+    settings = post_store.PostStore(db).mail_settings()
+    if not settings.configured:
+        raise MailError("mail_off", "No mail server is set up.")
+    try:
+        nexpost.send.deliver(settings, letter)
+    except nexpost.MailError as exc:
+        # The reason goes to the log by its code only: an SMTP answer can quote the address or the credentials.
+        logger.warning("Mail not sent host=%s code=%s", settings.host, exc.code)
+        _note(db, ok=False, code=exc.code)
+        if exc.code == "mail_address_invalid":
+            raise MailError("invalid_email", "This is not a mail address.") from exc
+        raise MailError("mail_failed", "The mail server did not take the mail.") from exc
+    _note(db, ok=True)
 
 
 def mail_language(*choices: str | None) -> str:
@@ -129,10 +156,33 @@ def mail_language(*choices: str | None) -> str:
 
 
 def send_invite(db: Session, to: str, link: str, *, by: str, space: str | None, until: date | None = None,
-                language: str = "en") -> None:
-    base = settings_service.public_url(db)
-    send_message(db, to, messages.invite(language, base=base, link=link, by=by, space=space, until=until))
+                language: str = "en", days: int = 0) -> None:
+    """The invitation, at once, in the receiver's language. Into nextasks (the operator's) as the shared post module
+    writes it. Into a space nextasks' own letter of 0.8.0 stays (``messages.invite``): the post module's invitation
+    has no place for the space, and the person must read where they are invited to (nothing of 0.8.0 goes)."""
+    from ..vendor import nexpost
+
+    if space:
+        base = settings_service.public_url(db)
+        send_message(db, to, messages.invite(language, base=base, link=link, by=by, space=space, until=until))
+        return
+    try:
+        letter = nexpost.letters.compose(
+            "invite", to, language=language,
+            values={"by": by, "valid": nexpost.letters.validity(language, days=days) if days else ""},
+            link=link,
+        )
+    except nexpost.MailError as exc:
+        raise MailError("invalid_email", "This is not a mail address.") from exc
+    send_message(db, to, letter)
 
 
 def send_test(db: Session, to: str, language: str = "en") -> None:
-    send_message(db, to, messages.test(language, base=settings_service.public_url(db)))
+    """The operator's test mail, at once, as the shared post module writes it."""
+    from ..vendor import nexpost
+
+    try:
+        letter = nexpost.letters.compose("test", to, language=language, values={})
+    except nexpost.MailError as exc:
+        raise MailError("invalid_email", "This is not a mail address.") from exc
+    send_message(db, to, letter)

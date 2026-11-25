@@ -4,8 +4,10 @@ An invitation is a link with an end date for one person. It may name a space: wh
 they have none yet) and becomes a member there. Signed in already, following it only makes the account a member.
 Managers invite into their spaces (never into "Private"); the operator also invites into nextasks without a space.
 
-After nextrmnl's accounts: the name is checked before the password, and an unknown name costs the same time as a
-wrong password, so that neither answer nor timing tells which names exist.
+Setting up, signing in, accepting an invitation with a new account, the profile and a forgotten password run through
+the shared account module (``vendor/nexkonten``, store ``services/konten_store.py``). What stays here is nextasks' own:
+making and finding invitations (they lead into spaces), joining a space, the lock per account for the password typed
+again on nextasks' own pages, and the address check of the operator's settings.
 """
 
 from __future__ import annotations
@@ -13,7 +15,6 @@ from __future__ import annotations
 import logging
 import re
 import secrets
-import threading
 from datetime import timedelta
 from functools import lru_cache
 
@@ -22,11 +23,9 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from .. import __version__
-from ..config import get_settings
 from ..models import (
     MANAGER,
     MEMBER,
-    OPERATOR,
     ROLES,
     SIGN_IN_PASSWORD,
     SPACE_MEMBER,
@@ -91,40 +90,20 @@ def create_with_password(db: Session, name: str, password: str, role: str = MEMB
     return account
 
 
-#: One setup at a time: two at once each counted no account yet and made two operators.
-_setup_lock = threading.Lock()
-_generated_code: str | None = None
-
-
 def setup_code() -> str:
-    """What the first account must bring: ``NEXTASKS_SETUP_TOKEN``, else a code made at start and written to the log.
-    Whoever reaches a fresh instance first would otherwise become its operator."""
-    global _generated_code
-    given = get_settings().setup_token.strip()
-    if given:
-        return given
-    if _generated_code is None:
-        _generated_code = "-".join(secrets.token_hex(2).upper() for _ in range(3))
-    return _generated_code
+    """What the first account must bring: ``NEXTASKS_SETUP_TOKEN`` (16 characters at least), else a code made at
+    start and written to the log (the shared account module, ``setup.setup_code``)."""
+    from ..vendor.nexkonten import setup
+
+    return setup.setup_code()
 
 
 def announce_setup_code(db: Session) -> None:
-    """At start, while nobody has set nextasks up: the code in the log, where only whoever runs the server reads it."""
-    if count(db) == 0:
-        if get_settings().setup_token.strip():
-            logger.warning("nextasks is not set up yet. Open it and give NEXTASKS_SETUP_TOKEN as the setup code.")
-        else:
-            logger.warning("nextasks is not set up yet. The setup code is %s (new at every start until set up).",
-                           setup_code())
+    """At start, while nobody has set nextasks up: the code in the log (the shared account module)."""
+    from ..vendor.nexkonten import setup
+    from .konten_store import KontenStore
 
-
-def create_operator(db: Session, name: str, password: str, code: str) -> Account:
-    with _setup_lock:
-        if count(db) > 0:
-            raise AccountError("already_set_up", "nextasks is already set up.", 409)
-        if not secrets.compare_digest(code.strip().upper().encode(), setup_code().upper().encode()):
-            raise AccountError("setup_code_wrong", "The setup code is wrong. It is in the server's log.", 403)
-        return create_with_password(db, name, password, OPERATOR)
+    setup.announce_setup(KontenStore(db))
 
 
 #: The first language of an ``Accept-Language`` header: ``de`` from ``de-DE,de;q=0.9,en;q=0.8``.
@@ -170,59 +149,6 @@ def note_success(db: Session, account: Account) -> None:
     db.commit()
 
 
-_account_locks: dict[int, threading.Lock] = {}
-_account_locks_guard = threading.Lock()
-
-
-def _one_check_at_a_time(account_id: int) -> threading.Lock:
-    """Checks of one account's password in turn: 60 wrong ones at once all passed the lock test before the first
-    failure was counted, and 46 were checked instead of 10."""
-    with _account_locks_guard:
-        return _account_locks.setdefault(account_id, threading.Lock())
-
-
-def authenticate(db: Session, name: str, password: str, device: int | None = None) -> Account:
-    """Checks name and password; counts failures and locks the account after too many.
-
-    A locked account answers like a wrong password (no hint that the name exists), except to a browser that signed in
-    as it before (``device``, the account its cookie names): a stranger guessing can lock the account against the
-    world, not against its owner.
-    Failures from that browser do not count towards the lock.
-
-    A blocked account hears that it is blocked and whom to ask, but only after its right password; a wrong one answers
-    as for anybody (Prüfgang 05.10.2026 A16, as decided). The caller counts it for the brakes like a failure. The same
-    for the emergency account while connected (``/notzugang`` signs in here too).
-    """
-    account = by_name(db, name)
-    if account is None or account.sign_in != SIGN_IN_PASSWORD:
-        verify_password(password, _dummy_hash())
-        logger.warning("Sign-in failed for an unknown account")
-        raise AccountError("wrong_credentials", "Name or password is wrong.", 401)
-    known_device = device == account.id
-    with _one_check_at_a_time(account.id):
-        db.refresh(account)
-        if is_locked(account) and not known_device:
-            # Locked says nothing more, blocked or not.
-            verify_password(password, _dummy_hash())
-            logger.warning("Sign-in refused, account locked name=%s", account.name)
-            raise AccountError("wrong_credentials", "Name or password is wrong.", 401)
-        if not verify_password(password, account.password_hash):
-            # A blocked account counts wrong passwords like any other: otherwise it would tell from changing senders,
-            # without end, whether a guess was right.
-            if not known_device:
-                note_failure(db, account)
-            raise AccountError("wrong_credentials", "Name or password is wrong.", 401)
-        if account.blocked_at is not None:
-            # The right password: it hears that it is blocked and whom to ask (A16). The count of failures stays.
-            logger.warning("Sign-in refused, account blocked name=%s", account.name)
-            raise AccountError("account_blocked", "This account is blocked. Ask the operator to unblock it.", 403)
-        if not account.totp_secret_enc:
-            # With a second factor, only the code resets the count of failures: otherwise whoever knows the password
-            # could guess codes forever, a new password step before each lockout.
-            note_success(db, account)
-    return account
-
-
 def check_password(account: Account, password: str) -> bool:
     return account.sign_in == SIGN_IN_PASSWORD and verify_password(password, account.password_hash)
 
@@ -238,26 +164,17 @@ def change_password(db: Session, account: Account, current: str, new: str) -> No
     logger.info("Password changed name=%s", account.name)
 
 
-def set_password(db: Session, account: Account, new: str) -> None:
-    """The operator gives an account a new password (it forgot its own); it signs in with a password from now on."""
-    account.password_hash = hash_password(new)
-    account.sign_in = SIGN_IN_PASSWORD
-    account.failed_logins = 0
-    account.locked_until = None
-    db.commit()
-    logger.info("Password set by the operator name=%s", account.name)
-
-
 # --- Invitations ---------------------------------------------------------------------------------------------------
 
 
-def create_invite(db: Session, by: Account, *, space_id: str | None, days: int, email: str = "") -> tuple[Invite, str]:
+def create_invite(db: Session, by: Account, *, space_id: str | None, days: int, email: str = "",
+                  display_name: str = "") -> tuple[Invite, str]:
     if days not in INVITE_DAYS:
         raise AccountError("invalid_days", "Choose 1, 7 or 30 days.", 422)
     token = secrets.token_urlsafe(24)
     invite = Invite(
         token_hash=hash_token(token), space_id=space_id, email=email.strip()[:255], created_by=by.id,
-        expires_at=utcnow() + timedelta(days=days),
+        expires_at=utcnow() + timedelta(days=days), display_name=display_name[:80],
     )
     db.add(invite)
     db.commit()
@@ -269,20 +186,25 @@ def expired(invite: Invite) -> bool:
     return invite.expires_at <= utcnow()
 
 
-def find_invite(db: Session, token: str) -> Invite | None:
-    """A usable invitation: not run out, and into a space only while the one who made it still manages the space
-    (a manager who lost the role must not keep bringing people in with an old link) and the space is not private."""
+def invite_allowed(db: Session, invite: Invite) -> bool:
+    """Whether the maker may still bring people in with it: into a space only while it still manages the space (a
+    manager who lost the role must not keep bringing people in with an old link) and the space is not private."""
     from . import spaces
 
-    invite = db.scalar(select(Invite).where(Invite.token_hash == hash_token(token)))
-    if invite is None or invite.expires_at <= utcnow():
-        return None
     if invite.space_id is not None:
         space = db.get(Space, invite.space_id)
         if space is None or space.private or invite.created_by is None:
-            return None
+            return False
         if spaces.role_of(db, invite.created_by, invite.space_id) != MANAGER:
-            return None
+            return False
+    return True
+
+
+def find_invite(db: Session, token: str) -> Invite | None:
+    """A usable invitation: not run out, and its maker may still invite (``invite_allowed``)."""
+    invite = db.scalar(select(Invite).where(Invite.token_hash == hash_token(token)))
+    if invite is None or invite.expires_at <= utcnow() or not invite_allowed(db, invite):
+        return None
     return invite
 
 
@@ -308,10 +230,30 @@ def is_member(db: Session, invite: Invite, account_id: int) -> bool:
     return invite.space_id is not None and spaces.role_of(db, account_id, invite.space_id) is not None
 
 
+def join_space(db: Session, invite: Invite, account: Account) -> bool:
+    """The account becomes a member of the invitation's space, in the caller's transaction (no commit); the other
+    members hear of it on their channels. False when there is no space or it is a member already. The caller wakes
+    the waiting devices after its commit (``cursor.touched_everybody``)."""
+    from . import cursor, spaces
+
+    if invite.space_id is None or is_member(db, invite, account.id):
+        return False
+    space = db.get(Space, invite.space_id)
+    if space is None:
+        return False
+    with cursor.WRITE_LOCK:
+        spaces.join(db, space, account.id, SPACE_MEMBER)
+        _tell_joined(db, space, account)
+        db.flush()
+    logger.info("Invite used name=%s space_id=%s", account.name, invite.space_id)
+    return True
+
+
 def redeem(db: Session, invite: Invite, account: Account, *, consumed: bool = False, commit: bool = True) -> None:
     """The invitation is used: it goes first (``consume``), then the account becomes a member of its space. Who is a
-    member already does not use it up."""
-    from . import cursor, spaces
+    member already does not use it up. (The sign-in provider's store; the module's ``join_invite`` does the same for
+    the routes.)"""
+    from . import cursor
 
     if invite.space_id is not None and is_member(db, invite, account.id):
         if commit:
@@ -320,18 +262,12 @@ def redeem(db: Session, invite: Invite, account: Account, *, consumed: bool = Fa
     if not consumed and not consume(db, invite):
         db.rollback()
         raise AccountError("invite_invalid", "This invitation is not valid any more.", 404)
-    if invite.space_id is not None:
-        space = db.get(Space, invite.space_id)
-        if space is not None:
-            with cursor.WRITE_LOCK:
-                spaces.join(db, space, account.id, SPACE_MEMBER)
-                _tell_joined(db, space, account)
-                if commit:
-                    db.commit()
-            cursor.touched_everybody()
+    joined = join_space(db, invite, account)
     if commit:
         db.commit()
-    logger.info("Invite used name=%s space_id=%s", account.name, invite.space_id)
+    if joined:
+        # Without ``commit`` the caller's commit follows right away (the sign-in provider's module), as in 0.8.0.
+        cursor.touched_everybody()
 
 
 def _tell_joined(db: Session, space: Space, joined: Account) -> None:
@@ -353,31 +289,27 @@ def _tell_joined(db: Session, space: Space, joined: Account) -> None:
     outbox.wake()
 
 
-def accept_invite(db: Session, token: str, name: str, password: str) -> Account:
-    invite = find_invite(db, token)
-    if invite is None:
-        if invite_ran_out(db, token):
-            raise AccountError("invite_expired", "This invitation has run out.", 404)
-        raise AccountError("invite_invalid", "This invitation is not valid any more.", 404)
-    check_name(db, name)
-    # The invitation goes before the account comes, in one transaction: two requests with the same link at the same
-    # moment make one account, not two.
-    if not consume(db, invite):
-        db.rollback()
-        raise AccountError("invite_invalid", "This invitation is not valid any more.", 404)
-    try:
-        account = create_with_password(db, name, password, commit=False)
-    except AccountError:
-        db.rollback()
-        raise
-    if invite.email and not account.email:
-        account.email = invite.email
-    redeem(db, invite, account, consumed=True)
-    return account
-
-
 def invites_of(db: Session, *, space_id: str | None, all_spaces: bool = False) -> list[Invite]:
     query = select(Invite).where(Invite.expires_at > utcnow())
     if not all_spaces:
         query = query.where(Invite.space_id.is_(None) if space_id is None else Invite.space_id == space_id)
     return list(db.scalars(query.order_by(Invite.created_at)))
+
+
+def delete_account(db: Session, account: Account) -> None:
+    """For good: it leaves every space (its reminders stay; where it was the last manager, the member who joined first
+    becomes manager), its space "Private" goes. Its username stays reserved for good (``former_names`` without an
+    account): nobody inherits another's mentions or history. Waiting devices hear it after the commit."""
+    from ..models_accounts import FormerName
+    from ..vendor.nexkonten import factor
+    from . import cursor, totp, trash
+
+    account_id, name = account.id, account.name
+    with cursor.WRITE_LOCK:
+        trash.remove_account(db, account_id)
+        db.add(FormerName(account_id=None, name=name))
+        db.delete(account)
+        db.commit()
+    cursor.touched_everybody()
+    totp.forget_account(account_id)
+    factor.drop_waiting(account_id)
