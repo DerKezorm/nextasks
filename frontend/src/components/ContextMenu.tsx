@@ -155,7 +155,9 @@ function Card({ items, onChoose, onBack, title, sheet, style, cardRef, level }: 
       aria-label={title}
       data-level={level}
       className={sheet ? 'nt-pop nt-sheet max-h-[75dvh] w-full overflow-y-auto rounded-t-2xl border-t border-ink-700 bg-ink-850 px-2 pt-2 shadow-2xl' : 'nt-menu fixed z-[70] max-h-[calc(100dvh-16px)] overflow-y-auto'}
-      style={style}
+      // A very long label (a list's name) never makes the card wider than the window: the card is measured off screen
+      // first, then placed; the label stays cut with "…" (finding of nexnotes, measured here).
+      style={sheet ? style : { maxWidth: 'calc(100vw - 16px)', ...style }}
       onContextMenu={(e) => e.preventDefault()}
     >
       {sheet && <span className="mx-auto mb-2 block h-1 w-10 rounded-full bg-ink-600" aria-hidden />}

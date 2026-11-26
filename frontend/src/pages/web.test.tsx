@@ -549,6 +549,21 @@ describe('the context menu', () => {
     expect(document.activeElement).toBe(target)
   })
 
+  it('is never wider than the window, a long label is cut (also in a submenu)', async () => {
+    const { server, home } = world()
+    const page = await mount(server, `/lists/${home}`)
+    await rightClick(row(page, 'Mine')!)
+    await click(entry('Priority'))
+    const cards = [...document.querySelectorAll<HTMLElement>('[data-testid="context-menu"] [role="menu"]')]
+    expect(cards).toHaveLength(2)
+    for (const card of cards) {
+      expect(card.style.maxWidth).toBe('calc(100vw - 16px)')
+      const labels = [...card.querySelectorAll('[role^="menuitem"] > span.flex-1')]
+      expect(labels.length).toBeGreaterThan(1)
+      for (const label of labels) expect(label.classList.contains('truncate')).toBe(true)
+    }
+  })
+
   it('works with the keys: Shift+F10 opens, arrows move, right opens a submenu, left and Escape go back', async () => {
     const { server, home } = world()
     const page = await mount(server, `/lists/${home}`)
