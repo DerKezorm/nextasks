@@ -143,3 +143,26 @@ def test_an_api_key_typed_in_before_works_on_beside_a_connection_and_says_when_i
         _made, secret = apitokens.make(db, row, "nextime", "read", None, 90)
     ending = TestClient(app, base_url="http://testserver", headers={"Authorization": f"Bearer {secret}"})
     assert ending.get(f"{V1}/me").json()["expires_at"].endswith("Z")
+
+
+def test_nexpaper_makes_a_task_from_a_document_and_reads_it_but_never_the_members() -> None:
+    """Teil B (V19): nexpaper › nextasks with ``tasks.read`` and ``tasks.write``."""
+    account, _anna, space, own, _shared = family()
+    paper = connected(account, "nexpaper")
+    made = paper.post(f"{V1}/tasks", json={"title": "Pay the invoice", "due_date": "2026-12-01"})
+    assert status(made) == 201
+    assert paper.get(f"{V1}/tasks/{made.json()['id']}").json()["title"] == "Pay the invoice"
+    assert status(paper.patch(f"{V1}/tasks/{own}", json={"completed": True})) == 200
+    assert status(paper.get(f"{V1}/spaces/{space}/members"), "purpose_missing") == 403
+
+
+def test_every_partner_card_stands_for_purposes_nextasks_really_grants() -> None:
+    """V20: nextasks shows a card only for a partner whose purposes work at ``/api/v1``; it uses nothing of them
+    (a host only), so no card ever says "connected" without an effect here."""
+    from app.routers.v1 import PURPOSES
+
+    assert verbinden.CONFIG.partners == ["nexnotes", "nexmail", "nextime", "nexpaper", "nexdiary"]
+    for partner in verbinden.CONFIG.partners:
+        granted = CATALOG.uses(partner, "nextasks")
+        assert granted and set(granted) <= set(PURPOSES), partner
+        assert CATALOG.uses("nextasks", partner) == (), partner
