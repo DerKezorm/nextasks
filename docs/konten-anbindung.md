@@ -17,8 +17,8 @@ zurück; das stimmt nicht ganz.
 
 Nach dem Bauplan in nexlore `Development/nexapps/Baupläne/Bauplan Einstellungen.md` (E1 bis E31). Module aus
 `bauplaene-stand` bzw. `bauplaene-einst` (je `tools/sync.py copy`, `check` grün): **ui 1.1.0, konten 1.1.0, oidc 1.2.0,
-post 1.1.0, log 1.0.0, sicherung 1.0.1, schluessel 1.0.0** (Stand `bauplaene-stand` `a374e3c`, jede Vorlagen-Kopie mit
-ihrer Kopfzeile und den Änderungen der Vorlagen seit `bef0132`; `things`/`thingsDative` = Aufgaben/Aufgaben). Fragen: `einst-fragen/nextasks.md` (1 bis 14; Nacharbeit nach E33 und E35 eingetragen).
+post 1.1.0, log 1.0.0, sicherung 1.0.1, schluessel 1.0.0** (Stand `bauplaene-stand` `86a0cce`, jede Vorlagen-Kopie mit
+ihrer Kopfzeile und den Änderungen der Vorlagen seit `bef0132`; `things`/`thingsDative` = Aufgaben/Aufgaben). Fragen: `einst-fragen/nextasks.md` (1 bis 17; Nacharbeit nach E33, E35 und der gemeinsamen Runde eingetragen).
 
 | Bereich | woher jetzt | was gewandert ist (alt → neu) |
 |---|---|---|
@@ -53,14 +53,26 @@ Zeiten von Log und Sicherung in der Zone des Kontos (E14, E40: `when`/`clock` an
 Umwege: keine; ruff nimmt alle vendor-Module samt Vertragstests aus. sicherung aus `bauplaene-stand` `b0d3618`. Vorbestehend rot war
 e2e Test 34: jetzt grün (Fläche über ihren h1, Karte über `data-card`).
 
-Verweise (E39): Texte, README und `docs/api.md` nennen die Orte der Einstellungen von heute (API-Schlüssel unter
-Verbindungen, Schnittstellen unter Allgemein, öffentliche Adresse unter Anmeldung, Seitenleiste unter Darstellung); Test
-`i18n/places.test.ts`. Die toten Bereichstexte `settings.areas.*` sind weg.
+Verweise (E39, E46): Texte, README und `docs/api.md` nennen die Orte der Einstellungen von heute, mit „›“ und der
+Gruppe zuerst („Mein Konto › Verbindungen › API-Schlüssel“, „Server › Allgemein › Schnittstellen“, „Server ›
+Anmeldung“, „Mein Konto › Darstellung › Seitenleiste“, „Mein Konto › Profil › Sprache“); „Einstellungen ›“ nur auf der
+Seite zum Abbestellen und im README vor der Gruppe; auch die Orte älterer Was-ist-neu-Einträge. Test
+`i18n/places.test.ts` (Pfeile, Kommas und ein Ort ohne Gruppe sind rot). Die toten Bereichstexte `settings.areas.*`
+sind weg.
 
-Läufe nach a374e3c und E39 (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber (nach dem Umbruch einer
-Zeile); pytest 1518 grün, 3 übersprungen (Gründe der App: kein git, kein eigener Scanner, keine Links unter Windows); `npm run lint`
-sauber; vitest 1147 grün, 0 rot; `npm run build` sauber. Playwright `npm run e2e`: 33, 34, 35 grün. Mutationsproben
-(Rückgabecode): Schwärzen von `ntd_` (nexlog), Zähler nach dem Wiederherstellen, Zurückholen eines gelöschten Kontos,
+Gemeinsame Runde (26.11.2026, `bauplaene-stand` `86a0cce`): alle sieben Module neu gezogen, Vorlage
+`e2e/nexoidc.spec.ts` mit Kopfzeile 1.2.0. E45: neue Konten haben `theme=system` (`add_account` schreibt `new.theme`,
+der OIDC-`create_account` ebenso); die Seite schickt `adopt` nur den Wert, den der Browser wirklich hielt, roh oder
+leer (`lib/theme.ts` `storedRaw`, Test `lib/theme.test.ts`). Angeglichen an nexnotes (E39): „iPhone oder iPad
+verbinden“ mit Symbol Smartphone, Feld „Größte Datei je Anhang (MB)“. E48: „Funktionen für alle Konten“ mit „Was jedes
+Konto auf diesem Server nutzen darf.“; Sprachen nennen die eingebauten (Deutsch und Englisch) und haben „Sprache
+hochladen“ am Feld „Sprachcode“ und „Vorlage herunterladen“; „Über › Gebaut mit“ hat keine Zwischenüberschrift (Inter
+steht in der Liste wie bei nexnotes). „Verwalten“ in Konten bleibt `sm`, wie konten ihn liefert.
+
+Läufe nach der gemeinsamen Runde (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber; pytest 1520 grün, 3 übersprungen (Gründe der App: kein git, kein eigener Scanner, keine Links unter Windows); `npm run lint`
+sauber; vitest 1153 grün, 0 rot; `npm run build` sauber. Playwright `npm run e2e`: 33, 34, 35 grün. Mutationsproben
+(Rückgabecode): neues Konto über einen Anbieter mit `system`, roher Browserwert (`storedRaw`), Symbol Smartphone,
+Satz der Funktionen, Feld der Grenzen, Orte mit Pfeil und ohne Gruppe; Schwärzen von `ntd_` (nexlog), Zähler nach dem Wiederherstellen, Zurückholen eines gelöschten Kontos,
 Schlüssel bei geschuldetem Faktor (`SETUP_ONLY_PATHS`), gelöschte Mitglieder auf den Geräten (`changes.page`),
 Zustand des Mail-Wegs (`after_attempt`), versteckte Zuweisung behalten (`gone.kept`) und nicht zeigen (`gone.shown`), kein Weg für ein gesperrtes Konto
 (`channels.ready`), Fuß-Link auf die fragende Seite (`unsubscribe_page`), Zeiten in der Zone des Kontos (Log, Sicherung).
