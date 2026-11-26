@@ -72,8 +72,10 @@ steht in der Liste wie bei nexnotes). „Verwalten“ in Konten bleibt `sm`, wie
 `/api/auth/me` trägt `passkeys_can_add` (`passkeys.can_add`, dieselben Eingaben wie beim Hinzufügen), der Kasten
 „Passkeys“ zeigt `PasskeyAddition` des Moduls (Knopf, sonst für den Betreiber der Ort „Server › Anmeldung“, für ein
 Mitglied der Satz ohne Ort); Vorlage `nexkonten.cards.test.tsx` übernommen; Tests `test_konten.py` und
-`settings.test.tsx` „the box Passkeys“ (Mutationen rot). Läufe danach: pytest 1522 grün, 3 übersprungen; vitest 1160
-grün; ruff, lint, build sauber.
+`settings.test.tsx` „the box Passkeys“ (Mutationen rot). konten `c0b07ab`: `can_add` bekommt nur die gesetzte
+Adresse (Einstellung oder Umgebung, sonst leer), die der Anfrage nur als `origin`/`request_url`; Test: gesetzte
+http-Adresse auf localhost nein, ohne Adresse auf localhost ja. Läufe danach: pytest 1522 grün, 3 übersprungen; vitest
+1160 grün; ruff, lint, build sauber.
 
 Läufe nach der gemeinsamen Runde (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber; pytest 1520 grün, 3 übersprungen (Gründe der App: kein git, kein eigener Scanner, keine Links unter Windows); `npm run lint`
 sauber; vitest 1153 grün, 0 rot; `npm run build` sauber. Playwright `npm run e2e`: 33, 34, 35 grün. Mutationsproben
