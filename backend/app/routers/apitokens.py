@@ -11,17 +11,19 @@ import logging
 from datetime import datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, HTTPException, Path
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from ..deps import Account, DbSession, OperatorAccount
 from ..errors import error
 from ..models import Account as AccountRow
-from ..models import ApiToken, Space, utcnow
+from ..models import ApiToken, Space
 from ..services import apitokens
 from ..services import spaces as spaces_service
-from ..services.apitokens import TokenError
+from ..services.schluessel_store import CONFIG, SchluesselStore
+from ..vendor.nexschluessel import keys
+from ..vendor.nexschluessel.errors import KeyRefused
 
 logger = logging.getLogger("nextasks.api")
 
@@ -96,6 +98,10 @@ def own_tokens(account: Account, db: DbSession) -> TokensOut:
     return TokensOut(allowed=apitokens.allowed(db), tokens=[_out(db, account, row) for row in rows], choices=choices)
 
 
+def _refused(refusal: KeyRefused) -> HTTPException:
+    return error(refusal.public_code, refusal.message, refusal.status)
+
+
 @router.post("/api-tokens", response_model=MadeOut, status_code=201, summary="Make an API token; shown once")
 def make_token(body: TokenIn, account: Account, db: DbSession) -> MadeOut:
     if not apitokens.allowed(db):
@@ -104,21 +110,30 @@ def make_token(body: TokenIn, account: Account, db: DbSession) -> MadeOut:
         raise error("invalid_input", "Choose spaces, or all of them, not both.", 422)
     if not body.all_spaces and not body.spaces:
         raise error("choose_spaces", "Choose the spaces the token may see, or all of them on purpose.", 422)
+    # The answers of 0.8.0 before the module's: a lifetime it never offered, a space the account may not read.
+    if body.days is not None and body.days not in apitokens.LIFETIMES:
+        raise error("invalid_input", "A token runs out after 30, 90 or 365 days, or never.", 422)
+    if body.spaces is not None and not set(body.spaces) <= set(spaces_service.space_ids_of(db, account.id)):
+        raise error("invalid_input", "Choose spaces you may read.", 422)
     try:
-        row, secret = apitokens.make(db, account, body.name, body.level, None if body.all_spaces else body.spaces,
-                                     body.days)
-    except TokenError as exc:
-        raise error(exc.code, exc.text, exc.status) from exc
-    return MadeOut(token=_out(db, account, row), secret=secret)
+        made = keys.make(SchluesselStore(db), CONFIG, account.id, kind="api", name=body.name.strip()[:100] or "API",
+                         right=body.level, areas="all" if body.all_spaces else sorted(set(body.spaces or [])),
+                         days=body.days)
+    except KeyRefused as exc:
+        raise _refused(exc) from exc
+    row = db.get(ApiToken, int(made.key.id))
+    assert row is not None
+    logger.info("API token made token_id=%s level=%s spaces=%s days=%s", row.id, row.level,
+                "all" if row.spaces is None else len(row.spaces), body.days or "never")
+    return MadeOut(token=_out(db, account, row), secret=made.secret)
 
 
 @router.delete("/api-tokens/{token_id}", status_code=204, summary="Delete an own API token")
 def delete_token(token_id: Annotated[int, Path(ge=1)], account: Account, db: DbSession) -> None:
-    row = db.get(ApiToken, token_id)
-    if row is None or row.account_id != account.id:
-        raise error("not_found", "Not found.", 404)
-    db.delete(row)
-    db.commit()
+    try:
+        keys.revoke(SchluesselStore(db), CONFIG, account.id, token_id)
+    except KeyRefused as exc:
+        raise error("not_found", "Not found.", 404) from exc
     logger.info("API token deleted token_id=%s", token_id)
 
 
@@ -162,11 +177,12 @@ def every_token(_operator: OperatorAccount, db: DbSession) -> list[AnyTokenOut]:
 @router.post("/admin/api-tokens/{token_id}/block", response_model=AnyTokenOut,
              summary="Block a token for good (operator); its account sees it blocked")
 def block_token(token_id: Annotated[int, Path(ge=1)], _operator: OperatorAccount, db: DbSession) -> AnyTokenOut:
+    try:
+        keys.block(SchluesselStore(db), CONFIG, token_id)
+    except KeyRefused as exc:
+        raise error("not_found", "Not found.", 404) from exc
     row = db.get(ApiToken, token_id)
-    if row is None:
-        raise error("not_found", "Not found.", 404)
-    if row.blocked_at is None:
-        row.blocked_at = utcnow()
-        db.commit()
-        logger.info("API token blocked by the operator token_id=%s", token_id)
+    assert row is not None
+    db.refresh(row)
+    logger.info("API token blocked by the operator token_id=%s", token_id)
     return _any(row, db.get(AccountRow, row.account_id))
