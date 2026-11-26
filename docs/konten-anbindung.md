@@ -41,6 +41,16 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug 9bc9f73 (26.11.2026 spät): updates 0.1.2, mcp 1.1.1, verbinden 0.1.3
+
+updates: `has_bell = False` im Adapter, die Glocken-Vertragstests laufen ohne Glocke statt übersprungen; die Einrichtung
+zeigt mit `UpdateSetupRow bell={false}` den Satz ohne Glocke (Test). mcp 1.1.1: Adapter `change_arguments()` und
+`notified()` (der Haken `notify` geht über `mcp.notify`), Programme fragen ohne App-Köpfe; die Zeile einer Rückfrage
+nennt die Aufgabe mit Titel in der Sprache des Kontos (`describe(arguments, caller)`). verbinden 0.1.3: nichts für
+nextasks (Hostregel der Partneradressen kommt aus dem Modul). Kein `TODO updates/mcp/verbinden` mehr im Code (die
+Tabelle oben nennt die Umwege von damals). Läufe `module-nextasks-r4`: ruff, lint, build sauber; pytest 1735 grün,
+13 übersprungen; vitest 1261 grün; Start-Probe 200, keine Traceback.
+
 ### verbinden 0.1.2 (26.11.2026, bauplaene c852886)
 
 `AppConfig.in_use` = alle fünf Partner (V20); Logos kommen aus dem Modul (nextasks hatte keine eigenen). Umwege von
