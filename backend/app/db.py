@@ -17,7 +17,10 @@ from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import NullPool
 
-from . import models_accounts  # noqa: F401  (its tables belong to the schema of every start)
+from . import (
+    models_accounts,  # noqa: F401  (its tables belong to the schema of every start)
+    models_mcp,  # noqa: F401  (the tables of the AI tools, mcp 1.1.0)
+)
 from .config import get_settings
 from .models import Base
 

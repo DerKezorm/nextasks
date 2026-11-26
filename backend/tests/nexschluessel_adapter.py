@@ -1,8 +1,8 @@
 """nexschluessel contract tests: nextasks' adapter (copied once from the module's template, now nextasks' file).
 
-The contract tests in ``backend/tests/nexschluessel/`` run the module against nextasks' store over ``api_tokens``
-(``services/schluessel_store.py``), its routes under ``/api/connections`` and the real way a token is used
-(``GET /api/v1/me``). The database is the test session's (``tests/conftest.py`` empties it before every test).
+The contract tests in ``backend/tests/nexschluessel/`` run the module against nextasks' store over ``api_tokens`` and
+``mcp_keys`` (``services/schluessel_store.py``), its routes under ``/api/connections`` and the real ways a key is used
+(``GET /api/v1/me``, ``POST /api/mcp``). The database is the test session's (``tests/conftest.py`` empties it before every test).
 """
 
 from __future__ import annotations
@@ -40,8 +40,9 @@ class Adapter(StandardAdapter):
                 row = db.get(Account, account.id)
                 assert row is not None
                 ensure_private(db, row)
-            # Tokens are closed until the operator opens them (0.8.0); the contract asks with them open.
-            settings_service.save(db, {"api_tokens_allowed": True})
+            # Tokens are closed until the operator opens them (0.8.0), MCP too (mcp 1.1.0, decision 5); the contract
+            # asks with both open.
+            settings_service.save(db, {"api_tokens_allowed": True, "mcp_enabled": True})
         self._clients: dict[str, Any] = {}
 
     def stop(self) -> None:
@@ -85,7 +86,11 @@ class Adapter(StandardAdapter):
 
     def probe(self, kind: str, secret: str) -> int:
         client = self.client("anonymous")
-        return client.get("/api/v1/me", headers={"Authorization": f"Bearer {secret}"}).status_code
+        headers = {"Authorization": f"Bearer {secret}"}
+        if kind == "mcp":
+            return client.post("/api/mcp", headers=headers,
+                               json={"jsonrpc": "2.0", "id": 1, "method": "initialize"}).status_code
+        return client.get("/api/v1/me", headers=headers).status_code
 
     def owe_factor(self) -> None:
         from app.db import SessionLocal

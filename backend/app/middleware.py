@@ -154,6 +154,9 @@ APP_PREFIX = "/api/app/1/"
 #: One click from a mail program (``List-Unsubscribe-Post``, RFC 8058): it sends no tab, the signed token in the address
 #: is all it may do (turn off one report or event of one account, ``routers/notifications.py``).
 UNSUBSCRIBE_PREFIX = "/api/notify/unsubscribe/"
+#: Ways for programs, not pages (mcp 1.1.0): they bring a key or speak OAuth, never a session; ``/api/mcp`` refuses a
+#: request with an ``Origin`` itself. The consent (``/api/oauth/authorize``) is the page's and names its tab.
+PROGRAM_PATHS = ("/api/mcp", "/api/oauth/register", "/api/oauth/token", "/api/oauth/revoke")
 #: Largest body an ordinary request may carry.
 MAX_BODY = 16 * 1024 * 1024
 #: Where another limit holds, checked while streaming: ``/batch`` takes 2 MB (``vertrag-block1.md``); an upload's
@@ -208,7 +211,7 @@ class GuardMiddleware:
                     await send(message)
                 return
         # The API for programs needs a token in ``Authorization`` instead, and refuses a request with an ``Origin``.
-        exempt = path.startswith((API_PREFIX, APP_PREFIX, UNSUBSCRIBE_PREFIX))
+        exempt = path.startswith((API_PREFIX, APP_PREFIX, UNSUBSCRIBE_PREFIX)) or path in PROGRAM_PATHS
         if scope.get("method") in CHANGING and not exempt and not named:
             for message in _refuse(400, "client_required", "Changes need the header X-Nextasks-Client."):
                 await send(message)

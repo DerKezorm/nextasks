@@ -149,7 +149,7 @@ class Adapter(StandardAdapter):
         made = os.urandom(9).hex()
         return [
             *(Secret(f"Token used {prefix}{made}", hidden=made, kept=[f"{prefix}…"])
-              for prefix in ("ntk_", "ntd_", "nxm_", "nxa_", "nxc_")),
+              for prefix in ("ntk_", "ntd_", "nxm_", "nxa_", "nxc_", "ntm_", "ntmr_", "ntmc_", "ntc_", "ntcr_", "ntco_")),
             Secret(f"GET /api/invite/{made}x -> 200", hidden=made, kept=["/api/invite/…"]),
             Secret(f"GET /api/calendar/{made}x -> 200", hidden=made, kept=["/api/calendar/…"]),
             Secret(f"GET /api/unsubscribe/{made}x -> 200", hidden=made, kept=["/api/unsubscribe/…"]),

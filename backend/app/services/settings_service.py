@@ -37,6 +37,14 @@ DEFAULTS: dict[str, Any] = {
     "passkeys_allowed": True,
     #: Tokens for programs such as n8n or nexdeck (``/api/v1``): closed until the operator opens it.
     "api_tokens_allowed": False,
+    #: AI tools (MCP, ``/api/mcp``): off on every installation until the operator opens it (MCP decision 5; nextasks
+    #: had no MCP before, so no installation had it on).
+    "mcp_enabled": False,
+    #: The module nexmcp's settings (None: its default): programs may connect themselves by OAuth (on), the highest
+    #: level of a key (the highest), the tools blocked for every account (none).
+    "mcp_programs": None,
+    "mcp_max_level": None,
+    "mcp_blocked_tools": None,
     #: Ask GitHub once a day whether a newer nextasks is out (services/updates). Only the question goes out, so on.
     "update_check": True,
     #: Invitation mail: without a host nothing is sent, the link to copy is enough.

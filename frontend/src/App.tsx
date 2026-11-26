@@ -7,6 +7,7 @@ import { SidebarBody } from './components/Sidebar'
 import { AppConnectPage, ConfirmEmailPage, ForgotPage, InvitePage, LoginPage, ResetPage, SetupPage, UnsubscribePage } from './pages/AuthPages'
 import { FilterPage } from './pages/FilterPage'
 import { ListPage } from './pages/ListPage'
+import { McpConsentPage, McpRequestPage } from './pages/McpPages'
 import { ReviewPage } from './pages/ReviewPage'
 import { SearchPage } from './pages/SearchPage'
 import { SomedayPage } from './pages/SomedayPage'
@@ -87,6 +88,23 @@ export default function App() {
       <Route path="invite/:token" element={<InvitePage />} />
       <Route path="confirm-email/:token" element={<ConfirmEmailPage />} />
       <Route path="unsubscribe/:token" element={<UnsubscribePage />} />
+      {/* AI tools (MCP): a program asks to connect, a call waits for the account's yes. */}
+      <Route
+        path="oauth/authorize"
+        element={
+          <SignedIn>
+            <McpConsentPage />
+          </SignedIn>
+        }
+      />
+      <Route
+        path="mcp/requests/:id"
+        element={
+          <SignedIn>
+            <McpRequestPage />
+          </SignedIn>
+        }
+      />
       <Route
         path="app-connect"
         element={

@@ -423,3 +423,17 @@ def test_after_the_change_forgot_password_mails_a_link(bestand: Any, post: list,
     answer = browser().post("/api/auth/forgot", json={"name": _name(account)})
     assert answer.status_code == 202, answer.text
     assert [to.lower() for to, _message in post] == [account["email"].lower()]
+
+
+def test_after_the_change_mcp_is_off_and_an_api_token_opens_only_the_api(bestand: Any) -> None:
+    """mcp 1.1.0: 0.8.0 had no MCP, so every installation starts with it off (decision 5); an API token of 0.8.0
+    never opens it and keeps opening ``/api/v1``."""
+    account = next(a for a in ACCOUNTS if a.get("api_token"))
+    key = {"Authorization": f"Bearer {account['api_token']}"}
+    answer = browser().post("/api/mcp", headers=key, json={"jsonrpc": "2.0", "id": 1, "method": "ping"})
+    assert answer.status_code == 404, answer.text
+    with SessionLocal() as db:
+        settings_service.save(db, {"mcp_enabled": True})
+    answer = browser().post("/api/mcp", headers=key, json={"jsonrpc": "2.0", "id": 1, "method": "ping"})
+    assert answer.status_code == 401, answer.text
+    assert browser().get("/api/v1/me", headers=key).status_code == 200

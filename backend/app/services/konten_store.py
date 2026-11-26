@@ -56,6 +56,7 @@ from ..models import (
 from ..models import Invite as InviteRow
 from ..models_accounts import FailedUnknown, FormerName, PasswordReset, SetupClaim
 from ..models_accounts import Passkey as PasskeyRow
+from ..models_mcp import McpKey
 from ..security import (
     LOCK_MINUTES,
     MAX_FAILURES,
@@ -450,12 +451,19 @@ class KontenStore:
             .order_by(ApiToken.created_at)
         )
         found += [Access(f"token-{row.id}", "api_key", row.name, row.last_used_at) for row in tokens]
+        # MCP keys and connected programs (mcp 1.1.0) are keys too: listed and disconnected with the API keys.
+        mcp_keys = self.db.scalars(
+            select(McpKey).where(McpKey.account_id == int(account_id), McpKey.blocked_at.is_(None))
+            .order_by(McpKey.created_at)
+        )
+        found += [Access(f"mcp-{row.id}", "api_key", row.name, row.last_used_at) for row in mcp_keys]
         found += [Access(key.uid, "passkey", key.name, key.last_used_at) for key in self.passkeys_of(account_id)]
         return found
 
     def revoke_access(self, account_id: AccountId) -> int:
         gone = int(self.db.execute(delete(AppDevice).where(AppDevice.account_id == int(account_id))).rowcount or 0)
         gone += int(self.db.execute(delete(ApiToken).where(ApiToken.account_id == int(account_id))).rowcount or 0)
+        gone += self._end_mcp_keys(account_id)
         gone += self.remove_passkeys(account_id)
         # A QR code nobody scanned yet would bring a device right back.
         self.db.execute(delete(AppPairing).where(AppPairing.account_id == int(account_id)))
@@ -1007,9 +1015,23 @@ class KontenStore:
         self.db.execute(delete(AppDevice).where(AppDevice.account_id == int(account_id)))
         self.db.execute(delete(AuthSession).where(AuthSession.account_id == int(account_id)))
         self.db.execute(delete(AppPairing).where(AppPairing.account_id == int(account_id)))
+        # Connected AI programs end like the sessions (E42); MCP keys made by hand rest like API tokens (E41).
+        from .schluessel_store import SchluesselStore
+
+        SchluesselStore(self.db).end_programs_of(int(account_id))
         totp.forget_account(int(account_id))
         factor.drop_waiting(int(account_id))
         self.renew_device_key(account_id)
+
+    def _end_mcp_keys(self, account_id: AccountId) -> int:
+        """Every MCP key and connected program of the account, with what they spent and their rights per tool."""
+        from .schluessel_store import SchluesselStore
+
+        store = SchluesselStore(self.db)
+        ids = list(self.db.scalars(select(McpKey.id).where(McpKey.account_id == int(account_id))))
+        for number in ids:
+            store.end_program(f"mcp-{number}")
+        return len(ids)
 
     def on_shut_out(self, account: KontoAccount) -> None:
         """Konten 1.1.0 (E38), after the commit: the account went out. Nothing is pushed or mailed to it while it is

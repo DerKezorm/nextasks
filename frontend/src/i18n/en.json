@@ -1668,5 +1668,21 @@
     "removeTasks_one": "Tasks stay in their spaces; the account is in one space.",
     "removeTasks_other": "Tasks stay in their spaces; the account is in {{count}} spaces.",
     "withdrawn": "Invitation withdrawn."
+  },
+  "mcp": {
+    "areas": "Spaces",
+    "tools": {
+      "list_spaces": "List spaces",
+      "list_lists": "List lists",
+      "list_tasks": "Find tasks",
+      "read_task": "Read a task",
+      "list_comments": "Read comments",
+      "list_members": "Members of a space",
+      "create_task": "Create a task",
+      "update_task": "Change a task",
+      "complete_task": "Tick off a task",
+      "add_comment": "Comment",
+      "delete_task": "Move a task to the bin"
+    }
   }
 }

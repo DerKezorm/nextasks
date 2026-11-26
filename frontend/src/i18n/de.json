@@ -1668,5 +1668,21 @@
     "removeTasks_one": "Aufgaben bleiben in ihren Bereichen; das Konto ist in einem Bereich.",
     "removeTasks_other": "Aufgaben bleiben in ihren Bereichen; das Konto ist in {{count}} Bereichen.",
     "withdrawn": "Einladung zurückgenommen."
+  },
+  "mcp": {
+    "areas": "Bereiche",
+    "tools": {
+      "list_spaces": "Bereiche auflisten",
+      "list_lists": "Listen auflisten",
+      "list_tasks": "Aufgaben suchen",
+      "read_task": "Aufgabe lesen",
+      "list_comments": "Kommentare lesen",
+      "list_members": "Mitglieder eines Bereichs",
+      "create_task": "Aufgabe anlegen",
+      "update_task": "Aufgabe ändern",
+      "complete_task": "Aufgabe abhaken",
+      "add_comment": "Kommentieren",
+      "delete_task": "Aufgabe in den Papierkorb"
+    }
   }
 }

@@ -41,6 +41,7 @@ from .routers import (
     health,
     history,
     invites,
+    mcp,
     notifications,
     oidc,
     stats,
@@ -85,7 +86,7 @@ ROUTERS = [
     health, about, locales_router, logs_router, auth, totp_router, passkeys_router, oidc, accounts_router, invites,
     settings_router, backups_router, avatars_router, apitokens, v1, app_pairing, app1, notifications, stats,
     focus, sweep, history, server_signin_router, server_mail_router,
-    connections_router,
+    connections_router, mcp,
 ]
 
 

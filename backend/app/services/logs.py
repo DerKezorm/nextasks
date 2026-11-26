@@ -27,8 +27,10 @@ from ..vendor.nexlog import *
 
 #: The keys nextasks' log blacked out before the module (a calendar subscription's key travels in its address, the
 #: API tokens), and the prefixes of the other tokens of nextasks (devices of the iPhone app, the link that confirms an
-#: address): what follows them never reaches the log.
-KEY_PREFIXES = ("nxa_", "nxc_", "nxl_", "nxr_", "ntk_", "ntd_", "nxm_")
+#: address; MCP keys and a program's refresh token and code, mcp 1.1.0; the tokens of a connection with another nex
+#: app, verbinden 0.1.1): what follows them never reaches the log.
+KEY_PREFIXES = ("nxa_", "nxc_", "nxl_", "nxr_", "ntk_", "ntd_", "nxm_", "ntm_", "ntmr_", "ntmc_", "ntc_", "ntcr_",
+                "ntco_")
 #: Path segments followed by a token that are nextasks' own (the common ones come with the module).
 TOKEN_PATHS = ("calendar", "unsubscribe", "notify/unsubscribe")
 
