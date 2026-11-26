@@ -210,3 +210,27 @@ describe('inviting into a space', () => {
     expect(page.querySelector('[data-testid="invite-mail"]')).toBeNull()
   })
 })
+
+describe('"Auf welchem Weg" with notifications blocked in this browser (E59)', () => {
+  afterEach(() => {
+    delete (navigator as unknown as { serviceWorker?: unknown }).serviceWorker
+    vi.unstubAllGlobals()
+  })
+
+  it('still shows "This browser" (locked, saying why) and the browsers with notifications', async () => {
+    vi.stubGlobal('PushManager', function PushManager() {})
+    vi.stubGlobal('Notification', { permission: 'denied', requestPermission: async () => 'denied' })
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { getRegistration: async () => ({ pushManager: { getSubscription: async () => null } }) },
+    })
+    const { server, robin } = smallWorld()
+    server.webpush.push({ id: 7, account: robin, endpoint: 'https://push.example.com/a', agent: 'Mozilla/5.0 (Windows NT 10.0) Chrome/141.0', since: '2026-11-01T09:00:00Z' })
+    const page = await mount(server, '/settings/notifications')
+    const here = page.querySelector('[data-testid="notify-browser"]') as HTMLElement
+    expect(here).not.toBeNull()
+    expect(here.textContent).toContain('blocked notifications')
+    expect((here.querySelector('[data-testid="notify-browser-on"]') as HTMLButtonElement).disabled).toBe(true)
+    expect(page.querySelectorAll('[data-testid="notify-browser-row"]')).toHaveLength(1)
+  })
+})

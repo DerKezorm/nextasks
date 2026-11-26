@@ -180,9 +180,17 @@ export function NotificationsPart() {
       <NotifyWays
         subtitle={t('notify.lead')}
         mail={mail?.available ? { address: mail.confirmed && mail.address ? mail.address : t('notify.mail.none'), confirmed: !!(mail.confirmed && mail.address), href: '/settings/profile' } : undefined}
+        // "This browser" always (E59, as nexnotes): blocked or unable, it says why and its button stays locked.
         browser={
-          browser && push.offered && (push.here === 'on' || push.here === 'off')
-            ? { on: push.here === 'on', onTurnOn: () => push.toggle(true), onTurnOff: () => push.toggle(false), busy }
+          browser && push.offered
+            ? {
+                on: push.here === 'on',
+                onTurnOn: () => push.toggle(true),
+                onTurnOff: () => push.toggle(false),
+                busy,
+                disabled: push.here !== 'on' && push.here !== 'off',
+                note: push.here === 'denied' ? t('push.denied') : push.here === 'unsupported' ? t('push.unsupported') : undefined,
+              }
             : undefined
         }
         browsers={
@@ -207,8 +215,8 @@ export function NotificationsPart() {
       >
         {mail?.pending && <Notice tone="warn">{t('account.emailPending', { email: mail.pending })}</Notice>}
         {mail?.available && mail.can_send === false && <Notice tone="warn">{t('notify.mail.noPublic')}</Notice>}
-        {browser && push.here === 'unsupported' && <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{t('push.unsupported')}</p>}
-        {browser && push.here === 'denied' && <Notice tone="warn">{t('push.denied')}</Notice>}
+        {browser && !push.offered && push.here === 'unsupported' && <p className="m-0 text-sm text-[var(--nexui-text-muted)]">{t('push.unsupported')}</p>}
+        {browser && !push.offered && push.here === 'denied' && <Notice tone="warn">{t('push.denied')}</Notice>}
         {push.problem && <Notice tone="danger">{push.problem}</Notice>}
         {browser && (
           <p className={'m-0 text-xs ' + (ios && !standalone ? 'text-[var(--nexui-warn)]' : 'text-[var(--nexui-text-muted)]')} data-testid="push-ios">
