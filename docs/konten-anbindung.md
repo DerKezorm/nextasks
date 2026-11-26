@@ -36,6 +36,22 @@ ihrer Kopfzeile und den Änderungen der Vorlagen seit `bef0132`; `things`/`thing
 | Log | Modul log (`services/logs.py` = Konfiguration, `routers/logs.py` = `nexlog.api.router`), `LogCard` | Format, Datei, Schlüssel `log_mode`/`log_mode_until` unverändert; geschwärzt jetzt auch `ntd_`, `nxm_` |
 | Über | `AboutPage` (ui) | eigene Seite mit Wortmarke → Logo als Bild |
 
+Eigene Sprachen (E51, `bauplaene-stand` `4a5bb15`, schluessel `4f3e75e`): Modul **sprachen 1.0.0**.
+`services/locales.py` stellt `nexsprachen` beim ersten Import ein (Ordner wie bisher `NEXTASKS_LOCALES_DIR`, sonst
+`<daten>/locales`; eingebaut Deutsch und Englisch; die Vorlage macht die Seite aus den englischen Texten) und trägt die
+Namen von vorher; `routers/locales.py` ist der Router des Moduls unter `/api/locales` (Lesen ohne Anmeldung, Ändern für
+den Betreiber, Fehler in nextasks' Form). Die Liste nennt jetzt zuerst die eingebauten Sprachen (`built_in`, `own`),
+`code`, `name`, `keys` bleiben; eine Seite von vorher übergeht eingebaute Codes und sieht dieselbe Liste (Test
+`test_locales.py`). Das Log nennt einen festen Grund statt eines Python-Typs. Die Profilsprache prüft
+`nexsprachen.known`. Seite: Karte `LanguagesCard` des Moduls unter Server › Allgemein (mit `X-Nextasks-Client`,
+`onChange` = `own.forget`), i18n über `ownLanguages`, Profil über `useLanguageOptions`; die alte Karte und ihre Wörter
+(`server.languages*`, `template`, `upload`, `builtIn`, `texts*`, `languageCode`, `languageAdded`) sind weg. Die
+Anmeldeseite hat in nextasks keine Sprachauswahl (die Einrichtung nimmt die Sprache des Browsers, konten: kein Feld).
+Vertragstests `tests/nexsprachen` mit `nexsprachen_adapter.py`, Vorlage `nexsprachen.test.tsx`; schluessel neu gezogen,
+Vorlage `nexschluessel.test.tsx` von Hand („Neuer MCP-Schlüssel“ md secondary Plus). Läufe: ruff sauber; pytest 1587
+grün, 3 übersprungen; lint sauber; vitest 1175 grün; build sauber; Playwright 33, 34, 35 grün. Mutationsproben (rot): eingebaute
+Sprachen der Liste, Profilsprache nur mit `known`, Kopfzeile `X-Nextasks-Client` der Karte, `own.forget` nach dem Hochladen.
+
 Schlüssel: `services/schluessel_store.py` über `api_tokens` (Vorsilbe `ntk_`, Hash, Stufe, Bereiche unverändert),
 Schalter `api_tokens_allowed`, `app_enabled`, `app_pairing_allowed`; Wege `/api/connections/*`; `/api/v1` prüft weiter
 selbst; `/api/api-tokens`, `/api/admin/api-tokens` bleiben in alter Form und laufen über `keys.make/revoke/block` (E33).
