@@ -52,12 +52,13 @@ Umwege: keine im `vendor/`; ruff nimmt alle vendor-Module samt Vertragstests aus
 (Frage 15): `sicherung.test.tsx` aus `tsc` ausgenommen, eine eslint-Regel für `StorageArea.tsx` aus. Vorbestehend rot war
 e2e Test 34: jetzt grün (Fläche über ihren h1, Karte über `data-card`).
 
-Läufe nach der Nacharbeit E35 (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber; pytest 1515 grün,
-3 übersprungen (vorher 1397/3); `npm run lint` sauber; vitest 1119 grün, 3 rot (`signInCards.test.tsx`, Modulfrage 8;
-vorher 1048); `npm run build` sauber. Playwright `npm run e2e`: 33 und 34 grün, 35 rot (Modulfrage 8b). Mutationsproben
+Läufe nach dem Nachziehen auf 7685875 (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber; pytest
+1518 grün, 3 übersprungen (Gründe der App: kein git, kein eigener Scanner, keine Links unter Windows); `npm run lint`
+sauber; vitest 1142 grün, 0 rot; `npm run build` sauber. Playwright `npm run e2e`: 33, 34, 35 grün. Mutationsproben
 (Rückgabecode): Schwärzen von `ntd_` (nexlog), Zähler nach dem Wiederherstellen, Zurückholen eines gelöschten Kontos,
 Schlüssel bei geschuldetem Faktor (`SETUP_ONLY_PATHS`), gelöschte Mitglieder auf den Geräten (`changes.page`),
-Zustand des Mail-Wegs (`after_attempt`), versteckte Zuweisung behalten (`gone.kept`) und nicht zeigen (`gone.shown`).
+Zustand des Mail-Wegs (`after_attempt`), versteckte Zuweisung behalten (`gone.kept`) und nicht zeigen (`gone.shown`), kein Weg für ein gesperrtes Konto
+(`channels.ready`), Fuß-Link auf die fragende Seite (`unsubscribe_page`).
 
 ### Auf den Modulen 1.0.0 (25.11.2026)
 
