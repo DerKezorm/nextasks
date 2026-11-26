@@ -41,6 +41,13 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### verbinden 0.1.2 (26.11.2026, bauplaene c852886)
+
+`AppConfig.in_use` = alle fünf Partner (V20); Logos kommen aus dem Modul (nextasks hatte keine eigenen). Umwege von
+0.1.1 aufgelöst: Vertragstests mit nextime als Partner, `probe` je Zweck mit Methode, Weg und Rumpf (verweigerte Zwecke
+403), Kontonamen und `account_id` aus dem Adapter, vitest-Vorlage mit nextasks' eigenem Paar. Läufe `module-nextasks-r3`:
+ruff, lint, build sauber; pytest 1721 grün, 19 übersprungen; vitest 1260 grün; Start-Probe 200, keine Traceback.
+
 ### Durchgang „Module“, Runde 2 (26.11.2026, `einst-werkzeug/AUFTRAG-RUNDE2.md`)
 
 - **MCP 14:** wartet ein Programm auf das Ja des Kontos, geht das Ereignis `mcp_waiting` die Wege aus „Was kommt wohin“
