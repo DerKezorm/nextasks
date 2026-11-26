@@ -1054,10 +1054,12 @@ class KontenStore:
         """As deleting did in 0.8.0 (``accounts.delete_account``): every space left (its reminders stay; where it was
         the last manager, the member who joined first becomes manager), its space "Private" gone, the name reserved
         for good."""
-        from . import accounts, gone
+        from . import accounts, gone, verbinden
 
         row = self._row(account_id)
         if row is not None:
+            # Its connections with other nex apps end first, and the partners hear it (verbinden 0.1.1).
+            verbinden.end_all(self.db, int(account_id))
             accounts.delete_account(self.db, row)
         gone.forget()
 

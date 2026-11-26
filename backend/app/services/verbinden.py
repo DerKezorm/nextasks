@@ -1,0 +1,269 @@
+"""nextasks among the other nex apps (shared module ``vendor/nexverbinden``, verbinden 0.1.1): its ``AppConfig`` and the
+``Store`` over its tables (``models_connect.py``).
+
+nextasks is a host in five pairs of the catalog (V2): nexnotes, nexmail, nextime, nexpaper and nexdiary use its tasks;
+it uses nothing of theirs. What it grants (V5): ``tasks.read``, ``tasks.write``, ``tasks.complete`` and
+``members.read``, each limited to the spaces the account gives. A partner reaches ``/api/v1`` with the token of its
+connection (``ntc_``) and the same checks as an API key there, plus the purposes (``routers/v1.py``).
+
+**Older connections notice nothing.** Other apps typed in an ``ntk_`` API key of nextasks (nexnotes ``PUT
+/api/nextasks``, nexmail ``POST /api/aufgabenziele/nextasks``, nextime ``PUT /api/nextasks``); such a key keeps working
+at ``/api/v1`` as before. nextasks itself never typed in a key of another app, so it has no older connection of its own
+to show (``legacy`` is empty). After a partner connected anew, it brings the older key to ``/api/connect/retire`` and
+the key ends itself (``retire_key``).
+"""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime
+from typing import Any
+
+from sqlalchemy import delete, func, select
+from sqlalchemy.orm import Session
+
+from .. import __version__
+from ..models import Account, ApiToken
+from ..models_connect import Connection as ConnectionRow
+from ..models_connect import ConnectionCode, ConnectionPending, ConnectionSpent, ConnectionWaiting
+from ..security import decrypt_secret, encrypt_secret
+from ..vendor import nexverbinden
+from ..vendor.nexverbinden import Code, Connection, Legacy, Pending, Waiting
+from . import apitokens, settings_service, totp
+from .schluessel_store import SchluesselStore
+
+#: The tokens nextasks gives its partners: access, refresh, code. Never ``ntk_`` (an API key's).
+ACCESS_PREFIX = "ntc_"
+REFRESH_PREFIX = "ntcr_"
+CODE_PREFIX = "ntco_"
+
+CONFIG = nexverbinden.AppConfig(
+    app_name="nextasks",
+    version=__version__,
+    access_prefix=ACCESS_PREFIX,
+    refresh_prefix=REFRESH_PREFIX,
+    code_prefix=CODE_PREFIX,
+)
+
+#: The module's settings under nextasks' names (``settings_service.DEFAULTS``).
+SETTINGS = {"connections": "connections_enabled", "addresses": "connections_addresses",
+            "connections_local_network": "connections_local_network"}
+#: What a sealed secret of a connection is bound to (``security.encrypt_secret``).
+SEAL = "nexverbinden"
+
+
+def _aware(moment: datetime | None) -> datetime | None:
+    if moment is None:
+        return None
+    return moment if moment.tzinfo else moment.replace(tzinfo=UTC)
+
+
+class VerbindenStore:
+    """``nexverbinden.Store`` over the tables of ``models_connect``, inside one session."""
+
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    # --- connections ---------------------------------------------------------------------------------------------
+
+    @staticmethod
+    def _connection(row: ConnectionRow | None) -> Connection | None:
+        if row is None:
+            return None
+        return Connection(
+            id=row.id, account_id=row.account_id, partner=row.partner, partner_base=row.partner_base,
+            partner_account=row.partner_account, uses=tuple(row.uses or ()), grants=tuple(row.grants or ()),
+            areas_granted=row.areas_granted, areas_used=row.areas_used, held=row.held,
+            issued_access_hash=row.issued_access_hash, issued_refresh_hash=row.issued_refresh_hash,
+            issued_access_expires=_aware(row.issued_access_expires) or datetime.now(UTC),
+            created_at=_aware(row.created_at) or datetime.now(UTC), used_at=_aware(row.used_at),
+            ok_at=_aware(row.ok_at), state=row.state, stale_since=_aware(row.stale_since), problem=row.problem,
+            partner_version=row.partner_version or "",
+        )
+
+    def connections(self, account_id: Any) -> list[Connection]:
+        rows = self.db.scalars(select(ConnectionRow).where(ConnectionRow.account_id == int(account_id))
+                               .order_by(ConnectionRow.partner))
+        return [found for row in rows if (found := self._connection(row)) is not None]
+
+    def connection(self, account_id: Any, partner: str) -> Connection | None:
+        return self._connection(self.db.scalar(select(ConnectionRow).where(
+            ConnectionRow.account_id == int(account_id), ConnectionRow.partner == partner)))
+
+    def by_issued_access(self, token_hash: str) -> Connection | None:
+        return self._connection(self.db.scalar(select(ConnectionRow).where(
+            ConnectionRow.issued_access_hash == token_hash)))
+
+    def by_issued_refresh(self, token_hash: str) -> Connection | None:
+        return self._connection(self.db.scalar(select(ConnectionRow).where(
+            ConnectionRow.issued_refresh_hash == token_hash)))
+
+    def save(self, connection: Connection) -> None:
+        """Writes the connection (a new one replaces an older one of the same account and partner)."""
+        row = self.db.get(ConnectionRow, connection.id)
+        if row is None:
+            self.db.execute(delete(ConnectionRow).where(ConnectionRow.account_id == int(connection.account_id),
+                                                        ConnectionRow.partner == connection.partner))
+            self.db.flush()
+            row = ConnectionRow(id=connection.id)
+            self.db.add(row)
+        row.account_id = int(connection.account_id)
+        row.partner = connection.partner
+        row.partner_base = connection.partner_base
+        row.partner_account = connection.partner_account
+        row.uses = list(connection.uses)
+        row.grants = list(connection.grants)
+        row.areas_granted = connection.areas_granted
+        row.areas_used = connection.areas_used
+        row.held = connection.held
+        row.issued_access_hash = connection.issued_access_hash
+        row.issued_refresh_hash = connection.issued_refresh_hash
+        row.issued_access_expires = connection.issued_access_expires
+        row.created_at = connection.created_at
+        row.used_at = connection.used_at
+        row.ok_at = connection.ok_at
+        row.state = connection.state
+        row.stale_since = connection.stale_since
+        row.problem = connection.problem
+        row.partner_version = connection.partner_version
+        self.db.flush()
+
+    def remove(self, connection_id: str) -> None:
+        self.db.execute(delete(ConnectionRow).where(ConnectionRow.id == connection_id))
+        self.db.execute(delete(ConnectionSpent).where(ConnectionSpent.connection_id == connection_id))
+        self.db.flush()
+
+    # --- started connections and codes ---------------------------------------------------------------------------
+
+    def add_pending(self, pending: Pending) -> None:
+        self.db.add(ConnectionPending(state_hash=pending.state_hash, account_id=int(pending.account_id),
+                                      partner=pending.partner, partner_base=pending.partner_base,
+                                      verifier=pending.verifier, areas_granted=pending.areas_granted,
+                                      created_at=pending.created_at))
+        self.db.flush()
+
+    def take_pending(self, state_hash: str) -> Pending | None:
+        row = self.db.get(ConnectionPending, state_hash)
+        if row is None:
+            return None
+        found = Pending(state_hash=row.state_hash, account_id=row.account_id, partner=row.partner,
+                        partner_base=row.partner_base, verifier=row.verifier, areas_granted=row.areas_granted,
+                        created_at=_aware(row.created_at) or datetime.now(UTC))
+        gone = self.db.execute(delete(ConnectionPending).where(ConnectionPending.state_hash == state_hash)).rowcount
+        return found if gone == 1 else None
+
+    def add_code(self, code: Code) -> None:
+        self.db.add(ConnectionCode(code_hash=code.code_hash, account_id=int(code.account_id), partner=code.partner,
+                                   partner_base=code.partner_base, redirect_uri=code.redirect_uri,
+                                   challenge=code.challenge, areas_granted=code.areas_granted,
+                                   expires_at=code.expires_at))
+        self.db.flush()
+
+    def take_code(self, code_hash: str) -> Code | None:
+        row = self.db.get(ConnectionCode, code_hash)
+        if row is None:
+            return None
+        found = Code(code_hash=row.code_hash, account_id=row.account_id, partner=row.partner,
+                     partner_base=row.partner_base, redirect_uri=row.redirect_uri, challenge=row.challenge,
+                     areas_granted=row.areas_granted, expires_at=_aware(row.expires_at) or datetime.now(UTC))
+        gone = self.db.execute(delete(ConnectionCode).where(ConnectionCode.code_hash == code_hash)).rowcount
+        return found if gone == 1 else None
+
+    # --- spent ---------------------------------------------------------------------------------------------------
+
+    def spend(self, connection_id: str, token_hash: str, keep: int) -> None:
+        at = int(self.db.scalar(select(func.coalesce(func.max(ConnectionSpent.at), 0))) or 0) + 1
+        self.db.merge(ConnectionSpent(token_hash=token_hash, connection_id=connection_id, at=at))
+        self.db.flush()
+        kept = self.db.scalars(select(ConnectionSpent.token_hash).where(ConnectionSpent.connection_id == connection_id)
+                               .order_by(ConnectionSpent.at.desc()).limit(keep)).all()
+        self.db.execute(delete(ConnectionSpent).where(ConnectionSpent.connection_id == connection_id,
+                                                      ConnectionSpent.token_hash.not_in(kept)))
+
+    def spent_by(self, token_hash: str) -> str | None:
+        row = self.db.get(ConnectionSpent, token_hash)
+        return None if row is None else row.connection_id
+
+    # --- waiting revocations ---------------------------------------------------------------------------------------
+
+    def revoke_later(self, account_id: Any, partner_base: str, sealed_token: str, now: datetime) -> None:
+        self.db.add(ConnectionWaiting(account_id=None if account_id is None else int(account_id),
+                                      partner_base=partner_base, token=sealed_token, since=now))
+        self.db.flush()
+
+    def waiting(self) -> list[Waiting]:
+        rows = self.db.scalars(select(ConnectionWaiting).order_by(ConnectionWaiting.id))
+        return [Waiting(row.id, row.partner_base, row.token, _aware(row.since) or datetime.now(UTC)) for row in rows]
+
+    def done_waiting(self, waiting_id: Any) -> None:
+        self.db.execute(delete(ConnectionWaiting).where(ConnectionWaiting.id == int(waiting_id)))
+
+    # --- the account and the app -------------------------------------------------------------------------------------
+
+    def account_may(self, account_id: Any) -> bool:
+        """False while the account is blocked or deleted, or its keys wait for a second factor it owes (its
+        connections rest, E41)."""
+        row = self.db.get(Account, int(account_id))
+        return row is not None and not row.shut and not totp.setup_required(self.db, row)
+
+    def account_name(self, account_id: Any) -> str:
+        row = self.db.get(Account, int(account_id))
+        return row.name if row is not None else ""
+
+    def areas(self, account_id: Any) -> list[dict[str, Any]]:
+        """The spaces of the account, by name (as an API key may be given them)."""
+        return [{"id": area.id, "name": area.name}
+                for area in SchluesselStore(self.db).areas_of(int(account_id), "api")]
+
+    def legacy(self, account_id: Any) -> list[Legacy]:
+        # nextasks never typed in a key of another app: no older connection of its own.
+        return []
+
+    def retire_key(self, token: str) -> bool:
+        """An older API key (``ntk_``) a partner had typed in ends itself, as revoking it would."""
+        if not token.startswith(apitokens.TOKEN_PREFIX) or len(token) > 200:
+            return False
+        row = self.db.scalar(select(ApiToken).where(ApiToken.token_hash == apitokens.digest(token)))
+        if row is None:
+            return False
+        self.db.delete(row)
+        self.db.flush()
+        return True
+
+    def setting(self, name: str) -> Any:
+        return settings_service.get(self.db, SETTINGS[name])
+
+    def set_setting(self, name: str, value: Any) -> None:
+        settings_service.save(self.db, {SETTINGS[name]: value}, commit=False)
+
+    def local_allowed(self) -> bool:
+        return bool(settings_service.get(self.db, SETTINGS["connections_local_network"]))
+
+    def seal(self, text: str) -> str:
+        return encrypt_secret(text, SEAL)
+
+    def unseal(self, sealed: str) -> str:
+        return decrypt_secret(sealed, SEAL)
+
+    def commit(self) -> None:
+        self.db.commit()
+
+    def rollback(self) -> None:
+        self.db.rollback()
+
+
+def caller(db: Session, token: str) -> nexverbinden.Caller:
+    """The connection behind a token a partner brings to ``/api/v1``; ``nexverbinden.Refused`` otherwise."""
+    return nexverbinden.authenticate(VerbindenStore(db), CONFIG, token, datetime.now(UTC))
+
+
+def retry_waiting() -> int:
+    """Revocations a partner out of reach has not heard yet, tried again (the background round calls this)."""
+    from ..db import SessionLocal
+
+    with SessionLocal() as db:
+        return nexverbinden.retry_waiting(VerbindenStore(db), CONFIG, datetime.now(UTC))
+
+
+def end_all(db: Session, account_id: int) -> int:
+    """The account goes for good: its connections end, the partners hear it (or later)."""
+    return nexverbinden.end_all(VerbindenStore(db), CONFIG, account_id, datetime.now(UTC))

@@ -9,6 +9,13 @@ can use a token it found); API tokens must be switched on by the operator; the t
 run out, its account neither blocked nor deleted); the token must stay under its rate. The session cookie counts for
 nothing here.
 
+Since verbinden 0.1.1 another nex app comes here with the token of its connection (``ntc_``, ``services/verbinden.py``)
+instead of an API key: its own switch ("Verbindungen mit anderen nex-Apps", not the one of API tokens), its own
+refusals (``token_invalid``, ``connections_off``, ``account_resting``), the spaces the account gave it, and only its
+purposes: reading tasks ``tasks.read``, making and changing them ``tasks.write``, ticking them off ``tasks.complete``,
+the members of a space ``members.read`` (else 403 ``purpose_missing``). An API key may everything its level allows, as
+before.
+
 A token reads as its account, limited to its spaces (``services/apiread.py``); a token that writes changes through the
 same ops as the interface and the app (``services/apiwrite.py``). Errors here are ``{"detail": {"code", "message"}}``
 like in the whole nexapps family (plus ``fields``); ``middleware.ApiErrorShape`` gives the framework's own a code too.
@@ -34,8 +41,10 @@ from ..errors import error
 from ..models import Account, Member
 from ..models import Comment as CommentRow
 from ..models import Space as SpaceRow
-from ..services import apiread, apitokens, apiwrite, clock, logs, records, stats, sync
+from ..services import apiread, apitokens, apiwrite, clock, logs, records, stats, sync, verbinden
 from ..services.apitokens import Caller
+from ..vendor.nexverbinden import CODES as CONNECTION_CODES
+from ..vendor.nexverbinden import Refused as ConnectionRefused
 
 logger = logging.getLogger("nextasks.api")
 
@@ -55,13 +64,51 @@ def _token(request: Request) -> str | None:
     return header[7:].strip() if header[:7].lower() == "bearer " else None
 
 
+#: Every purpose another nex app may have here (the catalog of the module verbinden).
+PURPOSES = ("tasks.read", "tasks.write", "tasks.complete", "members.read")
+
+
+def _connection(token: str) -> Caller:
+    """Another nex app with the token of its connection: the account it acts as, limited to the spaces given."""
+    with SessionLocal() as db:
+        try:
+            link = verbinden.caller(db, token)
+        except ConnectionRefused as refusal:
+            raise error(refusal.code, refusal.message, refusal.status) from None
+        row = db.get(Account, int(link.account_id))
+        if row is None or row.shut:
+            raise error("token_invalid", "No valid connection.", 401)
+        db.expunge(row)
+    row.via_key = True
+    if link.areas is not None:
+        row.key_spaces = frozenset(str(space_id) for space_id in link.areas)
+    return Caller(account=row, token_id=0, level=link.level or "read", purposes=tuple(link.purposes),
+                  connection=link.connection_id)
+
+
+def need(found: Caller, *purposes: str) -> None:
+    """A connection must have one of ``purposes`` (an API key: always fine)."""
+    if not found.may(*purposes):
+        status, message = CONNECTION_CODES["purpose_missing"]
+        raise error("purpose_missing", message, status)
+
+
 def caller(request: Request) -> Caller:
     if request.headers.get("origin"):
         raise error("origin_refused", "The API is for programs, not web pages.", 403)
+    given = _token(request)
+    if given and given.startswith(verbinden.ACCESS_PREFIX):
+        found = _connection(given)
+        if not apitokens.brake(found.key):
+            exc = error("slow_down", "Too many requests with this connection. Wait a minute.", 429)
+            exc.headers = {"Retry-After": "60"}
+            raise exc
+        logs.set_actor(found.account.name)
+        return found
     with SessionLocal() as db:
         if not apitokens.allowed(db):
             raise error("api_off", "The operator has not switched the API on (Server › General › Interfaces).", 401)
-        found = apitokens.authenticate(db, _token(request))
+        found = apitokens.authenticate(db, given)
     if found is None:
         raise error("token_invalid", "No valid API key.", 401)
     if not apitokens.brake(found.token_id):
@@ -73,6 +120,7 @@ def caller(request: Request) -> Caller:
 
 
 def writer(found: Annotated[Caller, Depends(caller)]) -> Caller:
+    need(found, "tasks.write", "tasks.complete")
     if not found.writes:
         raise error("token_reads_only",
                     "This API key only reads. For changes, create one that writes under"
@@ -86,7 +134,7 @@ Writer = Annotated[Caller, Depends(writer)]
 
 def _sync_caller(found: Caller) -> sync.Caller:
     """The token as a sender of ops (``services/sync.py``)."""
-    return sync.Caller(account=found.account, key=f"t:{found.token_id}")
+    return sync.Caller(account=found.account, key=found.key)
 
 
 def _refused(exc: apiwrite.Refused) -> Exception:
@@ -125,6 +173,8 @@ class MeOut(BaseModel):
     spaces: list[SpaceBrief]
     version: str
     features: list[str]
+    #: When the API key runs out (null: never, or the token of a connection); since verbinden 0.1.1.
+    expires_at: str | None = None
 
 
 class SpaceOut(BaseModel):
@@ -379,7 +429,8 @@ def me(found: Reader) -> MeOut:
                  display_name=found.account.display_name or found.account.name, level=found.level,
                  time_zone=sight.zone_name,
                  spaces=[SpaceBrief(id=row.id, name=row.name) for row in spaces], version=__version__,
-                 features=FEATURES)
+                 features=FEATURES,
+                 expires_at=records.format_stamp(found.expires_at) if found.expires_at is not None else None)
 
 
 # --- Spaces and lists -----------------------------------------------------------------------------------------------
@@ -387,6 +438,7 @@ def me(found: Reader) -> MeOut:
 
 @router.get("/spaces", response_model=SpacesOut, responses=ERRORS, summary="The spaces the token sees, by name")
 def get_spaces(found: Reader) -> SpacesOut:
+    need(found, *PURPOSES)
     with SessionLocal() as db:
         sight = apiread.sight_of(db, found.account)
         world = apiread.World.read(db, sight)
@@ -406,6 +458,7 @@ def get_members(found: Reader, space_id: str) -> MembersOut:
     """Exactly the accounts ``assignees`` takes in this space (``services/spaces.member_ids``); in the account's own
     "Private" only the account itself. Everybody listed shares this space with the token's account, so name and
     display name follow the rule of ``services/visibility.py``."""
+    need(found, "members.read")
     with SessionLocal() as db:
         sight = apiread.sight_of(db, found.account)
         space = db.get(SpaceRow, space_id) if space_id in sight.space_ids else None
@@ -423,6 +476,7 @@ def get_members(found: Reader, space_id: str) -> MembersOut:
 @router.get("/lists", response_model=ListsOut, responses=ERRORS,
             summary="The lists the token sees, in the order of the interface")
 def get_lists(found: Reader, space_id: Annotated[str | None, Query(max_length=36)] = None) -> ListsOut:
+    need(found, "tasks.read", "tasks.write", "tasks.complete")
     with SessionLocal() as db:
         sight = apiread.sight_of(db, found.account)
         world = apiread.World.read(db, sight)
@@ -508,6 +562,7 @@ def get_tasks(
     limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
     cursor: Annotated[str | None, Query(max_length=100)] = None,
 ) -> JSONResponse:
+    need(found, "tasks.read")
     as_of = records.format_stamp(clock.now())
     bad: list[str] = []
     wanted_ids: list[str] | None = None
@@ -568,12 +623,14 @@ def _one(found: Caller, task_id: str, *, items: bool = True) -> dict[str, Any]:
 
 @router.get("/tasks/{task_id}", response_model=TaskOut, responses=ERRORS, summary="One task, its subtasks listed")
 def get_task(task_id: str, found: Reader) -> JSONResponse:
+    need(found, "tasks.read")
     return JSONResponse(_one(found, task_id.lower()))
 
 
 @router.post("/tasks", response_model=TaskOut, status_code=201, responses={**WRITE_ERRORS, 200: {"model": TaskOut}},
              summary="Make a task; with external_ref safe to repeat (200 with the task made before)")
 def make_task(body: TaskIn, found: Writer) -> JSONResponse:
+    need(found, "tasks.write")
     try:
         fields = apiwrite.clean(body.model_dump(exclude_unset=True))
         with SessionLocal() as db:
@@ -583,15 +640,18 @@ def make_task(body: TaskIn, found: Writer) -> JSONResponse:
     except apiwrite.Refused as exc:
         raise _refused(exc) from exc
     if done.created:
-        logger.info("API task made token_id=%s", found.token_id)
+        logger.info("API task made token_id=%s", found.connection and found.key or found.token_id)
     return JSONResponse(_one(found, done.task_id, items=False), status_code=201 if done.created else 200)
 
 
 @router.patch("/tasks/{task_id}", response_model=ChangedOut, responses=WRITE_ERRORS,
               summary="Change, tick off, reopen or restore a task")
 def change_task(task_id: str, body: TaskChange, found: Writer) -> JSONResponse:
+    sent = body.model_dump(exclude_unset=True)
+    # Ticking off or opening again is ``tasks.complete`` of its own; any other field is ``tasks.write``.
+    need(found, "tasks.write", *(("tasks.complete",) if set(sent) <= {"completed"} else ()))
     try:
-        fields = apiwrite.clean(body.model_dump(exclude_unset=True))
+        fields = apiwrite.clean(sent)
         with SessionLocal() as db:
             sight = apiread.sight_of(db, found.account)
         done = apiwrite.change_task(_sync_caller(found), sight, task_id.lower(), fields)
@@ -607,6 +667,7 @@ def change_task(task_id: str, body: TaskChange, found: Writer) -> JSONResponse:
 @router.delete("/tasks/{task_id}", status_code=204, responses=WRITE_ERRORS,
                summary="Move a task, with its subtasks, to the bin")
 def trash_task(task_id: str, found: Writer) -> Response:
+    need(found, "tasks.write")
     try:
         with SessionLocal() as db:
             sight = apiread.sight_of(db, found.account)
@@ -622,6 +683,7 @@ def trash_task(task_id: str, found: Writer) -> Response:
 @router.get("/tasks/{task_id}/comments", response_model=CommentsOut, responses=ERRORS,
             summary="The comments of a task, oldest first")
 def get_comments(task_id: str, found: Reader) -> JSONResponse:
+    need(found, "tasks.read")
     with SessionLocal() as db:
         sight = apiread.sight_of(db, found.account)
         try:
@@ -635,13 +697,14 @@ def get_comments(task_id: str, found: Reader) -> JSONResponse:
 @router.post("/tasks/{task_id}/comments", response_model=CommentOut, status_code=201, responses=WRITE_ERRORS,
              summary="Comment on a task of a shared space")
 def post_comment(task_id: str, body: CommentIn, found: Writer) -> JSONResponse:
+    need(found, "tasks.write")
     try:
         with SessionLocal() as db:
             sight = apiread.sight_of(db, found.account)
         comment_id = apiwrite.add_comment(_sync_caller(found), sight, task_id.lower(), body.text, body.mentions)
     except apiwrite.Refused as exc:
         raise _refused(exc) from exc
-    logger.info("API comment made token_id=%s", found.token_id)
+    logger.info("API comment made token_id=%s", found.connection and found.key or found.token_id)
     with SessionLocal() as db:
         world = apiread.World.read(db, apiread.sight_of(db, found.account))
         row = db.get(CommentRow, comment_id)
@@ -655,6 +718,7 @@ def post_comment(task_id: str, body: CommentIn, found: Writer) -> JSONResponse:
 @router.get("/dashboard", response_model=DashboardOut, responses=ERRORS,
             summary="The numbers and the soonest tasks for a dashboard card")
 def dashboard(found: Reader, limit: Annotated[int, Query(ge=1, le=DASHBOARD_MAX)] = DASHBOARD_LIMIT) -> JSONResponse:
+    need(found, "tasks.read")
     with SessionLocal() as db:
         world = apiread.World.read(db, apiread.sight_of(db, found.account))
         return JSONResponse(apiread.dashboard(world, limit))
@@ -668,6 +732,7 @@ def dashboard(found: Reader, limit: Annotated[int, Query(ge=1, le=DASHBOARD_MAX)
 def stats_summary(found: Reader) -> JSONResponse:
     """From the record of completions, as the web's review counts: every space the token sees (hidden ones too), a
     task once (subtasks not), days in the account's zone."""
+    need(found, "tasks.read")
     with SessionLocal() as db:
         sight = apiread.sight_of(db, found.account)
         scope = stats.scope_of(db, found.account.id, allowed=sight.space_ids)

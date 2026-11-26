@@ -51,6 +51,7 @@ from .routers import (
 from .routers import accounts as accounts_router
 from .routers import avatars as avatars_router
 from .routers import backups as backups_router
+from .routers import connect as connect_router
 from .routers import connections as connections_router
 from .routers import locales as locales_router
 from .routers import logs as logs_router
@@ -74,6 +75,7 @@ from .services import (
     totp,
     trash,
     updates,
+    verbinden,
     webpush,
 )
 from .services.konten_store import KontenStore
@@ -86,7 +88,7 @@ ROUTERS = [
     health, about, locales_router, logs_router, auth, totp_router, passkeys_router, oidc, accounts_router, invites,
     settings_router, backups_router, avatars_router, apitokens, v1, app_pairing, app1, notifications, stats,
     focus, sweep, history, server_signin_router, server_mail_router,
-    connections_router, mcp,
+    connections_router, mcp, connect_router,
 ]
 
 
@@ -114,6 +116,12 @@ async def _sweep_forever(stop: asyncio.Event) -> None:
             await asyncio.to_thread(post_store.run_due)
         except Exception:
             logger.exception("Outbox round failed")
+        if rounds % 5 == 0:
+            # A revocation a nex app out of reach has not heard yet is tried again (verbinden 0.1.1).
+            try:
+                await asyncio.to_thread(verbinden.retry_waiting)
+            except Exception:
+                logger.exception("Telling other nex apps of ended connections failed")
         if rounds % 60 == 0:
             with SessionLocal() as db:
                 purge_sessions(db)

@@ -45,6 +45,11 @@ DEFAULTS: dict[str, Any] = {
     "mcp_programs": None,
     "mcp_max_level": None,
     "mcp_blocked_tools": None,
+    #: Connections with other nex apps (verbinden 0.1.1, V1 7a): None (never set) is on; the addresses of the other
+    #: apps the operator typed in once (partner -> address, V1 1b); calls into the own network only when allowed.
+    "connections_enabled": None,
+    "connections_addresses": None,
+    "connections_local_network": False,
     #: Ask GitHub once a day whether a newer nextasks is out (services/updates). Only the question goes out, so on.
     "update_check": True,
     #: Invitation mail: without a host nothing is sent, the link to copy is enough.

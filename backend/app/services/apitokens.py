@@ -29,6 +29,7 @@ import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -106,15 +107,33 @@ def make(
 @dataclass
 class Caller:
     """Who calls ``/api/v1``: the account, detached, and its token. A token limited to some spaces has them on the
-    account (``Account.key_spaces``), so every right checked for it sees only those."""
+    account (``Account.key_spaces``), so every right checked for it sees only those.
+
+    Since verbinden 0.1.1 also another nex app with the token of its connection: ``connection`` names it and
+    ``purposes`` what it may (``tasks.read``, ``tasks.write``, ``tasks.complete``, ``members.read``); an API token has
+    ``purposes`` None and may everything its level allows, as before."""
 
     account: Account
     token_id: int
     level: str
+    purposes: tuple[str, ...] | None = None
+    connection: str | None = None
+    #: When the API token runs out (None: never, and for a connection); ``/api/v1/me`` names it (verbinden 0.1.1: a
+    #: partner that typed the key in says so a week before).
+    expires_at: Any = None
 
     @property
     def writes(self) -> bool:
         return self.level == "write"
+
+    @property
+    def key(self) -> str:
+        """The sender of ops and the brake's key: ``t:<token>`` or ``c:<connection>``."""
+        return f"c:{self.connection}" if self.connection else f"t:{self.token_id}"
+
+    def may(self, *purposes: str) -> bool:
+        """Whether the caller may do what any of ``purposes`` stands for (an API token: always)."""
+        return self.purposes is None or any(purpose in self.purposes for purpose in purposes)
 
 
 def authenticate(db: Session, token: str | None) -> Caller | None:
@@ -142,18 +161,19 @@ def authenticate(db: Session, token: str | None) -> Caller | None:
     level = row.level if row.level in LEVELS else "read"
     spaces = row.spaces
     token_id = row.id
+    expires_at = row.expires_at
     db.expunge(account)
     account.via_key = True
     if spaces is not None:
         account.key_spaces = frozenset(str(space_id) for space_id in spaces)
-    return Caller(account=account, token_id=token_id, level=level)
+    return Caller(account=account, token_id=token_id, level=level, expires_at=expires_at)
 
 
 _calls_lock = threading.Lock()
-_calls: dict[int, deque[float]] = defaultdict(deque)
+_calls: dict[int | str, deque[float]] = defaultdict(deque)
 
 
-def brake(token_id: int, now: float | None = None) -> bool:
+def brake(token_id: int | str, now: float | None = None) -> bool:
     """True while the token stays under ``PER_MINUTE`` requests in the last minute; counts this one."""
     now = time.monotonic() if now is None else now
     with _calls_lock:

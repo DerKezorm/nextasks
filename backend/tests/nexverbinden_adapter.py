@@ -1,0 +1,157 @@
+"""nexverbinden contract tests: nextasks' adapter (from the module's ``tests-fuer-apps/adapter_template.py``).
+
+nextasks is the host: the partner of the tests is nexmail, which uses all four purposes nextasks grants
+(``tasks.read``, ``tasks.write``, ``tasks.complete``, ``members.read``), so every probe opens. That a connection without
+a purpose is turned away at nextasks' routes, the app's own tests show with nexnotes, nextime and nexdiary
+(``tests/test_connect.py``). The app runs on the test session's database (``tests/conftest.py`` empties it before every
+test) at the public address ``https://nextasks.example.com``; the older version (0.8.0) had API keys, typed in by other
+apps, but never typed in a key of another app (``older_link`` False).
+
+The probes are GET routes of ``/api/v1`` (``probe``): a write purpose has no GET route of its own, so it is probed at
+the route a program reads before it writes (TODO verbinden 0.1.1: question in ``einst-fragen/nextasks-module.md``).
+"""
+
+from __future__ import annotations
+
+import secrets
+import sqlite3
+from datetime import timedelta
+from pathlib import Path
+from typing import Any
+
+from fastapi.testclient import TestClient
+from verbinden_contract import StandardAdapter
+
+BASE = "https://nextasks.example.com"
+#: The GET route of ``/api/v1`` each purpose is probed at (see the module docstring).
+PROBES = {"tasks.read": "/api/v1/tasks", "tasks.complete": "/api/v1/tasks", "tasks.write": "/api/v1/lists",
+          "members.read": "/api/v1/spaces"}
+
+
+class Adapter(StandardAdapter):
+    package = "app.vendor.nexverbinden"
+    partner = "nexmail"
+    base = BASE
+    older_link = False
+
+    def start(self, folder: Path, *, older: bool = False) -> None:
+        from app.db import SessionLocal
+        from app.models import MEMBER, OPERATOR, Account, ApiToken, utcnow
+        from app.routers.auth import ensure_private
+        from app.services import apitokens, settings_service, verbinden
+        from tests.conftest import PASSWORD, make_account
+
+        self._accounts = {
+            # The names of the partner of the tests (verbinden_partner.ROLES): the contract asks for "kim".
+            "owner": make_account("kim", MEMBER),
+            "other": make_account("sam", MEMBER),
+            "operator": make_account("boss", OPERATOR),
+        }
+        self._password = PASSWORD
+        with SessionLocal() as db:
+            settings_service.save(db, {"public_url": BASE})
+            for account in self._accounts.values():
+                row = db.get(Account, account.id)
+                assert row is not None
+                ensure_private(db, row)
+        self._clients: dict[str, TestClient] = {}
+        # Two spaces of the owner with a list and a task in each (the card asks which of them a partner reads).
+        from tests.sync_helpers import make_list, make_reminder, private_space, shared_space
+
+        owner = self.client("owner")
+        _private, first_list = private_space(owner)
+        garden = shared_space(owner, name="Garden")
+        garden_list = make_list(owner, garden, name="Beds")
+        make_reminder(owner, first_list, title="Milk")
+        make_reminder(owner, garden_list, title="Water the roses")
+        self.older_key = ""
+        self.older_key_path = "/api/v1/me"
+        if older:
+            # An API key of 0.8.0, as another app has it typed in (all spaces, 90 days).
+            token = apitokens.TOKEN_PREFIX + secrets.token_urlsafe(32)
+            now = utcnow()
+            with SessionLocal() as db:
+                settings_service.save(db, {"api_tokens_allowed": True})
+                db.add(ApiToken(account_id=self._accounts["owner"].id, name="nexmail", level="write",
+                                token_hash=apitokens.digest(token), prefix=token[:8], spaces=None, created_at=now,
+                                expires_at=now + timedelta(days=90)))
+                db.commit()
+            self.older_key = token
+        self.store = verbinden.VerbindenStore(SessionLocal())
+
+    def stop(self) -> None:
+        for client in self._clients.values():
+            client.close()
+        self.store.db.close()
+
+    def asgi(self) -> Any:
+        from app.main import app
+
+        return app
+
+    def client(self, role: str | None) -> TestClient:
+        from app.main import app
+        from tests.conftest import TAB, sign_in
+
+        key = role or "anonymous"
+        if key not in self._clients:
+            made = TestClient(app, base_url=BASE, headers=TAB if role else {})
+            if role:
+                sign_in(made, self._accounts[role])
+            self._clients[key] = made
+        return self._clients[key]
+
+    def config(self) -> Any:
+        from app.services import verbinden
+
+        return verbinden.CONFIG
+
+    def block(self, role: str, blocked: bool = True) -> None:
+        account = self._accounts[role]
+        answer = self.client("operator").post(f"/api/accounts/{account.id}/{'block' if blocked else 'unblock'}",
+                                              json={"current_password": self._password})
+        assert answer.status_code == 204, answer.text
+        if not blocked and role in self._clients:
+            # Blocking ended the account's browser sessions (as in 0.8.0): its browser signs in again.
+            from tests.conftest import sign_in
+
+            sign_in(self._clients[role], account)
+
+    def probe(self, purpose: str) -> str | None:
+        return PROBES[purpose]
+
+    def areas_seen(self, purpose: str, answer: Any) -> set[str]:
+        from app.db import SessionLocal
+        from app.models import TaskList
+
+        if "spaces" in answer:
+            return {str(space["id"]) for space in answer["spaces"]}
+        if "lists" in answer:
+            return {str(row["space_id"]) for row in answer["lists"]}
+        with SessionLocal() as db:
+            found = set()
+            for task in answer["tasks"]:
+                row = db.get(TaskList, task["list_id"])
+                if row is not None:
+                    found.add(str(row.space_id))
+            return found
+
+    def everything(self) -> str:
+        from app.db import engine
+
+        plain = sqlite3.connect(str(engine.url.database))
+        try:
+            return "\n".join(plain.iterdump())
+        finally:
+            plain.close()
+
+    def own_tables(self) -> dict[str, Any]:
+        from sqlalchemy import select
+
+        from app.db import SessionLocal
+        from app.models import ApiToken
+
+        with SessionLocal() as db:
+            rows = db.scalars(select(ApiToken).order_by(ApiToken.id)).all()
+            return {"api_tokens": [(row.id, row.account_id, row.name, row.level, row.token_hash, row.prefix,
+                                    row.spaces, row.expires_at, row.blocked_at) for row in rows]}

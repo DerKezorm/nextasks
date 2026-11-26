@@ -19,6 +19,7 @@ from sqlalchemy.pool import NullPool
 
 from . import (
     models_accounts,  # noqa: F401  (its tables belong to the schema of every start)
+    models_connect,  # noqa: F401  (the connections with other nex apps, verbinden 0.1.1)
     models_mcp,  # noqa: F401  (the tables of the AI tools, mcp 1.1.0)
 )
 from .config import get_settings
