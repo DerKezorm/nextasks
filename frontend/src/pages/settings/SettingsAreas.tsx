@@ -17,6 +17,7 @@ import { mcpRequest, useMcpWords } from '../../lib/mcp'
 import { moment } from '../../lib/time'
 import { McpOperatorSettings, PendingRequests, ToolRights } from '../../vendor/nexmcp'
 import { AllKeysCard, ApiKeysCard, InterfacesCard, ToolsCard, type KeyRequest } from '../../vendor/nexschluessel'
+import { ConnectionsArea as OtherApps, ConnectionsOperatorCard } from '../../vendor/nexverbinden'
 import { AboutArea } from './AboutArea'
 import { AccountsTab } from './AccountsTab'
 import { AccountTab } from './AccountTab'
@@ -61,8 +62,9 @@ export function AreaContent({ area }: { area: AreaSlug }) {
   }
 }
 
-/** Mein Konto › Connections: the iPhone app's devices, installing on this device, the API keys, the AI tools (MCP:
- * programs and MCP keys, their rights per tool, the requests that wait). */
+/** Mein Konto › Connections: the iPhone app's devices, installing on this device, the other nex apps that use the
+ * tasks (verbinden), the API keys, the AI tools (MCP: programs and MCP keys, their rights per tool, the requests that
+ * wait). */
 function ConnectionsArea() {
   const { t, i18n } = useTranslation()
   const { me } = useAuth()
@@ -71,6 +73,7 @@ function ConnectionsArea() {
     <>
       <DevicesSection />
       <InstallCard />
+      <OtherApps app="nextasks" request={request} areaWord={t('mcp.areas')} language={i18n.language} when={(iso) => moment(iso, i18n.language)} />
       <ApiKeysCard request={request} things={t('settings.things')} thingsDative={t('settings.thingsDative')} words={{ areas: t('apiTokens.where') }} docsHref={API_DOCS} operator={me?.role === 'operator'} />
       <ToolsCard request={request} words={{ areas: t('apiTokens.where') }} extra={(key) => <ToolRights request={mcpRequest} keyId={key.id} words={words} />}>
         <PendingRequests request={mcpRequest} words={words} when={(iso) => moment(iso, i18n.language)} viewHref={(entry) => `/mcp/requests/${entry.id}`} />
@@ -79,7 +82,8 @@ function ConnectionsArea() {
   )
 }
 
-/** Server › General: limits, features for all accounts, interfaces (the module schluessel's), languages. */
+/** Server › General: limits, features for all accounts, interfaces (the module schluessel's), the other nex apps
+ * (verbinden), languages. */
 function GeneralArea() {
   const server = useServerSettings()
   const words = useMcpWords()
@@ -89,6 +93,7 @@ function GeneralArea() {
       <LimitsCard server={server} />
       <FeaturesCard server={server} />
       <InterfacesCard request={request} docsHref={API_DOCS} after={{ mcp: <McpOperatorSettings request={mcpRequest} words={words} /> }} />
+      <ConnectionsOperatorCard app="nextasks" request={request} />
       <LanguagesCard />
     </>
   )

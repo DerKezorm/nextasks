@@ -21,9 +21,9 @@ describe('My account › Connections › Devices', () => {
     server.devices.push({ id: 'other', account: alex, name: 'Alex’s iPhone', created_at: hour, last_seen: hour })
     const page = await mount(server, '/settings/connections')
     const cards = [...page.querySelectorAll('section[id]')].map((section) => section.id)
-    // The order of the plan "Einstellungen" (Verbindungen): devices, installing on this device, the API keys, the AI
-    // tools (MCP, since mcp 1.1.0).
-    expect(cards).toEqual(['devices', 'install', 'api-keys', 'ai-tools'])
+    // The order of the plan "Einstellungen" (Verbindungen): devices, installing on this device, the other nex apps
+    // (verbinden 0.1.1, in the order of the catalog), the API keys, the AI tools (MCP, since mcp 1.1.0).
+    expect(cards).toEqual(['devices', 'install', 'nexnotes', 'nexmail', 'nextime', 'nexpaper', 'nexdiary', 'api-keys', 'ai-tools'])
     expect(card(page).querySelector('h2')?.textContent).toBe('Devices')
     const rows = [...card(page).querySelectorAll('[data-testid="device-row"]')]
     expect(rows.map((row) => row.querySelector('[data-testid="device-name"]')?.textContent)).toEqual(['Robin’s iPhone', 'iPad'])

@@ -200,8 +200,9 @@ describe('the settings', () => {
     expect(switches.length).toBeGreaterThan(3)
     expect(switches.every((entry) => !!entry.id && page.querySelector(`label[for="${entry.id}"]`) !== null)).toBe(true)
     expect(page.querySelector('[role="switch"], .nt-switch')).toBeNull()
-    // The cards in the plan's order: limits, features for all accounts, interfaces (the API, the iPhone app), languages.
-    expect([...page.querySelectorAll('[data-card]')].map((card) => card.getAttribute('data-card'))).toEqual(['limits', 'features', 'interfaces', 'languages'])
+    // The cards in the plan's order: limits, features for all accounts, interfaces (the API, MCP, the iPhone app), the
+    // other nex apps (verbinden 0.1.1, V14), languages.
+    expect([...page.querySelectorAll('[data-card]')].map((card) => card.getAttribute('data-card'))).toEqual(['limits', 'features', 'interfaces', 'nex-apps', 'languages'])
     // The words as the plan and nexnotes write them (E39, E48): the same sentence on every server's features card.
     expect(page.querySelector('[data-card="features"]')?.textContent).toContain('What every account may use on this server.')
     expect([...page.querySelectorAll('[data-card="limits"] label')].map((label) => label.textContent)).toContain('Largest file per attachment (MB)')

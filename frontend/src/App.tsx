@@ -7,6 +7,7 @@ import { SidebarBody } from './components/Sidebar'
 import { AppConnectPage, ConfirmEmailPage, ForgotPage, InvitePage, LoginPage, ResetPage, SetupPage, UnsubscribePage } from './pages/AuthPages'
 import { FilterPage } from './pages/FilterPage'
 import { ListPage } from './pages/ListPage'
+import { ConnectConsentPage, ConnectReturnPage } from './pages/ConnectPages'
 import { McpConsentPage, McpRequestPage } from './pages/McpPages'
 import { ReviewPage } from './pages/ReviewPage'
 import { SearchPage } from './pages/SearchPage'
@@ -88,6 +89,23 @@ export default function App() {
       <Route path="invite/:token" element={<InvitePage />} />
       <Route path="confirm-email/:token" element={<ConfirmEmailPage />} />
       <Route path="unsubscribe/:token" element={<UnsubscribePage />} />
+      {/* Another nex app asks to use the tasks, and the way back from another app's consent (verbinden). */}
+      <Route
+        path="connect/app"
+        element={
+          <SignedIn>
+            <ConnectConsentPage />
+          </SignedIn>
+        }
+      />
+      <Route
+        path="connect/return"
+        element={
+          <SignedIn>
+            <ConnectReturnPage />
+          </SignedIn>
+        }
+      />
       {/* AI tools (MCP): a program asks to connect, a call waits for the account's yes. */}
       <Route
         path="oauth/authorize"
