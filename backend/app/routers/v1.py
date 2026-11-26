@@ -60,12 +60,12 @@ def caller(request: Request) -> Caller:
         raise error("origin_refused", "The API is for programs, not web pages.", 403)
     with SessionLocal() as db:
         if not apitokens.allowed(db):
-            raise error("api_off", "The operator has not switched API tokens on.", 401)
+            raise error("api_off", "The operator has not switched the API on (Server › General › Interfaces).", 401)
         found = apitokens.authenticate(db, _token(request))
     if found is None:
-        raise error("token_invalid", "No valid API token.", 401)
+        raise error("token_invalid", "No valid API key.", 401)
     if not apitokens.brake(found.token_id):
-        exc = error("slow_down", "Too many requests with this token. Wait a minute.", 429)
+        exc = error("slow_down", "Too many requests with this API key. Wait a minute.", 429)
         exc.headers = {"Retry-After": "60"}
         raise exc
     logs.set_actor(found.account.name)
@@ -74,7 +74,7 @@ def caller(request: Request) -> Caller:
 
 def writer(found: Annotated[Caller, Depends(caller)]) -> Caller:
     if not found.writes:
-        raise error("token_reads_only", "This token reads only. Make one that writes for changes.", 403)
+        raise error("token_reads_only", "This API key only reads. For changes, create one that writes under Connections › API keys.", 403)
     return found
 
 

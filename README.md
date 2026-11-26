@@ -84,7 +84,7 @@ its own, and nextasks installs from the browser as an app.*
 - **Accounts** by invitation only, a second factor (TOTP, which the operator can require for everybody), profile
   pictures, sign-in through any number of OpenID Connect providers side by side.
 - **For the operator**: backups on a schedule, to download, upload and restore; a log in four levels; switches for
-  invitations, API tokens and the iPhone app.
+  invitations, the API and the iPhone app.
 - **An API** for programs and scripts under `/api/v1`, see [For programs](#for-programs).
 - **Languages**: English and German, plus languages of your own as JSON files.
 
@@ -206,8 +206,9 @@ Make a backup first (see above). What changed is in the release notes, and nexta
 ## For programs
 
 Home Assistant, n8n or your own scripts use nextasks over `/api/v1`: spaces, lists and tasks, and making, changing and
-completing tasks. The operator switches API tokens on under **Settings → Server → General**; then every account makes its
-own under **Settings → My account → Connections**, to read or to read and write, for chosen spaces, with an end date. The
+completing tasks. The operator switches the API on under **Settings → Server → General → Interfaces**; then every account
+makes its own API keys under **Settings → My account → Connections → API keys**, to read or to read and write, for chosen
+spaces, with an end date. The
 reference is in [docs/api.md](docs/api.md).
 
 What is under `/api/v1` stays: new fields may come, nothing is renamed or taken away. A change that would break a

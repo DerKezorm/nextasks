@@ -69,56 +69,6 @@
   "settings": {
     "title": "Settings",
     "saved": "Saved.",
-    "areas": {
-      "profile": {
-        "title": "Profile",
-        "text": "Picture, name, language and time zone of your account."
-      },
-      "security": {
-        "title": "Security",
-        "text": "Sign-in, password, second factor and your other browsers."
-      },
-      "appearance": {
-        "title": "Appearance",
-        "text": "How nextasks looks on this device, what the sidebar shows, and the keyboard shortcuts."
-      },
-      "connections": {
-        "title": "Connections",
-        "text": "The iPhone app, programs and services that work with your tasks."
-      },
-      "notifications": {
-        "title": "Notifications",
-        "text": "What reaches you which way: mail, this browser, iPhone and iPad."
-      },
-      "general": {
-        "title": "General",
-        "text": "Files, features for every account, the iPhone app and added languages."
-      },
-      "signIn": {
-        "title": "Sign-in",
-        "text": "How everyone signs in: password, public address, second factor and providers."
-      },
-      "mail": {
-        "title": "Mail",
-        "text": "The mail server nextasks sends invitations, reports and notifications through."
-      },
-      "storage": {
-        "title": "Storage and backups",
-        "text": "The backups of the server: when, how many, download and restore."
-      },
-      "accounts": {
-        "title": "Accounts",
-        "text": "Who uses nextasks, with role, open invitations and the API tokens of all accounts."
-      },
-      "log": {
-        "title": "Log",
-        "text": "What the server writes down, to look into problems."
-      },
-      "about": {
-        "title": "About nextasks",
-        "text": "Version, licence, where it comes from and whether a newer version is out."
-      }
-    },
     "things": "tasks",
     "thingsDative": "tasks"
   },
@@ -144,7 +94,7 @@
     "texts_one": "one text",
     "texts_other": "{{count}} texts",
     "languageCode": "Language code",
-    "languageAdded": "Language added. It shows under Settings, Profile after reloading.",
+    "languageAdded": "Language added. It shows under Settings › Profile › Language after reloading.",
     "files": "Files",
     "filesHint": "Files on tasks: how large they may be and what is removed when uploading.",
     "app": {
@@ -198,11 +148,11 @@
     "own_second_factor_first": "Set up your own second factor first, on your account page.",
     "use_disable": "Turn your own second factor off on your account page.",
     "provider_first": "Set up a sign-in provider first, or nobody but you could sign in.",
-    "api_off": "The operator has not switched API tokens on.",
-    "too_many_tokens": "An account has at most 20 tokens.",
+    "api_off": "The operator has not switched the API on (Server › General › Interfaces).",
+    "too_many_tokens": "An account has at most 20 API keys.",
     "operator_network": "The operator's settings are open only from the home network.",
     "display_name_invalid": "A display name cannot contain control or invisible characters.",
-    "public_url_missing": "Mail needs the public address of nextasks; the operator sets it under Settings.",
+    "public_url_missing": "Mail needs the public address of nextasks; the operator sets it under Server › Sign-in.",
     "internal_error": "That did not work.",
     "network": "No connection to the server.",
     "password_missing": "Enter the password.",
@@ -238,8 +188,8 @@
     "backups_emergency_only": "While connected, only the emergency account downloads and deletes backups.",
     "comment_too_long": "A comment has at most 5000 characters.",
     "forTask": "“{{title}}”: {{text}}",
-    "choose_spaces": "Choose the spaces the token may see, or all of them on purpose.",
-    "token_reads_only": "This token only reads. Create one that writes for changes.",
+    "choose_spaces": "Choose the spaces the API key may see, or all of them on purpose.",
+    "token_reads_only": "This API key only reads. For changes, create one that writes under Connections › API keys.",
     "bad_preference": "This value is not one nextasks offers.",
     "display_name_too_long": "The display name is too long, at most {{maximum}} characters.",
     "duration_not_allowed": "This duration is not offered.",
@@ -247,13 +197,13 @@
     "invalid_status": "This is not a status nextasks knows.",
     "invalid_priority": "This is not a priority nextasks knows.",
     "origin_refused": "The API is for programs, not for web pages.",
-    "slow_down": "Too many requests with this token. Wait a minute.",
-    "token_invalid": "No valid API token.",
+    "slow_down": "Too many requests with this API key. Wait a minute.",
+    "token_invalid": "No valid API key.",
     "invite_unknown": "This invitation is not valid (expired, used or withdrawn).",
     "private_space": "The space “Private” is yours alone; nobody can be invited there.",
     "invites_disabled": "The operator turned invitations off.",
     "app_pairing_disabled": "The operator turned off connecting new devices.",
-    "app_address_missing": "The server does not know its public address. The operator enters it under Settings, Server, Sign-in.",
+    "app_address_missing": "The server does not know its public address. The operator enters it under Server › Sign-in.",
     "app_too_many_pairings": "Five codes are waiting already. Cancel one or wait ten minutes.",
     "not_signed_in": "You are not signed in (any more).",
     "bad_client": "The request did not come from the nextasks page. Reload the page.",
@@ -586,7 +536,7 @@
     "empty": "Nothing parked",
     "emptyLine": "What has no date waits here. “Someday” in a task's menu takes its date away.",
     "hide": "Hide on this device",
-    "hidden": "“Someday” is hidden on this device. Bring it back in Settings under Sidebar.",
+    "hidden": "“Someday” is hidden on this device. Bring it back under Settings › Appearance › Sidebar.",
     "device": "on this device only",
     "moved": "“{{title}}” now waits under Someday.",
     "leaveOut": "Leave “{{name}}” out here (on this device)",
@@ -1277,7 +1227,7 @@
       "sent": "Link sent to {{address}}. Open it to confirm the address.",
       "suggestion": "Your sign-in provider knows you as {{address}}.",
       "useSuggestion": "Confirm this address",
-      "noPublic": "Mail needs the public address of nextasks; the operator enters it under Settings.",
+      "noPublic": "Mail needs the public address of nextasks; the operator enters it under Server › Sign-in.",
       "removed": "Address removed. nextasks no longer sends you mail.",
       "none": "No confirmed address yet.",
       "inProfile": "Change the address in your profile"
@@ -1318,7 +1268,7 @@
     "ask": "Stop getting “{{event}}” by {{channel}}?",
     "already": "“{{event}}” by {{channel}} is off already.",
     "button": "Unsubscribe",
-    "done": "Unsubscribed. You can turn it on again under My account › Notifications.",
+    "done": "Unsubscribed. You can turn it on again under Settings › Notifications.",
     "toSettings": "Go to notifications"
   },
   "join": {

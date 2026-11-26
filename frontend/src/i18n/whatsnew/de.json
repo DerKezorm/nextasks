@@ -248,7 +248,7 @@
       },
       {
         "title": "Seitenleiste nach deinem Geschmack",
-        "where": "Einstellungen, „Seitenleiste“",
+        "where": "Einstellungen › Darstellung › Seitenleiste",
         "body": "Mit dem Auge blendest du jede Sammlung (Heute, Geplant, Alle und so weiter) und jeden eigenen Filter ein oder aus. Das gilt für alle deine Geräte, auch für die iPhone-App."
       },
       {
@@ -283,7 +283,7 @@
       },
       {
         "title": "Benachrichtigungen und Berichte",
-        "where": "Mein Konto, Benachrichtigungen",
+        "where": "Einstellungen › Benachrichtigungen",
         "body": "Eine Tabelle sagt, was dich per Mail, im Browser oder auf dem iPhone erreicht: dir zugewiesene Aufgaben, fällige Aufgaben, Änderungen in Listen, denen du folgst, und die Berichte „Mein Tag“ und „Wochenbericht“."
       }
     ],

@@ -248,7 +248,7 @@
       },
       {
         "title": "The sidebar the way you like it",
-        "where": "Settings, “Sidebar”",
+        "where": "Settings › Appearance › Sidebar",
         "body": "The eye shows or hides each collection (Today, Scheduled, All and so on) and each own filter. It applies to all your devices, the iPhone app included."
       },
       {
@@ -283,7 +283,7 @@
       },
       {
         "title": "Notifications and reports",
-        "where": "My account, Notifications",
+        "where": "Settings › Notifications",
         "body": "One table says what reaches you by mail, in the browser or on the iPhone: tasks assigned to you, tasks that are due, changes in lists you follow, and the reports “My day” and “Weekly report”."
       }
     ],

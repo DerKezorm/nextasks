@@ -105,14 +105,14 @@ def _refused(refusal: KeyRefused) -> HTTPException:
 @router.post("/api-tokens", response_model=MadeOut, status_code=201, summary="Make an API token; shown once")
 def make_token(body: TokenIn, account: Account, db: DbSession) -> MadeOut:
     if not apitokens.allowed(db):
-        raise error("api_off", "The operator has not switched API tokens on.", 403)
+        raise error("api_off", "The operator has not switched the API on (Server › General › Interfaces).", 403)
     if body.all_spaces and body.spaces is not None:
         raise error("invalid_input", "Choose spaces, or all of them, not both.", 422)
     if not body.all_spaces and not body.spaces:
-        raise error("choose_spaces", "Choose the spaces the token may see, or all of them on purpose.", 422)
+        raise error("choose_spaces", "Choose the spaces the API key may see, or all of them on purpose.", 422)
     # The answers of 0.8.0 before the module's: a lifetime it never offered, a space the account may not read.
     if body.days is not None and body.days not in apitokens.LIFETIMES:
-        raise error("invalid_input", "A token runs out after 30, 90 or 365 days, or never.", 422)
+        raise error("invalid_input", "An API key runs out after 30, 90 or 365 days, or never.", 422)
     if body.spaces is not None and not set(body.spaces) <= set(spaces_service.space_ids_of(db, account.id)):
         raise error("invalid_input", "Choose spaces you may read.", 422)
     try:

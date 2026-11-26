@@ -77,7 +77,7 @@ def make(
     if level not in LEVELS:
         raise TokenError("invalid_input", "No such level.", 422)
     if days is not None and days not in LIFETIMES:
-        raise TokenError("invalid_input", "A token runs out after 30, 90 or 365 days, or never.", 422)
+        raise TokenError("invalid_input", "An API key runs out after 30, 90 or 365 days, or never.", 422)
     if spaces is not None:
         # A space the account may not read is refused like one that does not exist.
         # Of those a token of the account would read: the operator's powers do not reach a token, so a space it sees
@@ -90,7 +90,7 @@ def make(
     with _make_lock:
         count = len(db.scalars(select(ApiToken.id).where(ApiToken.account_id == account.id)).all())
         if count >= MAX_TOKENS:
-            raise TokenError("too_many_tokens", "An account holds at most 20 tokens.", 409)
+            raise TokenError("too_many_tokens", "An account holds at most 20 API keys.", 409)
         now = utcnow()
         row = ApiToken(account_id=account.id, name=name.strip()[:100] or "API", level=level,
                        token_hash=digest(token), prefix=token[: len(TOKEN_PREFIX) + 4], spaces=spaces, created_at=now,

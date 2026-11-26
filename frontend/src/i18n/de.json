@@ -69,56 +69,6 @@
   "settings": {
     "title": "Einstellungen",
     "saved": "Gespeichert.",
-    "areas": {
-      "profile": {
-        "title": "Profil",
-        "text": "Bild, Name, Sprache und Zeitzone deines Kontos."
-      },
-      "security": {
-        "title": "Sicherheit",
-        "text": "Anmeldung, Passwort, zweiter Faktor und deine anderen Browser."
-      },
-      "appearance": {
-        "title": "Darstellung",
-        "text": "Wie nextasks auf diesem Gerät aussieht, was die Seitenleiste zeigt, und die Tastenkürzel."
-      },
-      "connections": {
-        "title": "Verbindungen",
-        "text": "Die iPhone-App, Programme und Dienste, die mit deinen Aufgaben arbeiten."
-      },
-      "notifications": {
-        "title": "Benachrichtigungen",
-        "text": "Was dich auf welchem Weg erreicht: Mail, dieser Browser, iPhone und iPad."
-      },
-      "general": {
-        "title": "Allgemein",
-        "text": "Dateien, Funktionen für alle Konten, die iPhone-App und eigene Sprachen."
-      },
-      "signIn": {
-        "title": "Anmeldung",
-        "text": "Wie sich alle anmelden: Passwort, öffentliche Adresse, zweiter Faktor und Anbieter."
-      },
-      "mail": {
-        "title": "Mail",
-        "text": "Der Mailserver, über den nextasks Einladungen, Berichte und Benachrichtigungen verschickt."
-      },
-      "storage": {
-        "title": "Speicher und Sicherung",
-        "text": "Die Sicherungen des Servers: wann, wie viele, herunterladen und zurückspielen."
-      },
-      "accounts": {
-        "title": "Konten",
-        "text": "Wer nextasks nutzt, mit Rolle, offene Einladungen und die API-Token aller Konten."
-      },
-      "log": {
-        "title": "Log",
-        "text": "Was der Server mitschreibt, zum Nachsehen bei Fehlern."
-      },
-      "about": {
-        "title": "Über nextasks",
-        "text": "Version, Lizenz, Herkunft und ob es eine neuere Version gibt."
-      }
-    },
     "things": "Aufgaben",
     "thingsDative": "Aufgaben"
   },
@@ -144,7 +94,7 @@
     "texts_one": "ein Text",
     "texts_other": "{{count}} Texte",
     "languageCode": "Sprachcode",
-    "languageAdded": "Sprache hinzugefügt. Sie erscheint nach dem Neuladen unter Einstellungen, Profil.",
+    "languageAdded": "Sprache hinzugefügt. Sie erscheint nach dem Neuladen unter Einstellungen › Profil › Sprache.",
     "files": "Dateien",
     "filesHint": "Dateien an Aufgaben: wie groß sie sein dürfen und was beim Hochladen herausfällt.",
     "app": {
@@ -198,11 +148,11 @@
     "own_second_factor_first": "Richte zuerst deinen eigenen zweiten Faktor ein, auf deiner Kontoseite.",
     "use_disable": "Schalte deinen eigenen zweiten Faktor auf deiner Kontoseite aus.",
     "provider_first": "Richte zuerst einen Anmeldeanbieter ein, sonst kommt außer dir niemand mehr herein.",
-    "api_off": "Der Betreiber hat API-Token nicht eingeschaltet.",
-    "too_many_tokens": "Ein Konto hat höchstens 20 Token.",
+    "api_off": "Der Betreiber hat die API nicht eingeschaltet (Server › Allgemein › Schnittstellen).",
+    "too_many_tokens": "Ein Konto hat höchstens 20 API-Schlüssel.",
     "operator_network": "Die Einstellungen des Betreibers sind nur aus dem Heimnetz erreichbar.",
     "display_name_invalid": "Ein Anzeigename darf keine Steuer- oder unsichtbaren Zeichen enthalten.",
-    "public_url_missing": "Für Mails braucht nextasks seine öffentliche Adresse; der Betreiber trägt sie unter Einstellungen ein.",
+    "public_url_missing": "Für Mails braucht nextasks seine öffentliche Adresse; der Betreiber trägt sie unter Server › Anmeldung ein.",
     "internal_error": "Das hat nicht geklappt.",
     "network": "Keine Verbindung zum Server.",
     "password_missing": "Gib das Passwort an.",
@@ -238,8 +188,8 @@
     "backups_emergency_only": "Im Verbund lädt und löscht nur das Notkonto Sicherungen.",
     "comment_too_long": "Ein Kommentar hat höchstens 5000 Zeichen.",
     "forTask": "„{{title}}“: {{text}}",
-    "choose_spaces": "Wähle die Bereiche, die das Token sehen darf, oder ausdrücklich alle.",
-    "token_reads_only": "Dieses Token liest nur. Für Änderungen leg eines an, das schreibt.",
+    "choose_spaces": "Wähle die Bereiche, die der API-Schlüssel sehen darf, oder ausdrücklich alle.",
+    "token_reads_only": "Dieser API-Schlüssel liest nur. Für Änderungen leg unter Verbindungen › API-Schlüssel einen an, der schreibt.",
     "bad_preference": "Diesen Wert bietet nextasks nicht an.",
     "display_name_too_long": "Der Anzeigename ist zu lang, höchstens {{maximum}} Zeichen.",
     "duration_not_allowed": "Diese Dauer gibt es hier nicht.",
@@ -247,13 +197,13 @@
     "invalid_status": "Diesen Status kennt nextasks nicht.",
     "invalid_priority": "Diese Priorität kennt nextasks nicht.",
     "origin_refused": "Die API ist für Programme, nicht für Webseiten.",
-    "slow_down": "Zu viele Anfragen mit diesem Token. Warte eine Minute.",
-    "token_invalid": "Kein gültiges API-Token.",
+    "slow_down": "Zu viele Anfragen mit diesem API-Schlüssel. Warte eine Minute.",
+    "token_invalid": "Kein gültiger API-Schlüssel.",
     "invite_unknown": "Diese Einladung gilt nicht (abgelaufen, benutzt oder zurückgezogen).",
     "private_space": "Der Bereich „Privat“ gehört nur dir; dorthin lässt sich niemand einladen.",
     "invites_disabled": "Der Betreiber hat Einladungen abgeschaltet.",
     "app_pairing_disabled": "Der Betreiber hat das Verbinden neuer Geräte abgeschaltet.",
-    "app_address_missing": "Der Server kennt seine öffentliche Adresse nicht. Der Betreiber trägt sie unter Einstellungen, Server, Anmeldung ein.",
+    "app_address_missing": "Der Server kennt seine öffentliche Adresse nicht. Der Betreiber trägt sie unter Server › Anmeldung ein.",
     "app_too_many_pairings": "Es warten schon fünf Codes. Brich einen ab oder warte zehn Minuten.",
     "not_signed_in": "Du bist nicht (mehr) angemeldet.",
     "bad_client": "Die Anfrage kam nicht aus der nextasks-Seite. Lade die Seite neu.",
@@ -586,7 +536,7 @@
     "empty": "Nichts geparkt",
     "emptyLine": "Was kein Datum hat, wartet hier. „Irgendwann“ im Menü einer Aufgabe nimmt ihr das Datum.",
     "hide": "Auf diesem Gerät ausblenden",
-    "hidden": "„Irgendwann“ ist auf diesem Gerät ausgeblendet. Zurück holst du es in den Einstellungen unter Seitenleiste.",
+    "hidden": "„Irgendwann“ ist auf diesem Gerät ausgeblendet. Zurück holst du es unter Einstellungen › Darstellung › Seitenleiste.",
     "device": "nur auf diesem Gerät",
     "moved": "„{{title}}“ wartet jetzt unter Irgendwann.",
     "leaveOut": "„{{name}}“ hier nicht zeigen (auf diesem Gerät)",
@@ -1277,7 +1227,7 @@
       "sent": "Link an {{address}} geschickt. Öffne ihn, um die Adresse zu bestätigen.",
       "suggestion": "Dein Anmeldeanbieter kennt dich als {{address}}.",
       "useSuggestion": "Diese Adresse bestätigen",
-      "noPublic": "Für Mails braucht nextasks seine öffentliche Adresse; der Betreiber trägt sie unter Einstellungen ein.",
+      "noPublic": "Für Mails braucht nextasks seine öffentliche Adresse; der Betreiber trägt sie unter Server › Anmeldung ein.",
       "removed": "Adresse entfernt. nextasks schickt dir keine Mails mehr.",
       "none": "Noch keine bestätigte Adresse.",
       "inProfile": "Adresse im Profil ändern"
@@ -1318,7 +1268,7 @@
     "ask": "Möchtest du „{{event}}“ per {{channel}} nicht mehr bekommen?",
     "already": "„{{event}}“ per {{channel}} ist schon aus.",
     "button": "Abbestellen",
-    "done": "Abbestellt. Einschalten kannst du es unter Mein Konto › Benachrichtigungen.",
+    "done": "Abbestellt. Einschalten kannst du es unter Einstellungen › Benachrichtigungen.",
     "toSettings": "Zu den Benachrichtigungen"
   },
   "join": {

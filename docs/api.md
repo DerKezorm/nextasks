@@ -1,24 +1,25 @@
 # The nextasks API
 
 Programs such as nexmail, nexdeck, Home Assistant, n8n or your own scripts use nextasks over `/api/v1`: spaces,
-lists, tasks and the numbers for a dashboard. A token reads, or reads and writes.
+lists, tasks and the numbers for a dashboard. An API key reads, or reads and writes.
 
 **The promise.** What is under `/api/v1` stays as it is: new fields may come, nothing is renamed or taken away. A
 change that would break a program goes to `/api/v2` beside it. Programs ignore fields they do not know.
 
 ## Switching it on
 
-API tokens are off until the operator switches them on, under **Settings → Server → General**. Then every account makes
-its own tokens under **Settings → My account → Connections**:
+The API is off until the operator switches it on, under **Settings → Server → General → Interfaces**. Then every account
+makes its own API keys under **Settings → My account → Connections → API keys** (keys made before as "API tokens", with
+`ntk_` in front, go on working):
 
-- A token never does more than its account, and never sees more than the spaces chosen for it. "Every space I may see,
+- An API key never does more than its account, and never sees more than the spaces chosen for it. "Every space I may see,
   later ones too" has to be picked on purpose.
-- A new token runs out after 90 days; 30 days, a year or never can be picked.
+- A new API key runs out after 90 days; 30 days, a year or never can be picked.
 - **Read** fetches spaces, lists, tasks and the numbers. **Read and write** also makes, changes, ticks off and trashes
   tasks, in spaces where the account may write. Nothing under `/api/v1` deletes for good or touches members or rights.
-- The token is shown once. nextasks keeps only a checksum, and the token never reaches the log.
-- The operator sees every token (never the token itself) and can block one for good. A blocked or deleted account has
-  no working token.
+- The key is shown once. nextasks keeps only a checksum, and the key never reaches the log.
+- The operator sees every key under **Settings → Server → Accounts → API keys of all accounts** (never the key itself, nor
+  its beginning) and can block and unblock one. A blocked or deleted account has no working key.
 
 ## Asking
 
@@ -35,9 +36,9 @@ family, plus `"fields"` inside `detail` for `422 invalid_input`.
 
 | Status | Code | Meaning |
 |---|---|---|
-| 401 | `api_off` | The operator has not switched API tokens on. |
-| 401 | `token_invalid` | No valid token (missing, unknown, run out, blocked). |
-| 403 | `token_reads_only` | A write with a read token. |
+| 401 | `api_off` | The operator has not switched the API on (Server › General › Interfaces). |
+| 401 | `token_invalid` | No valid API key (missing, unknown, run out, blocked). |
+| 403 | `token_reads_only` | A write with a key that only reads. |
 | 403 | `not_allowed` | The account may read the space but not write in it. |
 | 403 | `origin_refused` | The request came from a web page. |
 | 404 | `not_found` | Not there, or not for this token. |
