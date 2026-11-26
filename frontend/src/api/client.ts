@@ -178,6 +178,8 @@ export type Me = {
   min_password?: number
   /** The operator allows passkeys (on from the start). */
   passkeys_allowed?: boolean
+  /** Passkeys can be added here: a public https address, or the page on localhost (konten 1.1.0, E49). */
+  passkeys_can_add?: boolean
   /** A mail when a browser signs in for the first time (on from the start). */
   new_sign_in_mail?: boolean
   /** A password set through a link: the page lists what still has access, until put away. */

@@ -73,6 +73,7 @@ from ..services.konten_store import KontenStore, counts, pending_of, proven
 from ..services.oidc_store import SqlStore
 from ..vendor import nexkonten
 from ..vendor.nexkonten import login as konten_login
+from ..vendor.nexkonten import passkeys as konten_passkeys
 from ..vendor.nexkonten import profiles, resets
 from ..vendor.nexkonten import sessions as konten_sessions
 from ..vendor.nexkonten import setup as konten_setup
@@ -537,6 +538,18 @@ def logout_everywhere(request: Request, response: Response, account: Account, db
     logger.info("All other sessions ended by their owner name=%s", account.name)
 
 
+def passkey_base(request: Request, db: Session) -> str:
+    """The address passkeys belong to: the public one, else the one this request came to (``routers/passkeys``)."""
+    return settings_service.public_url(db) or str(request.base_url).rstrip("/")
+
+
+def passkeys_can_add(request: Request, db: Session) -> bool:
+    """Since konten 1.1.0 (E49): whether the box "Passkeys" offers "Add a passkey" here, with the same inputs as
+    adding one (a public https address, or the page on localhost)."""
+    return konten_passkeys.can_add(passkey_base(request, db), origin=request.headers.get("origin", ""),
+                                   request_url=str(request.url))
+
+
 @router.get("/auth/me", summary="The signed-in account, and what this server offers it")
 def me(account: Account, db: DbSession, request: Request) -> dict[str, Any]:
     spared = session_by_provider(db, request.cookies.get(SESSION_COOKIE))
@@ -554,6 +567,8 @@ def me(account: Account, db: DbSession, request: Request) -> dict[str, Any]:
         "preferences": preferences_of(account.preferences),
         "min_password": MIN_PASSWORD,
         "passkeys_allowed": bool(settings_service.get(db, "passkeys_allowed")),
+        # The box "Passkeys" under My account › Security (E49): the button, or what is missing for it.
+        "passkeys_can_add": passkeys_can_add(request, db),
         # Signed in at a provider within the last minutes: an account without a password may confirm with that.
         "fresh_sign_in": fresh_session(request, db, account),
     }

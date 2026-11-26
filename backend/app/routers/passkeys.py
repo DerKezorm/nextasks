@@ -20,7 +20,7 @@ from ..services import settings_service, totp
 from ..services.konten_store import KontenStore
 from ..vendor import nexkonten
 from ..vendor.nexkonten import passkeys
-from .auth import PENDING_COOKIE, account_view, fail, sign_in
+from .auth import PENDING_COOKIE, account_view, fail, passkey_base, sign_in
 
 logger = logging.getLogger("nextasks.auth")
 
@@ -43,7 +43,7 @@ class RemoveIn(BaseModel):
 
 
 def _party(request: Request, db: DbSession) -> passkeys.Party:
-    base = settings_service.public_url(db) or str(request.base_url).rstrip("/")
+    base = passkey_base(request, db)
     try:
         # A page on localhost gets exactly its host and port; a GET without ``Origin`` counts by its own address.
         return passkeys.party(base, origin=request.headers.get("origin", ""), request_url=str(request.url))

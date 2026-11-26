@@ -371,3 +371,16 @@ def test_the_password_says_when_it_was_changed_last(client: TestClient) -> None:
     new = "Another-long-enough-password"
     assert client.put("/api/auth/password", json={"current": PASSWORD, "new": new}).status_code == 204
     assert client.get("/api/auth/me").json()["password_changed_at"] is not None
+
+
+def test_the_security_answer_says_whether_a_passkey_can_be_added_here(client: TestClient, operator: Account) -> None:
+    """E49: without a public https address and away from localhost the box "Passkeys" says what is missing instead
+    of the button; with one, or on localhost, it offers "Add a passkey" (``passkeys_can_add`` in ``/api/auth/me``)."""
+    assert client.get("/api/auth/me").json()["passkeys_can_add"] is False
+    assert client.get("/api/auth/me", headers={"Origin": "http://localhost:5510"}).json()["passkeys_can_add"] is True
+    with SessionLocal() as db:
+        settings_service.save(db, {"public_url": "http://tasks.example.com"})
+    assert client.get("/api/auth/me").json()["passkeys_can_add"] is False
+    with SessionLocal() as db:
+        settings_service.save(db, {"public_url": PUBLIC})
+    assert client.get("/api/auth/me").json()["passkeys_can_add"] is True

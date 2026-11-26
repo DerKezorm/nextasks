@@ -3,7 +3,7 @@
 // keys button there; the settings in areas under `/settings/<area>` with the groups "My account" and, for the
 // operator only, "Server"; the addresses of before lead to their area; the width of the sidebar is dragged and kept.
 import { act } from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { forgetPrefs } from '../lib/devicePref'
 import { smallWorld } from '../test/fakeServer'
@@ -227,5 +227,37 @@ describe('the ways that must stay', () => {
     for (const id of mine.slice(1)) server.addPref('space_pref', id, robin, { hidden: true })
     page = await mount(server, '/today')
     expect(page.querySelector('[data-testid="new-space-hidden"]')?.getAttribute('aria-label')).toBe('New space')
+  })
+})
+
+describe('the box Passkeys', () => {
+  function browserWithPasskeys(): void {
+    vi.stubGlobal('PublicKeyCredential', function PublicKeyCredential() {})
+    Object.defineProperty(navigator, 'credentials', { value: { create: () => undefined, get: () => undefined }, configurable: true })
+  }
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    Reflect.deleteProperty(navigator, 'credentials')
+  })
+
+  it('offers "Add a passkey" where the server can add one', async () => {
+    browserWithPasskeys()
+    const { server } = smallWorld()
+    const page = await mount(server, '/settings/security')
+    const box = page.querySelector('[data-testid="passkeys"]') as HTMLElement
+    expect(box.querySelector('[data-testid="passkey-add"]')).not.toBeNull()
+    expect(box.querySelector('[data-testid="passkey-needs-address"]')).toBeNull()
+  })
+
+  it('tells the operator where the public address goes, instead of a button it cannot keep (E49)', async () => {
+    browserWithPasskeys()
+    const { server } = smallWorld()
+    server.passkeysCanAdd = false
+    const page = await mount(server, '/settings/security')
+    const box = page.querySelector('[data-testid="passkeys"]') as HTMLElement
+    expect(box.querySelector('[data-testid="passkey-add"]')).toBeNull()
+    const note = box.querySelector('[data-testid="passkey-needs-address"]') as HTMLElement
+    expect(note.querySelector('a')?.getAttribute('href')).toBe('/settings/sign-in')
+    expect(note.querySelector('a')?.textContent).toBe('Server › Sign-in')
   })
 })

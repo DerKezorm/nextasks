@@ -377,7 +377,7 @@ export function AccountTab({ part }: { part: AccountPart }) {
 
           <SecondFactor me={me} />
 
-          <PasskeysBox signedInByPassword={withPassword} allowed={me.passkeys_allowed !== false} />
+          <PasskeysBox signedInByPassword={withPassword} allowed={me.passkeys_allowed !== false} canAdd={me.passkeys_can_add !== false} operator={me.role === 'operator'} />
 
           <SessionsBox busy={busy} onEverywhere={() => run(() => authApi.logoutEverywhere(), t('me.sessions.done'))} />
 

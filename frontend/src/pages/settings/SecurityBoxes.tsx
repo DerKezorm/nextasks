@@ -5,7 +5,7 @@
  * module through `AccountButton`.
  */
 import { Fingerprint, Monitor, Smartphone } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { authApi, passkeysApi, type AccessEntry, type PasskeyEntry, type SessionEntry } from '../../api/client'
@@ -14,15 +14,19 @@ import { confirmOf } from '../../lib/accountButton'
 import { problemText } from '../../lib/errors'
 import { moment } from '../../lib/time'
 import { addPasskey, passkeysSupported } from '../../lib/passkeys'
+import { PasskeyAddition } from '../../vendor/nexkonten/AccountCards'
 import { Badge, Box, ConfirmDialog, Field, Notice as Message, Row, Rows } from '../../vendor/nexui'
 
 /** A success worth a sentence that is not the usual "saved" (thrown to end an action early). */
 // eslint-disable-next-line react-refresh/only-export-components
 export class Notice extends Error {}
 
-/** The own passkeys: list, add (password first), remove; adding only where the operator allows passkeys. */
-export function PasskeysBox({ signedInByPassword, allowed = true }: { signedInByPassword: boolean; allowed?: boolean }) {
+/** The own passkeys: list, add (password first), remove; adding only where the operator allows passkeys. Without a
+ * public https address the module's `PasskeyAddition` says what is missing instead of the button (E49); the passkeys
+ * the account has stay listed and removable. */
+export function PasskeysBox({ signedInByPassword, allowed = true, canAdd = true, operator = false }: { signedInByPassword: boolean; allowed?: boolean; canAdd?: boolean; operator?: boolean }) {
   const { t, i18n } = useTranslation()
+  const translate = useMemo(() => (key: string, values?: Record<string, unknown>) => t(key, values), [t])
   const [keys, setKeys] = useState<PasskeyEntry[] | null>(null)
   const [asking, setAsking] = useState<{ kind: 'add' } | { kind: 'remove'; uid: string } | null>(null)
   const [password, setPassword] = useState('')
@@ -57,7 +61,7 @@ export function PasskeysBox({ signedInByPassword, allowed = true }: { signedInBy
       title={t('account.passkeys')}
       hint={t('account.passkeysHint')}
       testId="passkeys"
-      actions={allowed && passkeysSupported() && <AccountButton name="account.passkeyAdd" onClick={() => setAsking({ kind: 'add' })} />}
+      actions={allowed && passkeysSupported() && <PasskeyAddition t={translate} canAdd={canAdd} operator={operator} onAdd={() => setAsking({ kind: 'add' })} signInHref="/settings/sign-in" />}
     >
       {keys.length > 0 && (
         <Rows label={t('account.passkeys')}>

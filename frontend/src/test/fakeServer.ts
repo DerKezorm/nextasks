@@ -137,6 +137,8 @@ export class FakeServer {
   limits = { attachment_bytes: 50 * 1024 * 1024 }
   failures: Failure[] = []
   requests: { method: string; path: string; body: unknown }[] = []
+  /** What `/api/auth/me` says of adding a passkey here (E49: a public https address, or the page on localhost). */
+  passkeysCanAdd = true
   /** How long `/wait` waits without news, ms. */
   waitMs = 25_000
   /** Answers on their way. */
@@ -821,6 +823,7 @@ export class FakeServer {
       factor_state: 'none',
       passkeys: 0,
       passkeys_allowed: true,
+      passkeys_can_add: this.passkeysCanAdd,
       new_sign_in_mail: true,
       min_password: 12,
       second_factor_setup_required: !!account.setupRequired,
