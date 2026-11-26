@@ -50,7 +50,9 @@ operationIds, Zusammenfassungen und das Schema `LocaleEntry` von 0.8.0 (`routers
 `test_nexsprachen_openapi.py`); `GET /api/locales/template` ist neu. E53 (`bauplaene-stand` `0e372f1`): die alten Wege der Sicherung behalten
 ihre Namen (`routes.FORMER_SCHEMAS` an beiden Routern, `routes.former_names("/api/backups")` am alten); Test
 `test_openapi_names.py` hält jeden Namen von 0.8.0 fest (`tests/fixtures/openapi-names-0.8.0.json` aus `konten`),
-nur zwei Zusammenfassungen ändern sich mit dem Verhalten (Löschen mit 30 Tagen, mehrere Betreiber). Seite: Karte `LanguagesCard` des Moduls unter Server › Allgemein (mit `X-Nextasks-Client`,
+nur zwei Zusammenfassungen ändern sich mit dem Verhalten (Löschen mit 30 Tagen, mehrere Betreiber). E57 (`bauplaene-stand` `dcbd5d1`): sprachen 1.0.1
+(Entfernen einer Sprache fragt erst), konten 1.1.1, schluessel 1.0.1 (nur neue, freie Stellen für die App, nextasks
+nutzt sie nicht); die drei Vorlagen von Hand übernommen. Seite: Karte `LanguagesCard` des Moduls unter Server › Allgemein (mit `X-Nextasks-Client`,
 `onChange` = `own.forget`), i18n über `ownLanguages`, Profil über `useLanguageOptions`; die alte Karte und ihre Wörter
 (`server.languages*`, `template`, `upload`, `builtIn`, `texts*`, `languageCode`, `languageAdded`) sind weg. Die
 Anmeldeseite hat in nextasks keine Sprachauswahl (die Einrichtung nimmt die Sprache des Browsers, konten: kein Feld).
