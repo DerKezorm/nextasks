@@ -1,3 +1,4 @@
+// Vorlage nexoidc 1.2.0
 /**
  * Pflichttest 35 (Bauplan 05): every text of the oidc module is in the app, in German and English, through the app's
  * own i18n. Copied once by `bauplaene/oidc/tools/sync.py` to `frontend/src/nexoidc.wording.test.ts`; then the
