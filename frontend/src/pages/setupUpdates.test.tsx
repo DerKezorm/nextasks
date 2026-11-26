@@ -74,6 +74,9 @@ async function fillAndSend(untick: boolean): Promise<Record<string, unknown>> {
   await settle()
   const tick = box.querySelector<HTMLInputElement>('input[data-testid="setup-update-check"]')!
   expect(tick.parentElement!.textContent).toContain('Nach neuen Versionen sehen')
+  // No bell in nextasks (U19): the sentence says the answer stands under About, never "in der Glocke".
+  expect(tick.parentElement!.parentElement!.textContent).toContain('Wenn du Einstellungen › Über nextasks öffnest')
+  expect(tick.parentElement!.parentElement!.textContent).not.toContain('Glocke')
   expect(tick.checked).toBe(true)
   if (untick) act(() => tick.click())
   const fields = [...box.querySelectorAll<HTMLInputElement>('input:not([type="checkbox"])')]

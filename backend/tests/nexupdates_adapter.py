@@ -3,10 +3,8 @@
 The app as in production: the switch ``update_check`` in the settings table (JSON, as before the module), the routes
 under ``/api/about`` (``routers/about.py``), the setup route ``POST /api/setup`` with the box (U1).
 
-nextasks has no bell. So it never looks in the background (U19, ``on_newer`` is None) and asks only when an operator
-opens "About": ``look`` here is that visit, the one way nextasks asks by itself. ``bell`` and ``bell_notices`` skip
-with that reason (TODO updates 0.1.1: the contract tests know no app without a bell; question in
-``einst-fragen/nextasks-module.md``); every test that ends with them has checked the questions that went out first.
+nextasks has no bell (``has_bell`` False, updates 0.1.2): it never looks in the background (U19, ``on_newer`` is None)
+and asks only when an operator opens "About".
 """
 
 from __future__ import annotations
@@ -14,16 +12,14 @@ from __future__ import annotations
 import secrets
 from typing import Any
 
-import pytest
 from updates_contract import StandardAdapter
-
-NO_BELL = "nextasks has no bell: no notice to tell, no look in the background (U19)"
 
 
 class Adapter(StandardAdapter):
     package = "app.vendor.nexupdates"
     prefix = "/api/about"
     also: tuple[str, ...] = ()
+    has_bell = False
 
     def start(self) -> None:
         from app.models import MEMBER, OPERATOR
@@ -100,18 +96,6 @@ class Adapter(StandardAdapter):
             db.expunge(made)
         self._accounts = {"operator": made,
                           "member": make_account("robin", MEMBER, password=secrets.token_urlsafe(12))}
-
-    def look(self) -> None:
-        """U19: the one way nextasks asks by itself is an operator opening "About" (the state is asked when it is a
-        day old and the switch is on)."""
-        answer = self.client("operator").get(f"{self.prefix}/updates")
-        assert answer.status_code == 200, answer.text
-
-    def bell(self) -> list[str]:
-        pytest.skip(NO_BELL)
-
-    def bell_notices(self) -> list[tuple[str, str, str]]:
-        pytest.skip(NO_BELL)
 
     def description(self) -> dict[str, Any]:
         # The app's own description (published under /api/openapi.json only with NEXTASKS_API_DOCS).
