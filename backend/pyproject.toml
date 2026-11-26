@@ -7,6 +7,7 @@ line-length = 120
 extend-exclude = ["app/vendor/nexoidc", "tests/nexoidc", "app/vendor/nexlog", "tests/nexlog", "app/vendor/nexkonten",
                   "app/vendor/nexpost",
                   "app/vendor/nexsicherung", "tests/nexsicherung", "app/vendor/nexschluessel", "tests/nexschluessel",
+                  "app/vendor/nexsprachen", "tests/nexsprachen",
                   "app/services/wiederholung.py", "app/services/gleichstand.py", "app/services/position.py",
                   "app/services/push_crypto.py"]
 

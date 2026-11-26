@@ -222,7 +222,7 @@ def check_confirm(password: str, confirm: str | None) -> None:
 
 def check_language(language: str) -> str:
     """Empty (the browser decides) or a language nextasks has."""
-    if language and language not in SHIPPED and language not in {item.code for item in locales.available()}:
+    if language and language not in SHIPPED and not locales.known(language):
         raise error("unknown_language", "nextasks does not have this language.", 422)
     return language
 
