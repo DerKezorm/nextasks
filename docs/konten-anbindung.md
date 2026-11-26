@@ -47,7 +47,10 @@ an, was 0.8.0 annahm (eingebaut oder eine Datei der Liste; E52, `nexsprachen.kno
 way takes a language as before“). Beim Start ruft `main.lifespan` `locales.start()`: `configure`, dann
 `tidy_at_start` (Reste eines abgebrochenen Hochladens). Die Wege behalten in der Beschreibung der Schnittstelle ihre
 operationIds, Zusammenfassungen und das Schema `LocaleEntry` von 0.8.0 (`routers/locales.py`, Vertragstest
-`test_nexsprachen_openapi.py`); `GET /api/locales/template` ist neu. Seite: Karte `LanguagesCard` des Moduls unter Server › Allgemein (mit `X-Nextasks-Client`,
+`test_nexsprachen_openapi.py`); `GET /api/locales/template` ist neu. E53 (`bauplaene-stand` `0e372f1`): die alten Wege der Sicherung behalten
+ihre Namen (`routes.FORMER_SCHEMAS` an beiden Routern, `routes.former_names("/api/backups")` am alten); Test
+`test_openapi_names.py` hält jeden Namen von 0.8.0 fest (`tests/fixtures/openapi-names-0.8.0.json` aus `konten`),
+nur zwei Zusammenfassungen ändern sich mit dem Verhalten (Löschen mit 30 Tagen, mehrere Betreiber). Seite: Karte `LanguagesCard` des Moduls unter Server › Allgemein (mit `X-Nextasks-Client`,
 `onChange` = `own.forget`), i18n über `ownLanguages`, Profil über `useLanguageOptions`; die alte Karte und ihre Wörter
 (`server.languages*`, `template`, `upload`, `builtIn`, `texts*`, `languageCode`, `languageAdded`) sind weg. Die
 Anmeldeseite hat in nextasks keine Sprachauswahl (die Einrichtung nimmt die Sprache des Browsers, konten: kein Feld).
