@@ -12,7 +12,9 @@ up.
 Since post 1.1.0 there is no mailer of nextasks' own any more: the helpers at the end of this file (``configured``,
 ``send_letter``, ``send_invite``, ``send_test``, ``MailError``) take every system mail through the module. nextasks'
 reports and events are letters of the app (``app_letters.write`` with their HTML as ``body_html`` in the module's
-frame, ``services/channels.py``); their tries and the person's state per way stay in ``notify_outbox``.
+frame, ``channels.mail_letter``) in this same outbox, under the key ``notify:<account>:<key>``; every try shows at the
+person's way of mail (``after_attempt``), and a waiting one without a way of mail any more is given up before a round
+(``outbox.drop_stale_mail``).
 """
 
 from __future__ import annotations
