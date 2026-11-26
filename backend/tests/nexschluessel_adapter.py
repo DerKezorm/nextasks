@@ -43,7 +43,6 @@ class Adapter(StandardAdapter):
             # Tokens are closed until the operator opens them (0.8.0); the contract asks with them open.
             settings_service.save(db, {"api_tokens_allowed": True})
         self._clients: dict[str, Any] = {}
-        self._owes = False
 
     def stop(self) -> None:
         for client in self._clients.values():
@@ -60,20 +59,7 @@ class Adapter(StandardAdapter):
 
         if role not in self._clients:
             self._clients[role] = new_client(None if role == "anonymous" else self._accounts[role])
-            if role == "owner" and self._owes:
-                self._from_provider()
         return self._clients[role]
-
-    def _from_provider(self) -> None:
-        from sqlalchemy import update
-
-        from app.db import SessionLocal
-        from app.models import AuthSession
-
-        with SessionLocal() as db:
-            db.execute(update(AuthSession).where(AuthSession.account_id == self._accounts["owner"].id)
-                       .values(by_provider=True))
-            db.commit()
 
     def legacy_keys(self) -> list[LegacyKey]:
         return [
@@ -102,17 +88,11 @@ class Adapter(StandardAdapter):
         return client.get("/api/v1/me", headers={"Authorization": f"Bearer {secret}"}).status_code
 
     def owe_factor(self) -> None:
-        """The operator requires a second factor; the owner has none. In nextasks a browser session of such an account
-        reaches nothing but the setup of its factor, unless it began at a provider that checks the factor itself
-        (``AuthSession.by_provider``, decided 10.10.2026): then the account uses nextasks and its tokens rest. The
-        owner's session is that one (question 3 in einst-fragen/nextasks.md)."""
         from app.db import SessionLocal
         from app.services import settings_service
 
         with SessionLocal() as db:
             settings_service.save(db, {"two_factor_required": True})
-        self._owes = True
-        self._from_provider()
 
     def foreign_area(self) -> Any:
         from app.db import SessionLocal

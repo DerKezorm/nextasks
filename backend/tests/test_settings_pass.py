@@ -119,3 +119,24 @@ def test_the_box_for_an_address_not_proven_only_for_a_new_one(client: TestClient
         row.email_confirmed = "tester@example.com"
         db.commit()
     assert client.get("/api/auth/me").json()["email_needs_proof"] is False
+
+
+def test_an_account_that_owes_its_second_factor_makes_keys_that_rest(client: TestClient, operator: Account) -> None:
+    """The module schluessel's rule (E33): making a key stays possible and says the keys rest; the key opens nothing
+    until the account has its factor. Everything else of the account still waits for the factor."""
+    anna = make_account("anna")
+    with SessionLocal() as db:
+        settings_service.save(db, {"api_tokens_allowed": True, "two_factor_required": True})
+    with new_client(anna) as browser:
+        assert browser.get("/api/notify").status_code == 403
+        listed = browser.get("/api/connections/keys")
+        assert listed.status_code == 200 and listed.json()["keys_wait"] is True
+        made = browser.post("/api/connections/keys", json={"kind": "api", "name": "Script", "areas": "all"})
+        assert made.status_code == 201, made.text
+        secret = made.json()["secret"]
+    with TestClient(app, base_url="http://testserver") as program:
+        assert program.get("/api/v1/me", headers={"Authorization": f"Bearer {secret}"}).status_code in (401, 403)
+    with SessionLocal() as db:
+        settings_service.save(db, {"two_factor_required": False})
+    with TestClient(app, base_url="http://testserver") as program:
+        assert program.get("/api/v1/me", headers={"Authorization": f"Bearer {secret}"}).status_code == 200

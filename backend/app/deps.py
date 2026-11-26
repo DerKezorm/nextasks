@@ -123,6 +123,9 @@ def client_ip(request: Request) -> str:
 SETUP_ONLY_PATHS = {
     "/api/auth/me", "/api/auth/logout", "/api/auth/totp/begin", "/api/auth/totp/setup", "/api/auth/totp/confirm",
     "/api/auth/passkeys", "/api/auth/passkeys/begin", "/api/auth/passkeys/finish",
+    # The module schluessel's rule (decided E33): an account that owes its second factor still lists and makes its API
+    # keys, told that they rest; they open nothing until the factor is there (``apitokens.authenticate``).
+    "/api/connections/keys",
 }
 
 
