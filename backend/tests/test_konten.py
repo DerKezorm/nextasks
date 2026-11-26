@@ -381,6 +381,11 @@ def test_the_security_answer_says_whether_a_passkey_can_be_added_here(client: Te
     with SessionLocal() as db:
         settings_service.save(db, {"public_url": "http://tasks.example.com"})
     assert client.get("/api/auth/me").json()["passkeys_can_add"] is False
+    # A set address counts alone: http answers no, also with the page on localhost (adding would fail there).
+    assert client.get("/api/auth/me", headers={"Origin": "http://localhost:5510"}).json()["passkeys_can_add"] is False
+    with SessionLocal() as db:
+        settings_service.save(db, {"public_url": "http://localhost:8510"})
+    assert client.get("/api/auth/me", headers={"Origin": "http://localhost:8510"}).json()["passkeys_can_add"] is False
     with SessionLocal() as db:
         settings_service.save(db, {"public_url": PUBLIC})
     assert client.get("/api/auth/me").json()["passkeys_can_add"] is True

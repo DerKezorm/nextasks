@@ -544,9 +544,10 @@ def passkey_base(request: Request, db: Session) -> str:
 
 
 def passkeys_can_add(request: Request, db: Session) -> bool:
-    """Since konten 1.1.0 (E49): whether the box "Passkeys" offers "Add a passkey" here, with the same inputs as
-    adding one (a public https address, or the page on localhost)."""
-    return konten_passkeys.can_add(passkey_base(request, db), origin=request.headers.get("origin", ""),
+    """Since konten 1.1.0 (E49): whether the box "Passkeys" offers "Add a passkey" here: a public address set counts
+    alone and only with https; without one, the page on localhost. Only the address set goes in, never the one this
+    request came to (that would count as set)."""
+    return konten_passkeys.can_add(settings_service.public_url(db), origin=request.headers.get("origin", ""),
                                    request_url=str(request.url))
 
 
