@@ -41,6 +41,22 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug 7fb9279 (27.11.2026): ui 1.1.2, schluessel 1.1.2, mcp 1.1.3, verbinden 0.1.5, sicherung 1.0.5
+
+E65: die Module schreiben Tage und Zeitpunkte selbst in der einen Form; nextasks gibt ihnen wie bisher ein `when`, jetzt
+in dieser Form und in der Zeitzone des Kontos (E14). `lib/time.ts`: `momentIn` („heute, 14:05“, „gestern, 14:05“, sonst
+„24.02.2027, 14:05“) und `clockIn` („14:05“) über `formatMoment`/`formatTime` von ui, gerechnet in der Zone des Kontos
+(heute/gestern nach seiner Uhr); `dayOf` = `formatDay`; Hook `lib/useWhen.ts`. Umgestellt: „Andere nex-Apps“,
+„API-Schlüssel“, „KI-Werkzeuge (MCP)“, „Wartende Rückfragen“, die Seite einer Rückfrage, „API-Schlüssel aller Konten“
+(bekamen vorher kein bzw. das alte `when` der App in der Zone des Browsers), Passkeys und Sitzungen, Konten (Fakten,
+Marken, Ablauf einer Einladung), „Zuletzt geändert am …“ des Passworts (vorher „26. November 2026“), Log, Sicherung,
+Über. Außerhalb der Einstellungen (Aufgaben, Papierkorb, Verlauf) bleibt `moment`. M-19 kommt aus den Modulen, kein Test
+der App erwartete „All Spaces“; auch kein Test der App erwartete eine alte Datumsform. Neu: `lib/time.test.ts` (Zone,
+heute/gestern nach der Uhr des Kontos, unbekannte Zone, 24 Stunden; grün auch mit `TZ=America/Los_Angeles`),
+`settings.test.tsx` (Sitzung in Asia/Tokyo; der Fake nennt `timezone` in `/api/auth/me` wie der Server). Gegenproben
+rot: Zone übergangen, Sitzungen in alter Form. Vorlagen der drei Module von Hand übernommen. Kein `TODO` im Code.
+Läufe `module-nextasks-r6`: ruff, lint, build sauber; pytest 1742 grün, 13 übersprungen; vitest 1279 grün; Start-Probe 200, keine Traceback.
+
 ### Nachzug 80a3dd0 (27.11.2026): schluessel 1.1.1, mcp 1.1.2, verbinden 0.1.4, MCP 15 an Kommentaren
 
 schluessel 1.1.1 und mcp 1.1.2: nichts Eigenes, nextasks hatte keine eigenen Wörter `areasAll`/`areasSome` (es gibt
