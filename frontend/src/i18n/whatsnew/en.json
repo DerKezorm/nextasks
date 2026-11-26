@@ -161,7 +161,7 @@
       {
         "title": "Settings in one place",
         "where": "Your name at the bottom of the sidebar",
-        "body": "The menu above your name is gone. Clicking your name opens the settings: “My account” with profile, security, appearance, connections and notifications, “Server” for operators, and “About nextasks” at the bottom. Language and sign out are in the profile, light and dark under My account › Appearance."
+        "body": "The menu above your name is gone. Clicking your name opens the settings: “My account” with profile, security, appearance, connections and notifications, “Server” for operators, and “About nextasks” at the bottom. Language and sign out are in the profile, light and dark under appearance."
       },
       {
         "title": "New task and search in the sidebar",

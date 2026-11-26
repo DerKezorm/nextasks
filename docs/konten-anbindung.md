@@ -56,8 +56,9 @@ e2e Test 34: jetzt grün (Fläche über ihren h1, Karte über `data-card`).
 Verweise (E39, E46): Texte, README und `docs/api.md` nennen die Orte der Einstellungen von heute, mit „›“ und der
 Gruppe zuerst („Mein Konto › Verbindungen › API-Schlüssel“, „Server › Allgemein › Schnittstellen“, „Server ›
 Anmeldung“, „Mein Konto › Darstellung › Seitenleiste“, „Mein Konto › Profil › Sprache“); „Einstellungen ›“ nur auf der
-Seite zum Abbestellen und im README vor der Gruppe; auch die Orte älterer Was-ist-neu-Einträge. Test
-`i18n/places.test.ts` (Pfeile, Kommas und ein Ort ohne Gruppe sind rot). Die toten Bereichstexte `settings.areas.*`
+Seite zum Abbestellen und im README vor der Gruppe. In „Was ist neu“ zeigen nur die Wegweiser („where“) auf den Ort
+von heute, der Text älterer Fassungen bleibt wie veröffentlicht (E49). Test `i18n/places.test.ts` (Pfeile, Kommas und
+ein Ort ohne Gruppe sind rot; Fingerabdruck des Texts jeder veröffentlichten Fassung, gleich dem Zweig `konten`). Die toten Bereichstexte `settings.areas.*`
 sind weg.
 
 Gemeinsame Runde (26.11.2026, `bauplaene-stand` `86a0cce`): alle sieben Module neu gezogen, Vorlage
