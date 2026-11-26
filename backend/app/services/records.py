@@ -19,7 +19,7 @@ from typing import Annotated, Any
 
 from pydantic import PlainSerializer
 
-from . import fractional, gleichstand, position, rotation, wiederholung
+from . import fractional, gleichstand, gone, position, rotation, wiederholung
 
 UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
@@ -510,9 +510,10 @@ def data_of(kind: str, row: Any, *, role: str | None = None, own_member: bool = 
             "position": row.position, "title": row.title, "notes": row.notes, "url": row.url,
             "due_date": row.due_date, "due_time": row.due_time, "repeat": row.repeat, "repeat_from": row.repeat_from,
             "location": row.location, "flagged": row.flagged, "priority": row.priority, "tags": list(row.tags or []),
-            "assignees": list(row.assignees or []), "completed_at": row.completed_at,
+            # Deleted accounts (within their 30 days) are nobody's to see (``services/gone.py``, E35).
+            "assignees": gone.shown(row.assignees), "completed_at": row.completed_at,
             "completed_by": row.completed_by, "created_by": row.created_by, "created_at": row.created_at,
-            "deleted_at": row.deleted_at, "rotation": list(row.rotation or []),
+            "deleted_at": row.deleted_at, "rotation": gone.shown(row.rotation),
         }
     if kind == "attachment":
         return {"id": row.id, "reminder_id": row.reminder_id, "name": row.name, "mime": row.mime, "size": row.size,

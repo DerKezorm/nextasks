@@ -49,6 +49,7 @@ from ..models import (
     AuthSession,
     Member,
     OidcProvider,
+    Reminder,
     new_device_key,
     utcnow,
 )
@@ -984,7 +985,14 @@ class KontenStore:
             first = cursor.take(self.db, len(members))
             for number, member in enumerate(members):
                 member.cursor = first + number
-            self.members_moved = True
+        # Its tasks too, where it is assigned: every device shows them anew, without it or with it again (E35).
+        given = [task for task in self.db.scalars(select(Reminder)) if row.id in (task.assignees or [])
+                 or row.id in (task.rotation or [])]
+        if given:
+            first = cursor.take(self.db, len(given))
+            for number, task in enumerate(given):
+                task.cursor = first + number
+        self.members_moved = True
         self.db.flush()
 
     def shut_out(self, account_id: AccountId) -> None:
@@ -1010,11 +1018,12 @@ class KontenStore:
         """As deleting did in 0.8.0 (``accounts.delete_account``): every space left (its reminders stay; where it was
         the last manager, the member who joined first becomes manager), its space "Private" gone, the name reserved
         for good."""
-        from . import accounts
+        from . import accounts, gone
 
         row = self._row(account_id)
         if row is not None:
             accounts.delete_account(self.db, row)
+        gone.forget()
 
     def set_storage_limit(self, account_id: AccountId, limit: int | None) -> None:
         """nextasks has no storage limit per account (the module's table): never called."""
@@ -1057,9 +1066,10 @@ class KontenStore:
     def commit(self) -> None:
         self.db.commit()
         if getattr(self, "members_moved", False):
-            from . import cursor
+            from . import cursor, gone
 
             self.members_moved = False
+            gone.forget()
             cursor.touched_everybody()
 
     def rollback(self) -> None:

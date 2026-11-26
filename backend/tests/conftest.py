@@ -40,7 +40,7 @@ from app.main import app  # noqa: E402
 from app.models import MEMBER, OPERATOR, Account, Base, Setting  # noqa: E402
 from app.routers import app1  # noqa: E402
 from app.security import SESSION_COOKIE, brake, hash_password, start_session  # noqa: E402
-from app.services import clock, devices, emailaddr, notify, totp, updates  # noqa: E402
+from app.services import clock, devices, emailaddr, gone, notify, totp, updates  # noqa: E402
 from app.vendor.nexkonten import factor as konten_factor  # noqa: E402
 from app.vendor.nexkonten import passkeys as konten_passkeys  # noqa: E402
 from app.vendor.nexkonten import setup as konten_setup  # noqa: E402
@@ -108,6 +108,7 @@ def clean_db(schema: None) -> Iterator[None]:
     clock.shift(0)
     app1.forget_private_cache()
     devices.forget()
+    gone.forget()
     notify.INLINE = True
     yield
     app.dependency_overrides.clear()

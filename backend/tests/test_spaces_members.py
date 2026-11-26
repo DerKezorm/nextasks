@@ -224,3 +224,39 @@ def test_a_deleted_account_keeps_its_place_unseen_and_comes_back_whole() -> None
 
         assert db.get(Member, (space, ben_account.id)) is None, "gone for good, its membership with it"
     _ = anna_account
+
+
+def test_a_task_given_to_a_deleted_account_keeps_it_unseen_until_it_comes_back() -> None:
+    """Decided E35: the assignment of a deleted account stays, unseen (lists, ``/api/app/1``); changing the task keeps
+    it; brought back, it shows again; gone for good, it goes."""
+    from app.models import Reminder
+
+    from .conftest import make_account
+
+    _anna_account, anna = person("anna")
+    ben_account, ben = person("ben")
+    space = shared_space(anna, ben)
+    list_id = make_list(anna, space)
+    task = new_id()
+    assert put(anna, "reminder", task, {"list_id": list_id, "title": "Bins", "position": "a0",
+                                        "assignees": [ben_account.id]})["ok"]
+    boss = make_account("boss", "operator")
+    admin = TestClient(app, base_url="http://testserver", headers=WEB)
+    assert admin.post("/api/auth/login", json={"name": boss.name, "password": PASSWORD}).status_code == 200
+    assert admin.request("DELETE", f"/api/accounts/{ben_account.id}", json={"current_password": PASSWORD}).status_code == 204
+
+    assert state(anna)[("reminder", task)]["data"]["assignees"] == [], "unseen"
+    # A change by somebody who cannot see it: the hidden assignment stays.
+    assert put(anna, "reminder", task, {"title": "Bins out", "assignees": []})["ok"]
+    with SessionLocal() as db:
+        row = db.get(Reminder, task)
+        assert row is not None and row.title == "Bins out" and row.assignees == [ben_account.id]
+
+    assert admin.post(f"/api/accounts/{ben_account.id}/restore", json={"current_password": PASSWORD}).status_code == 204
+    assert state(anna)[("reminder", task)]["data"]["assignees"] == [ben_account.id], "back with the account"
+
+    assert admin.request("DELETE", f"/api/accounts/{ben_account.id}", json={"current_password": PASSWORD}).status_code == 204
+    purge_deleted(ben_account.id)
+    with SessionLocal() as db:
+        row = db.get(Reminder, task)
+        assert row is not None and row.assignees == [], "gone for good, the assignment with it"

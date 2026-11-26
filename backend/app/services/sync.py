@@ -52,6 +52,7 @@ from . import (  # noqa: F401
     cursor,
     files,
     gleichstand,
+    gone,
     history,
     records,
     rotation,
@@ -445,6 +446,7 @@ def _update(db: Session, caller: Caller, kind: str, row: Any, incoming: records.
         _check_parent(db, incoming.values["parent_id"], row.id)
     dropped: list[int] = []
     before_assignees = list(row.assignees or []) if kind == "reminder" else []
+    before_rotation = list(row.rotation or []) if kind == "reminder" else []
     before_deleted = getattr(row, "deleted_at", None)
     for name in fields:
         if name == "completed_by":
@@ -461,9 +463,11 @@ def _update(db: Session, caller: Caller, kind: str, row: Any, incoming: records.
         row.space_id = new_space
     if kind == "reminder" and "assignees" in taken:
         kept, dropped = _allowed_assignees(db, new_space, list(row.assignees or []))
-        row.assignees = kept
+        # An assignment of a deleted account nobody sees stays while the task keeps its space (decided E35).
+        row.assignees = gone.kept(before_assignees, kept) if new_space == old_space else kept
     if kind == "reminder" and "rotation" in taken:
-        row.rotation, _struck = _allowed_assignees(db, new_space, list(row.rotation or []))
+        turn, _struck = _allowed_assignees(db, new_space, list(row.rotation or []))
+        row.rotation = gone.kept(before_rotation, turn) if new_space == old_space else turn
     if kind == "reminder":
         # Whose turn it is stands in ``assignees`` alone; ``_filter_assignees`` keeps it so when the space changes.
         rotation.settle(row, _is_private(db, new_space), now_ms, before_assignees)
