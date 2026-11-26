@@ -162,6 +162,7 @@ def test_every_partner_card_stands_for_purposes_nextasks_really_grants() -> None
     from app.routers.v1 import PURPOSES
 
     assert verbinden.CONFIG.partners == ["nexnotes", "nexmail", "nextime", "nexpaper", "nexdiary"]
+    assert verbinden.CONFIG.usable == verbinden.CONFIG.partners
     for partner in verbinden.CONFIG.partners:
         granted = CATALOG.uses(partner, "nextasks")
         assert granted and set(granted) <= set(PURPOSES), partner

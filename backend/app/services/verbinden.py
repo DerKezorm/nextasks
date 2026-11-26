@@ -42,6 +42,8 @@ CONFIG = nexverbinden.AppConfig(
     access_prefix=ACCESS_PREFIX,
     refresh_prefix=REFRESH_PREFIX,
     code_prefix=CODE_PREFIX,
+    # V20: the partners nextasks has a use for, all five as host (its purposes work at /api/v1).
+    in_use=("nexnotes", "nexmail", "nextime", "nexpaper", "nexdiary"),
 )
 
 #: The module's settings under nextasks' names (``settings_service.DEFAULTS``).

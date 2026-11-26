@@ -1,14 +1,10 @@
 """nexverbinden contract tests: nextasks' adapter (from the module's ``tests-fuer-apps/adapter_template.py``).
 
-nextasks is the host: the partner of the tests is nexmail, which uses all four purposes nextasks grants
-(``tasks.read``, ``tasks.write``, ``tasks.complete``, ``members.read``), so every probe opens. That a connection without
-a purpose is turned away at nextasks' routes, the app's own tests show with nexnotes, nextime and nexdiary
-(``tests/test_connect.py``). The app runs on the test session's database (``tests/conftest.py`` empties it before every
-test) at the public address ``https://nextasks.example.com``; the older version (0.8.0) had API keys, typed in by other
-apps, but never typed in a key of another app (``older_link`` False).
-
-The probes are GET routes of ``/api/v1`` (``probe``): a write purpose has no GET route of its own, so it is probed at
-the route a program reads before it writes (TODO verbinden 0.1.1: question in ``einst-fragen/nextasks-module.md``).
+nextasks is the host: the partner of the tests is nextime, which uses ``tasks.read`` and ``tasks.complete``, so the
+probes show both sides: what it was given opens, ``tasks.write`` and ``members.read`` are turned away (403). The app
+runs on the test session's database (``tests/conftest.py`` empties it before every test) at the public address
+``https://nextasks.example.com``; the older version (0.8.0) had API keys, typed in by other apps, but never typed in a
+key of another app (``older_link`` False).
 """
 
 from __future__ import annotations
@@ -23,14 +19,11 @@ from fastapi.testclient import TestClient
 from verbinden_contract import StandardAdapter
 
 BASE = "https://nextasks.example.com"
-#: The GET route of ``/api/v1`` each purpose is probed at (see the module docstring).
-PROBES = {"tasks.read": "/api/v1/tasks", "tasks.complete": "/api/v1/tasks", "tasks.write": "/api/v1/lists",
-          "members.read": "/api/v1/spaces"}
 
 
 class Adapter(StandardAdapter):
     package = "app.vendor.nexverbinden"
-    partner = "nexmail"
+    partner = "nextime"
     base = BASE
     older_link = False
 
@@ -42,9 +35,8 @@ class Adapter(StandardAdapter):
         from tests.conftest import PASSWORD, make_account
 
         self._accounts = {
-            # The names of the partner of the tests (verbinden_partner.ROLES): the contract asks for "kim".
-            "owner": make_account("kim", MEMBER),
-            "other": make_account("sam", MEMBER),
+            "owner": make_account(self.names["owner"], MEMBER),
+            "other": make_account(self.names["other"], MEMBER),
             "operator": make_account("boss", OPERATOR),
         }
         self._password = PASSWORD
@@ -60,9 +52,9 @@ class Adapter(StandardAdapter):
 
         owner = self.client("owner")
         _private, first_list = private_space(owner)
-        garden = shared_space(owner, name="Garden")
-        garden_list = make_list(owner, garden, name="Beds")
-        make_reminder(owner, first_list, title="Milk")
+        self._garden = shared_space(owner, name="Garden")
+        garden_list = make_list(owner, self._garden, name="Beds")
+        self._task = make_reminder(owner, first_list, title="Milk")
         make_reminder(owner, garden_list, title="Water the roses")
         self.older_key = ""
         self.older_key_path = "/api/v1/me"
@@ -117,8 +109,17 @@ class Adapter(StandardAdapter):
 
             sign_in(self._clients[role], account)
 
-    def probe(self, purpose: str) -> str | None:
-        return PROBES[purpose]
+    def account_id(self, role: str) -> Any:
+        return self._accounts[role].id
+
+    def probe(self, purpose: str) -> str | tuple[str, str, Any] | None:
+        """The route of ``/api/v1`` each purpose opens (``routers/v1.py``)."""
+        return {
+            "tasks.read": "/api/v1/tasks",
+            "tasks.complete": ("PATCH", f"/api/v1/tasks/{self._task}", {"completed": True}),
+            "tasks.write": ("POST", "/api/v1/tasks", {"title": "From the probe"}),
+            "members.read": f"/api/v1/spaces/{self._garden}/members",
+        }[purpose]
 
     def areas_seen(self, purpose: str, answer: Any) -> set[str]:
         from app.db import SessionLocal
