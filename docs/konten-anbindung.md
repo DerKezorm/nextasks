@@ -11,7 +11,50 @@ haben**, eine Adresse dient heute nur den Mitteilungen, und es gibt einen Weg, d
 Betreiber setzt ein Passwort selbst** (Konten › „Neues Passwort“). Der Entwurf sagt, nextasks habe gar keinen Weg
 zurück; das stimmt nicht ganz.
 
-## 0. Stand (25.11.2026): Backend und Oberfläche angebunden, auf den Modulen 1.0.0
+## 0. Stand
+
+### Durchgang „Einstellungen“ (26.11.2026, Zweig `einst-desktop`)
+
+Nach dem Bauplan in nexlore `Development/nexapps/Baupläne/Bauplan Einstellungen.md` (E1 bis E31). Module aus
+`bauplaene-stand` bzw. `bauplaene-einst` (je `tools/sync.py copy`, `check` grün): **ui 1.1.0, konten 1.1.0, oidc 1.2.0,
+post 1.1.0, log 1.0.0, sicherung 1.0.1, schluessel 1.0.0**. Offene Fragen: `einst-fragen/nextasks.md` (1 bis 12).
+
+| Bereich | woher jetzt | was gewandert ist (alt → neu) |
+|---|---|---|
+| Gerüst | `SettingsLayout`, `SettingsNav`, `SettingsPage` (ui) in `pages/SettingsPage.tsx`, Titel und Zeilen aus `areaText` | eigene `SettingsNav`/`SettingsJump` → Liste unter `/settings` auf dem Handy; Reihenfolge Mein Konto: Profil, Sicherheit, Darstellung, **Benachrichtigungen vor Verbindungen**; alte Pfade (`/account?tab=…`, `/about`, `/settings?tab=…&sub=…`) leiten weiter um |
+| Profil | `PAGES.profile` (konten), `UnconfirmedEmailBox`, `SignOutCard` | Karte „Zeitzone“ → Auswahl in der Profilkarte unter Sprache (E14); „Als App installieren“ → Verbindungen; eigene Abmelden-Karte → Modul; neu `POST /api/me/email/prove`, `email_needs_proof` (E23: Bestandsadressen beim ersten Start von 1.1.0 bewiesen, `konten_wanderung.run(first_110)`) |
+| Sicherheit | `PAGES.security` | jede Rückfrage nach dem eigenen Passwort heißt „Passwort“ (Frage 9 zum Fenster „Passwort ändern“) |
+| Darstellung | `pages/settings/AppearanceArea.tsx`: `AppearanceCard` (konten), „Seitenleiste“, „Bereiche“, „Tastenkürzel“ | Hell/Dunkel am Konto (`accounts.theme`, `PUT /api/me/theme`, einmal `POST /api/me/theme/adopt` mit dem Wert des Browsers); Augen-Knöpfe → `CheckboxRow`; Filter bearbeiten als `sm` „Bearbeiten“ |
+| Benachrichtigungen | `NotifyWays` (ui) zuerst, dann app-eigen „Was kommt wohin“ (E18) | Kästen Mail und Browser → `NotifyWays`; iPhone und iPad mit Verweis auf Verbindungen |
+| Verbindungen | „Geräte“ (Kit, `ConfirmDialog`), `components/InstallCard.tsx` (E28: immer da), `ApiKeysCard` (schluessel) | `ApiTokens.tsx`, `KeysWait.tsx` fallen weg; keine Karte „KI-Werkzeuge (MCP)“ (nextasks hat keinen MCP-Zugang, E27) |
+| Allgemein | `ServerCards.tsx`: „Grenzen“ (`Field action`), „Funktionen für alle Konten“, `InterfacesCard` (schluessel), „Sprachen“ (`Chip`) | „Dateien“ → Grenzen; „iPhone-App und Einladungen“ → Schnittstellen (App, Koppeln) und Funktionen (Einladungen); Karte „API-Token“ → Schnittstellen; Proxy-Hinweis fällt weg (Bereit fürs Internet?); keine Karte Web Push (Frage 12) |
+| Anmeldung | `SignInArea.tsx`: `SignInPage` (konten) + `SignInProviders` (oidc) | `SignInCards.tsx` und Kopplungs-Zweige (nexsuite) fallen weg; neue Wege `GET/PUT /api/server/sign-in`, `GET /api/server/sign-in/readiness` (`routers/server_signin.py`); `PUT /api/settings` bleibt |
+| Mail | `MailCard` (post) unter `/api/server/mail` (`routers/server_mail.py`) | `services/mailer.py` fällt weg: Kontomails und Testmail über `post_store.send_letter` (`outbox.deliver_now`); Berichte und Ereignisse als Briefe der App (`app_letters.write`, `body_html` im Rahmen, E26) über den Weg Mail von `notify_outbox` (Frage 2); Outbox mit `key`, `waiting`, `on_commit`, `recipient`, `outbox_runner` |
+| Speicher und Sicherung | Modul sicherung: `services/backup_hooks.py` (Format unverändert), `StorageArea.tsx` | eigene `BackupsCard` → Karten „Speicher“ und „Sicherung“; neu Uhrzeit (`backup_time`, 03:00), „Jeden Monat“; alte Wege `/api/backups/*` mit `x-nextasks-password` über `legacy_router`; Start: `configure`, `tidy_at_start`, `warn_at_start`, `apply_pending`, `report_failed_restore` |
+| Konten | Kontenliste (konten, `capsOf`), `WhatYouSeeCard`, `AllKeysCard` (schluessel) | Löschen mit 30 Tagen Zurückholen (`accounts.deleted_at`, `POST /api/accounts/{id}/restore`, Hausputz `manage.purge_due` stündlich); mehrere Betreiber; `Account.shut` sperrt gelöschte wie gesperrte an jeder Tür; Tabelle „API-Token aller Konten“ → Modul |
+| Log | Modul log (`services/logs.py` = Konfiguration, `routers/logs.py` = `nexlog.api.router`), `LogCard` | Format, Datei, Schlüssel `log_mode`/`log_mode_until` unverändert; geschwärzt jetzt auch `ntd_`, `nxm_` |
+| Über | `AboutPage` (ui) | eigene Seite mit Wortmarke → Logo als Bild |
+
+Schlüssel: `services/schluessel_store.py` über `api_tokens` (Vorsilbe `ntk_`, Hash, Stufe, Bereiche unverändert),
+Schalter `api_tokens_allowed`, `app_enabled`, `app_pairing_allowed`; Wege `/api/connections/*`; `/api/v1` prüft weiter
+selbst; `/api/api-tokens`, `/api/admin/api-tokens` bleiben (Frage 7). Home Assistant, iPhone-App, nexmail und nexnotes
+merken nichts (Test `test_settings_pass.py`).
+
+Umwege: keine im `vendor/`; ruff nimmt alle vendor-Module samt Vertragstests aus. Rot und begründet: drei Fälle in
+`signInCards.test.tsx` und e2e Test 35 (Verhalten der authentik-Karte von oidc 1.2.0, Frage 8). Vorbestehend rot war
+e2e Test 34: jetzt grün (Fläche über ihren h1, Karte über `data-card`). post und oidc ließen sich aus `bauplaene-einst`
+nicht neu ziehen (dort ungespeicherte Änderungen); die Vorlagen-Zeilen von `5caffab` sind übernommen, `sync.py check`
+grün.
+
+Läufe (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber; pytest 1510 grün, 3 übersprungen (vorher
+1397/3; neu darin die Vertragstests nexlog, nexsicherung, nexschluessel, konten/post 1.1.0 und `test_settings_pass.py`);
+`npm run lint` sauber; vitest 1119 grün, 3 rot (`signInCards.test.tsx`, Frage 8; vorher 1048); `npm run build` nach
+dem Nachtrag in `nexpost.test.ts` sauber. Playwright `npm run e2e`: 33 und 34 grün, 35 rot (Frage 8b). Mutationsproben
+(Rückgabecode): Schwärzen von `ntd_` (nexlog), Zähler nach dem Wiederherstellen (`continue_counter`), Zurückholen
+eines gelöschten Kontos.
+
+### Auf den Modulen 1.0.0 (25.11.2026)
+
 
 **Auf den eingefrorenen Modulen konten 1.0.0, ui 1.0.0, post 1.0.0, oidc 1.1.2** (25.11.2026): „Passwort vergessen“
 und jeder andere Link, der sofort geht (Bestätigung nach einer Einladung, Reset-Link des Betreibers, neue Adresse),
