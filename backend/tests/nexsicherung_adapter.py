@@ -34,6 +34,8 @@ class Adapter(StandardAdapter):
         self.operation_ids = names["operation_ids"]
         self.summaries = names["summaries"]
         self.schema_names = names["schema_names"]
+        # The old ways check {name} against the pattern and length of 0.8.0 again (E53, part of former_names).
+        self.name_pattern = bool(names["name_pattern"])
 
     def description(self) -> dict[str, Any]:
         # nextasks publishes its description only with NEXTASKS_API_DOCS (off in the tests): its own, never for tests.
