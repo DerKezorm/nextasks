@@ -87,6 +87,7 @@ describe('Über nextasks', () => {
     await show()
     expect(box.textContent).toContain('0.8.0')
     expect(box.textContent).not.toContain('9.0.0')
+    expect(box.textContent).not.toContain('Aktualisierungen')
     expect(box.querySelector('input[type="checkbox"]')).toBeNull()
     expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual(['GET /api/about'])
   })
