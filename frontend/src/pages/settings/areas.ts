@@ -6,7 +6,7 @@
  * a phone and the profile beside it on a wider page. The addresses of before (`/account?tab=…`, `/about`,
  * `/settings?tab=…&sub=…`) lead to their area.
  */
-import type { IconLike } from '../../vendor/nexui'
+import type { GeneralPart, IconLike } from '../../vendor/nexui'
 import type { Me } from '../../api/client'
 
 type Role = Me['role']
@@ -95,3 +95,7 @@ export function formerAccountPath(search: string): string {
   const tab = FORMER_ACCOUNT[params.get('tab') ?? ''] ?? (params.has('linked') || params.has('error') ? 'security' : 'profile')
   return areaPath(tab) + rest(search, 'tab')
 }
+
+/** The cards of Server › General in their order (`SettingsAreas.tsx` `GeneralArea`), for the line under its title (ui
+ * 1.1.3, U-3): nextasks has no card for Web Push. */
+export const GENERAL_PARTS: readonly GeneralPart[] = ['limits', 'features', 'interfaces', 'nexApps', 'languages']

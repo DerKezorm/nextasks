@@ -11,7 +11,7 @@ import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import { Avatar } from '../components/Avatar'
 import { useAuth } from '../state/auth'
 import { areaText, languageOf, NEXUI_TEXTS, NexuiLanguage, SettingsLayout, SettingsNav, SettingsPage as AreaPage, type SettingsGroup } from '../vendor/nexui'
-import { ABOUT_AREA, areaPath, areasFor, findArea, formerAccountPath, GROUPS, resolveArea, type Area } from './settings/areas'
+import { ABOUT_AREA, areaPath, areasFor, findArea, formerAccountPath, GENERAL_PARTS, GROUPS, resolveArea, type Area } from './settings/areas'
 import { AreaContent } from './settings/SettingsAreas'
 
 const APP = 'nextasks'
@@ -59,7 +59,7 @@ export function SettingsPage() {
               />
             }
           >
-            <AreaPage slug={area.slug} app={APP} things={things} thingsDative={t('settings.thingsDative')} title={own?.title} subtitle={own?.text}>
+            <AreaPage slug={area.slug} app={APP} things={things} thingsDative={t('settings.thingsDative')} title={own?.title} subtitle={own?.text} parts={area.slug === 'general' ? GENERAL_PARTS : undefined}>
               <AreaContent key={area.slug} area={area.slug} />
             </AreaPage>
           </SettingsLayout>

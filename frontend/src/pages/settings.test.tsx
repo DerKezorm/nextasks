@@ -203,6 +203,8 @@ describe('the settings', () => {
     // The cards in the plan's order: limits, features for all accounts, interfaces (the API, MCP, the iPhone app), the
     // other nex apps (verbinden 0.1.1, V14), languages.
     expect([...page.querySelectorAll('[data-card]')].map((card) => card.getAttribute('data-card'))).toEqual(['limits', 'features', 'interfaces', 'nex-apps', 'languages'])
+    // The line under the title names exactly these cards, in this order (ui 1.1.3, U-3): no Web Push in nextasks.
+    expect(page.querySelector('[data-testid="settings-area-general"] p')?.textContent).toBe('Limits, features for every account, interfaces, other nex apps and added languages.')
     // The words as the plan and nexnotes write them (E39, E48): the same sentence on every server's features card.
     expect(page.querySelector('[data-card="features"]')?.textContent).toContain('What every account may use on this server.')
     expect([...page.querySelectorAll('[data-card="limits"] label')].map((label) => label.textContent)).toContain('Largest file per attachment (MB)')
