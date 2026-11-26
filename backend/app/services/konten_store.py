@@ -47,6 +47,7 @@ from ..models import (
     AppDevice,
     AppPairing,
     AuthSession,
+    Member,
     OidcProvider,
     new_device_key,
     utcnow,
@@ -970,10 +971,21 @@ class KontenStore:
         self.db.flush()
 
     def set_deleted(self, account_id: AccountId, at: datetime | None) -> None:
+        """Deleted or back: its memberships stay (decided E33), but its member rows go to every device anew, gone while
+        deleted and back again after (``changes.page`` gives a deleted account's member row as gone)."""
+        from . import cursor
+
         row = self._row(account_id)
-        if row is not None:
-            row.deleted_at = at
-            self.db.flush()
+        if row is None:
+            return
+        row.deleted_at = at
+        members = list(self.db.scalars(select(Member).where(Member.account_id == row.id)))
+        if members:
+            first = cursor.take(self.db, len(members))
+            for number, member in enumerate(members):
+                member.cursor = first + number
+            self.members_moved = True
+        self.db.flush()
 
     def shut_out(self, account_id: AccountId) -> None:
         """What blocking ended in 0.8.0: every browser session and sign-in that waits, every paired iPhone, the key of
@@ -1044,9 +1056,15 @@ class KontenStore:
     # --- Transaction ---------------------------------------------------------------------------------------------
     def commit(self) -> None:
         self.db.commit()
+        if getattr(self, "members_moved", False):
+            from . import cursor
+
+            self.members_moved = False
+            cursor.touched_everybody()
 
     def rollback(self) -> None:
         self.joined_space = False
+        self.members_moved = False
         self.db.rollback()
 
 

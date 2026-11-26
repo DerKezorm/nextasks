@@ -61,8 +61,14 @@ def role_of(db: Session, account_id: int, space_id: str) -> str | None:
     return db.scalar(select(Member.role).where(Member.space_id == space_id, Member.account_id == account_id))
 
 
-def member_ids(db: Session, space_id: str) -> list[int]:
-    return list(db.scalars(select(Member.account_id).where(Member.space_id == space_id).order_by(Member.account_id)))
+def member_ids(db: Session, space_id: str, *, with_deleted: bool = False) -> list[int]:
+    """The members of a space. An account deleted and not yet gone for good (konten 1.1.0: 30 days to bring it back)
+    keeps its membership but is left out (decided E33): not listed, not assignable, told nothing; ``with_deleted``
+    for what must reach every row (a space purged, a space left empty)."""
+    statement = select(Member.account_id).where(Member.space_id == space_id)
+    if not with_deleted:
+        statement = statement.join(Account, Account.id == Member.account_id).where(Account.deleted_at.is_(None))
+    return list(db.scalars(statement.order_by(Member.account_id)))
 
 
 def space_ids_of(db: Session, account_id: int) -> list[str]:
@@ -187,7 +193,7 @@ def leave(db: Session, space: Space, account_id: int, *, now_ms: int, tell: bool
     db.flush()
     tombstone(db, "member", f"{space.id}:{account_id}", space.id)
     drop_assignees(db, space.id, {account_id}, now_ms=now_ms, everyone=False)
-    if not member_ids(db, space.id):
+    if not member_ids(db, space.id, with_deleted=True):
         space.orphaned_at = utcnow()
         logger.info("Space without members, gone in 30 days space_id=%s", space.id)
 

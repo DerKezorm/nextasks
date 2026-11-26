@@ -101,7 +101,7 @@ def purge_list(db: Session, list_row: TaskList) -> None:
 def purge_space(db: Session, space: Space) -> None:
     """The space with everything in it. Whoever is still a member hears it went (``Hidden``); the tombstones refuse
     further changes."""
-    members = spaces.member_ids(db, space.id)
+    members = spaces.member_ids(db, space.id, with_deleted=True)
     for account_id in members:
         spaces.hide(db, [account_id], spaces.items_of_space(db, space.id, account_id), space.id)
     items: list[tuple[str, str, int]] = [("space", space.id, 0)]

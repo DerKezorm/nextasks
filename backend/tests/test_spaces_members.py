@@ -15,7 +15,7 @@ from app.models import Invite, utcnow
 from app.services import records, settings_service
 
 from .conftest import PASSWORD, purge_deleted
-from .sync_helpers import API, WEB, changes, new_id, person, private_space, put, shared_space, state
+from .sync_helpers import API, WEB, changes, make_list, new_id, person, private_space, put, shared_space, state
 
 
 def _secret(link: str) -> str:
@@ -181,3 +181,46 @@ def test_every_time_of_invitations_pairing_and_devices_is_written_like_the_data_
     times = [made["expires_at"], listed[0]["expires_at"], page["expires_at"], pairing["expires_at"],
              device["created_at"], device["last_seen"]]
     assert all(isinstance(value, str) and records.STAMP.fullmatch(value) for value in times), times
+
+
+def test_a_deleted_account_keeps_its_place_unseen_and_comes_back_whole() -> None:
+    """Decided E33: within its 30 days a deleted account keeps its memberships (so bringing it back is whole), but no
+    list and no device shows it, it is not assignable, and gone for good its memberships go."""
+    from .conftest import make_account
+
+    anna_account, anna = person("anna")
+    ben_account, ben = person("ben")
+    space = shared_space(anna, ben)
+    boss = make_account("boss", "operator")
+    admin = TestClient(app, base_url="http://testserver", headers=WEB)
+    assert admin.post("/api/auth/login", json={"name": boss.name, "password": PASSWORD}).status_code == 200
+    since = changes(anna)["cursor"]
+    assert ("member", f"{space}:{ben_account.id}") in state(anna)
+
+    gone = admin.request("DELETE", f"/api/accounts/{ben_account.id}", json={"current_password": PASSWORD})
+    assert gone.status_code == 204, gone.text
+    # The device of another member hears the member row as gone; a fresh device never sees it.
+    news = changes(anna, since)
+    assert {"kind": "member", "id": f"{space}:{ben_account.id}"}.items() <= next(
+        item for item in news["items"] if item["kind"] == "member" and item["id"] == f"{space}:{ben_account.id}").items()
+    assert next(item for item in news["items"] if item["id"] == f"{space}:{ben_account.id}")["deleted"] is True
+    assert ("member", f"{space}:{ben_account.id}") not in state(anna)
+    assert all(person_["name"] is None for person_ in changes(anna)["people"] if person_["id"] == ben_account.id)
+    # Not assignable: a task given to the deleted account keeps nobody.
+    list_id = make_list(anna, space)
+    task = new_id()
+    assert put(anna, "reminder", task, {"list_id": list_id, "title": "Bins", "position": "a0",
+                                        "assignees": [ben_account.id]})["ok"]
+    assert state(anna)[("reminder", task)]["data"]["assignees"] == []
+
+    back = admin.post(f"/api/accounts/{ben_account.id}/restore", json={"current_password": PASSWORD})
+    assert back.status_code == 204, back.text
+    assert ("member", f"{space}:{ben_account.id}") in state(anna), "back with its membership"
+
+    assert admin.request("DELETE", f"/api/accounts/{ben_account.id}", json={"current_password": PASSWORD}).status_code == 204
+    purge_deleted(ben_account.id)
+    with SessionLocal() as db:
+        from app.models import Member
+
+        assert db.get(Member, (space, ben_account.id)) is None, "gone for good, its membership with it"
+    _ = anna_account

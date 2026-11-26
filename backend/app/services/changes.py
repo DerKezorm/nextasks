@@ -192,8 +192,15 @@ def page(db: Session, account_id: int, since: int, limit: int = DEFAULT_LIMIT) -
         newest[(item.kind, item.id)] = item
     chosen = sorted(newest.values(), key=lambda item: (item.cursor, KIND_ORDER.get(item.kind, 99), item.id))
     roles = dict(db.execute(select(Member.space_id, Member.role).where(Member.account_id == account_id)).all())
+    # Accounts deleted and not yet gone for good keep their memberships (30 days to bring them back), but no device
+    # lists them (decided E33): their member rows come as gone, on a first page not at all.
+    deleted = set(db.scalars(select(Account.id).where(Account.deleted_at.is_not(None))))
     out = []
     for item in chosen:
+        if item.kind == "member" and not item.deleted and item.row.account_id in deleted:
+            if since:
+                out.append(records.deleted_entry(item.kind, item.id, item.cursor))
+            continue
         if item.deleted:
             out.append(records.deleted_entry(item.kind, item.id, item.cursor))
         elif item.kind == "space":
@@ -228,7 +235,9 @@ def people(db: Session, account_id: int, spaces: dict[str, int] | None = None) -
                                            .where(Comment.space_id.in_(space_ids))):
             wanted |= {value for value in (author, *(mentions or [])) if isinstance(value, int)}
     seen = visibility.seen_by(db, account_id)
-    known = {row.id: row for row in db.scalars(select(Account).where(Account.id.in_(wanted & seen)))}
+    # A deleted account (within its 30 days) is given like a former member: no name, no picture.
+    known = {row.id: row for row in db.scalars(select(Account).where(Account.id.in_(wanted & seen),
+                                                                       Account.deleted_at.is_(None)))}
     return [
         {"id": person, "name": (known[person].display_name or known[person].name) if person in known else None,
          "avatar_hash": (known[person].avatar_hash or None) if person in known else None}

@@ -410,7 +410,7 @@ def get_members(found: Reader, space_id: str) -> MembersOut:
         if space is None or space.deleted_at is not None:
             raise _not_found()
         rows = db.execute(select(Member.role, Account).join(Account, Account.id == Member.account_id)
-                          .where(Member.space_id == space_id)).all()
+                          .where(Member.space_id == space_id, Account.deleted_at.is_(None))).all()
         if space.private:
             rows = [(role, account) for role, account in rows if account.id == found.account.id]
         people = [MemberOut(id=account.id, name=account.name, display_name=account.display_name or account.name,
