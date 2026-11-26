@@ -314,6 +314,8 @@ class KontenStore:
             password_changed_at=utcnow() if new.password else None,
             language=new.language or "",
             whats_new_seen=__version__,
+            # A new account starts "as the device says" (E45); only accounts of before take a browser's value once.
+            theme=getattr(new, "theme", "system") or "system",
         )
         self.db.add(row)
         self._flush()

@@ -307,6 +307,8 @@ class SqlStore:
             role=MEMBER,
             sign_in=SIGN_IN_OIDC,
             password_hash="",
+            # A new account starts "as the device says" (konten 1.1.0, E45).
+            theme="system",
             email=address,
             email_counted=address,
             email_confirmed=address if invitation is not None and invitation.mailed else "",
