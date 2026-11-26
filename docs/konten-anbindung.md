@@ -13,6 +13,34 @@ zurück; das stimmt nicht ganz.
 
 ## 0. Stand
 
+### Durchgang „Module“ (26.11.2026, Zweig `einst-module`)
+
+Nach `einst-werkzeug/AUFTRAG-MODULE.md`, Module aus `bauplaene-module` (je `tools/sync.py copy`, `check` grün),
+Fragen und Modulfehler in `einst-fragen/nextasks-module.md` (1 bis 12).
+
+| Modul | Fassung | was nextasks dafür gebaut hat | alte Wege (bleiben) | Umwege |
+|---|---|---|---|---|
+| sicherung | 1.0.4 (de70ac2) | nichts eigenes (E62 Zeit in Klammern, E63 Notiz bei „Jetzt sichern“, E64); kein Test der App suchte alte Wortlaute oder klickte ohne Bestätigen | `/api/backups/*` | keine |
+| ui | 1.1.1 | `AboutPage showUpdates` | | keine |
+| schluessel | 1.1.0 | Art `mcp` (`ntm_`, Tabelle `mcp_keys`, Kennungen `mcp-<n>`; API-Schlüssel behalten ihre Nummern, `key_id=str`), `programs=True`, Schalter `mcp` = `mcp_enabled` (ab Werk aus); Vorlage `nexschluessel.test.tsx` von Hand | `/api/api-tokens`, `/api/admin/api-tokens` zeigen nur API-Schlüssel | keine |
+| updates | 0.1.1 | `services/updates.py` konfiguriert das Modul (Schalter `update_check` wie bisher, `NEXTASKS_UPDATE_URL`, Projektseite leer U18), `routers/about.py` = Router des Moduls mit den Namen von 0.8.0 (E53); Einrichtung mit Kästchen (`SetupIn.update_check`, `at_setup`), `AboutArea` mit `useUpdates`, Satz „was hinausgeht“ nennt die Push-Dienste (U11) | `/api/about`, `/api/about/updates`, `…/check`, `PUT …/updates`; `PUT /api/settings` `update_check` | keine Glocke: kein Blick im Hintergrund (U19); Vertragstests mit Glocke überspringen (`TODO updates 0.1.1`, Frage 1) |
+| mcp | 1.1.0 (neu) | `services/mcp.py` (elf Werkzeuge über `apiread`/`apiwrite` wie `/api/v1`, Bereiche = Spaces), `routers/mcp.py` (`/api/mcp`, OAuth unter `/api/oauth`, `/api/connections/mcp`), `models_mcp.py` (Schlüssel, Programme, Codes, verbrauchte Token, Rechte je Werkzeug, Rückfragen), `SchluesselStore` als Store beider Module; Sperren beendet Programme, Schlüssel ruhen (E41, E42); „Alle trennen“ nimmt sie mit; Wege für Programme ohne Tab-Kopf (`middleware.PROGRAM_PATHS`); Log schwärzt `ntm_`, `ntmr_`, `ntmc_`; Seite: `ToolsCard` mit `ToolRights`/`PendingRequests`, `McpOperatorSettings`, `/oauth/authorize`, `/mcp/requests/:id` | keine (nextasks hatte kein MCP); `/api/v1` brauchte keinen neuen Weg | keine |
+| verbinden | 0.1.1 (neu) | Gastgeberin für nexnotes, nexmail, nextime, nexpaper, nexdiary: `services/verbinden.py` (Store, Siegel `encrypt_secret`), `routers/connect.py`, `models_connect.py`; `/api/v1` nimmt `ntc_`-Token mit eigenem Schalter, Bereichen und Zwecken (Frage 12), `/api/v1/me` nennt `expires_at`; Widerruf später (Takt alle 5 Minuten), endgültig gelöschtes Konto beendet seine Verbindungen; Seite: `ConnectionsArea` unter Verbindungen, `ConnectionsOperatorCard` unter Allgemein, `/connect/app`, `/connect/return` | alle `ntk_`-Schlüssel, die nexnotes (`PUT /api/nextasks`), nexmail (`POST /api/aufgabenziele/nextasks`), nextime (`PUT /api/nextasks`) eingetragen haben, gelten an `/api/v1` wie bisher (Test `test_connect.py`, „Bestand“); nach „Neu verbinden“ endet ein solcher Schlüssel über `/api/connect/retire` | Vertragstests: Partner nexmail, schreibende Zwecke am Lese-Weg geprobt, Konto „kim“, vitest-Vorlage von nexmails Seite (`TODO verbinden 0.1.1`, Fragen 8 bis 10) |
+| ki | – | nextasks bekommt keine KI | | |
+
+Test „Bestand“: nur zwei neue Tests im Block `AFTER_THE_CHANGE` (MCP aus, API-Schlüssel öffnet nur `/api/v1`;
+`/.well-known/nex-app` und der eingetragene Schlüssel). Mutationsproben (Rückgabecode, alle rot): Mitglied sieht die Karte
+„Aktualisierungen“, Einrichtung schickt das Kästchen nicht, `at_setup` fehlt, Schalter nicht gelesen, andere Rufe fehlen;
+Bereiche eines MCP-Schlüssels übergangen, Sperren beendet Programme nicht, „Alle trennen“ lässt MCP-Schlüssel, Wege für
+Programme mit Tab-Kopf, `ntm_` nicht geschwärzt, Schreibwerkzeug mit Stufe `read`; Zweck `members.read` nicht geprüft,
+`tasks.complete` öffnet jede Änderung, Bereiche einer Verbindung übergangen, `retire_key` beendet nichts, Wege zwischen
+den Apps mit Tab-Kopf, `expires_at` fehlt.
+
+Läufe (`WT=module reihe.sh nextasks module-nextasks-ende`): ruff sauber; pytest 1714 grün, 19 übersprungen (3 der App:
+kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke; die übrigen Vertragsfälle für Fähigkeiten,
+die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
+grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
+
 ### Durchgang „Einstellungen“ (26.11.2026, Zweig `einst-desktop`)
 
 Nach dem Bauplan in nexlore `Development/nexapps/Baupläne/Bauplan Einstellungen.md` (E1 bis E31). Module aus
