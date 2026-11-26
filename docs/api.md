@@ -63,6 +63,9 @@ server has `GET /api/v1/spaces/{id}/members`. `stats`: the server has `GET /api/
 read and take `rotation` (taking turns, see below). `comments`: the server has `GET` and `POST
 /api/v1/tasks/{id}/comments`.
 
+`expires_at` (since the connections with other nex apps): when the API key runs out, `null` for never (and for the
+token of a connection).
+
 ## Spaces and lists
 
 ### `GET /api/v1/spaces`
@@ -268,6 +271,35 @@ the bin not at all. `streak.current` is the run of days with at least one task d
 (today is not over; `done_today` says whether today counts already), `record` the longest run ever. `done_week` is the
 last seven days, today included. `days.counts` has one number per day of the last 365, oldest first. Days are those
 of `time_zone`, the account's.
+
+## Other nex apps
+
+nexnotes, nexmail, nextime, nexpaper and nexdiary connect with nextasks with one click under **Settings › My account ›
+Connections** (no key to copy): the account agrees on nextasks' page `/connect/app`, and the other app then calls
+`/api/v1` with the token of its connection (`Authorization: Bearer ntc_…`) instead of an API key. The places of this
+are the same in every nex app: `/.well-known/nex-app`, `/api/connect/…`. Such a token works only while the operator
+leaves **Settings › Server › General › Other nex apps** on (else `403 connections_off`; the switch of API keys does
+not count for it), only in the spaces the account gave, and only for what the other app needs:
+
+| Purpose | Opens | Used by |
+|---|---|---|
+| `tasks.read` | reading spaces, lists, tasks, comments, the dashboard and the numbers | nexnotes, nexmail, nextime, nexpaper, nexdiary |
+| `tasks.write` | making, changing, trashing tasks, commenting | nexnotes, nexmail, nexpaper |
+| `tasks.complete` | ticking off and opening again (`PATCH` with `completed` alone) | nexmail, nextime |
+| `members.read` | `GET /api/v1/spaces/{id}/members` | nexmail |
+
+Anything else answers `403 purpose_missing`; an account that is blocked or deleted lets its connections rest (`401
+account_resting`). API keys typed into another app before keep working as they are.
+
+## AI tools (MCP)
+
+AI programs that speak MCP work with an account's tasks at `POST /api/mcp`, once the operator switches **MCP access**
+on under **Settings › Server › General › Interfaces** (off on every installation). They connect themselves with the
+account's consent (OAuth, the metadata under `/.well-known/oauth-authorization-server`), or take an MCP key (`ntm_`)
+made under **Settings › My account › Connections › AI tools (MCP)**. The tools read and change tasks the way `/api/v1`
+does, in the spaces the key was given: `list_spaces`, `list_lists`, `list_tasks`, `read_task`, `list_comments`,
+`list_members`, `create_task`, `update_task`, `complete_task`, `add_comment`, `delete_task` (to the bin), and
+`request_status`. Each tool can be allowed, asked for or denied per key.
 
 ## Later
 
