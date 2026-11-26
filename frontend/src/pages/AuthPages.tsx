@@ -42,6 +42,7 @@ import {
 } from '../vendor/nexkonten/konten'
 import type { ButtonName } from '../vendor/nexkonten/konten'
 import { AuthCard, Button, Checkbox, Field, Notice, TextLink } from '../vendor/nexui'
+import { UpdateSetupRow } from '../vendor/nexupdates/UpdateSetupRow'
 
 export function AuthFrame({ title, text, children }: { title: string; text?: string; children: ReactNode }) {
   return (
@@ -158,6 +159,8 @@ export function SetupPage() {
   const [password, setPassword] = useState('')
   const again = usePasswordConfirm(password)
   const [code, setCode] = useState('')
+  // "Look for new versions" (updates U1): asked once at setup, ticked by default.
+  const [updateCheck, setUpdateCheck] = useState(true)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<Trouble>(null)
   useEffect(() => {
@@ -189,6 +192,7 @@ export function SetupPage() {
                 code: code.trim(),
                 // The language comes from the browser silently and is changed in the profile (konten: no field).
                 language: i18n.language,
+                update_check: updateCheck,
               }),
             )
           } catch (error) {
@@ -205,6 +209,7 @@ export function SetupPage() {
         <AuthField label={t('account.email')} value={email} onChange={setEmail} type="email" autoComplete="email" maxLength={EMAIL_MAX} hint={t('account.emailHint')} />
         <AuthField label={t('account.newPassword')} value={password} onChange={setPassword} type="password" autoComplete="new-password" hint={t('account.passwordRules', { minimum: min })} />
         <PasswordConfirmField value={again.confirm} onChange={again.setConfirm} mismatch={again.mismatch} />
+        <UpdateSetupRow app="nextasks" checked={updateCheck} onChange={setUpdateCheck} language={i18n.language} />
         {/* No word about the second factor under the password unless one is required (konten 0.3.6): the first
             account comes before any switch of the operator. */}
         {setupNotes({ factorRequired: false }).map((note) => (

@@ -288,9 +288,7 @@
     "version": "Version",
     "releases": "Releases",
     "project": "Project page",
-    "updates": {
-      "whatGoesOut": "Only the question goes out: a request to api.github.com for the newest release of nextasks, with no names, tasks or settings. It is the only call nextasks makes on its own."
-    }
+    "otherCalls": "the push service push.nexapps.dev for notifications to paired iPhones and iPads, and the browser's push service for notifications in the browser"
   },
   "me": {
     "profile": {

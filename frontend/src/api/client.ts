@@ -246,7 +246,7 @@ export type AddressQuestion = { count: number; address: string; hand: number }
 
 export const authApi = {
   setupState: () => api<SetupState>('/api/setup'),
-  setup: (body: { display_name: string; name: string; email: string; password: string; password_confirm: string; code: string; language: string }) =>
+  setup: (body: { display_name: string; name: string; email: string; password: string; password_confirm: string; code: string; language: string; update_check?: boolean }) =>
     api<Me>('/api/setup', { method: 'POST', body }),
   methods: () => api<Methods>('/api/auth/methods'),
   login: (name: string, password: string, remember = true) =>

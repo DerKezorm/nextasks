@@ -72,6 +72,7 @@ from .services import (
     settings_service,
     totp,
     trash,
+    updates,
     webpush,
 )
 from .services.konten_store import KontenStore
@@ -158,6 +159,9 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         if folder is not None:
             folder.mkdir(parents=True, exist_ok=True)
     locales.start()
+    # Whether a newer nextasks is out: asked only when an operator opens "About" (no bell, so no look in the
+    # background, U19).
+    updates.configure()
     added = locales.available()
     if added:
         logger.info("Languages added by the operator: %s", ", ".join(locale.code for locale in added))
@@ -266,6 +270,8 @@ for module in ROUTERS:
 
 # The shared sign-in module learns who it runs in before the first request (vendor/nexoidc).
 oidc_store.configure()
+# The shared update check too (vendor/nexupdates): its routes answer from the first request on.
+updates.configure()
 
 
 def _mount_frontend(target: FastAPI, dist: Path) -> None:

@@ -66,6 +66,7 @@ from ..services import (
     settings_service,
     spaces,
     totp,
+    updates,
     visibility,
 )
 from ..services.accounts import AccountError
@@ -102,6 +103,9 @@ class SetupIn(BaseModel):
     language: str = Field(default="", max_length=16)
     #: The setup code from the server's log (or NEXTASKS_SETUP_TOKEN).
     code: str = Field(default="", max_length=200)
+    #: The box "Look for new versions" (U1, ticked on the page); left out (a page of 0.8.0), nothing is stored and the
+    #: daily check stays on as before.
+    update_check: bool | None = None
 
 
 class LoginIn(BaseModel):
@@ -401,6 +405,9 @@ def setup(payload: SetupIn, request: Request, response: Response, db: DbSession)
         if exc.code == "setup_code_wrong":
             brake.failed(key)
         raise fail(exc) from exc
+    if payload.update_check is not None:
+        # Only where nothing is stored yet (nexupdates.at_setup): the operator's answer of the setup.
+        updates.at_setup(payload.update_check)
     account = db.get(AccountRow, int(done.account.id))
     assert account is not None
     # The space "Private" with its first list comes with the sign-in, named in the language chosen here.

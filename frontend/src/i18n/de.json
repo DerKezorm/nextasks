@@ -288,9 +288,7 @@
     "version": "Version",
     "releases": "Veröffentlichungen",
     "project": "Projektseite",
-    "updates": {
-      "whatGoesOut": "Hinaus geht nur die Frage: eine Anfrage an api.github.com nach der neuesten Veröffentlichung von nextasks, ohne Namen, Aufgaben oder Einstellungen. Es ist der einzige Ruf, den nextasks von sich aus macht."
-    }
+    "otherCalls": "den Push-Dienst push.nexapps.dev für Mitteilungen an verbundene iPhones und iPads und den Push-Dienst des Browsers für Mitteilungen im Browser"
   },
   "me": {
     "profile": {
