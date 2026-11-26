@@ -105,7 +105,7 @@ export function AccountsTab() {
   const open = managing === null ? null : (ordered.find((row) => row.id === managing) ?? null)
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <Card id="accounts" icon={Users} title={t(ACCOUNT_LIST.title)} subtitle={t(ACCOUNT_LIST.subtitle, { count: accountCount(listed) })} testId="account-list">
         <div>
           <AccountButton name="account.invite" testId="invite-open" onClick={() => setInviting(true)} />

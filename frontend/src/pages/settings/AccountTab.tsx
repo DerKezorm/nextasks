@@ -149,7 +149,7 @@ export function AccountTab({ part }: { part: AccountPart }) {
   const unchanged = name.trim() === (me.display_name ?? '') && email.trim().toLowerCase() === (me.email ?? '').toLowerCase() && username.trim().toLowerCase() === me.name
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <SecondFactorOffNotice on={me.second_factor_off} />
       {me.new_password_origin && <RemainingAccess onDone={() => void refresh()} />}
       <div aria-live="polite" className="space-y-2 empty:hidden">
