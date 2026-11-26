@@ -208,6 +208,14 @@ class MailChannel(Channel):
             raise DeliveryError(exc.code) from exc
 
 
+def _asking_page(unsubscribe: str) -> str:
+    """nextasks' page behind the footer's link, which asks before it turns anything off (a link checker that opens
+    every link must not unsubscribe anybody); the mail program's one click posts to ``unsubscribe`` itself."""
+    from . import messages
+
+    return messages.visible(unsubscribe) if unsubscribe else ""
+
+
 def mail_letter(address: str, message: Message, key: str = "") -> Any:
     """A report or event as a letter of the app (post 1.1.0, E26): nextasks' body in the module's frame, in the language
     it was written in, with ``List-Unsubscribe`` and one click (RFC 8058) where it has the link. A message queued by an
@@ -220,10 +228,11 @@ def mail_letter(address: str, message: Message, key: str = "") -> Any:
             return nexpost.app_letters.write(
                 address, kind=message.kind or "notify", subject=message.title, language=message.language,
                 text=message.text, body_html=message.body_html, heading=message.heading or message.title,
-                unsubscribe=message.unsubscribe, key=key)
+                unsubscribe=message.unsubscribe, unsubscribe_page=_asking_page(message.unsubscribe), key=key)
         return nexpost.app_letters.write(
             address, kind=message.kind or "notify", subject=message.title, language=message.language,
-            text=message.text, html=message.html or "", unsubscribe=message.unsubscribe, key=key)
+            text=message.text, html=message.html or "", unsubscribe=message.unsubscribe,
+            unsubscribe_page=_asking_page(message.unsubscribe), key=key)
     except (ValueError, nexpost.MailError) as exc:
         raise DeliveryError("invalid_email") from exc
 
@@ -347,7 +356,11 @@ CHANNELS: dict[str, Channel] = {channel.kind: channel for channel in (MailChanne
 
 
 def ready(db: Session, account: Account, kind: str) -> Target | None:
-    """The account's target at this channel when the channel is set up and the target confirmed; else None."""
+    """The account's target at this channel when the channel is set up and the target confirmed; else None. A blocked
+    or deleted account has none (konten 1.1.0, E38): nothing goes out to it, its subscriptions and addresses stay, so
+    that it comes back whole."""
+    if account.shut:
+        return None
     channel = CHANNELS.get(kind)
     if channel is None or not channel.available(db):
         return None

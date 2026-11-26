@@ -250,17 +250,13 @@ def _page(language: str, base: str, heading: str, body: str, *, unsubscribe: tup
     )
 
 
-def _links(language: str, base: str, unsubscribe: tuple[str, str] | None) -> str:
+def _links(language: str, base: str) -> str:
     """The end of a report or event in the shared post module's frame (post 1.1.0): the way to the notification
-    settings and the page that asks before it turns this mail off (a link checker opening every link must not
-    unsubscribe anybody; the mail program's one click goes to the address in ``List-Unsubscribe``)."""
+    settings, as the footer of 0.8.0 had it. The link that turns this mail off is the module's footer, to nextasks'
+    page that asks first (``unsubscribe_page``, ``channels.mail_letter``)."""
     w = words(language)
-    links = [f'<a href="{_e(base)}/settings/notifications" style="color:{PETROL_TEXT}">{_e(w["settings"])}</a>']
-    if unsubscribe:
-        label, link = unsubscribe
-        links.append(f'<a href="{_e(link)}" style="color:{PETROL_TEXT}">{_e(label)}</a>')
     return (f'<p style="margin:16px 0 0 0;font-size:12px;line-height:1.6;color:{QUIET}">'
-            + " &nbsp;·&nbsp; ".join(links) + "</p>")
+            f'<a href="{_e(base)}/settings/notifications" style="color:{PETROL_TEXT}">{_e(w["settings"])}</a></p>')
 
 
 def _p(text: str, *, quiet: bool = False) -> str:
@@ -392,7 +388,7 @@ def daily(language: str, *, base: str, day: date, overdue: list[Item], today: li
     return Message(title=title, text=_text(lead, text_parts, language=language, base=base, unsubscribe=off),
                    link=base + "/today", html=_page(language, base, w["daily_heading"], body, unsubscribe=off),
                    unsubscribe=unsubscribe, language=language, inline={LOGO: "mail-logo.png"},
-                   heading=w["daily_heading"], body_html=body + _links(language, base, off), kind="daily")
+                   heading=w["daily_heading"], body_html=body + _links(language, base), kind="daily")
 
 
 def weekly(language: str, *, base: str, done: list[Item], upcoming: list[Item], unsubscribe: str,
@@ -420,7 +416,7 @@ def weekly(language: str, *, base: str, done: list[Item], upcoming: list[Item], 
                                                        unsubscribe=off),
                    link=base + "/scheduled", html=_page(language, base, w["weekly_heading"], body, unsubscribe=off),
                    unsubscribe=unsubscribe, language=language, inline={LOGO: "mail-logo.png"},
-                   heading=w["weekly_heading"], body_html=body + _links(language, base, off), kind="weekly")
+                   heading=w["weekly_heading"], body_html=body + _links(language, base), kind="weekly")
 
 
 def _event(language: str, *, base: str, title: str, lead: str, item: Item | None, link: str,
@@ -436,7 +432,7 @@ def _event(language: str, *, base: str, title: str, lead: str, item: Item | None
     return Message(title=title, text=_text(lead, parts, language=language, base=base, unsubscribe=off), link=link,
                    html=_page(language, base, title, body, unsubscribe=off), unsubscribe=unsubscribe,
                    language=language, inline={LOGO: "mail-logo.png"},
-                   heading=title, body_html=body + _links(language, base, off), kind="event")
+                   heading=title, body_html=body + _links(language, base), kind="event")
 
 
 def assigned(language: str, *, base: str, by: str, item: Item, unsubscribe: str) -> Message:

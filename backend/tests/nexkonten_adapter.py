@@ -460,6 +460,24 @@ class Adapter(StandardAdapter):
         assert answer.status_code == 200, answer.text
         return answer.json()
 
+    def push_ready(self, account_id: Any) -> bool | None:
+        """Whether a push to the account would go out now: one browser subscription of it (made here once), and the
+        channel's own answer (``channels.ready``), which says none for a blocked or deleted account."""
+        from sqlalchemy import select
+
+        from app.db import SessionLocal
+        from app.models import Account, WebPushSubscription
+        from app.services import channels
+
+        with SessionLocal() as db:
+            if db.scalar(select(WebPushSubscription).where(WebPushSubscription.account_id == int(account_id))) is None:
+                db.add(WebPushSubscription(account_id=int(account_id), endpoint=f"https://push.example.com/{account_id}",
+                                           p256dh="key", auth="auth"))
+                db.commit()
+            row = db.get(Account, int(account_id))
+            assert row is not None
+            return channels.ready(db, row, "webpush") is not None
+
     def sign_in(self, typed: str, password: str) -> Any:
         """Through ``POST /api/auth/login`` (field ``name``) up to the session or the code of the second factor. The
         brake is emptied first: it counts in memory and would answer in a test that tries many."""

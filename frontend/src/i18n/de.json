@@ -119,7 +119,8 @@
         "text": "Version, Lizenz, Herkunft und ob es eine neuere Version gibt."
       }
     },
-    "things": "Aufgaben"
+    "things": "Aufgaben",
+    "thingsDative": "Aufgaben"
   },
   "server": {
     "member": "Mitglied",

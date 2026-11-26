@@ -119,7 +119,8 @@
         "text": "Version, licence, where it comes from and whether a newer version is out."
       }
     },
-    "things": "tasks"
+    "things": "tasks",
+    "thingsDative": "tasks"
   },
   "server": {
     "member": "Member",

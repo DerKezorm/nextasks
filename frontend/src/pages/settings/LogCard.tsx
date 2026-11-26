@@ -18,5 +18,5 @@ const clock = (iso: string, language: string) => new Date(iso).toLocaleTimeStrin
 
 export function LogCard() {
   const { t } = useTranslation()
-  return <SharedLogCard request={request} base="/api/logs" things={t('settings.things')} when={when} clock={clock} />
+  return <SharedLogCard request={request} base="/api/logs" things={t('settings.things')} thingsDative={t('settings.thingsDative')} when={when} clock={clock} />
 }

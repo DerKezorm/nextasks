@@ -562,6 +562,8 @@ def test_one_click_unsubscribes_exactly_this_report(postbox: type[Postbox]) -> N
     assert header.startswith(f"<{PUBLIC}/api/notify/unsubscribe/") and header.endswith(">")
     path = urlsplit(header[1:-1]).path
     assert f"{PUBLIC}/unsubscribe/" in text_of(mail), "the link in the text asks first"
+    # The footer of the module's frame links nextasks' page that asks first, never the address that turns it off.
+    assert f'href="{PUBLIC}/unsubscribe/' in html_of(mail) and f'href="{PUBLIC}/api/notify/unsubscribe/' not in html_of(mail)
     # A mail program: no session, no tab header, the body of RFC 8058.
     program = TestClient(app, base_url="http://testserver")
     assert program.get(path).json() == {"event": "daily", "channel": "mail", "on": True}

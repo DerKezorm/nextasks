@@ -17,8 +17,8 @@ zurück; das stimmt nicht ganz.
 
 Nach dem Bauplan in nexlore `Development/nexapps/Baupläne/Bauplan Einstellungen.md` (E1 bis E31). Module aus
 `bauplaene-stand` bzw. `bauplaene-einst` (je `tools/sync.py copy`, `check` grün): **ui 1.1.0, konten 1.1.0, oidc 1.2.0,
-post 1.1.0, log 1.0.0, sicherung 1.0.1, schluessel 1.0.0** (Stand `bauplaene-stand` `bef0132`, jede Vorlagen-Kopie mit
-ihrer Kopfzeile). Fragen: `einst-fragen/nextasks.md` (1 bis 14; Nacharbeit nach E33 und E35 eingetragen).
+post 1.1.0, log 1.0.0, sicherung 1.0.1, schluessel 1.0.0** (Stand `bauplaene-stand` `7685875`, jede Vorlagen-Kopie mit
+ihrer Kopfzeile und den Änderungen der Vorlagen seit `bef0132`; `things`/`thingsDative` = Aufgaben/Aufgaben). Fragen: `einst-fragen/nextasks.md` (1 bis 14; Nacharbeit nach E33 und E35 eingetragen).
 
 | Bereich | woher jetzt | was gewandert ist (alt → neu) |
 |---|---|---|
@@ -43,11 +43,14 @@ Ein Konto, das den zweiten Faktor schuldet, listet und legt Schlüssel an (`/api
 `SETUP_ONLY_PATHS`), sie öffnen nichts bis zum Faktor (E33). Home Assistant, iPhone-App, nexmail und nexnotes
 merken nichts (Test `test_settings_pass.py`).
 
-Umwege: keine im `vendor/`; ruff nimmt alle vendor-Module samt Vertragstests aus. Rot und begründet: drei Fälle in
-`signInCards.test.tsx` und e2e Test 35 (Verhalten der authentik-Karte von oidc 1.2.0, Frage 8). Vorbestehend rot war
-e2e Test 34: jetzt grün (Fläche über ihren h1, Karte über `data-card`). post und oidc ließen sich aus `bauplaene-einst`
-nicht neu ziehen (dort ungespeicherte Änderungen); die Vorlagen-Zeilen von `5caffab` sind übernommen, `sync.py check`
-grün.
+Gesperrt und gelöscht (E38): `KontenStore.on_shut_out`/`on_back`; `channels.ready` gibt einem gesperrten oder gelöschten
+Konto keinen Weg (kein Push, keine Mail; Abos und Adresse bleiben), nextasks hat keine eigenen Abgleiche im Hintergrund;
+Vertragsadapter `push_ready`. Mail-Fuß: „Diese Mails abbestellen“ führt auf die fragende Seite `/unsubscribe/<token>`
+(`unsubscribe_page`), `List-Unsubscribe` bleibt die Adresse mit einem Klick.
+
+Umwege: keine im `vendor/`; ruff nimmt alle vendor-Module samt Vertragstests aus. Zwei Umwege `TODO sicherung 1.0.1`
+(Frage 15): `sicherung.test.tsx` aus `tsc` ausgenommen, eine eslint-Regel für `StorageArea.tsx` aus. Vorbestehend rot war
+e2e Test 34: jetzt grün (Fläche über ihren h1, Karte über `data-card`).
 
 Läufe nach der Nacharbeit E35 (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber; pytest 1515 grün,
 3 übersprungen (vorher 1397/3); `npm run lint` sauber; vitest 1119 grün, 3 rot (`signInCards.test.tsx`, Modulfrage 8;

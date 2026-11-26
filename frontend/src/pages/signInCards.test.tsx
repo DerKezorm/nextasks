@@ -167,8 +167,8 @@ describe('Settings, Server, Sign-in', () => {
     expect(list).toContain(oidcEn.oidc.admin.managed)
     expect(list).toContain(oidcEn.oidc.admin.active)
     expect(list).toContain(oidcEn.oidc.admin.inactive)
-    // Two entries: each has its drag handle.
-    expect(shown.querySelectorAll('[data-testid="provider-list"] button[aria-label]')).toHaveLength(2)
+    // Two entries: each has its drag handle (the buttons Edit and Remove now carry the name too: "Edit: <name>").
+    expect(shown.querySelectorAll('[data-testid="provider-list"] button[data-icon="GripVertical"][aria-label]')).toHaveLength(2)
   })
 
 })

@@ -50,6 +50,7 @@ export function SettingsPage() {
               <SettingsNav
                 app={APP}
                 things={things}
+                thingsDative={t('settings.thingsDative')}
                 groups={groups}
                 about={{ href: areaPath(ABOUT_AREA.slug), slug: ABOUT_AREA.slug }}
                 current={area.slug}
@@ -58,7 +59,7 @@ export function SettingsPage() {
               />
             }
           >
-            <AreaPage slug={area.slug} app={APP} things={things} title={own?.title} subtitle={own?.text}>
+            <AreaPage slug={area.slug} app={APP} things={things} thingsDative={t('settings.thingsDative')} title={own?.title} subtitle={own?.text}>
               <AreaContent key={area.slug} area={area.slug} />
             </AreaPage>
           </SettingsLayout>

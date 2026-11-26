@@ -1,4 +1,4 @@
-// Vorlage nexoidc 1.2.0
+// Vorlage nexoidc 1.0.14
 /**
  * Pflichttests 33 and 34 of the shared sign-in blueprint (copied once from bauplaene/oidc, then nextasks's file).
  *

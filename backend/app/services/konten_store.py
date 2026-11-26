@@ -1009,6 +1009,18 @@ class KontenStore:
         factor.drop_waiting(int(account_id))
         self.renew_device_key(account_id)
 
+    def on_shut_out(self, account: KontoAccount) -> None:
+        """Konten 1.1.0 (E38), after the commit: the account went out. Nothing is pushed or mailed to it while it is
+        out (``channels.ready`` answers none for a shut account; its browser subscriptions and its address stay), and
+        nextasks keeps no syncs of its own in the background that would need holding. Its paired iPhones ended with
+        ``shut_out``."""
+        logger.info("Account out, its pushes held account_id=%s", account.id)
+
+    def on_back(self, account: KontoAccount) -> None:
+        """Konten 1.1.0 (E38), after the commit: the account can sign in again; its pushes go out again by themselves
+        (``channels.ready``)."""
+        logger.info("Account back, its pushes go out again account_id=%s", account.id)
+
     def deleted_before(self, moment: datetime) -> list[AccountId]:
         return list(self.db.scalars(
             select(Account.id).where(Account.deleted_at.is_not(None), Account.deleted_at <= moment)

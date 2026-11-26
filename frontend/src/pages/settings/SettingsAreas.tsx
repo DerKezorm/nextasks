@@ -66,7 +66,7 @@ function ConnectionsArea() {
     <>
       <DevicesSection />
       <InstallCard />
-      <ApiKeysCard request={request} things={t('settings.things')} words={{ areas: t('apiTokens.where') }} docsHref={API_DOCS} operator={me?.role === 'operator'} />
+      <ApiKeysCard request={request} things={t('settings.things')} thingsDative={t('settings.thingsDative')} words={{ areas: t('apiTokens.where') }} docsHref={API_DOCS} operator={me?.role === 'operator'} />
     </>
   )
 }
