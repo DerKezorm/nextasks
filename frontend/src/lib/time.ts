@@ -14,3 +14,25 @@ export function ago(time: number, lang: string): string {
 export function moment(value: string | number | Date, lang: string): string {
   return new Date(value).toLocaleString(lang, { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
+
+/** A point in time as `moment` writes it, in the account's own time zone (E14; the server says it in `Me.timezone`),
+ * not the browser's: the settings' backups and log read the same as the account's due times. A zone the browser
+ * does not know: the browser's. */
+export function momentIn(value: string | number | Date, lang: string, zone: string | undefined): string {
+  const format: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }
+  try {
+    return new Date(value).toLocaleString(lang, zone ? { ...format, timeZone: zone } : format)
+  } catch {
+    return new Date(value).toLocaleString(lang, format)
+  }
+}
+
+/** The time of day ("14:05") in the account's time zone. */
+export function clockIn(value: string | number | Date, lang: string, zone: string | undefined): string {
+  const format: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' }
+  try {
+    return new Date(value).toLocaleTimeString(lang, zone ? { ...format, timeZone: zone } : format)
+  } catch {
+    return new Date(value).toLocaleTimeString(lang, format)
+  }
+}

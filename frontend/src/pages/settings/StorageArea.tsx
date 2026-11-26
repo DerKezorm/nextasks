@@ -7,6 +7,7 @@
 import { useTranslation } from 'react-i18next'
 
 import { tabId } from '../../api/client'
+import { momentIn } from '../../lib/time'
 import { useAuth } from '../../state/auth'
 import { StorageArea as SharedStorageArea } from '../../vendor/nexsicherung/StorageArea'
 import { makeSicherungApi, type Brief, type Entry } from '../../vendor/nexsicherung/sicherung'
@@ -51,6 +52,7 @@ export function StorageArea() {
       facts={facts}
       details={details}
       language={languageOf(i18n.language)}
+      when={(iso, language) => momentIn(iso, language, me?.timezone)}
     />
   )
 }
