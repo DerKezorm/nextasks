@@ -357,9 +357,6 @@
       "done": "Profil gespeichert."
     },
     "password": {
-      "current": "Jetziges Passwort",
-      "new": "Neues Passwort",
-      "submit": "Passwort ändern",
       "done": "Passwort geändert. Andere Browser müssen sich neu anmelden."
     },
     "sessions": {

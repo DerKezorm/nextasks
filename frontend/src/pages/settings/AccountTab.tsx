@@ -343,7 +343,7 @@ export function AccountTab({ part }: { part: AccountPart }) {
           {changing && (
             <ConfirmDialog
               title={t('account.passwordChange')}
-              confirm={confirmOf('resetSubmit', t('me.password.submit'))}
+              confirm={confirmOf('account.passwordChange', t('account.passwordChange'))}
               cancel={t('common.cancel')}
               closeLabel={t('common.close')}
               busy={busy}
@@ -361,8 +361,8 @@ export function AccountTab({ part }: { part: AccountPart }) {
                 })
               }}
             >
-              <Field label={t('me.password.current')} value={current} onChange={(event) => setCurrent(event.target.value)} type="password" autoComplete="current-password" />
-              <Field label={t('me.password.new')} value={next} onChange={(event) => setNext(event.target.value)} type="password" autoComplete="new-password" hints={[t('account.passwordRules', { minimum: me.min_password ?? PASSWORD_MIN })]} />
+              <Field label={t(FIELDS.currentPassword.label)} value={current} onChange={(event) => setCurrent(event.target.value)} type="password" autoComplete="current-password" />
+              <Field label={t(FIELDS.newPassword.label)} value={next} onChange={(event) => setNext(event.target.value)} type="password" autoComplete="new-password" hints={[t('account.passwordRules', { minimum: me.min_password ?? PASSWORD_MIN })]} />
               <Field
                 label={t(FIELDS.passwordRepeat.label)}
                 name="password_confirm"
