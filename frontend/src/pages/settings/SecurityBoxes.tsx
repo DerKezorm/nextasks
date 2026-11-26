@@ -12,7 +12,7 @@ import { authApi, passkeysApi, type AccessEntry, type PasskeyEntry, type Session
 import { AccountButton } from '../../components/AccountButton'
 import { confirmOf } from '../../lib/accountButton'
 import { problemText } from '../../lib/errors'
-import { moment } from '../../lib/time'
+import { useWhen } from '../../lib/useWhen'
 import { addPasskey, passkeysSupported } from '../../lib/passkeys'
 import { PasskeyAddition } from '../../vendor/nexkonten/AccountCards'
 import { Badge, Box, ConfirmDialog, Field, Notice as Message, Row, Rows } from '../../vendor/nexui'
@@ -25,7 +25,8 @@ export class Notice extends Error {}
  * public https address the module's `PasskeyAddition` says what is missing instead of the button (E49); the passkeys
  * the account has stay listed and removable. */
 export function PasskeysBox({ signedInByPassword, allowed = true, canAdd = true, operator = false }: { signedInByPassword: boolean; allowed?: boolean; canAdd?: boolean; operator?: boolean }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const when = useWhen()
   const translate = useMemo(() => (key: string, values?: Record<string, unknown>) => t(key, values), [t])
   const [keys, setKeys] = useState<PasskeyEntry[] | null>(null)
   const [asking, setAsking] = useState<{ kind: 'add' } | { kind: 'remove'; uid: string } | null>(null)
@@ -70,7 +71,7 @@ export function PasskeysBox({ signedInByPassword, allowed = true, canAdd = true,
               key={key.uid}
               icon={Fingerprint}
               name={key.name || t('account.passkeys')}
-              detail={moment(key.last_used_at ?? key.created_at, i18n.language)}
+              detail={when(key.last_used_at ?? key.created_at)}
               action={<AccountButton name="account.passkeyRemove" onClick={() => setAsking({ kind: 'remove', uid: key.uid })} />}
             />
           ))}
@@ -100,7 +101,8 @@ export function PasskeysBox({ signedInByPassword, allowed = true, canAdd = true,
 /** "Signed-in devices" (``account.sessions``, konten 0.3.6): browsers and paired devices, this browser marked, each
  * signed out alone; under them what "Sign out everywhere else" ends and what stays, and the button. */
 export function SessionsBox({ onEverywhere, busy = false }: { onEverywhere: () => Promise<unknown>; busy?: boolean }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const when = useWhen()
   const [rows, setRows] = useState<SessionEntry[] | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
   const load = useCallback(() => {
@@ -122,7 +124,7 @@ export function SessionsBox({ onEverywhere, busy = false }: { onEverywhere: () =
             icon={row.device ? Smartphone : Monitor}
             name={<span title={row.label}>{row.device ? `${t('account.sessionDevice')}: ${row.label}` : row.label || t('account.sessions')}</span>}
             badge={row.current ? <Badge tone="on">{t('account.sessionThis')}</Badge> : undefined}
-            detail={row.current ? undefined : moment(row.last_seen_at ?? row.created_at, i18n.language)}
+            detail={row.current ? undefined : when(row.last_seen_at ?? row.created_at)}
             action={
               !row.current && (
                 <AccountButton

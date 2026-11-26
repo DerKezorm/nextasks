@@ -9,7 +9,7 @@
 import { useTranslation } from 'react-i18next'
 
 import { tabId } from '../../api/client'
-import { moment } from '../../lib/time'
+import { momentIn } from '../../lib/time'
 import { useWhatsNew } from '../../lib/whatsNew'
 import { useAuth } from '../../state/auth'
 import { AboutPage, Notice, type BuiltWith } from '../../vendor/nexui'
@@ -41,7 +41,7 @@ export function AboutArea() {
   const { me } = useAuth()
   const operator = me?.role === 'operator'
   const language = i18n.language
-  const state = useUpdates({ fetcher, operator, language, when: (iso) => moment(iso, language) })
+  const state = useUpdates({ fetcher, operator, language, when: (iso) => momentIn(iso, language, me?.timezone) })
   // The written text of the running version, to read again at any time.
   const { entry } = useWhatsNew(me?.version, language)
   const texts = useUpdatesTexts(language)

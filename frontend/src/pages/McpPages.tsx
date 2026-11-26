@@ -12,7 +12,7 @@ import { useParams } from 'react-router-dom'
 
 import { Logo } from '../components/Logo'
 import { ThemeSwitcher } from '../components/ThemeSwitcher'
-import { moment } from '../lib/time'
+import { useWhen } from '../lib/useWhen'
 import { mcpRequest, useMcpWords } from '../lib/mcp'
 import { ConsentPage, RequestPage } from '../vendor/nexmcp'
 
@@ -42,10 +42,11 @@ export function McpRequestPage() {
   const { i18n } = useTranslation()
   const { id = '' } = useParams()
   const words = useMcpWords()
+  const when = useWhen()
   return (
     <Frame>
       <div className="w-full max-w-[640px]">
-        <RequestPage request={mcpRequest} id={id} words={words} language={i18n.language} when={(iso) => moment(iso, i18n.language)} />
+        <RequestPage request={mcpRequest} id={id} words={words} language={i18n.language} when={when} />
       </div>
     </Frame>
   )

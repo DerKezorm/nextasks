@@ -14,7 +14,7 @@ import { useAuth } from '../../state/auth'
 import { WhatYouSeeCard } from '../../vendor/nexkonten/AccountCards'
 import { MailCard } from '../../vendor/nexpost/MailCard'
 import { mcpRequest, useMcpWords } from '../../lib/mcp'
-import { moment } from '../../lib/time'
+import { useWhen } from '../../lib/useWhen'
 import { McpOperatorSettings, PendingRequests, ToolRights } from '../../vendor/nexmcp'
 import { AllKeysCard, ApiKeysCard, InterfacesCard, ToolsCard, type KeyRequest } from '../../vendor/nexschluessel'
 import { ConnectionsArea as OtherApps, ConnectionsOperatorCard } from '../../vendor/nexverbinden'
@@ -69,14 +69,15 @@ function ConnectionsArea() {
   const { t, i18n } = useTranslation()
   const { me } = useAuth()
   const words = useMcpWords()
+  const when = useWhen()
   return (
     <>
       <DevicesSection />
       <InstallCard />
-      <OtherApps app="nextasks" request={request} areaWord={t('mcp.areas')} language={i18n.language} when={(iso) => moment(iso, i18n.language)} />
-      <ApiKeysCard request={request} things={t('settings.things')} thingsDative={t('settings.thingsDative')} words={{ areas: t('apiTokens.where') }} docsHref={API_DOCS} operator={me?.role === 'operator'} />
-      <ToolsCard request={request} words={{ areas: t('apiTokens.where') }} extra={(key) => <ToolRights request={mcpRequest} keyId={key.id} words={words} />}>
-        <PendingRequests request={mcpRequest} words={words} when={(iso) => moment(iso, i18n.language)} viewHref={(entry) => `/mcp/requests/${entry.id}`} />
+      <OtherApps app="nextasks" request={request} areaWord={t('mcp.areas')} language={i18n.language} when={when} />
+      <ApiKeysCard request={request} things={t('settings.things')} thingsDative={t('settings.thingsDative')} words={{ areas: t('apiTokens.where') }} docsHref={API_DOCS} operator={me?.role === 'operator'} when={when} />
+      <ToolsCard request={request} words={{ areas: t('apiTokens.where') }} when={when} extra={(key) => <ToolRights request={mcpRequest} keyId={key.id} words={words} />}>
+        <PendingRequests request={mcpRequest} words={words} when={when} viewHref={(entry) => `/mcp/requests/${entry.id}`} />
       </ToolsCard>
     </>
   )
@@ -110,11 +111,12 @@ function MailArea() {
 function AccountsArea() {
   const { t } = useTranslation()
   const translate = useMemo(() => (key: string, values?: Record<string, unknown>) => t(key, values), [t])
+  const when = useWhen()
   return (
     <>
       <AccountsTab />
       <WhatYouSeeCard t={translate} text={t('server.whatYouSee')} />
-      <AllKeysCard request={request} words={{ areas: t('apiTokens.where') }} />
+      <AllKeysCard request={request} words={{ areas: t('apiTokens.where') }} when={when} />
     </>
   )
 }

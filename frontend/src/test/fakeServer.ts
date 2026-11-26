@@ -108,6 +108,8 @@ export class FakeServer {
   /** The tasks `/api/sweep` offers; null: 404, as an older server. Kept ones (`POST /api/sweep/keep`) drop out. */
   sweep: { id: string; [key: string]: unknown }[] | null = null
   kept = new Set<string>()
+  /** Further sessions `/api/auth/sessions` lists after the current one. */
+  otherSessions: Record<string, unknown>[] = []
   /** What `/api/reminders/{id}/history` answers per task (events of the history); none: an empty one. */
   history = new Map<string, unknown[]>()
   /** What it answers as `comments_via` per task (comment id → `mcp:<key name>`); none: none. */
@@ -824,6 +826,8 @@ export class FakeServer {
       provider_email: own && !own.confirmed ? own.suggestion : '',
       provider_email_from: own && !own.confirmed && own.suggestion ? 'Pocket ID' : '',
       language: account.language,
+      // The account's own time zone, as the real server says it (E14).
+      timezone: account.timezone,
       two_factor: false,
       two_factor_recovery_left: 0,
       factor_state: 'none',
@@ -1083,7 +1087,7 @@ export class FakeServer {
       me.name = String(body.display_name ?? me.name)
       return { status: 200, body: this.oldMe(me) }
     }
-    if (path === '/api/auth/sessions') return { status: 200, body: [{ uid: 'this', kind: 'browser', label: 'Firefox on Linux', address: '', created_at: this.iso(), last_seen_at: this.iso(), current: true, device: false }] }
+    if (path === '/api/auth/sessions') return { status: 200, body: [{ uid: 'this', kind: 'browser', label: 'Firefox on Linux', address: '', created_at: this.iso(), last_seen_at: this.iso(), current: true, device: false }, ...this.otherSessions] }
     if (path === '/api/auth/passkeys') return { status: 200, body: [] }
     if (path === '/api/auth/totp/setup') return { status: 200, body: { waiting: false } }
     if (path === '/api/auth/access') return { status: 200, body: { origin: '', access: [] } }

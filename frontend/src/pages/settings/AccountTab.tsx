@@ -25,6 +25,7 @@ import { confirmOf } from '../../lib/accountButton'
 import { copyText } from '../../lib/copy'
 import { errorText, problemText, returnErrorText } from '../../lib/errors'
 import { usePasswordConfirm } from '../../lib/passwordConfirm'
+import { dayOf } from '../../lib/time'
 import { useAuth } from '../../state/auth'
 import { confirmLine, DISPLAY_NAME_MAX, EMAIL_MAX, fieldLabel, FIELDS, PAGES, PASSWORD_MIN, passwordChanged, screenFields, SECOND_FACTOR_STATE, USERNAME_MAX } from '../../vendor/nexkonten/konten'
 import { Badge, Box, Card, CheckboxRow, ConfirmDialog, Field, Notice, Row, Rows, SelectField } from '../../vendor/nexui'
@@ -143,7 +144,7 @@ export function AccountTab({ part }: { part: AccountPart }) {
 
   // "Last changed on …" under the password (konten 0.3.10, `PAGES.security` part `password`, `line`).
   const changed = passwordChanged(me.password_changed_at)
-  const changedLine = t(changed.text, changed.date ? { day: new Date(changed.date).toLocaleDateString(i18n.language, { day: 'numeric', month: 'long', year: 'numeric' }) } : {})
+  const changedLine = t(changed.text, changed.date ? { day: dayOf(changed.date, i18n.language) } : {})
   const picture = pagePart('profile', 'picture')
   const lastLinkOf = (provider: MyProvider) => me.sign_in === 'oidc' && provider.linked && (providers ?? []).filter((entry) => entry.linked).length === 1
   const unchanged = name.trim() === (me.display_name ?? '') && email.trim().toLowerCase() === (me.email ?? '').toLowerCase() && username.trim().toLowerCase() === me.name

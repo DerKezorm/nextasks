@@ -19,7 +19,7 @@ import { accountsApi, invitesApi, oidcApi, type AccountRow, type FactorResetOver
 import { AccountButton } from '../../components/AccountButton'
 import { confirmOf } from '../../lib/accountButton'
 import { copyText } from '../../lib/copy'
-import { moment } from '../../lib/time'
+import { dayOf, momentIn } from '../../lib/time'
 import { useAuth } from '../../state/auth'
 import {
   ACCOUNT_LIST,
@@ -57,10 +57,8 @@ import { Avatar, Badge, Button, ButtonGroup, Card, CheckboxRow, ConfirmDialog, D
 import { APP_CAPS, APP_OWN_ACTIONS, listedOf } from './accountList'
 import { Outcome as Feedback, useAction } from './actions'
 
-/** A day as nextasks writes it in the list ("25.11.2026"). */
-function day(value: string, lang: string): string {
-  return new Date(value).toLocaleDateString(lang)
-}
+/** A day as all apps write it (E65, "25.11.2026"). */
+const day = dayOf
 
 /** The badges of a row or an invitation, in the kit's look; a day in the app's way of writing it. */
 function Badges({ shown }: { shown: BadgeShown[] }) {
@@ -215,6 +213,7 @@ function ManageDialog({ row, ownId, operatorHasPassword, mailServer, onClose, on
 }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
+  const zone = useAuth().me?.timezone
   const listed = listedOf(row, ownId)
   const name = accountName(listed)
   const action = useAction()
@@ -227,7 +226,7 @@ function ManageDialog({ row, ownId, operatorHasPassword, mailServer, onClose, on
     label: t(fact.label),
     value: (
       <>
-        {fact.raw ?? (fact.date ? moment(fact.date, lang) : fact.text ? t(fact.text, fact.values) : '')}
+        {fact.raw ?? (fact.date ? momentIn(fact.date, lang, zone) : fact.text ? t(fact.text, fact.values) : '')}
         {fact.state && <span className="text-[var(--nexui-text-muted)]"> · {t(fact.state)}</span>}
       </>
     ),

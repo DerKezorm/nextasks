@@ -241,6 +241,16 @@ describe('the box Passkeys', () => {
     Reflect.deleteProperty(navigator, 'credentials')
   })
 
+  it('writes a moment in the one form of all apps, in the account\'s own time zone (E65, E14)', async () => {
+    const { server, robin } = smallWorld()
+    server.accounts.get(robin)!.timezone = 'Asia/Tokyo'
+    server.otherSessions = [{ uid: 'phone', kind: 'browser', label: 'Safari on iPhone', address: '', created_at: '2026-01-15T03:05:00.000Z', last_seen_at: '2026-01-15T03:05:00.000Z', current: false, device: false }]
+    const page = await mount(server, '/settings/security')
+    const box = page.querySelector('[data-testid="sessions"]')!.textContent
+    expect(box).toContain('Safari on iPhone')
+    expect(box).toContain('15/01/2026, 12:05')
+  })
+
   it('offers "Add a passkey" where the server can add one', async () => {
     browserWithPasskeys()
     const { server } = smallWorld()
