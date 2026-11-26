@@ -41,6 +41,14 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug 84d152a (27.11.2026): ui 1.1.3, verbinden 0.1.6, mcp 1.1.4
+
+ui 1.1.3 (U-3): Server › Allgemein bekommt `parts` = `GENERAL_PARTS` (`pages/settings/areas.ts`: Grenzen, Funktionen
+für alle Konten, Schnittstellen, andere nex-Apps, eigene Sprachen; kein Web Push), der Untertitel nennt genau diese
+(Test in `settings.test.tsx`, Gegenproben rot: ohne `parts`, mit Web Push). V-15 und M-20 kommen aus den Modulen, die
+Vorlagen `nexverbinden.test.tsx` und `nexmcp.test.tsx` sind von Hand übernommen. Kein `TODO` im Code.
+Läufe `module-nextasks-r7`: ruff, lint, build sauber; pytest 1742 grün, 13 übersprungen; vitest 1282 grün; Start-Probe 200, keine Traceback.
+
 ### Nachzug 7fb9279 (27.11.2026): ui 1.1.2, schluessel 1.1.2, mcp 1.1.3, verbinden 0.1.5, sicherung 1.0.5
 
 E65: die Module schreiben Tage und Zeitpunkte selbst in der einen Form; nextasks gibt ihnen wie bisher ein `when`, jetzt
