@@ -56,6 +56,17 @@ class Adapter(StandardAdapter):
                 assert row is not None
                 ensure_private(db, row)
         self._own = _task(self._accounts["owner"].id, "Groceries")
+        # Every call of the app's hook "a program waits" (MCP 14), recorded and passed on to nextasks' ways.
+        from app.services import mcp
+
+        self._notify = mcp.notify
+        self._notified: list[tuple[str, Any]] = []
+
+        def recorded(event: str, request: Any) -> None:
+            self._notified.append((event, request.id))
+            self._notify(event, request)
+
+        mcp.notify = recorded
         self._foreign = _task(self._accounts["other"].id, "Diary")
         self._clients: dict[str, Any] = {}
 
@@ -64,6 +75,9 @@ class Adapter(StandardAdapter):
         self.start()
 
     def stop(self) -> None:
+        from app.services import mcp
+
+        mcp.notify = self._notify
         for client in self._clients.values():
             client.close()
 
@@ -92,6 +106,19 @@ class Adapter(StandardAdapter):
 
     def foreign_call(self) -> tuple[str, dict[str, Any]]:
         return "read_task", {"task_id": self._foreign}
+
+    def change_arguments(self, request_id: Any, arguments: str) -> None:
+        from app.db import SessionLocal
+        from app.models_mcp import McpRequest
+
+        with SessionLocal() as db:
+            row = db.get(McpRequest, int(request_id))
+            assert row is not None
+            row.arguments = arguments
+            db.commit()
+
+    def notified(self) -> list[tuple[str, Any]]:
+        return list(self._notified)
 
     def legacy_keys(self) -> list[LegacyKey]:
         return []

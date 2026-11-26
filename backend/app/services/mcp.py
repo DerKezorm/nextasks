@@ -301,8 +301,30 @@ _FIELDS: dict[str, Any] = {
 }
 
 
-def _describe_task(verb: str) -> Any:
-    return lambda args: f"{verb} '{str(args.get('title') or args.get('task_id', ''))[:80]}'"
+def _describe_task(tool: str) -> Any:
+    """The line of a request ("Was es tun will", mcp 1.1.1 M-12): in the language of the account, with the title of the
+    task instead of its id (only a task the account sees)."""
+
+    def describe(args: dict[str, Any], caller: Any) -> str:
+        import json
+
+        from ..models import Member, Reminder
+        from . import spaces
+
+        language = "en"
+        named = dict(args)
+        with SessionLocal() as db:
+            account = db.get(Account, int(caller.account_id))
+            if account is not None:
+                language = spaces.language_of(account)
+            task_id = str(args.get("task_id") or "").strip().lower()
+            if task_id and not named.get("title"):
+                row = db.get(Reminder, task_id) if records.is_uuid(task_id) else None
+                if row is not None and db.get(Member, (row.space_id, int(caller.account_id))) is not None:
+                    named["title"] = row.title
+        return what_of(language, tool, json.dumps(named))
+
+    return describe
 
 
 TOOLS: tuple[Tool, ...] = (
@@ -333,19 +355,19 @@ TOOLS: tuple[Tool, ...] = (
     Tool("create_task", "change", "write",
          "Make a task. Without list_id it goes into the list new tasks go to in the interface.",
          _schema({**_FIELDS, "parent_id": {**_ID, "description": "Makes it a subtask of this task."}}, ["title"]),
-         create_task, describe=_describe_task("Make the task")),
+         create_task, describe=_describe_task("create_task")),
     Tool("update_task", "change", "write", "Change fields of a task; null clears a field.",
-         _schema({**_TASK, **_FIELDS}, ["task_id"]), update_task, describe=_describe_task("Change the task")),
+         _schema({**_TASK, **_FIELDS}, ["task_id"]), update_task, describe=_describe_task("update_task")),
     Tool("complete_task", "change", "write",
          "Tick a task off (completed true, the default) or open it again (false). A repeating task moves on.",
          _schema({**_TASK, "completed": {"type": "boolean"}}, ["task_id"]), complete_task,
-         describe=_describe_task("Tick off the task")),
+         describe=_describe_task("complete_task")),
     Tool("add_comment", "change", "write", "Comment on a task of a shared space.",
          _schema({**_TASK, "text": {"type": "string", "minLength": 1, "maxLength": 5000},
                   "mentions": {"type": "array", "maxItems": 50, "items": {"type": "integer", "minimum": 1}}},
-                 ["task_id", "text"]), add_comment, describe=_describe_task("Comment on the task")),
+                 ["task_id", "text"]), add_comment, describe=_describe_task("add_comment")),
     Tool("delete_task", "risky", "write", "Move a task, with its subtasks, to the bin.", _schema(_TASK, ["task_id"]),
-         delete_task, describe=_describe_task("Move to the bin the task")),
+         delete_task, describe=_describe_task("delete_task")),
 )
 
 # --- "A program waits for your yes" (MCP decision 14) -----------------------------------------------------------------

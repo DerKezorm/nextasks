@@ -272,3 +272,18 @@ def test_the_history_names_the_program_behind_a_change() -> None:
     assert put(anna, "reminder", made["id"], {"priority": 3}, {"priority": now_ms() + 1000})["ok"]
     after = anna.get(f"/api/reminders/{made['id']}/history").json()["events"]
     assert ("priority", "") in [(event["field"], event["via"]) for event in after]
+
+
+def test_a_waiting_request_says_what_it_wants_with_the_title_not_the_id() -> None:
+    """mcp 1.1.1 (M-12): the line of a request names the task by its title, in the language of the account."""
+    _account, anna = person("anna")
+    private_space(anna)
+    secret = mcp_key(anna, right="write")
+    made = data(call(secret, "create_task", title="Old boxes"))
+    key_id = next(key["id"] for key in anna.get("/api/connections/keys").json()["keys"] if key["kind"] == "mcp")
+    anna.put(f"/api/connections/mcp/keys/{key_id}/rights", json={"rights": {"delete_task": "ask"}})
+    call(secret, "delete_task", task_id=made["id"])
+    waiting = anna.get("/api/connections/mcp/requests").json()
+    entries = waiting if isinstance(waiting, list) else waiting.get("requests", waiting)
+    summary = entries[0]["summary"]
+    assert "Old boxes" in summary and made["id"] not in summary, summary
