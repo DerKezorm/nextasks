@@ -18,7 +18,7 @@ zurück; das stimmt nicht ganz.
 Nach dem Bauplan in nexlore `Development/nexapps/Baupläne/Bauplan Einstellungen.md` (E1 bis E31). Module aus
 `bauplaene-stand` bzw. `bauplaene-einst` (je `tools/sync.py copy`, `check` grün): **ui 1.1.0, konten 1.1.0, oidc 1.2.0,
 post 1.1.0, log 1.0.0, sicherung 1.0.1, schluessel 1.0.0** (Stand `bauplaene-stand` `bef0132`, jede Vorlagen-Kopie mit
-ihrer Kopfzeile). Fragen: `einst-fragen/nextasks.md` (1 bis 14; Nacharbeit nach E33 eingetragen).
+ihrer Kopfzeile). Fragen: `einst-fragen/nextasks.md` (1 bis 14; Nacharbeit nach E33 und E35 eingetragen).
 
 | Bereich | woher jetzt | was gewandert ist (alt → neu) |
 |---|---|---|
@@ -32,7 +32,7 @@ ihrer Kopfzeile). Fragen: `einst-fragen/nextasks.md` (1 bis 14; Nacharbeit nach 
 | Anmeldung | `SignInArea.tsx`: `SignInPage` (konten) + `SignInProviders` (oidc) | `SignInCards.tsx` und Kopplungs-Zweige (nexsuite) fallen weg; neue Wege `GET/PUT /api/server/sign-in`, `GET /api/server/sign-in/readiness` (`routers/server_signin.py`); `PUT /api/settings` bleibt |
 | Mail | `MailCard` (post) unter `/api/server/mail` (`routers/server_mail.py`) | `services/mailer.py` fällt weg: Kontomails und Testmail über `post_store.send_letter` (`outbox.deliver_now`); Berichte und Ereignisse als Briefe der App (`channels.mail_letter`, `body_html` im Rahmen, E26) über die eine Outbox von post (`queue`, Schlüssel `notify:<konto>:<key>`, Zustand je Weg über `after_attempt`, E33); `notify_outbox` nur noch für Push, wartende Mail-Zeilen ziehen beim Start um (`move_waiting_mail`); Outbox mit `key`, `waiting`, `on_commit`, `recipient`, `after_attempt`, `outbox_runner` |
 | Speicher und Sicherung | Modul sicherung: `services/backup_hooks.py` (Format unverändert), `StorageArea.tsx` | eigene `BackupsCard` → Karten „Speicher“ und „Sicherung“; neu Uhrzeit (`backup_time`, 03:00), „Jeden Monat“; alte Wege `/api/backups/*` mit `x-nextasks-password` über `legacy_router`; Start: `configure`, `tidy_at_start`, `warn_at_start`, `apply_pending`, `report_failed_restore` |
-| Konten | Kontenliste (konten, `capsOf`), `WhatYouSeeCard`, `AllKeysCard` (schluessel) | Löschen mit 30 Tagen Zurückholen (`accounts.deleted_at`, `POST /api/accounts/{id}/restore`, Hausputz `manage.purge_due` stündlich); mehrere Betreiber; `Account.shut` sperrt gelöschte wie gesperrte an jeder Tür; gelöschte behalten 30 Tage ihre Mitgliedschaften, unsichtbar (`spaces.member_ids`, `/api/app/1` gibt ihre Mitgliederzeile als „gone“, `/api/v1` lässt sie aus, nicht zuweisbar, keine Mitteilungen; E33); Tabelle „API-Token aller Konten“ → Modul |
+| Konten | Kontenliste (konten, `capsOf`), `WhatYouSeeCard`, `AllKeysCard` (schluessel) | Löschen mit 30 Tagen Zurückholen (`accounts.deleted_at`, `POST /api/accounts/{id}/restore`, Hausputz `manage.purge_due` stündlich); mehrere Betreiber; `Account.shut` sperrt gelöschte wie gesperrte an jeder Tür; gelöschte behalten 30 Tage ihre Mitgliedschaften und Zuweisungen, unsichtbar (`spaces.member_ids`, `services/gone.py`; `/api/app/1` gibt ihre Mitgliederzeile als „gone“ und ihre Aufgaben ohne sie, `/api/v1` lässt sie aus, nicht neu zuweisbar, keine Mitteilungen; Ändern einer Aufgabe behält die Zuweisung, Zurückholen zeigt sie wieder; E33, E35); Tabelle „API-Token aller Konten“ → Modul |
 | Log | Modul log (`services/logs.py` = Konfiguration, `routers/logs.py` = `nexlog.api.router`), `LogCard` | Format, Datei, Schlüssel `log_mode`/`log_mode_until` unverändert; geschwärzt jetzt auch `ntd_`, `nxm_` |
 | Über | `AboutPage` (ui) | eigene Seite mit Wortmarke → Logo als Bild |
 
@@ -49,12 +49,12 @@ e2e Test 34: jetzt grün (Fläche über ihren h1, Karte über `data-card`). post
 nicht neu ziehen (dort ungespeicherte Änderungen); die Vorlagen-Zeilen von `5caffab` sind übernommen, `sync.py check`
 grün.
 
-Läufe nach der Nacharbeit E33 (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber; pytest 1514 grün,
+Läufe nach der Nacharbeit E35 (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber; pytest 1515 grün,
 3 übersprungen (vorher 1397/3); `npm run lint` sauber; vitest 1119 grün, 3 rot (`signInCards.test.tsx`, Modulfrage 8;
 vorher 1048); `npm run build` sauber. Playwright `npm run e2e`: 33 und 34 grün, 35 rot (Modulfrage 8b). Mutationsproben
 (Rückgabecode): Schwärzen von `ntd_` (nexlog), Zähler nach dem Wiederherstellen, Zurückholen eines gelöschten Kontos,
 Schlüssel bei geschuldetem Faktor (`SETUP_ONLY_PATHS`), gelöschte Mitglieder auf den Geräten (`changes.page`),
-Zustand des Mail-Wegs (`after_attempt`).
+Zustand des Mail-Wegs (`after_attempt`), versteckte Zuweisung behalten (`gone.kept`) und nicht zeigen (`gone.shown`).
 
 ### Auf den Modulen 1.0.0 (25.11.2026)
 
