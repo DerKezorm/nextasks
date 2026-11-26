@@ -70,11 +70,26 @@ class Adapter(StandardAdapter):
                 db.commit()
             self.older_key = token
         self.store = verbinden.VerbindenStore(SessionLocal())
+        # V39 (0.1.4): every call of the app's hook, heard on the way through (the router looks it up at each call).
+        self._ended: list[tuple[Any, str]] = []
+        self._hook = verbinden.on_disconnected
+
+        def heard(store: Any, account_id: Any, partner: str) -> None:
+            self._ended.append((account_id, partner))
+            self._hook(store, account_id, partner)
+
+        verbinden.on_disconnected = heard
 
     def stop(self) -> None:
+        from app.services import verbinden
+
+        verbinden.on_disconnected = self._hook
         for client in self._clients.values():
             client.close()
         self.store.db.close()
+
+    def disconnected(self) -> list[tuple[Any, str]]:
+        return list(self._ended)
 
     def asgi(self) -> Any:
         from app.main import app

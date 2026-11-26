@@ -1,4 +1,4 @@
-"""Connections with other nex apps: the routes of the shared module ``nexverbinden`` (verbinden 0.1.1), the same
+"""Connections with other nex apps: the routes of the shared module ``nexverbinden`` (verbinden 0.1.4), the same
 places in every app: ``/.well-known/nex-app``, ``/api/connect/…`` (the cards, the consent, the operator's switch and
 addresses, and between the apps ``token``, ``revoke``, ``retire``, ``hello``). The pages ``/connect/app`` and
 ``/connect/return`` are the web's. A partner then uses ``/api/v1`` with the token of its connection
@@ -31,5 +31,10 @@ def _error(refusal: Refused) -> HTTPException:
     return error(refusal.code, refusal.message, refusal.status, **refusal.details)
 
 
+def _disconnected(store: verbinden.VerbindenStore, account_id: object, partner: str) -> None:
+    # Looked up at each call, so the contract's adapter can listen (``tests/nexverbinden_adapter.py``).
+    verbinden.on_disconnected(store, account_id, partner)
+
+
 router = api.router(config=verbinden.CONFIG, store=_store, account=require_account, operator=require_operator,
-                    address=_address, error=_error)
+                    address=_address, error=_error, on_disconnected=_disconnected)

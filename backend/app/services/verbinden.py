@@ -1,4 +1,4 @@
-"""nextasks among the other nex apps (shared module ``vendor/nexverbinden``, verbinden 0.1.1): its ``AppConfig`` and the
+"""nextasks among the other nex apps (shared module ``vendor/nexverbinden``, verbinden 0.1.4): its ``AppConfig`` and the
 ``Store`` over its tables (``models_connect.py``).
 
 nextasks is a host in five pairs of the catalog (V2): nexnotes, nexmail, nextime, nexpaper and nexdiary use its tasks;
@@ -15,6 +15,7 @@ the key ends itself (``retire_key``).
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import Any
 
@@ -30,6 +31,8 @@ from ..vendor import nexverbinden
 from ..vendor.nexverbinden import Code, Connection, Legacy, Pending, Waiting
 from . import apitokens, settings_service, totp
 from .schluessel_store import SchluesselStore
+
+logger = logging.getLogger("nextasks.connect")
 
 #: The tokens nextasks gives its partners: access, refresh, code. Never ``ntk_`` (an API key's).
 ACCESS_PREFIX = "ntc_"
@@ -240,6 +243,11 @@ class VerbindenStore:
     def local_allowed(self) -> bool:
         return bool(settings_service.get(self.db, SETTINGS["connections_local_network"]))
 
+    def set_local_allowed(self, on: bool) -> None:
+        """Since 0.1.4 (V36): the box "Verbindungen ins eigene Netz" in "Andere nex-Apps"; the one setting
+        ``local_allowed`` reads (nextasks had no switch of its own for it)."""
+        settings_service.save(self.db, {SETTINGS["connections_local_network"]: bool(on)}, commit=False)
+
     def seal(self, text: str) -> str:
         return encrypt_secret(text, SEAL)
 
@@ -251,6 +259,13 @@ class VerbindenStore:
 
     def rollback(self) -> None:
         self.db.rollback()
+
+
+def on_disconnected(store: VerbindenStore, account_id: Any, partner: str) -> None:
+    """V39 (0.1.4): a connection ended here, by "Zugriff beenden" or because the partner ended it. nextasks is only a
+    host: what a partner made here (tasks, comments) stays, and it keeps no rows of its own about a connection, so there
+    is nothing to drop; the log says it."""
+    logger.info("Connection with another nex app ended partner=%s account_id=%s", partner, account_id)
 
 
 def caller(db: Session, token: str) -> nexverbinden.Caller:
