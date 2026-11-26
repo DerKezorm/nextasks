@@ -437,3 +437,15 @@ def test_after_the_change_mcp_is_off_and_an_api_token_opens_only_the_api(bestand
     answer = browser().post("/api/mcp", headers=key, json={"jsonrpc": "2.0", "id": 1, "method": "ping"})
     assert answer.status_code == 401, answer.text
     assert browser().get("/api/v1/me", headers=key).status_code == 200
+
+
+def test_after_the_change_nextasks_describes_itself_to_other_nex_apps_and_the_typed_in_key_works_on(
+    bestand: Any,
+) -> None:
+    """verbinden 0.1.1: ``/.well-known/nex-app`` names nextasks and that it connects (the operator's switch, on from the
+    start, V1 7a); the API key another app typed in under 0.8.0 keeps opening ``/api/v1`` beside it."""
+    found = browser().get("/.well-known/nex-app")
+    assert found.status_code == 200, found.text
+    assert found.json()["app"] == "nextasks" and found.json()["connect"] is True
+    account = next(a for a in ACCOUNTS if a.get("api_token"))
+    assert browser().get("/api/v1/me", headers={"Authorization": f"Bearer {account['api_token']}"}).status_code == 200
