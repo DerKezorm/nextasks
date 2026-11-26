@@ -1,4 +1,4 @@
-// Settings, Connections, "Devices" as nexnotes' (`devices/devices.test.tsx` there), against the fake server: the card
+// My account › Connections › "Devices" as nexnotes' (`devices/devices.test.tsx` there), against the fake server: the card
 // first, before the keys; every paired device with its name and last contact; "Disconnect" only after a question;
 // "Connect iPhone or iPad" opens the QR code with the steps, the address and the short code; the operator's switches
 // answer in the dialog.
@@ -12,7 +12,7 @@ afterEach(unmount)
 const card = (page: HTMLElement) => page.querySelector('#devices') as HTMLElement
 const dialog = () => document.querySelector('[data-testid="devices-connect-dialog"]') as HTMLElement | null
 
-describe('Settings, Connections, Devices', () => {
+describe('My account › Connections › Devices', () => {
   it('stands first, before the keys, and lists every device with its name and last contact', async () => {
     const { server, robin, alex } = smallWorld()
     const hour = new Date(Date.now() - 3_600_000).toISOString()
@@ -39,6 +39,8 @@ describe('Settings, Connections, Devices', () => {
     expect(card(page).querySelector('[data-testid="devices-none"]')).toBeNull()
     expect(card(page).querySelector('[data-testid="devices-connect"]')?.textContent).toBe('Connect iPhone or iPad')
     expect(card(page).querySelector('[data-testid="devices-connect"]')?.getAttribute('data-kind')).toBe('primary')
+    // The symbol as nexnotes' (E39): the device, not the code it shows.
+    expect(card(page).querySelector('[data-testid="devices-connect"]')?.getAttribute('data-icon')).toBe('Smartphone')
   })
 
   it('says so when no device is connected, the button to connect stays', async () => {

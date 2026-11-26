@@ -1,12 +1,11 @@
 /**
- * Settings, Connections: "Geräte", first, before the keys (as nexnotes' `devices/DevicesSection.tsx`). Every paired
+ * My account › Connections: "Geräte", first, before the keys (as nexnotes' `devices/DevicesSection.tsx`). Every paired
  * iPhone and iPad with its name and its last contact, and "Trennen" after a question: the device reaches nothing from
  * that moment on. "iPhone oder iPad verbinden" opens the QR code (`ConnectDialog`).
  *
  * nextasks' server names no kind of device and nothing about notifications (`DeviceOut`: id, name, created_at,
  * last_seen), so every row has the phone's symbol and neither kind nor "Mitteilungen an".
  */
-import { QrCode } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -70,7 +69,7 @@ export function DevicesSection() {
         </Rows>
       )}
       <Buttons>
-        <Button kind="primary" icon={QrCode} onClick={() => setConnecting(true)} testId="devices-connect">
+        <Button kind="primary" icon="Smartphone" onClick={() => setConnecting(true)} testId="devices-connect">
           {t('devices.section.connect')}
         </Button>
       </Buttons>
