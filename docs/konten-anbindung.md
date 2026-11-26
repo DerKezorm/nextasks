@@ -17,7 +17,7 @@ zurück; das stimmt nicht ganz.
 
 Nach dem Bauplan in nexlore `Development/nexapps/Baupläne/Bauplan Einstellungen.md` (E1 bis E31). Module aus
 `bauplaene-stand` bzw. `bauplaene-einst` (je `tools/sync.py copy`, `check` grün): **ui 1.1.0, konten 1.1.0, oidc 1.2.0,
-post 1.1.0, log 1.0.0, sicherung 1.0.1, schluessel 1.0.0** (Stand `bauplaene-stand` `7685875`, jede Vorlagen-Kopie mit
+post 1.1.0, log 1.0.0, sicherung 1.0.1, schluessel 1.0.0** (Stand `bauplaene-stand` `a374e3c`, jede Vorlagen-Kopie mit
 ihrer Kopfzeile und den Änderungen der Vorlagen seit `bef0132`; `things`/`thingsDative` = Aufgaben/Aufgaben). Fragen: `einst-fragen/nextasks.md` (1 bis 14; Nacharbeit nach E33 und E35 eingetragen).
 
 | Bereich | woher jetzt | was gewandert ist (alt → neu) |
@@ -53,9 +53,13 @@ Zeiten von Log und Sicherung in der Zone des Kontos (E14, E40: `when`/`clock` an
 Umwege: keine; ruff nimmt alle vendor-Module samt Vertragstests aus. sicherung aus `bauplaene-stand` `b0d3618`. Vorbestehend rot war
 e2e Test 34: jetzt grün (Fläche über ihren h1, Karte über `data-card`).
 
-Läufe nach E40 und sicherung b0d3618 (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber; pytest
-1518 grün, 3 übersprungen (Gründe der App: kein git, kein eigener Scanner, keine Links unter Windows); `npm run lint`
-sauber; vitest 1144 grün, 0 rot; `npm run build` sauber. Playwright `npm run e2e`: 33, 34, 35 grün. Mutationsproben
+Verweise (E39): Texte, README und `docs/api.md` nennen die Orte der Einstellungen von heute (API-Schlüssel unter
+Verbindungen, Schnittstellen unter Allgemein, öffentliche Adresse unter Anmeldung, Seitenleiste unter Darstellung); Test
+`i18n/places.test.ts`. Die toten Bereichstexte `settings.areas.*` sind weg.
+
+Läufe nach a374e3c und E39 (26.11.2026, `einst-werkzeug/reihe.sh nextasks ende`): ruff sauber (nach dem Umbruch einer
+Zeile); pytest 1518 grün, 3 übersprungen (Gründe der App: kein git, kein eigener Scanner, keine Links unter Windows); `npm run lint`
+sauber; vitest 1147 grün, 0 rot; `npm run build` sauber. Playwright `npm run e2e`: 33, 34, 35 grün. Mutationsproben
 (Rückgabecode): Schwärzen von `ntd_` (nexlog), Zähler nach dem Wiederherstellen, Zurückholen eines gelöschten Kontos,
 Schlüssel bei geschuldetem Faktor (`SETUP_ONLY_PATHS`), gelöschte Mitglieder auf den Geräten (`changes.page`),
 Zustand des Mail-Wegs (`after_attempt`), versteckte Zuweisung behalten (`gone.kept`) und nicht zeigen (`gone.shown`), kein Weg für ein gesperrtes Konto
