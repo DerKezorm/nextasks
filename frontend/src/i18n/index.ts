@@ -1,6 +1,6 @@
 /**
  * Languages, as in nexlore. English and German ship with the app; the operator can add more as JSON files, which the
- * server offers under `/api/locales`.
+ * server offers under `/api/locales` (the shared module sprachen: `ownLanguages`, the card "Languages").
  *
  * English is always loaded and is the fallback: an added language may be incomplete, and whatever it leaves out
  * appears in English instead of as a raw key. An added file for `en` or `de` is laid over the shipped texts, so a
@@ -18,6 +18,8 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
 import { kontenVariables } from '../vendor/nexkonten/konten'
+import { ownLanguages } from '../vendor/nexsprachen/languages'
+import type { Texts as LanguageTexts } from '../vendor/nexsprachen/sprachen'
 import kontenDe from '../vendor/nexkonten/konten.de.json'
 import kontenEn from '../vendor/nexkonten/konten.en.json'
 import { postVariables } from '../vendor/nexpost/post'
@@ -42,70 +44,24 @@ export const SHIPPED: Record<string, { name: string; texts: Texts }> = {
   de: { name: 'Deutsch', texts: de },
 }
 
-export type LanguageOption = { code: string; name: string; added: boolean }
+export type { LanguageOption } from '../vendor/nexsprachen/languages'
+
+/** The built-in languages, code and name in itself, for the language menus (as the server's `AppConfig.built_in`). */
+export const BUILT_IN = Object.entries(SHIPPED).map(([code, entry]) => ({ code, name: entry.name }))
+
+/** The operator's own languages (the shared module sprachen, under `/api/locales`), asked for once per page load; the
+ * card "Languages" makes the list be asked again after a change (`own.forget`). */
+export const own = ownLanguages({ base: '/api/locales' })
 
 const FALLBACK = 'en'
 const STORAGE_KEY = 'nextasks.language'
 const CODE = /^[a-z]{2,3}(?:-(?:[A-Z]{2}|[A-Z][a-z]{3}))?$/
 
-type AddedEntry = { code: string; name: string; keys: number }
-
-let addedList: Promise<AddedEntry[]> | null = null
-
-/** The languages the operator added. An empty list when the server is not reachable: the app still works. */
-export function addedLanguages(): Promise<AddedEntry[]> {
-  addedList ??= fetch('/api/locales', { headers: { Accept: 'application/json' } })
-    .then((response) => (response.ok ? response.json() : []))
-    .then((list: unknown) =>
-      Array.isArray(list) ? list.filter((entry): entry is AddedEntry => !!entry && typeof entry.code === 'string' && CODE.test(entry.code)) : [],
-    )
-    .catch(() => [])
-  return addedList
-}
-
-/** After the operator added or removed one: ask the server again. */
-export function forgetAddedLanguages(): void {
-  addedList = null
-}
-
-async function fetchAdded(code: string): Promise<Texts | null> {
-  if (!CODE.test(code)) return null
-  try {
-    const response = await fetch(`/api/locales/${encodeURIComponent(code)}`, { headers: { Accept: 'application/json' } })
-    if (!response.ok) return null
-    const texts: unknown = await response.json()
-    return texts && typeof texts === 'object' && !Array.isArray(texts) ? (texts as Texts) : null
-  } catch {
-    return null
-  }
-}
-
 /** Shipped texts first, the operator's file on top. False when there is nothing for this code at all. */
 async function loadTexts(code: string): Promise<boolean> {
-  let found = code in SHIPPED
-  const added = await addedLanguages()
-  if (added.some((entry) => entry.code === code)) {
-    const texts = await fetchAdded(code)
-    if (texts) {
-      i18n.addResourceBundle(code, 'translation', texts, true, true)
-      found = true
-    }
-  }
-  return found
-}
-
-/** Languages in the order of their names, the same everywhere in the family: Deutsch, English, an added one in its
- * place among them, not at the end (decided 06.10.2026). */
-export function byLanguageName<T extends { code: string; name: string }>(list: T[]): T[] {
-  return [...list].sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }) || a.code.localeCompare(b.code))
-}
-
-export async function languageOptions(): Promise<LanguageOption[]> {
-  const options: LanguageOption[] = Object.entries(SHIPPED).map(([code, entry]) => ({ code, name: entry.name, added: false }))
-  for (const entry of await addedLanguages()) {
-    if (!(entry.code in SHIPPED)) options.push({ code: entry.code, name: entry.name || entry.code, added: true })
-  }
-  return byLanguageName(options)
+  const texts = await own.texts(code)
+  if (texts) i18n.addResourceBundle(code, 'translation', texts, true, true)
+  return code in SHIPPED || texts !== null
 }
 
 function storedLanguage(): string | null {
@@ -164,10 +120,7 @@ export async function followBrowser(): Promise<void> {
   await changeLanguage(browserLanguage(), false)
 }
 
-/** The English texts as a file to translate, with the `_meta` entry the server reads the name from. */
-export function templateFile(): Blob {
-  const template = { _meta: { name: 'Name of the language in itself, for example Español' }, ...en }
-  return new Blob([JSON.stringify(template, null, 2) + '\n'], { type: 'application/json' })
-}
+/** The English texts of nextasks, for the template the card "Languages" hands out. */
+export const ENGLISH = en as LanguageTexts
 
 export default i18n

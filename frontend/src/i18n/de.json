@@ -74,11 +74,6 @@
   },
   "server": {
     "member": "Mitglied",
-    "languages": "Sprachen",
-    "languagesHint": "Deutsch und Englisch sind eingebaut. Weitere als JSON-Datei hinzufügen, fehlende Texte fallen auf Englisch zurück.",
-    "builtIn": "eingebaut",
-    "template": "Vorlage herunterladen",
-    "upload": "Sprache hochladen",
     "uploadMax": "Größte Datei je Anhang (MB)",
     "uploadCeiling": "Höchstens {{mb}} MB (NEXTASKS_UPLOAD_MAX_MB).",
     "stripLocation": "Ort und Gerät aus Fotos entfernen",
@@ -91,10 +86,6 @@
     "backupFiles_zero": "keine Datei",
     "backupFiles_one": "eine Datei",
     "backupFiles_other": "{{count}} Dateien",
-    "texts_one": "ein Text",
-    "texts_other": "{{count}} Texte",
-    "languageCode": "Sprachcode",
-    "languageAdded": "Sprache hinzugefügt. Sie erscheint nach dem Neuladen unter Mein Konto › Profil › Sprache.",
     "files": "Dateien",
     "filesHint": "Dateien an Aufgaben: wie groß sie sein dürfen und was beim Hochladen herausfällt.",
     "app": {

@@ -60,8 +60,6 @@ describe('the places the texts point to', () => {
     expect(en.errors.token_reads_only).toContain('My account › Connections › API keys')
     expect(de.someday.hidden).toContain('Mein Konto › Darstellung › Seitenleiste')
     expect(en.someday.hidden).toContain('My account › Appearance › Sidebar')
-    expect(de.server.languageAdded).toContain('Mein Konto › Profil › Sprache')
-    expect(en.server.languageAdded).toContain('My account › Profile › Language')
   })
 
   it('never name the places of before', () => {

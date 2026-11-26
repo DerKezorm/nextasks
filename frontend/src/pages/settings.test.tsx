@@ -261,3 +261,32 @@ describe('the box Passkeys', () => {
     expect(note.querySelector('a')?.textContent).toBe('Server › Sign-in')
   })
 })
+
+describe('Server › General › Languages', () => {
+  async function chooseFile(page: HTMLElement, file: File): Promise<void> {
+    const input = page.querySelector('[data-testid="language-upload-file"]') as HTMLInputElement
+    Object.defineProperty(input, 'files', { value: [file], configurable: true })
+    await act(async () => void input.dispatchEvent(new Event('change', { bubbles: true })))
+    await settle()
+  }
+
+  it('is the card of the shared module, and a language added shows in the profile', async () => {
+    const { server } = smallWorld()
+    let page = await mount(server, '/settings/general')
+    const card = page.querySelector('[data-card="languages"]') as HTMLElement
+    expect(card.querySelector('[data-testid="languages-card"], [data-testid="language-built-in-de"]')).not.toBeNull()
+    expect(card.querySelector('[data-testid="language-built-in-en"]')).not.toBeNull()
+    expect(card.querySelector('[data-testid="language-template"]')?.getAttribute('data-icon')).toBe('Download')
+    await type(card.querySelector('[data-testid="language-code"]'), 'nl')
+    await chooseFile(page, new File([JSON.stringify({ _meta: { name: 'Nederlands' }, common: { save: 'Opslaan' } })], 'nl.json', { type: 'application/json' }))
+    // Sent as every change of nextasks, with the tab's name.
+    expect(server.locales.get('nl')?.name).toBe('Nederlands')
+    expect(server.localeClients).toHaveLength(1)
+    expect(server.localeClients[0]).not.toBe('')
+    expect(page.querySelector('[data-testid="language-nl"]')).not.toBeNull()
+    await unmount()
+    page = await mount(server, '/settings/profile')
+    const menu = page.querySelector('[data-testid="language-select"]') as HTMLSelectElement
+    expect([...menu.options].map((option) => option.value)).toContain('nl')
+  })
+})

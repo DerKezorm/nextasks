@@ -19,7 +19,8 @@ import { api, authApi, type Me, type MyProvider } from '../../api/client'
 import { TimeZone } from '../../components/AccountParts'
 import { AccountButton } from '../../components/AccountButton'
 import { Avatar } from '../../components/Avatar'
-import { browserLanguage, changeLanguage, languageOptions, type LanguageOption } from '../../i18n'
+import { browserLanguage, BUILT_IN, changeLanguage, own as ownLanguages } from '../../i18n'
+import { useLanguageOptions } from '../../vendor/nexsprachen/languages'
 import { confirmOf } from '../../lib/accountButton'
 import { copyText } from '../../lib/copy'
 import { errorText, problemText, returnErrorText } from '../../lib/errors'
@@ -68,14 +69,8 @@ export function AccountTab({ part }: { part: AccountPart }) {
   const [problem, setProblem] = useState<string | null>(params.get('error') ? returnErrorText(params.get('error')!) : null)
   const [dialogProblem, setDialogProblem] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [languages, setLanguages] = useState<LanguageOption[]>([])
-  useEffect(() => {
-    let alive = true
-    void languageOptions().then((list) => alive && setLanguages(list))
-    return () => {
-      alive = false
-    }
-  }, [])
+  // Built-in languages at once, the operator's own as soon as the server answered (the shared module sprachen).
+  const languages = useLanguageOptions(ownLanguages, BUILT_IN)
 
   if (!me) return null
   const withPassword = me.sign_in === 'password'

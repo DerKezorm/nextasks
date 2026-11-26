@@ -137,6 +137,10 @@ export class FakeServer {
   limits = { attachment_bytes: 50 * 1024 * 1024 }
   failures: Failure[] = []
   requests: { method: string; path: string; body: unknown }[] = []
+  /** The operator's own languages (`/api/locales`, the shared module sprachen): code -> name, texts, and the
+   * `X-Nextasks-Client` each change came with. */
+  locales = new Map<string, { name: string; texts: Record<string, unknown> }>()
+  localeClients: string[] = []
   /** What `/api/auth/me` says of adding a passkey here (E49: a public https address, or the page on localhost). */
   passkeysCanAdd = true
   /** How long `/wait` waits without news, ms. */
@@ -941,7 +945,11 @@ export class FakeServer {
       this.session = found.id
       return { status: 200, body: this.oldMe(found) }
     }
-    if (path === '/api/locales') return { status: 200, body: [] }
+    if (path === '/api/locales') {
+      const built = [['de', 'Deutsch'], ['en', 'English']].map(([code, name]) => ({ code, name, keys: this.locales.has(code) ? 1 : 0, built_in: true, own: this.locales.has(code) }))
+      const added = [...this.locales.entries()].filter(([code]) => code !== 'de' && code !== 'en').sort(([a], [b]) => a.localeCompare(b))
+      return { status: 200, body: [...built, ...added.map(([code, entry]) => ({ code, name: entry.name, keys: Object.keys(entry.texts).length, built_in: false, own: true }))] }
+    }
     if (path === '/api/email/confirm' && method === 'POST') {
       const token = String(body.token ?? '')
       if (!this.confirmMail(token)) return error(404, 'email_link_invalid')
@@ -1163,6 +1171,28 @@ export class FakeServer {
     this.devices.push({ id: uuid4(), account: found.account, name: device, created_at: this.iso(), last_seen: this.iso() })
   }
 
+  /** One language of the operator: its texts for anybody, adding and removing for the operator (sprachen 1.0.0). */
+  private async localeCall(method: string, code: string, body: unknown, account: number | null, headers: Record<string, string>): Promise<Answer> {
+    const found = this.locales.get(code)
+    if (method === 'GET') return found ? { status: 200, body: found.texts } : error(404, 'not_found')
+    if (account === null) return error(401, 'not_signed_in')
+    if (!this.accounts.get(account)?.operator) return error(403, 'operator_only')
+    this.localeClients.push(headers['x-nextasks-client'] ?? '')
+    if (method === 'DELETE') return this.locales.delete(code) ? { status: 204 } : error(404, 'not_found')
+    if (method !== 'PUT') return error(405, 'not_allowed')
+    const raw = body instanceof Blob ? await body.text() : typeof body === 'string' ? body : JSON.stringify(body ?? {})
+    let parsed: Record<string, unknown>
+    try {
+      parsed = JSON.parse(raw) as Record<string, unknown>
+    } catch {
+      return error(422, 'locale_unusable', { reason: 'not_json' })
+    }
+    const { _meta: meta, ...texts } = parsed
+    const name = (meta as { name?: string } | undefined)?.name ?? code
+    this.locales.set(code, { name, texts })
+    return { status: 200, body: { code, name, keys: Object.keys(texts).length } }
+  }
+
   // ---- The door ---------------------------------------------------------------------------------------------------------
 
   /** One request, as `account` (the session's when not given). */
@@ -1184,6 +1214,8 @@ export class FakeServer {
     const join = path.match(/^\/api\/invite\/([^/]+)$/)
     if (join && method === 'POST') return this.joinWithAccount(join[1], json)
     if (join && method === 'GET') return this.inviteOffer(join[1])
+    const locale = path.match(/^\/api\/locales\/([^/]+)$/)
+    if (locale) return this.localeCall(method, decodeURIComponent(locale[1]), body, account, headers)
     if (!path.startsWith(BASE)) return this.old(method, path, json) ?? error(404, 'not_found')
     if (account === null) return error(401, 'not_signed_in')
     if (headers['x-nextasks-client'] !== undefined && headers['x-nextasks-client'] !== 'web') return error(403, 'bad_client')

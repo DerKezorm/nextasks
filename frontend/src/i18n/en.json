@@ -74,11 +74,6 @@
   },
   "server": {
     "member": "Member",
-    "languages": "Languages",
-    "languagesHint": "German and English are built in. Add more as a JSON file; missing texts fall back to English.",
-    "builtIn": "built in",
-    "template": "Download template",
-    "upload": "Upload language",
     "uploadMax": "Largest file per attachment (MB)",
     "uploadCeiling": "At most {{mb}} MB (NEXTASKS_UPLOAD_MAX_MB).",
     "stripLocation": "Remove location and device from photos",
@@ -91,10 +86,6 @@
     "backupFiles_zero": "no files",
     "backupFiles_one": "one file",
     "backupFiles_other": "{{count}} files",
-    "texts_one": "one text",
-    "texts_other": "{{count}} texts",
-    "languageCode": "Language code",
-    "languageAdded": "Language added. It shows under My account › Profile › Language after reloading.",
     "files": "Files",
     "filesHint": "Files on tasks: how large they may be and what is removed when uploading.",
     "app": {

@@ -8,10 +8,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { api, ApiError, type AddressQuestion } from '../../api/client'
-import { byLanguageName, forgetAddedLanguages, SHIPPED, templateFile } from '../../i18n'
-import { Button, Buttons, Card, CheckboxRow, Chip, Field } from '../../vendor/nexui'
-import { Outcome, saveAsFile, useAction } from './actions'
+import { api, ApiError, tabId, type AddressQuestion } from '../../api/client'
+import { ENGLISH, own } from '../../i18n'
+import { LanguagesCard as ModuleLanguagesCard } from '../../vendor/nexsprachen/LanguagesCard'
+import { Button, Card, CheckboxRow, Field } from '../../vendor/nexui'
+import { Outcome, useAction } from './actions'
 
 export type ServerSettings = {
   /** The iPhone app may use the server (off: 403 `app_disabled` for every device). */
@@ -137,70 +138,14 @@ export function FeaturesCard({ server }: { server: Server }) {
   )
 }
 
-type Locale = { code: string; name: string; keys: number }
+/** The way of the card "Languages" to the server: as every call of nextasks, with the tab's name (changes without it
+ * are refused) and the session's cookie. */
+const languagesFetch = (path: string, init: RequestInit): Promise<Response> =>
+  fetch(path, { credentials: 'same-origin', ...init, headers: { ...(init.headers as Record<string, string> | undefined), 'X-Nextasks-Client': tabId() } })
 
-/** "Sprachen": the built-in ones and the operator's own as chips (by name, decided 06.10.2026), the template, upload. */
+/** "Sprachen": the shared module sprachen's card (plan "Einstellungen", Allgemein 5, E48, E51): the built-in ones and
+ * the operator's own as chips, the template from nextasks' English texts, the language code with "Upload language".
+ * After a change the menus ask the server again. */
 export function LanguagesCard() {
-  const { t } = useTranslation()
-  const [list, setList] = useState<Locale[]>([])
-  const [code, setCode] = useState('')
-  const action = useAction()
-  const load = useCallback(() => {
-    api<Locale[]>('/api/locales').then(setList, () => undefined)
-  }, [])
-  useEffect(load, [load])
-  const upload = (chosen: File) =>
-    void action.run(async () => {
-      await api(`/api/locales/${encodeURIComponent(code)}`, { method: 'PUT', raw: chosen })
-      forgetAddedLanguages()
-      load()
-    }, t('server.languageAdded'))
-  return (
-    <Card id="languages" icon="Globe" title={t('server.languages')} subtitle={t('server.languagesHint')}>
-      <div className="flex flex-wrap gap-2" data-testid="languages-list">
-        {byLanguageName([
-          ...Object.entries(SHIPPED).map(([shipped, entry]) => ({ code: shipped, name: entry.name, keys: 0, shipped: true })),
-          ...list.map((entry) => ({ ...entry, shipped: false })),
-        ]).map((entry) =>
-          entry.shipped ? (
-            <Chip key={`shipped-${entry.code}`}>{`${entry.name} · ${t('server.builtIn')}`}</Chip>
-          ) : (
-            <Chip
-              key={entry.code}
-              name={entry.name}
-              disabled={action.busy}
-              testId={`language-${entry.code}`}
-              onRemove={() =>
-                void action.run(async () => {
-                  await api(`/api/locales/${entry.code}`, { method: 'DELETE' })
-                  forgetAddedLanguages()
-                  load()
-                })
-              }
-            >
-              {`${entry.name} (${entry.code}) · ${t('server.texts', { count: entry.keys })}`}
-            </Chip>
-          ),
-        )}
-      </div>
-      <Buttons>
-        <Button kind="secondary" icon="Download" onClick={() => saveAsFile('nextasks-language-template.json', templateFile())} testId="language-template">
-          {t('server.template')}
-        </Button>
-      </Buttons>
-      <Field
-        label={t('server.languageCode')}
-        value={code}
-        onChange={(event) => setCode(event.target.value.trim())}
-        placeholder="es"
-        data-testid="language-code"
-        action={
-          <Button kind="secondary" icon="Upload" disabled={!code} busy={action.busy} accept="application/json,.json" onFile={upload} testId="language-upload">
-            {t('server.upload')}
-          </Button>
-        }
-      />
-      <Outcome problem={action.problem} done={action.done} />
-    </Card>
-  )
+  return <ModuleLanguagesCard app="nextasks" base="/api/locales" template={ENGLISH} fetcher={languagesFetch} onChange={own.forget} />
 }
