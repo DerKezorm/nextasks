@@ -41,6 +41,28 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug 80a3dd0 (27.11.2026): schluessel 1.1.1, mcp 1.1.2, verbinden 0.1.4, MCP 15 an Kommentaren
+
+schluessel 1.1.1 und mcp 1.1.2: nichts Eigenes, nextasks hatte keine eigenen Wörter `areasAll`/`areasSome` (es gibt
+nur `words.areas` = „Bereiche“); kein Test der App suchte die alte Knopfreihenfolge, „Speichern“ in „Rechte je
+Werkzeug“ oder „Ja, erlauben“ (die drei Vorlagen von Hand übernommen). `oauth_off_*` bleibt bei der Vorgabe 404
+`programs_off` (nextasks hatte vorher kein MCP). verbinden 0.1.4: `VerbindenStore.set_local_allowed(on)` schreibt
+`connections_local_network` (nextasks hatte keinen eigenen Schalter dafür; der Haken „Verbindungen ins eigene Netz“ in
+„Andere nex-Apps“ ist der einzige Ort); `router(on_disconnected=…)` ruft `verbinden.on_disconnected`, das nur eine
+Logzeile schreibt (nextasks ist nur Gastgeberin und hält keine eigenen Zeilen einer Verbindung; was ein Partner
+angelegt hat, bleibt); der Adapter hört die Rufe (`disconnected()`). MCP 15 (Galerie): **N-1** ein Kommentar über
+`add_comment` trägt `comments.via` (`mcp:<Schlüssel>`, Zusatzspalte, alte Zeilen leer), der Verlauf im Web liest es aus
+`GET /api/reminders/{id}/history` als `comments_via` (Kommentar-Kennung → Herkunft) und zeigt „Anna (MCP · Laptop)“
+am Namen; der Datensatz von `/api/app/1` bleibt wie im Vertrag 0.9. **N-2** gab es schon: `update_task` schreibt
+Datum, Priorität, Titel, Liste (und Zuweisung) mit Herkunft, wie der Verlauf sie für Handänderungen führt; Markierung,
+Notizen, Schlagworte führt der Verlauf für niemanden (nichts gebaut, Test dazu). Ändert dasselbe Programm eine Aufgabe in
+den zehn Minuten nach dem Anlegen, gehört das zum Anlegen (Regel des Verlaufs, für Hand und Programm gleich).
+Mutationsproben (Rückgabecode, alle rot): `set_local_allowed` schreibt nichts, `on_disconnected` nicht gerufen,
+`via` am Kommentar nicht gesetzt, Name ohne Herkunft an der Seite, `Together` ohne Herkunft. Kein `TODO` mehr.
+Dazu (Bau-Leitung, Befund aus nexnotes): das Kontextmenü ist nie breiter als das Fenster (`ContextMenu.tsx`, Karte mit
+`max-width: calc(100vw - 16px)`, Beschriftung bleibt `truncate`; vitest, Gegenproben rot).
+Läufe `module-nextasks-r5`: ruff, lint, build sauber; pytest 1742 grün, 13 übersprungen (wie vorher); vitest 1267 grün. Start-Probe 200, keine Traceback; `sync.py check` aller Module ok; kein `TODO updates/mcp/verbinden/ki/schluessel` im Code. Playwright nicht gelaufen (zentral; kein Spec betroffen).
+
 ### Nachzug 9bc9f73 (26.11.2026 spät): updates 0.1.2, mcp 1.1.1, verbinden 0.1.3
 
 updates: `has_bell = False` im Adapter, die Glocken-Vertragstests laufen ohne Glocke statt übersprungen; die Einrichtung
