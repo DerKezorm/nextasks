@@ -12,7 +12,9 @@ Events, the ones the server already knows for push (``services/notify.py``) plus
 * ``changed``: changes by others in a list I follow (as the bundled push "changed", ``notify_changes`` of the list),
 * ``joined``: somebody accepted an invitation into one of my spaces,
 * ``comment``: somebody commented on a task I am assigned to or made (as the push "comment"),
-* ``mention``: somebody named me with ``@`` in a comment (as the push "mention"; instead of ``comment``).
+* ``mention``: somebody named me with ``@`` in a comment (as the push "mention"; instead of ``comment``),
+* ``mcp_waiting``: an AI program (MCP) waits for my yes to a tool I set to "ask" (MCP decision 14; nextasks has no
+  bell, so it goes the ways of the other events).
 
 **From the start** every channel has its defaults (``Channel.defaults``): mail none, the browsers and the app exactly
 what went there before there were choices (``due``, ``assigned``, ``changed``). A ``NotifyRoute`` is stored only where
@@ -40,7 +42,7 @@ from ..security import signature
 from . import channels, outbox, settings_service, spaces
 
 REPORTS = ("daily", "weekly")
-EVENTS = ("assigned", "due", "changed", "joined", "comment", "mention")
+EVENTS = ("assigned", "due", "changed", "joined", "comment", "mention", "mcp_waiting")
 ALL = REPORTS + EVENTS
 DEFAULT_TIME = {"daily": "07:00", "weekly": "18:00"}
 #: Sunday evening: the week that was and the one that comes.

@@ -561,6 +561,9 @@ class TaskEvent(Base):
     field: Mapped[str] = mapped_column(String(16))
     old: Mapped[Any] = mapped_column(JSON, nullable=True)
     new: Mapped[Any] = mapped_column(JSON, nullable=True)
+    #: How the change came, where not by the account's own hand: ``mcp:<key name>`` for an AI program (mcp 1.1.0,
+    #: decision 15, as nexnotes shows it); empty otherwise and for every row from before.
+    via: Mapped[str] = mapped_column(String(200), default="")
     #: When it began, and when it last changed (the ten minutes count from ``first_at``).
     first_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow)
     at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow, index=True)

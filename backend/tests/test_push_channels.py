@@ -164,7 +164,7 @@ def test_from_the_start_the_browser_and_the_app_get_what_they_got_before(service
     assert [entry["kind"] for entry in state["channels"]] == ["mail", "webpush", "app"]
     pushed = ["webpush", "app"]
     assert state["routes"] == {"daily": [], "weekly": [], "assigned": pushed, "due": pushed, "changed": pushed,
-                               "joined": [], "comment": pushed, "mention": pushed}
+                               "joined": [], "comment": pushed, "mention": pushed, "mcp_waiting": pushed}
     with SessionLocal() as db:
         assert db.scalars(select(NotifyRoute)).all() == [], "the defaults are no rows"
 
@@ -208,7 +208,7 @@ def test_the_app_channel_is_on_from_the_start_and_needs_a_paired_device(relay: b
     assert column["name"] == "iPhone/iPad" and column["icon"] == "smartphone"
     assert column["state"] == "setup" and column["summary"] == "Kein Gerät"
     assert column["link"] == "/account?tab=connections" and column["link_label"] == "App koppeln"
-    assert column["defaults"] == ["assigned", "changed", "comment", "due", "mention"]
+    assert column["defaults"] == ["assigned", "changed", "comment", "due", "mcp_waiting", "mention"]
     base.phone_of(ben)
     column = next(entry for entry in notify_state(ben)["channels"] if entry["kind"] == "app")
     assert column["ready"] is True and column["summary"] == "1 Gerät gekoppelt"

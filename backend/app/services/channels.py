@@ -238,8 +238,9 @@ def mail_letter(address: str, message: Message, key: str = "") -> Any:
 
 
 #: What went to the browsers and the app before there were choices; on from the start there. Comments and mentions
-#: came later and are on there from the start as well, like the other events about one's tasks.
-PUSH_DEFAULTS = frozenset({"due", "assigned", "changed", "comment", "mention"})
+#: came later and are on there from the start as well, like the other events about one's tasks, and so is an AI
+#: program waiting for the account's yes (MCP decision 14: the app's push, as it has no bell).
+PUSH_DEFAULTS = frozenset({"due", "assigned", "changed", "comment", "mention", "mcp_waiting"})
 #: A push that could not go out is worth little hours later: three tries, then it is given up.
 PUSH_RETRIES = (1, 5, 15)
 

@@ -165,9 +165,10 @@ def test_mail_is_off_from_the_start_and_the_push_channels_carry_what_they_carrie
     state = browser.get("/api/notify").json()
     assert all("mail" not in chosen for chosen in state["routes"].values())
     assert state["reports"] == ["daily", "weekly"]
-    assert state["events"] == ["assigned", "due", "changed", "joined", "comment", "mention"]
+    # mcp 1.1.0 (decision 14): an AI program waiting for a yes comes last, on the push channels too.
+    assert state["events"] == ["assigned", "due", "changed", "joined", "comment", "mention", "mcp_waiting"]
     pushed = {"assigned": ["webpush", "app"], "due": ["webpush", "app"], "changed": ["webpush", "app"],
-              "comment": ["webpush", "app"], "mention": ["webpush", "app"]}
+              "comment": ["webpush", "app"], "mention": ["webpush", "app"], "mcp_waiting": ["webpush", "app"]}
     assert state["routes"] == {"daily": [], "weekly": [], "joined": [], **pushed}
 
 

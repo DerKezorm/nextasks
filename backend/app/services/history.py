@@ -33,6 +33,8 @@ from . import clock
 
 #: ``session.info`` key: the account a session writes for.
 ACTOR = "nextasks.actor"
+#: ``session.info`` key: how it writes, where not by the account's own hand (``mcp:<key name>``).
+VIA = "nextasks.via"
 #: ``session.info`` key: ``{reminder id: occurrence}`` of repeating tasks completed in this session.
 COMPLETING = "nextasks.completing"
 #: ``session.info`` key: the ids of the completed copies made for them.
@@ -78,11 +80,13 @@ def _changes(row: Reminder, completing: dict[str, str | None]) -> list[tuple[str
     return out
 
 
-def _note(session: Session, reminder_id: str, actor: int, field: str, old: Any, new: Any, now: datetime) -> None:
+def _note(session: Session, reminder_id: str, actor: int, field: str, old: Any, new: Any, now: datetime,
+          via: str = "") -> None:
     if field != "occurrence":
         last = session.scalar(select(TaskEvent).where(TaskEvent.reminder_id == reminder_id, TaskEvent.field == field)
                               .order_by(TaskEvent.at.desc(), TaskEvent.id.desc()).limit(1))
-        if last is not None and last.actor_id == actor and now - last.first_at <= WINDOW:
+        if (last is not None and last.actor_id == actor and (last.via or "") == via
+                and now - last.first_at <= WINDOW):
             if last.old == new:
                 session.delete(last)
             else:
@@ -90,14 +94,15 @@ def _note(session: Session, reminder_id: str, actor: int, field: str, old: Any, 
                 last.at = now
             return
     session.add(TaskEvent(reminder_id=reminder_id, actor_id=actor, field=field, old=old, new=new, first_at=now,
-                          at=now))
+                          at=now, via=via))
 
 
-def _just_made(session: Session, reminder_id: str, actor: int, now: datetime) -> bool:
-    """Made by ``actor`` less than ten minutes ago."""
+def _just_made(session: Session, reminder_id: str, actor: int, now: datetime, via: str = "") -> bool:
+    """Made by ``actor`` the same way (by hand, or by the same AI program) less than ten minutes ago."""
     found = session.scalar(select(TaskEvent).where(TaskEvent.reminder_id == reminder_id, TaskEvent.field == "created")
                            .limit(1))
-    return found is not None and found.actor_id == actor and now - found.first_at <= WINDOW
+    return (found is not None and found.actor_id == actor and (found.via or "") == via
+            and now - found.first_at <= WINDOW)
 
 
 @event.listens_for(Session, "before_flush")
@@ -111,22 +116,23 @@ def _record(session: Session, _context: Any, _instances: Any) -> None:
         return
     completing: dict[str, str | None] = session.info.get(COMPLETING, {})
     copies: set[str] = session.info.get(COPIES, set())
+    via = str(session.info.get(VIA) or "")
     now = clock.now()
     with session.no_autoflush:
         for row in made:
             if row.id in copies:
                 continue
             session.add(TaskEvent(reminder_id=row.id, actor_id=actor, field="created", old=None, new=None,
-                                  first_at=now, at=now))
+                                  first_at=now, at=now, via=via))
         for row in changed:
             if not session.is_modified(row):
                 continue
             notes = _changes(row, completing)
-            fresh = bool(notes) and _just_made(session, row.id, actor, now)
+            fresh = bool(notes) and _just_made(session, row.id, actor, now, via)
             for field, old, new in notes:
                 if fresh and field not in ALWAYS:
                     continue
-                _note(session, row.id, actor, field, old, new, now)
+                _note(session, row.id, actor, field, old, new, now, via)
     completing.clear()
     copies.clear()
 
@@ -154,5 +160,6 @@ def read(session: Session, viewer_id: int, reminder_id: str) -> list[dict[str, A
         if row.field == "list":
             old = {"id": old, "name": _list_name(session, viewer_id, old)}
             new = {"id": new, "name": _list_name(session, viewer_id, new)}
-        out.append({"id": row.id, "field": row.field, "by": row.actor_id, "at": row.at, "old": old, "new": new})
+        out.append({"id": row.id, "field": row.field, "by": row.actor_id, "at": row.at, "old": old, "new": new,
+                    "via": row.via or ""})
     return out

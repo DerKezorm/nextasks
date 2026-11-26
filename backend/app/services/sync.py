@@ -87,6 +87,8 @@ class Caller:
     account: Account
     #: ``d:<device id>`` or ``s:<session id>``.
     key: str
+    #: How it writes, where not by the account's own hand: ``mcp:<key name>`` (the history shows it).
+    via: str = ""
 
     @property
     def id(self) -> int:
@@ -779,6 +781,7 @@ def apply(caller: Caller, op: dict[str, Any]) -> tuple[dict[str, Any], Events]:
         return {"op_id": op.get("op_id"), "ok": False, "code": "invalid", "fields": ["type"]}, events
     with cursor.WRITE_LOCK, SessionLocal() as db:
         db.info[history.ACTOR] = caller.id
+        db.info[history.VIA] = caller.via
         try:
             outcome = runner(db, caller, op, events)
             db.commit()
@@ -814,6 +817,7 @@ class Together:
         cursor.WRITE_LOCK.acquire()
         self.db = SessionLocal()
         self.db.info[history.ACTOR] = self.caller.id
+        self.db.info[history.VIA] = self.caller.via
         return self
 
     def run(self, op: dict[str, Any]) -> Outcome:

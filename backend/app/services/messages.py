@@ -75,6 +75,9 @@ WORDS: dict[str, dict[str, str]] = {
         "comments_lead": "{summary}. Lies sie im Verlauf der Aufgabe.",
         "joined_title": "{name} ist jetzt in „{space}“",
         "joined_lead": "{name} hat die Einladung angenommen und ist jetzt Mitglied im Bereich „{space}“.",
+        "mcp_waiting_title": "„{program}“ wartet auf dein Ja",
+        "mcp_waiting_lead": "Das KI-Programm „{program}“ möchte: {what}. Ohne dein Ja geschieht nichts; nach 24 "
+                            "Stunden verfällt die Rückfrage.",
         "confirm_title": "nextasks: Mailadresse bestätigen",
         "confirm_heading": "Mailadresse bestätigen",
         "confirm_lead": "Hallo {name}, bestätige diese Adresse für dein Konto in nextasks. Erst dann schickt "
@@ -132,6 +135,9 @@ WORDS: dict[str, dict[str, str]] = {
         "comments_lead": "{summary}. Read them in the history of the task.",
         "joined_title": "{name} is in “{space}” now",
         "joined_lead": "{name} accepted the invitation and is a member of the space “{space}” now.",
+        "mcp_waiting_title": "“{program}” waits for your yes",
+        "mcp_waiting_lead": "The AI program “{program}” wants to: {what}. Nothing happens without your yes; after 24 "
+                            "hours the request runs out.",
         "confirm_title": "nextasks: confirm your mail address",
         "confirm_heading": "Confirm your mail address",
         "confirm_lead": "Hello {name}, confirm this address for your account in nextasks. Only then does nextasks "
@@ -478,6 +484,14 @@ def comment(language: str, *, base: str, by: str, item: Item, text: str, mention
     key = "mention_title" if mention else "comment_title"
     return _event(language, base=base, title=w[key].format(name=one_line(by), title=title), lead=lead, item=item,
                   link=item.link, unsubscribe=unsubscribe)
+
+
+def mcp_waiting(language: str, *, base: str, program: str, what: str, link: str, unsubscribe: str) -> Message:
+    """An AI program (MCP) asks for the account's yes to a tool set to "ask" (MCP decision 14)."""
+    w = words(language)
+    return _event(language, base=base, title=w["mcp_waiting_title"].format(program=one_line(program)),
+                  lead=w["mcp_waiting_lead"].format(program=one_line(program), what=one_line(what)), item=None,
+                  link=link, unsubscribe=unsubscribe)
 
 
 def joined(language: str, *, base: str, name: str, space: str, link: str, unsubscribe: str) -> Message:

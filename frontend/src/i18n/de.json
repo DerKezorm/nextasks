@@ -1235,7 +1235,8 @@
       "assigned": "Mir wurde eine Aufgabe zugewiesen",
       "due": "Eine Aufgabe mit Uhrzeit ist fällig",
       "changed": "Andere ändern etwas in Listen, die ich verfolge",
-      "joined": "Jemand ist einem meiner Bereiche beigetreten"
+      "joined": "Jemand ist einem meiner Bereiche beigetreten",
+      "mcp_waiting": "Ein KI-Programm wartet auf mein Ja"
     },
     "changedHint": "Welche Listen du verfolgst, stellst du in der Liste mit „{{label}}“ ein.",
     "on": "{{event}} per {{channel}}",
@@ -1639,7 +1640,8 @@
       "moved": "{{name}} hat sie nach „{{list}}“ verschoben",
       "movedAway": "{{name}} hat sie in eine andere Liste verschoben",
       "renamed": "{{name}} hat sie in „{{title}}“ umbenannt",
-      "changed": "{{name}} hat sie geändert"
+      "changed": "{{name}} hat sie geändert",
+      "viaMcp": "MCP · {{key}}"
     },
     "notify": {
       "comment": "Jemand kommentiert eine Aufgabe, die ich angelegt habe oder für die ich zuständig bin",

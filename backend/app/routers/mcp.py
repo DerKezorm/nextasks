@@ -41,4 +41,5 @@ def _error(refusal: McpRefused) -> HTTPException:
 
 
 router = api.router(config=mcp.CONFIG, store=_store, account=require_account, operator=require_operator,
-                    address=_address, sender=client_ip, error=_error, prefix="/api/connections/mcp")
+                    address=_address, sender=client_ip, error=_error, prefix="/api/connections/mcp",
+                    notify=mcp.notify)

@@ -19,12 +19,13 @@ from app.db import SessionLocal
 from app.main import app
 from app.models import Account, Reminder
 from app.models_mcp import McpKey
-from app.services import settings_service
+from app.services import mcp, notifyprefs, settings_service
 from app.vendor.nexmcp import brake
 
 from .conftest import PASSWORD
 from .sync_helpers import make_list, person, private_space, shared_space
 from .test_api_v1 import token
+from .test_notify import Relay, phone_of, relay  # noqa: F401
 
 TOOLS = {"list_spaces", "list_lists", "list_tasks", "read_task", "list_comments", "list_members", "create_task",
          "update_task", "complete_task", "add_comment", "delete_task", "request_status"}
@@ -217,3 +218,57 @@ def test_disconnect_all_ends_mcp_keys_and_programs_too() -> None:
     assert rpc(tokens["access_token"], "ping").status_code == 401
     with SessionLocal() as db:
         assert db.query(McpKey).filter_by(account_id=account.id).count() == 0
+
+
+def test_a_program_waiting_for_a_yes_is_told_on_the_accounts_ways(relay: Relay) -> None:  # noqa: F811
+    """MCP decision 14: nextasks has no bell; a request waiting for the account's yes goes the ways of "What comes
+    where" (``mcp_waiting``, on for the browsers and the iPhone from the start, mail when turned on)."""
+    account, anna = person("anna")
+    private_space(anna)
+    with SessionLocal() as db:
+        assert notifyprefs.routes_of(db, account.id)["mcp_waiting"] == ["webpush", "app"]
+    phone_of(anna)
+    relay.sent.clear()
+    secret = mcp_key(anna, right="write")
+    key_id = next(key["id"] for key in anna.get("/api/connections/keys").json()["keys"] if key["kind"] == "mcp")
+    asked = anna.put(f"/api/connections/mcp/keys/{key_id}/rights", json={"rights": {"create_task": "ask"}})
+    assert asked.status_code == 200, asked.text
+    result = call(secret, "create_task", title="Paint the fence")
+    assert "waiting" in result["content"][0]["text"], result
+    told = [message for message in relay.messages() if message["type"] == "mcp_waiting"]
+    assert len(told) == 1, relay.messages()
+    assert "Assistant" in told[0]["title"] and "Paint the fence" in told[0]["text"]
+    # Nothing ran: the task is not there until the yes.
+    with SessionLocal() as db:
+        assert db.query(Reminder).filter_by(title="Paint the fence").count() == 0
+
+
+def test_the_mail_of_a_waiting_program_in_both_languages() -> None:
+    from app.services import messages
+
+    german = messages.mcp_waiting("de", base="https://t.example", program="Laptop",
+                                  what=mcp.what_of("de", "delete_task", '{"task_id": "x"}'),
+                                  link="https://t.example/mcp/requests/3", unsubscribe="https://t.example/u")
+    english = messages.mcp_waiting("en", base="https://t.example", program="Laptop",
+                                   what=mcp.what_of("en", "create_task", '{"title": "Fence"}'),
+                                   link="https://t.example/mcp/requests/3", unsubscribe="https://t.example/u")
+    assert german.title == "„Laptop“ wartet auf dein Ja" and "eine Aufgabe in den Papierkorb legen" in german.text
+    assert english.title == "“Laptop” waits for your yes" and "create a task (“Fence”)" in english.text
+    assert english.link == "https://t.example/mcp/requests/3" and english.html and "/mcp/requests/3" in english.html
+
+
+def test_the_history_names_the_program_behind_a_change() -> None:
+    """MCP decision 15 (nexnotes shows it): a change by an AI program carries ``mcp:<key name>`` in the history of the
+    task; a change by the person's own hand carries nothing, and the two are never merged into one row."""
+    _account, anna = person("anna")
+    private_space(anna)
+    secret = mcp_key(anna, right="write")
+    made = data(call(secret, "create_task", title="By the program"))
+    data(call(secret, "update_task", task_id=made["id"], priority=2))
+    events = anna.get(f"/api/reminders/{made['id']}/history").json()["events"]
+    assert [(event["field"], event["via"]) for event in events] == [("created", "mcp:Assistant")]
+    from .sync_helpers import now_ms, put
+
+    assert put(anna, "reminder", made["id"], {"priority": 3}, {"priority": now_ms() + 1000})["ok"]
+    after = anna.get(f"/api/reminders/{made['id']}/history").json()["events"]
+    assert ("priority", "") in [(event["field"], event["via"]) for event in after]

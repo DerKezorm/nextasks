@@ -1235,7 +1235,8 @@
       "assigned": "A task was assigned to me",
       "due": "A task with a time is due",
       "changed": "Others change something in lists I follow",
-      "joined": "Someone joined one of my spaces"
+      "joined": "Someone joined one of my spaces",
+      "mcp_waiting": "An AI program waits for my yes"
     },
     "changedHint": "Choose the lists you follow in the list itself with “{{label}}”.",
     "on": "{{event}} by {{channel}}",
@@ -1639,7 +1640,8 @@
       "moved": "{{name}} moved it to “{{list}}”",
       "movedAway": "{{name}} moved it to another list",
       "renamed": "{{name}} renamed it to “{{title}}”",
-      "changed": "{{name}} changed it"
+      "changed": "{{name}} changed it",
+      "viaMcp": "MCP · {{key}}"
     },
     "notify": {
       "comment": "Someone comments on a task I created or am assigned to",

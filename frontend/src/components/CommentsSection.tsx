@@ -9,7 +9,7 @@ import { Check, ImagePlus, MessageCircle, MoreHorizontal, Pencil, SendHorizontal
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { COMMENT_MAX, loadHistory, mayEdit, mentionsIn, pieces, timeline, typedMention, type TaskEvent } from '../lib/comments'
+import { byWho, COMMENT_MAX, loadHistory, mayEdit, mentionsIn, pieces, timeline, typedMention, type TaskEvent } from '../lib/comments'
 import { ago, moment } from '../lib/time'
 import { useEngine, useView } from '../state/sync'
 import { APP_BASE } from '../sync/transport'
@@ -93,7 +93,7 @@ function useEventLine(): (event: TaskEvent) => string {
     return time ? `${shown}, ${time}` : shown
   }
   return (event) => {
-    const name = personName(event.by ? view.people.get(event.by) : undefined, t)
+    const name = byWho(personName(event.by ? view.people.get(event.by) : undefined, t), event.via, (key) => t('comments.event.viaMcp', { key }))
     const value = event.new as Record<string, unknown> | number[] | number | string | boolean | null
     switch (event.field) {
       case 'created':

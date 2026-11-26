@@ -17,6 +17,13 @@ export interface TaskEvent {
   at: string
   old: unknown
   new: unknown
+  /** How it came, where not by the person's own hand: `mcp:<key name>` (an AI program, mcp 1.1.0). */
+  via?: string
+}
+
+/** The name in a line of the history, with "MCP · <key>" where an AI program did it (as nexnotes shows it). */
+export function byWho(name: string, via: string | undefined, viaMcp: (key: string) => string): string {
+  return via?.startsWith('mcp:') ? `${name} (${viaMcp(via.slice(4))})` : name
 }
 
 export function loadHistory(reminderId: string): Promise<TaskEvent[]> {

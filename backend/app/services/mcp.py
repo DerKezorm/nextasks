@@ -57,8 +57,8 @@ def _account(ctx: Any) -> Account:
 
 
 def _sender(ctx: Any, account: Account) -> sync.Caller:
-    """The key as a sender of ops (``services/sync.py``)."""
-    return sync.Caller(account=account, key=f"m:{ctx.caller.key_id}")
+    """The key as a sender of ops (``services/sync.py``); the history names it as "MCP · <key>" (decision 15)."""
+    return sync.Caller(account=account, key=f"m:{ctx.caller.key_id}", via=f"mcp:{ctx.caller.key_name}"[:200])
 
 
 def _refused(exc: apiwrite.Refused) -> Exception:
@@ -347,6 +347,67 @@ TOOLS: tuple[Tool, ...] = (
     Tool("delete_task", "risky", "write", "Move a task, with its subtasks, to the bin.", _schema(_TASK, ["task_id"]),
          delete_task, describe=_describe_task("Move to the bin the task")),
 )
+
+# --- "A program waits for your yes" (MCP decision 14) -----------------------------------------------------------------
+
+#: The tools in the words of a person, for the message (the page has its own in ``i18n``).
+TOOL_WORDS = {
+    "de": {"create_task": "eine Aufgabe anlegen", "update_task": "eine Aufgabe ändern",
+           "complete_task": "eine Aufgabe abhaken", "add_comment": "eine Aufgabe kommentieren",
+           "delete_task": "eine Aufgabe in den Papierkorb legen"},
+    "en": {"create_task": "create a task", "update_task": "change a task", "complete_task": "tick off a task",
+           "add_comment": "comment on a task", "delete_task": "move a task to the bin"},
+}
+
+
+def what_of(language: str, tool: str, arguments: str) -> str:
+    """What the program wants, in the person's words: the tool, and the title it names (never more of the text)."""
+    import json
+
+    words = TOOL_WORDS.get(language, TOOL_WORDS["en"])
+    said = words.get(tool, tool)
+    try:
+        title = json.loads(arguments).get("title")
+    except (ValueError, AttributeError):
+        title = None
+    if isinstance(title, str) and title.strip():
+        short = " ".join(title.split())[:80]
+        said += f" („{short}“)" if language == "de" else f" (“{short}”)"
+    return said
+
+
+def notify(event: str, request: Any) -> None:
+    """The module's hook: a request waits for the account's yes. nextasks has no bell, so it goes the ways the account
+    chose for ``mcp_waiting`` under "What comes where" (browser and iPhone from the start, mail when turned on)."""
+    if event != "waiting":
+        return
+    from ..models import Account
+    from . import channels, messages, notifyprefs, outbox
+
+    with SessionLocal() as db:
+        account = db.get(Account, int(request.account_id))
+        if account is None:
+            return
+        program = request.key_name or "MCP"
+        path = f"/mcp/requests/{request.id}"
+
+        def make(language: str, base: str, unsubscribe: str) -> messages.Message:
+            return messages.mcp_waiting(language, base=base, program=program,
+                                        what=what_of(language, request.tool, request.arguments),
+                                        link=f"{base}{path}", unsubscribe=unsubscribe)
+
+        def short(language: str) -> channels.Message:
+            words = messages.words(language)
+            return channels.Message(
+                title=words["mcp_waiting_title"].format(program=messages.one_line(program)),
+                text=what_of(language, request.tool, request.arguments), link=path, language=language,
+                data={"type": "mcp_waiting", "reminder_id": None, "list_id": None,
+                      "collapse": f"mcp:{request.id}", "priority": None})
+
+        notifyprefs.dispatch(db, account, "mcp_waiting", f"mcp:{request.id}", make, short, at_once=True)
+        db.commit()
+    outbox.wake()
+
 
 CONFIG = nexmcp.AppConfig(
     app_name="nextasks",
