@@ -41,6 +41,21 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Durchgang „Module“, Runde 2 (26.11.2026, `einst-werkzeug/AUFTRAG-RUNDE2.md`)
+
+- **MCP 14:** wartet ein Programm auf das Ja des Kontos, geht das Ereignis `mcp_waiting` die Wege aus „Was kommt wohin“
+  (`notifyprefs.EVENTS`, ab Werk Browser und iPhone, Mail auf Wunsch; Brief `messages.mcp_waiting` DE/EN, Push-Typ
+  `mcp_waiting`, Link `/mcp/requests/<id>`); Haken `notify` des Moduls in `services/mcp.py`.
+- **MCP 15:** nexnotes zeigt die Herkunft, also auch nextasks: `task_events.via` (`mcp:<Schlüssel>`, Zusatzspalte, alte
+  Zeilen leer), gesetzt über `sync.Caller.via`, Verlauf „Anna (MCP · Laptop)“; Zeilen von Hand und vom Programm werden
+  nie zusammengelegt.
+- **V20:** nextasks ist nur Gastgeberin; jede Partnerkarte steht für Zwecke, die an `/api/v1` wirken (Test).
+- **V22:** „Andere nex-Apps“ steht nach „Schnittstellen“, vor „Sprachen“ (war schon so).
+- **Teil B:** nexpaper (`tasks.read`, `tasks.write`) und nexdiary (`tasks.read`) wirken an `/api/v1` (Tests in
+  `test_connect.py`, Mutationsprobe rot).
+- Läufe `module-nextasks-r2`: ruff, lint und build sauber; pytest 1719 grün, 19 übersprungen (wie Runde 1); vitest 1259
+  grün; Start-Probe 200, keine Traceback.
+
 ### Durchgang „Einstellungen“ (26.11.2026, Zweig `einst-desktop`)
 
 Nach dem Bauplan in nexlore `Development/nexapps/Baupläne/Bauplan Einstellungen.md` (E1 bis E31). Module aus
