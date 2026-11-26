@@ -19,7 +19,6 @@ import { initReactI18next } from 'react-i18next'
 
 import { kontenVariables } from '../vendor/nexkonten/konten'
 import { ownLanguages } from '../vendor/nexsprachen/languages'
-import type { Texts as LanguageTexts } from '../vendor/nexsprachen/sprachen'
 import kontenDe from '../vendor/nexkonten/konten.de.json'
 import kontenEn from '../vendor/nexkonten/konten.en.json'
 import { postVariables } from '../vendor/nexpost/post'
@@ -121,6 +120,6 @@ export async function followBrowser(): Promise<void> {
 }
 
 /** The English texts of nextasks, for the template the card "Languages" hands out. */
-export const ENGLISH = en as LanguageTexts
+export const ENGLISH: Texts = en
 
 export default i18n

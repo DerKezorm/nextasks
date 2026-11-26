@@ -7,8 +7,10 @@ in nextasks' form (``{"detail": {"code", "message", …}}``, the module's defaul
 
 from __future__ import annotations
 
+import json
 import secrets
 import shutil
+from pathlib import Path
 from typing import Any, ClassVar
 
 from sprachen_contract import StandardAdapter
@@ -76,6 +78,25 @@ class Adapter(StandardAdapter):
         if role not in self._clients:
             self._clients[role] = new_client(None if role == "anonymous" else self._accounts[role])
         return self._clients[role]
+
+    def offered_template(self) -> dict[str, Any]:
+        """The template as the page offers it: ``ENGLISH`` of ``frontend/src/i18n/index.ts`` (nextasks' English, the
+        sign-in words with invitations and several accounts, those of accounts and of system mail, merged at the top),
+        through ``texts_only``, with ``_meta``."""
+        from app.vendor import nexsprachen
+
+        source = Path(__file__).resolve().parents[2] / "frontend" / "src"
+
+        def read(part: str) -> dict[str, Any]:
+            found: dict[str, Any] = json.loads((source / part).read_text(encoding="utf-8"))
+            return found
+
+        oidc = read("vendor/nexoidc/oidc.en.json")
+        oidc["oidc"] = {key: value for key, value in oidc["oidc"].items() if key not in ("single", "noInvitations")}
+        english = {**read("i18n/en.json"), **oidc, **read("vendor/nexkonten/konten.en.json"),
+                   **read("vendor/nexpost/post.en.json")}
+        return {"_meta": {"name": "Name of the language in itself, for example Nederlands"},
+                **nexsprachen.texts_only(english)}
 
     def description(self) -> dict[str, Any]:
         # The app's own description, as /api/openapi.json shows it with NEXTASKS_API_DOCS; never published for tests.
