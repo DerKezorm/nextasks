@@ -97,6 +97,18 @@ describe('the history in the detail', () => {
     expect([...detail.querySelectorAll('[data-testid="comment-text"]')].map((p) => p.textContent)).toContain('Thanks @Alex, done')
   })
 
+  it('names the AI program behind a comment as behind a change, and nothing for one written by hand (MCP 15)', async () => {
+    const { server, robin, alex, home, task } = world()
+    const byProgram = server.addComment(task, alex, 'Bought them', { created_at: ago(3) })
+    server.addComment(task, robin, 'Thanks', { created_at: ago(2) })
+    server.commentsVia.set(task, { [byProgram]: 'mcp:Laptop' })
+    server.history.set(task, [{ id: 1, field: 'priority', by: alex, at: ago(1), old: 0, new: 3, via: 'mcp:Laptop' }])
+    const page = await mount(server, `/lists/${home}?reminder=${task}`)
+    const detail = page.querySelector('[data-testid="detail"]')!
+    expect([...detail.querySelectorAll('[data-testid="comment-author"]')].map((name) => name.textContent)).toEqual(['Alex (MCP · Laptop)', 'Robin'])
+    expect(detail.querySelector('[data-testid="history-event"]')?.textContent).toContain('Alex (MCP · Laptop) set the priority to High')
+  })
+
   it('removes an own comment as "Message deleted" after asking', async () => {
     const { server, robin, home, task } = world()
     const mine = server.addComment(task, robin, 'Wrong task')

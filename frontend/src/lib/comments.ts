@@ -26,8 +26,15 @@ export function byWho(name: string, via: string | undefined, viaMcp: (key: strin
   return via?.startsWith('mcp:') ? `${name} (${viaMcp(via.slice(4))})` : name
 }
 
-export function loadHistory(reminderId: string): Promise<TaskEvent[]> {
-  return api<{ events: TaskEvent[] }>(`/api/reminders/${reminderId}/history`).then((answer) => answer.events)
+/** What the web reads of a task's history: its events and, by comment id, how a comment came where an AI program wrote
+ * it (`mcp:<key name>`, MCP decision 15; an older server sends none). */
+export interface History {
+  events: TaskEvent[]
+  commentsVia: Record<string, string>
+}
+
+export function loadHistory(reminderId: string): Promise<History> {
+  return api<{ events: TaskEvent[]; comments_via?: Record<string, string> }>(`/api/reminders/${reminderId}/history`).then((answer) => ({ events: answer.events, commentsVia: answer.comments_via ?? {} }))
 }
 
 /** Comments and events in the order they happened. */

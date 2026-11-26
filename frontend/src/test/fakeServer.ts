@@ -110,6 +110,8 @@ export class FakeServer {
   kept = new Set<string>()
   /** What `/api/reminders/{id}/history` answers per task (events of the history); none: an empty one. */
   history = new Map<string, unknown[]>()
+  /** What it answers as `comments_via` per task (comment id → `mcp:<key name>`); none: none. */
+  commentsVia = new Map<string, Record<string, string>>()
   /** Mails the fake server "sent": to, what. */
   mails: { to: string; kind: string; token?: string }[] = []
   settings: Record<string, unknown> = {
@@ -969,7 +971,7 @@ export class FakeServer {
     if (history && method === 'GET') {
       const task = this.row('reminder', history[1])
       if (!task || !this.sees(me.id, task)) return error(404, 'not_found')
-      return { status: 200, body: { events: this.history.get(history[1]) ?? [] } }
+      return { status: 200, body: { events: this.history.get(history[1]) ?? [], comments_via: this.commentsVia.get(history[1]) ?? {} } }
     }
     if (path === '/api/stats' && method === 'GET') return this.stats ? { status: 200, body: this.stats } : error(404, 'not_found')
     const suggested = path.match(/^\/api\/lists\/([^/]+)\/suggestions$/)

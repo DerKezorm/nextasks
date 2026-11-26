@@ -383,7 +383,7 @@ def _create_comment(db: Session, caller: Caller, item_id: str, incoming: records
     members = set(spaces.member_ids(db, task.space_id))
     row = Comment(id=item_id, reminder_id=task.id, space_id=task.space_id, author_id=caller.id, text=data["text"],
                   mentions=[person for person in data["mentions"] if person in members], attachment_id=attachment_id,
-                  created_at=created, clock=clocks)
+                  created_at=created, clock=clocks, via=caller.via)
     spaces.restamp(db, [row])
     db.add(row)
     return row

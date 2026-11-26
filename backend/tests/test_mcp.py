@@ -23,7 +23,7 @@ from app.services import mcp, notifyprefs, settings_service
 from app.vendor.nexmcp import brake
 
 from .conftest import PASSWORD
-from .sync_helpers import make_list, person, private_space, shared_space
+from .sync_helpers import make_list, make_reminder, person, private_space, shared_space
 from .test_api_v1 import token
 from .test_notify import Relay, phone_of, relay  # noqa: F401
 
@@ -272,6 +272,28 @@ def test_the_history_names_the_program_behind_a_change() -> None:
     assert put(anna, "reminder", made["id"], {"priority": 3}, {"priority": now_ms() + 1000})["ok"]
     after = anna.get(f"/api/reminders/{made['id']}/history").json()["events"]
     assert ("priority", "") in [(event["field"], event["via"]) for event in after]
+
+
+def test_a_comment_names_the_program_that_wrote_it() -> None:
+    """N-1 (MCP decision 15): a comment written through ``add_comment`` names the program as a change does
+    ("Anna (MCP · Assistant)" in the web); a comment by the person's own hand names nothing, and the record of
+    ``/api/app/1`` stays as in contract 0.9 (no ``via``)."""
+    from .sync_helpers import entry, new_id, now_ms, put
+
+    _account, anna = person("anna")
+    _other, ben = person("ben")
+    family = shared_space(anna, ben)
+    task = make_reminder(anna, make_list(anna, family), title="Bins out")
+    secret = mcp_key(anna, right="write")
+    written = data(call(secret, "add_comment", task_id=task, text="Done by the program"))
+    by_hand = new_id()
+    assert put(ben, "comment", by_hand, {"reminder_id": task, "text": "By hand", "mentions": [],
+                                        "created_at": "2026-11-26T10:00:00.000Z"}, {"text": now_ms()})["ok"]
+    seen = anna.get(f"/api/reminders/{task}/history").json()
+    assert seen["comments_via"] == {written["id"]: "mcp:Assistant"}
+    assert ben.get(f"/api/reminders/{task}/history").json()["comments_via"] == {written["id"]: "mcp:Assistant"}
+    record = entry(anna, "comment", written["id"])
+    assert record is not None and record["data"]["text"] == "Done by the program" and "via" not in record["data"]
 
 
 def test_a_waiting_request_says_what_it_wants_with_the_title_not_the_id() -> None:

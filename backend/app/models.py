@@ -544,6 +544,10 @@ class Comment(Base):
     removed_at: Mapped[str | None] = mapped_column(STAMP, nullable=True)
     clock: Mapped[Any] = mapped_column(JSON, default=dict)
     cursor: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    #: How it was written, where not by the author's own hand: ``mcp:<key name>`` for an AI program (MCP decision 15,
+    #: as a change in ``task_events``); empty otherwise and for every comment from before. Only the web's history
+    #: reads it (``routers/history.py``); the record of ``/api/app/1`` stays as in contract 0.9.
+    via: Mapped[str] = mapped_column(String(200), default="")
 
 
 class TaskEvent(Base):

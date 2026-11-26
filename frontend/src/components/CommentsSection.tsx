@@ -126,7 +126,7 @@ function useEventLine(): (event: TaskEvent) => string {
   }
 }
 
-function CommentItem({ comment, people, manager }: { comment: Comment; people: Picked[]; manager: boolean }) {
+function CommentItem({ comment, people, manager, via }: { comment: Comment; people: Picked[]; manager: boolean; via?: string }) {
   const { t, i18n } = useTranslation()
   const engine = useEngine()
   const view = useView()
@@ -149,7 +149,7 @@ function CommentItem({ comment, people, manager }: { comment: Comment; people: P
       {comment.author_id ? <PersonAvatar id={comment.author_id} person={author} className="mt-0.5 h-7 w-7 text-xs" /> : <span className="mt-0.5 h-7 w-7 shrink-0 rounded-full bg-ink-800" />}
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2 text-xs">
-          <span className="font-semibold text-mist-100">{personName(author, t)}</span>
+          <span className="font-semibold text-mist-100" data-testid="comment-author">{byWho(personName(author, t), via, (key) => t('comments.event.viaMcp', { key }))}</span>
           <time dateTime={comment.created_at} title={moment(comment.created_at, i18n.language)} className="text-mist-500">
             {waiting ? t('comments.sending') : ago(Date.parse(comment.created_at), i18n.language)}
           </time>
@@ -383,12 +383,12 @@ export function CommentsSection({ reminder, spaceId }: { reminder: Reminder; spa
   const engine = useEngine()
   const view = useView()
   const line = useEventLine()
-  const [history, setHistory] = useState<{ id: string; events: TaskEvent[] } | null>(null)
+  const [history, setHistory] = useState<{ id: string; events: TaskEvent[]; commentsVia: Record<string, string> } | null>(null)
   const cursor = engine.cursor
   useEffect(() => {
     let alive = true
     loadHistory(reminder.id)
-      .then((events) => alive && setHistory({ id: reminder.id, events }))
+      .then((read) => alive && setHistory({ id: reminder.id, ...read }))
       .catch(() => undefined)
     return () => {
       alive = false
@@ -403,6 +403,7 @@ export function CommentsSection({ reminder, spaceId }: { reminder: Reminder; spa
   const everybody: Picked[] = [...people, { id: view.me, name: view.people.get(view.me)?.name ?? '' }]
   const comments = view.commentsOf(reminder.id)
   const events = history?.id === reminder.id ? history.events : []
+  const commentsVia = history?.id === reminder.id ? history.commentsVia : {}
   const entries = timeline(comments, events)
   return (
     <section className="mt-5" aria-label={t('comments.title')} data-testid="comments">
@@ -416,7 +417,7 @@ export function CommentsSection({ reminder, spaceId }: { reminder: Reminder; spa
         <ol className="px-1" data-testid="history">
           {entries.map((entry) =>
             entry.type === 'comment' ? (
-              <CommentItem key={`c:${entry.comment.id}`} comment={entry.comment} people={everybody} manager={manager} />
+              <CommentItem key={`c:${entry.comment.id}`} comment={entry.comment} people={everybody} manager={manager} via={commentsVia[entry.comment.id]} />
             ) : (
               <li key={`e:${entry.event.id}`} className="flex items-center gap-2 py-1 pl-2.5 text-xs text-mist-500" data-testid="history-event">
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ink-600" aria-hidden />

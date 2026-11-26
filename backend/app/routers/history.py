@@ -8,10 +8,11 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter
+from sqlalchemy import select
 
 from ..deps import Account, DbSession
 from ..errors import error
-from ..models import Member, Reminder
+from ..models import Comment, Member, Reminder
 from ..services import history, records
 
 router = APIRouter(prefix="/api", tags=["history"])
@@ -23,4 +24,8 @@ def read_history(reminder_id: str, account: Account, db: DbSession) -> dict[str,
     if task is None or db.get(Member, (task.space_id, account.id)) is None:
         raise error("not_found", "Not found.", 404)
     events = history.read(db, account.id, task.id)
-    return {"events": [{**event, "at": records.format_stamp(event["at"])} for event in events]}
+    # MCP decision 15: a comment an AI program wrote names it as a change does ("Anna (MCP · Laptop)"); the comments
+    # themselves come with /api/app/1, so the web finds the way they came here, by the comment's id.
+    written = db.execute(select(Comment.id, Comment.via).where(Comment.reminder_id == task.id, Comment.via != ""))
+    return {"events": [{**event, "at": records.format_stamp(event["at"])} for event in events],
+            "comments_via": {comment_id: via for comment_id, via in written}}
