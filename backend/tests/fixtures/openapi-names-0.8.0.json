@@ -1,0 +1,1162 @@
+{
+ "_about": "The names of nextasks 0.8.0 in /openapi.json (branch konten), taken with einst-werkzeug/openapi-namen; E53: they stay.",
+ "operations": {
+  "GET /api/about": {
+   "operationId": "about_api_about_get",
+   "summary": "About nextasks",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/about/updates": {
+   "operationId": "update_state_api_about_updates_get",
+   "summary": "Whether a newer nextasks is out (asked once a day)",
+   "body": null,
+   "answer": "UpdatesOut"
+  },
+  "PUT /api/about/updates": {
+   "operationId": "switch_api_about_updates_put",
+   "summary": "Switch the daily check",
+   "body": "UpdateSwitchIn",
+   "answer": "UpdatesOut"
+  },
+  "POST /api/about/updates/check": {
+   "operationId": "check_now_api_about_updates_check_post",
+   "summary": "Ask now, also with the daily check off",
+   "body": null,
+   "answer": "UpdatesOut"
+  },
+  "GET /api/accounts": {
+   "operationId": "list_accounts_api_accounts_get",
+   "summary": "All accounts",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/accounts/{account_id}": {
+   "operationId": "delete_account_api_accounts__account_id__delete",
+   "summary": "Delete an account for good (its tasks stay)",
+   "body": "OperatorConfirmIn",
+   "answer": null
+  },
+  "POST /api/accounts/{account_id}/block": {
+   "operationId": "block_account_api_accounts__account_id__block_post",
+   "summary": "Block an account (its sessions end)",
+   "body": "OperatorConfirmIn",
+   "answer": null
+  },
+  "PUT /api/accounts/{account_id}/display-name": {
+   "operationId": "set_display_name_api_accounts__account_id__display_name_put",
+   "summary": "Give an account another display name",
+   "body": "DisplayNameIn",
+   "answer": null
+  },
+  "DELETE /api/accounts/{account_id}/email": {
+   "operationId": "remove_email_api_accounts__account_id__email_delete",
+   "summary": "Take an account's address away (never set one)",
+   "body": "OperatorConfirmIn",
+   "answer": null
+  },
+  "PUT /api/accounts/{account_id}/name": {
+   "operationId": "set_name_api_accounts__account_id__name_put",
+   "summary": "Give an account another username",
+   "body": "NameIn",
+   "answer": null
+  },
+  "PUT /api/accounts/{account_id}/password": {
+   "operationId": "set_password_api_accounts__account_id__password_put",
+   "summary": "Gone: the operator makes a reset link instead",
+   "body": "PasswordSetIn",
+   "answer": null
+  },
+  "POST /api/accounts/{account_id}/reset-link": {
+   "operationId": "reset_link_api_accounts__account_id__reset_link_post",
+   "summary": "A link with which the person sets a new password themselves (mailed, or shown once)",
+   "body": "ResetLinkIn",
+   "answer": null
+  },
+  "PUT /api/accounts/{account_id}/role": {
+   "operationId": "set_role_api_accounts__account_id__role_put",
+   "summary": "Make an account operator or member",
+   "body": "app__routers__accounts__RoleIn",
+   "answer": null
+  },
+  "POST /api/accounts/{account_id}/sign-out": {
+   "operationId": "sign_out_account_api_accounts__account_id__sign_out_post",
+   "summary": "End every session of an account",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/accounts/{account_id}/totp/reset": {
+   "operationId": "operator_reset_overview_api_accounts__account_id__totp_reset_get",
+   "summary": "Operator: what a reset of the second factor takes away",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/accounts/{account_id}/totp/reset": {
+   "operationId": "operator_reset_api_accounts__account_id__totp_reset_post",
+   "summary": "Operator: take the second factor of a locked-out account",
+   "body": "FactorResetIn",
+   "answer": null
+  },
+  "POST /api/accounts/{account_id}/unblock": {
+   "operationId": "unblock_account_api_accounts__account_id__unblock_post",
+   "summary": "Let a blocked account in again",
+   "body": "OperatorConfirmIn",
+   "answer": null
+  },
+  "GET /api/admin/api-tokens": {
+   "operationId": "every_token_api_admin_api_tokens_get",
+   "summary": "Every API token (operator)",
+   "body": null,
+   "answer": "array of AnyTokenOut"
+  },
+  "POST /api/admin/api-tokens/{token_id}/block": {
+   "operationId": "block_token_api_admin_api_tokens__token_id__block_post",
+   "summary": "Block a token for good (operator); its account sees it blocked",
+   "body": null,
+   "answer": "AnyTokenOut"
+  },
+  "GET /api/api-tokens": {
+   "operationId": "own_tokens_api_api_tokens_get",
+   "summary": "The own API tokens",
+   "body": null,
+   "answer": "TokensOut"
+  },
+  "POST /api/api-tokens": {
+   "operationId": "make_token_api_api_tokens_post",
+   "summary": "Make an API token; shown once",
+   "body": "TokenIn",
+   "answer": null
+  },
+  "DELETE /api/api-tokens/{token_id}": {
+   "operationId": "delete_token_api_api_tokens__token_id__delete",
+   "summary": "Delete an own API token",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/app-connect": {
+   "operationId": "connect_api_app_connect_post",
+   "summary": "Pairing for the sign-in page: the link for the app",
+   "body": "ConnectIn",
+   "answer": "ConnectOut"
+  },
+  "GET /api/app-devices": {
+   "operationId": "own_devices_api_app_devices_get",
+   "summary": "The own paired iPhones",
+   "body": null,
+   "answer": "array of DeviceOut"
+  },
+  "DELETE /api/app-devices/{device_id}": {
+   "operationId": "disconnect_api_app_devices__device_id__delete",
+   "summary": "Disconnect a paired iPhone",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/app-pairing": {
+   "operationId": "pair_api_app_pairing_post",
+   "summary": "A pairing for the iPhone app",
+   "body": "PairingIn",
+   "answer": null
+  },
+  "DELETE /api/app-pairing/{pairing_id}": {
+   "operationId": "withdraw_api_app_pairing__pairing_id__delete",
+   "summary": "Withdraw a pairing",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/app-pairing/{pairing_id}": {
+   "operationId": "pairing_state_api_app_pairing__pairing_id__get",
+   "summary": "Whether the app picked the key up",
+   "body": null,
+   "answer": "PairingState"
+  },
+  "POST /api/app/1/batch": {
+   "operationId": "batch_api_app_1_batch_post",
+   "summary": "Changes, in order; each answered on its own",
+   "body": "BatchIn",
+   "answer": "BatchOut"
+  },
+  "GET /api/app/1/changes": {
+   "operationId": "get_changes_api_app_1_changes_get",
+   "summary": "What changed since a cursor; 0 is everything",
+   "body": null,
+   "answer": "ChangesOut"
+  },
+  "DELETE /api/app/1/device": {
+   "operationId": "forget_device_api_app_1_device_delete",
+   "summary": "Disconnect this device (device key only)",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/app/1/devices": {
+   "operationId": "bring_in_device_api_app_1_devices_post",
+   "summary": "A key of its own for another device of this account",
+   "body": "KeyIn",
+   "answer": "KeyOut"
+  },
+  "POST /api/app/1/files": {
+   "operationId": "upload_api_app_1_files_post",
+   "summary": "Upload the file of an attachment; answered like an op",
+   "body": "Body_upload_api_app_1_files_post",
+   "answer": "ResultOut"
+  },
+  "GET /api/app/1/files/{attachment_id}": {
+   "operationId": "get_file_api_app_1_files__attachment_id__get",
+   "summary": "The file of an attachment; ETag is its hash",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/app/1/me": {
+   "operationId": "me_api_app_1_me_get",
+   "summary": "The account, this device, what the server offers, the time",
+   "body": null,
+   "answer": "app__routers__app1__MeOut"
+  },
+  "PUT /api/app/1/me": {
+   "operationId": "set_me_api_app_1_me_put",
+   "summary": "The account's time zone and language",
+   "body": "MeIn",
+   "answer": "app__routers__app1__MeOut"
+  },
+  "POST /api/app/1/pairing/code": {
+   "operationId": "pickup_by_code_api_app_1_pairing_code_post",
+   "summary": "Pick the device key up with the short code",
+   "body": "app__routers__app1__CodeIn",
+   "answer": "KeyOut"
+  },
+  "POST /api/app/1/pairing/{pairing_id}/key": {
+   "operationId": "pickup_by_secret_api_app_1_pairing__pairing_id__key_post",
+   "summary": "Pick the device key up with the QR code",
+   "body": "KeyIn",
+   "answer": "KeyOut"
+  },
+  "GET /api/app/1/people/{account_id}/avatar": {
+   "operationId": "avatar_api_app_1_people__account_id__avatar_get",
+   "summary": "A profile picture; ETag is its hash",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/app/1/push": {
+   "operationId": "stop_push_api_app_1_push_delete",
+   "summary": "Stop notifications for this device; it stays paired",
+   "body": null,
+   "answer": "Done"
+  },
+  "PUT /api/app/1/push": {
+   "operationId": "set_push_api_app_1_push_put",
+   "summary": "Where notifications for this device go (device key only)",
+   "body": "PushIn",
+   "answer": "Done"
+  },
+  "GET /api/app/1/spaces/{space_id}/invites": {
+   "operationId": "list_space_invites_api_app_1_spaces__space_id__invites_get",
+   "summary": "Open invitations (managers)",
+   "body": null,
+   "answer": "array of InviteRow"
+  },
+  "POST /api/app/1/spaces/{space_id}/invites": {
+   "operationId": "make_invite_api_app_1_spaces__space_id__invites_post",
+   "summary": "A link for one person into the space (managers)",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/app/1/spaces/{space_id}/invites/{invite_id}": {
+   "operationId": "withdraw_invite_api_app_1_spaces__space_id__invites__invite_id__delete",
+   "summary": "Withdraw an invitation (managers)",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/app/1/spaces/{space_id}/members/{account_id}": {
+   "operationId": "remove_member_api_app_1_spaces__space_id__members__account_id__delete",
+   "summary": "Take a member out, or leave (managers, or oneself)",
+   "body": null,
+   "answer": null
+  },
+  "PUT /api/app/1/spaces/{space_id}/members/{account_id}": {
+   "operationId": "set_member_role_api_app_1_spaces__space_id__members__account_id__put",
+   "summary": "Change a role (managers)",
+   "body": "app__routers__app1__RoleIn",
+   "answer": "app__routers__app1__MemberOut"
+  },
+  "GET /api/app/1/wait": {
+   "operationId": "wait_api_app_1_wait_get",
+   "summary": "Wait up to 25 s for something new for this account",
+   "body": null,
+   "answer": "CursorOut"
+  },
+  "DELETE /api/app/1/webpush": {
+   "operationId": "webpush_off_api_app_1_webpush_delete",
+   "summary": "This browser takes no more notifications",
+   "body": "WebPushOff",
+   "answer": "Done"
+  },
+  "PUT /api/app/1/webpush": {
+   "operationId": "webpush_on_api_app_1_webpush_put",
+   "summary": "This browser takes notifications",
+   "body": "WebPushIn",
+   "answer": "Done"
+  },
+  "GET /api/app/1/webpush/key": {
+   "operationId": "webpush_key_api_app_1_webpush_key_get",
+   "summary": "The server's key for web push",
+   "body": null,
+   "answer": "WebPushKeyOut"
+  },
+  "GET /api/auth/access": {
+   "operationId": "remaining_access_api_auth_access_get",
+   "summary": "What still has access after a password set through a link",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/auth/access/disconnect": {
+   "operationId": "disconnect_all_api_auth_access_disconnect_post",
+   "summary": "Disconnect all: every iPhone, API token and passkey of the account",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/auth/access/seen": {
+   "operationId": "remaining_access_seen_api_auth_access_seen_post",
+   "summary": "The list of what still has access is put away",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/auth/avatar": {
+   "operationId": "remove_avatar_api_auth_avatar_delete",
+   "summary": "Remove the own profile picture",
+   "body": null,
+   "answer": null
+  },
+  "PUT /api/auth/avatar": {
+   "operationId": "set_avatar_api_auth_avatar_put",
+   "summary": "Set the own profile picture (the picture itself as the body)",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/auth/forgot": {
+   "operationId": "forgot_api_auth_forgot_post",
+   "summary": "Forgot your password? A link by mail (with a mail server)",
+   "body": "ForgotIn",
+   "answer": null
+  },
+  "POST /api/auth/login": {
+   "operationId": "login_api_auth_login_post",
+   "summary": "Sign in with username or email and password",
+   "body": "LoginIn",
+   "answer": null
+  },
+  "POST /api/auth/login/totp": {
+   "operationId": "login_code_api_auth_login_totp_post",
+   "summary": "Second step of the sign-in: the code from the app or a recovery code",
+   "body": "app__routers__totp__CodeIn",
+   "answer": null
+  },
+  "POST /api/auth/login/totp/cancel": {
+   "operationId": "cancel_code_api_auth_login_totp_cancel_post",
+   "summary": "Give up the second step and start over",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/auth/logout": {
+   "operationId": "logout_api_auth_logout_post",
+   "summary": "Sign out in this browser",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/auth/logout-all": {
+   "operationId": "logout_everywhere_api_auth_logout_all_post",
+   "summary": "Sign out every other browser of the own account",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/auth/me": {
+   "operationId": "me_api_auth_me_get",
+   "summary": "The signed-in account, and what this server offers it",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/auth/methods": {
+   "operationId": "methods_api_auth_methods_get",
+   "summary": "How one can sign in here (no sign-in needed)",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/auth/passkey/begin": {
+   "operationId": "begin_sign_in_api_auth_passkey_begin_post",
+   "summary": "Sign in with a passkey: the challenge (no sign-in needed)",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/auth/passkey/finish": {
+   "operationId": "finish_sign_in_api_auth_passkey_finish_post",
+   "summary": "Sign in with a passkey: the browser's answer",
+   "body": "FinishIn",
+   "answer": null
+  },
+  "GET /api/auth/passkeys": {
+   "operationId": "my_passkeys_api_auth_passkeys_get",
+   "summary": "The own passkeys",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/auth/passkeys/begin": {
+   "operationId": "begin_add_api_auth_passkeys_begin_post",
+   "summary": "Start adding a passkey; needs the password",
+   "body": "BeginAddIn",
+   "answer": null
+  },
+  "POST /api/auth/passkeys/finish": {
+   "operationId": "finish_add_api_auth_passkeys_finish_post",
+   "summary": "Finish adding a passkey with the browser's answer",
+   "body": "FinishIn",
+   "answer": null
+  },
+  "DELETE /api/auth/passkeys/{uid}": {
+   "operationId": "remove_api_auth_passkeys__uid__delete",
+   "summary": "Remove a passkey; needs the password",
+   "body": "RemoveIn",
+   "answer": null
+  },
+  "PUT /api/auth/password": {
+   "operationId": "change_password_api_auth_password_put",
+   "summary": "Change the own password",
+   "body": "PasswordChangeIn",
+   "answer": null
+  },
+  "GET /api/auth/sessions": {
+   "operationId": "my_sessions_api_auth_sessions_get",
+   "summary": "Where the own account is signed in: browsers and paired iPhones",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/auth/sessions/{uid}": {
+   "operationId": "end_one_session_api_auth_sessions__uid__delete",
+   "summary": "Sign one browser or iPhone of the own account out",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/auth/totp/begin": {
+   "operationId": "begin_api_auth_totp_begin_post",
+   "summary": "Start enrolling an authenticator app; the seed is shown once",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/auth/totp/confirm": {
+   "operationId": "confirm_api_auth_totp_confirm_post",
+   "summary": "Finish enrolling: a code from the app and the password",
+   "body": "app__routers__totp__ConfirmIn",
+   "answer": null
+  },
+  "POST /api/auth/totp/disable": {
+   "operationId": "disable_api_auth_totp_disable_post",
+   "summary": "Turn the second factor off; needs the password",
+   "body": "app__routers__totp__PasswordIn",
+   "answer": null
+  },
+  "POST /api/auth/totp/recovery": {
+   "operationId": "new_recovery_codes_api_auth_totp_recovery_post",
+   "summary": "New recovery codes; the old ones stop working",
+   "body": "app__routers__totp__PasswordIn",
+   "answer": null
+  },
+  "GET /api/auth/totp/setup": {
+   "operationId": "waiting_setup_api_auth_totp_setup_get",
+   "summary": "The authenticator that waits for its first code, once more",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/avatars/{account_id}": {
+   "operationId": "get_avatar_api_avatars__account_id__get",
+   "summary": "A profile picture, for those who may see it",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/backups": {
+   "operationId": "listing_api_backups_get",
+   "summary": "Listing",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/backups": {
+   "operationId": "create_api_backups_post",
+   "summary": "Create",
+   "body": "CreateIn",
+   "answer": null
+  },
+  "POST /api/backups/upload": {
+   "operationId": "upload_api_backups_upload_post",
+   "summary": "Bring in an archive from elsewhere (the body is the ZIP); needs the password again",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/backups/{name}": {
+   "operationId": "delete_api_backups__name__delete",
+   "summary": "Delete",
+   "body": "app__routers__backups__PasswordIn",
+   "answer": null
+  },
+  "POST /api/backups/{name}/check": {
+   "operationId": "check_api_backups__name__check_post",
+   "summary": "Check",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/backups/{name}/download": {
+   "operationId": "download_api_backups__name__download_post",
+   "summary": "The archive itself, to keep a copy elsewhere; needs the password again",
+   "body": "DownloadIn",
+   "answer": null
+  },
+  "POST /api/backups/{name}/restore": {
+   "operationId": "restore_api_backups__name__restore_post",
+   "summary": "Restore",
+   "body": "app__routers__backups__PasswordIn",
+   "answer": null
+  },
+  "POST /api/email/confirm": {
+   "operationId": "confirm_email_api_email_confirm_post",
+   "summary": "The link from the mail: the waiting address counts (no sign-in needed)",
+   "body": "app__routers__notifications__ConfirmIn",
+   "answer": null
+  },
+  "GET /api/email/{token}": {
+   "operationId": "email_link_state_api_email__token__get",
+   "summary": "Which address a confirmation link confirms (no sign-in needed)",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/focus": {
+   "operationId": "read_focus_api_focus_get",
+   "summary": "The own focus of today: up to three task ids, in order",
+   "body": null,
+   "answer": null
+  },
+  "PUT /api/focus": {
+   "operationId": "write_focus_api_focus_put",
+   "summary": "Sets the own focus of today (up to three task ids, in order)",
+   "body": "FocusIn",
+   "answer": null
+  },
+  "GET /api/health": {
+   "operationId": "health_api_health_get",
+   "summary": "Is nextasks running?",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/invite/{token}": {
+   "operationId": "invite_state_api_invite__token__get",
+   "summary": "What an invitation offers (no sign-in needed; the old path)",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/invite/{token}": {
+   "operationId": "accept_api_invite__token__post",
+   "summary": "Accept an invitation with a new account (password)",
+   "body": "AcceptIn",
+   "answer": null
+  },
+  "POST /api/invite/{token}/join": {
+   "operationId": "join_api_invite__token__join_post",
+   "summary": "Accept an invitation with the signed-in account (the old path)",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/invites": {
+   "operationId": "list_invites_api_invites_get",
+   "summary": "Open invitations into nextasks (operator)",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/invites": {
+   "operationId": "invite_api_invites_post",
+   "summary": "Invite into nextasks without a space (operator)",
+   "body": "InviteIn",
+   "answer": null
+  },
+  "DELETE /api/invites/{invite_id}": {
+   "operationId": "withdraw_api_invites__invite_id__delete",
+   "summary": "Withdraw an invitation",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/invites/{secret}": {
+   "operationId": "invite_page_api_invites__secret__get",
+   "summary": "What an invitation offers (no sign-in needed)",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/invites/{secret}/accept": {
+   "operationId": "accept_signed_in_api_invites__secret__accept_post",
+   "summary": "Accept an invitation with the signed-in account",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/lists/{list_id}/suggestions": {
+   "operationId": "read_suggestions_api_lists__list_id__suggestions_get",
+   "summary": "Often done in this list and not open now; known titles' sections",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/locales": {
+   "operationId": "list_locales_api_locales_get",
+   "summary": "Languages the operator added",
+   "body": null,
+   "answer": "array of LocaleEntry"
+  },
+  "DELETE /api/locales/{code}": {
+   "operationId": "delete_locale_api_locales__code__delete",
+   "summary": "Remove an added language (operator)",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/locales/{code}": {
+   "operationId": "read_locale_api_locales__code__get",
+   "summary": "The texts of one added language",
+   "body": null,
+   "answer": null
+  },
+  "PUT /api/locales/{code}": {
+   "operationId": "upload_locale_api_locales__code__put",
+   "summary": "Add or replace a language (operator)",
+   "body": null,
+   "answer": "LocaleEntry"
+  },
+  "DELETE /api/logs": {
+   "operationId": "clear_logs_api_logs_delete",
+   "summary": "Clear the log",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/logs": {
+   "operationId": "read_logs_api_logs_get",
+   "summary": "The newest lines",
+   "body": null,
+   "answer": "array of LogEntry"
+  },
+  "GET /api/logs/level": {
+   "operationId": "read_level_api_logs_level_get",
+   "summary": "Which level applies",
+   "body": null,
+   "answer": "LogMode"
+  },
+  "PUT /api/logs/level": {
+   "operationId": "set_level_api_logs_level_put",
+   "summary": "Change the level, effective at once",
+   "body": "LogModeChange",
+   "answer": "LogMode"
+  },
+  "DELETE /api/me/email": {
+   "operationId": "remove_email_api_me_email_delete",
+   "summary": "Remove the own mail address (no more mail); needs the own password",
+   "body": "RemoveEmailIn",
+   "answer": null
+  },
+  "PUT /api/me/email": {
+   "operationId": "set_email_api_me_email_put",
+   "summary": "Enter the own mail address (with the password); with a mail server it waits for its link",
+   "body": "EmailIn",
+   "answer": null
+  },
+  "DELETE /api/me/email/pending": {
+   "operationId": "cancel_email_api_me_email_pending_delete",
+   "summary": "Forget the address that waits for its confirmation",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/me/email/resend": {
+   "operationId": "resend_email_api_me_email_resend_post",
+   "summary": "Mail the link for the waiting address once more",
+   "body": null,
+   "answer": null
+  },
+  "PUT /api/me/language": {
+   "operationId": "set_language_api_me_language_put",
+   "summary": "The language of the own account; empty follows the browser",
+   "body": "LanguageIn",
+   "answer": null
+  },
+  "PUT /api/me/new-sign-in-mail": {
+   "operationId": "set_new_sign_in_mail_api_me_new_sign_in_mail_put",
+   "summary": "A mail when a browser signs in for the first time: on or off",
+   "body": "SwitchIn",
+   "answer": null
+  },
+  "POST /api/me/password-reset-notice/seen": {
+   "operationId": "password_reset_notice_seen_api_me_password_reset_notice_seen_post",
+   "summary": "The notice that the password was set through the operator's link is read",
+   "body": null,
+   "answer": null
+  },
+  "PUT /api/me/preferences": {
+   "operationId": "set_preferences_api_me_preferences_put",
+   "summary": "The own preferences; only the values sent change",
+   "body": null,
+   "answer": null
+  },
+  "PUT /api/me/profile": {
+   "operationId": "set_profile_api_me_profile_put",
+   "summary": "The own display name, username, address and time zone",
+   "body": "ProfileIn",
+   "answer": null
+  },
+  "POST /api/me/whats-new/seen": {
+   "operationId": "whats_new_seen_api_me_whats_new_seen_post",
+   "summary": "\"What's new\" of the running version is read or put away",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/notices": {
+   "operationId": "open_notices_api_notices_get",
+   "summary": "What the account should see once",
+   "body": null,
+   "answer": "array of NoticeOut"
+  },
+  "POST /api/notices/{notice_id}/decline": {
+   "operationId": "notice_seen_api_notices__notice_id__decline_post",
+   "summary": "Mark a notice seen",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/notify": {
+   "operationId": "read_api_notify_get",
+   "summary": "The own notifications: channels, choices, report times",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/notify/browsers/{subscription_id}": {
+   "operationId": "remove_browser_api_notify_browsers__subscription_id__delete",
+   "summary": "One of the own browsers takes no more notifications",
+   "body": null,
+   "answer": null
+  },
+  "PUT /api/notify/routes": {
+   "operationId": "set_route_api_notify_routes_put",
+   "summary": "Turn one report or event on one channel on or off",
+   "body": "RouteIn",
+   "answer": null
+  },
+  "PUT /api/notify/schedules/{report}": {
+   "operationId": "set_schedule_api_notify_schedules__report__put",
+   "summary": "When a report comes (in the account's time zone)",
+   "body": "ScheduleIn",
+   "answer": null
+  },
+  "GET /api/notify/unsubscribe/{token}": {
+   "operationId": "unsubscribe_info_api_notify_unsubscribe__token__get",
+   "summary": "What a link from a mail would turn off (no sign-in needed)",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/notify/unsubscribe/{token}": {
+   "operationId": "unsubscribe_api_notify_unsubscribe__token__post",
+   "summary": "Turn off the report or event of a mail (one click, RFC 8058)",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/oidc/admin/accounts/{account_id}/links/{provider_id}": {
+   "operationId": "operator_unlink_api_oidc_admin_accounts__account_id__links__provider_id__delete",
+   "summary": "Operator: unlink an account from a provider (with the own password)",
+   "body": "OperatorConfirmIn",
+   "answer": null
+  },
+  "GET /api/oidc/admin/providers": {
+   "operationId": "admin_providers_api_oidc_admin_providers_get",
+   "summary": "The provider list for the operator (never a secret)",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/oidc/admin/providers": {
+   "operationId": "add_provider_api_oidc_admin_providers_post",
+   "summary": "Add a provider; the issuer is checked by discovery",
+   "body": "ProviderIn",
+   "answer": null
+  },
+  "PUT /api/oidc/admin/providers/order": {
+   "operationId": "order_providers_api_oidc_admin_providers_order_put",
+   "summary": "Put the providers in this order (the drag handle)",
+   "body": "OrderIn",
+   "answer": null
+  },
+  "DELETE /api/oidc/admin/providers/{provider_id}": {
+   "operationId": "remove_provider_api_oidc_admin_providers__provider_id__delete",
+   "summary": "Remove a provider with its links",
+   "body": null,
+   "answer": null
+  },
+  "PUT /api/oidc/admin/providers/{provider_id}": {
+   "operationId": "save_provider_api_oidc_admin_providers__provider_id__put",
+   "summary": "Save a provider; another issuer drops its links",
+   "body": "ProviderIn",
+   "answer": null
+  },
+  "GET /api/oidc/admin/providers/{provider_id}/impact": {
+   "operationId": "provider_impact_api_oidc_admin_providers__provider_id__impact_get",
+   "summary": "Who loses a link when the issuer changes or it goes",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/oidc/authentik/address": {
+   "operationId": "authentik_address_api_oidc_authentik_address_get",
+   "summary": "What the authentik card shows about the public address",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/oidc/authentik/address": {
+   "operationId": "authentik_save_address_api_oidc_authentik_address_post",
+   "summary": "Use the address as nextasks's public address, without setting up",
+   "body": "AddressIn",
+   "answer": null
+  },
+  "GET /api/oidc/authentik/blueprint": {
+   "operationId": "authentik_blueprint_api_oidc_authentik_blueprint_get",
+   "summary": "Download a blueprint that creates the same objects in authentik",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/oidc/authentik/setup": {
+   "operationId": "authentik_setup_api_oidc_authentik_setup_post",
+   "summary": "Set up provider and application in authentik with a one-time token",
+   "body": "app__routers__oidc__SetupIn",
+   "answer": null
+  },
+  "GET /api/oidc/callback": {
+   "operationId": "legacy_callback_api_oidc_callback_get",
+   "summary": "The return from the provider of the entry oidc (the address before the list)",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/oidc/me": {
+   "operationId": "my_providers_api_oidc_me_get",
+   "summary": "The active providers and whether the own account is linked to each",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/oidc/me/address": {
+   "operationId": "decline_offered_address_api_oidc_me_address_delete",
+   "summary": "Do not offer the provider's address any more",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/oidc/me/address": {
+   "operationId": "take_offered_address_api_oidc_me_address_post",
+   "summary": "Take the address a provider knows the own account by",
+   "body": "TakeAddressIn",
+   "answer": null
+  },
+  "GET /api/oidc/providers": {
+   "operationId": "public_providers_api_oidc_providers_get",
+   "summary": "The active sign-in providers: slug and label (no sign-in needed)",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/oidc/{slug}/callback": {
+   "operationId": "callback_api_oidc__slug__callback_get",
+   "summary": "The return from the provider (no sign-in needed)",
+   "body": null,
+   "answer": null
+  },
+  "DELETE /api/oidc/{slug}/link": {
+   "operationId": "unlink_api_oidc__slug__link_delete",
+   "summary": "Unlink the own account from a provider",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/oidc/{slug}/link": {
+   "operationId": "link_start_api_oidc__slug__link_post",
+   "summary": "Start linking the own account to a provider; needs the password",
+   "body": "app__routers__oidc__PasswordIn",
+   "answer": null
+  },
+  "GET /api/oidc/{slug}/start": {
+   "operationId": "start_api_oidc__slug__start_get",
+   "summary": "Send the browser to the provider (no sign-in needed)",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/people": {
+   "operationId": "people_api_people_get",
+   "summary": "Display names for account names: of the own account and of those sharing a space",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/reminders/{reminder_id}/history": {
+   "operationId": "read_history_api_reminders__reminder_id__history_get",
+   "summary": "What happened to a task and who did it, oldest first",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/reset/{token}": {
+   "operationId": "reset_state_api_reset__token__get",
+   "summary": "Whom a link for a new password is for (no sign-in needed)",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/reset/{token}": {
+   "operationId": "reset_password_api_reset__token__post",
+   "summary": "Set a new password with a link; signs in nowhere",
+   "body": "ResetIn",
+   "answer": null
+  },
+  "GET /api/review": {
+   "operationId": "read_review_api_review_get",
+   "summary": "Open tasks for a look through: unchanged for long or overdue, the oldest first",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/settings": {
+   "operationId": "read_api_settings_get",
+   "summary": "Read",
+   "body": null,
+   "answer": "SettingsOut"
+  },
+  "PUT /api/settings": {
+   "operationId": "save_api_settings_put",
+   "summary": "Save",
+   "body": "SettingsIn",
+   "answer": "SettingsOut"
+  },
+  "POST /api/settings/mail-test": {
+   "operationId": "mail_test_api_settings_mail_test_post",
+   "summary": "Send a test mail through the configured server",
+   "body": "TestMailIn",
+   "answer": null
+  },
+  "GET /api/setup": {
+   "operationId": "setup_state_api_setup_get",
+   "summary": "Does nextasks still need its first account, and is this browser signed in?",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/setup": {
+   "operationId": "setup_api_setup_post",
+   "summary": "Create the operator account",
+   "body": "app__routers__auth__SetupIn",
+   "answer": null
+  },
+  "POST /api/spaces/{space_id}/invites": {
+   "operationId": "invite_to_space_api_spaces__space_id__invites_post",
+   "summary": "A link for one person into a space, sent by mail (managers; the web only)",
+   "body": "SpaceInviteIn",
+   "answer": null
+  },
+  "GET /api/stats": {
+   "operationId": "read_stats_api_stats_get",
+   "summary": "The review: what was done, when, by whom, in a period (week, month, year)",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/sweep": {
+   "operationId": "read_sweep_api_sweep_get",
+   "summary": "Open tasks to look through, without those kept in the last 30 days",
+   "body": null,
+   "answer": null
+  },
+  "POST /api/sweep/keep": {
+   "operationId": "keep_api_sweep_keep_post",
+   "summary": "Keeps a task out of the look through for 30 days",
+   "body": "KeepIn",
+   "answer": null
+  },
+  "DELETE /api/sweep/keep/{reminder_id}": {
+   "operationId": "unkeep_api_sweep_keep__reminder_id__delete",
+   "summary": "Lets a kept task come into the look through again",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/v1/dashboard": {
+   "operationId": "dashboard_api_v1_dashboard_get",
+   "summary": "The numbers and the soonest tasks for a dashboard card",
+   "body": null,
+   "answer": "DashboardOut"
+  },
+  "GET /api/v1/lists": {
+   "operationId": "get_lists_api_v1_lists_get",
+   "summary": "The lists the token sees, in the order of the interface",
+   "body": null,
+   "answer": "ListsOut"
+  },
+  "GET /api/v1/me": {
+   "operationId": "me_api_v1_me_get",
+   "summary": "Who the token speaks for, and what it may",
+   "body": null,
+   "answer": "app__routers__v1__MeOut"
+  },
+  "GET /api/v1/spaces": {
+   "operationId": "get_spaces_api_v1_spaces_get",
+   "summary": "The spaces the token sees, by name",
+   "body": null,
+   "answer": "SpacesOut"
+  },
+  "GET /api/v1/spaces/{space_id}/members": {
+   "operationId": "get_members_api_v1_spaces__space_id__members_get",
+   "summary": "Who may be assigned in a space: its members, by name",
+   "body": null,
+   "answer": "MembersOut"
+  },
+  "GET /api/v1/stats/summary": {
+   "operationId": "stats_summary_api_v1_stats_summary_get",
+   "summary": "The run of days, done today and this week, a year of days: for a dashboard card",
+   "body": null,
+   "answer": "StatsSummaryOut"
+  },
+  "GET /api/v1/tasks": {
+   "operationId": "get_tasks_api_v1_tasks_get",
+   "summary": "Tasks, filtered; ids, external_ref and updated_since keep a program in step",
+   "body": null,
+   "answer": "TasksOut"
+  },
+  "POST /api/v1/tasks": {
+   "operationId": "make_task_api_v1_tasks_post",
+   "summary": "Make a task; with external_ref safe to repeat (200 with the task made before)",
+   "body": "TaskIn",
+   "answer": "TaskOut"
+  },
+  "DELETE /api/v1/tasks/{task_id}": {
+   "operationId": "trash_task_api_v1_tasks__task_id__delete",
+   "summary": "Move a task, with its subtasks, to the bin",
+   "body": null,
+   "answer": null
+  },
+  "GET /api/v1/tasks/{task_id}": {
+   "operationId": "get_task_api_v1_tasks__task_id__get",
+   "summary": "One task, its subtasks listed",
+   "body": null,
+   "answer": "TaskOut"
+  },
+  "PATCH /api/v1/tasks/{task_id}": {
+   "operationId": "change_task_api_v1_tasks__task_id__patch",
+   "summary": "Change, tick off, reopen or restore a task",
+   "body": "TaskChange",
+   "answer": "ChangedOut"
+  },
+  "GET /api/v1/tasks/{task_id}/comments": {
+   "operationId": "get_comments_api_v1_tasks__task_id__comments_get",
+   "summary": "The comments of a task, oldest first",
+   "body": null,
+   "answer": "CommentsOut"
+  },
+  "POST /api/v1/tasks/{task_id}/comments": {
+   "operationId": "post_comment_api_v1_tasks__task_id__comments_post",
+   "summary": "Comment on a task of a shared space",
+   "body": "CommentIn",
+   "answer": null
+  }
+ },
+ "schemas": [
+  "AcceptIn",
+  "AddressIn",
+  "AnyTokenOut",
+  "BatchIn",
+  "BatchOut",
+  "BeginAddIn",
+  "Body_upload_api_app_1_files_post",
+  "ChangedOut",
+  "ChangesOut",
+  "CommentIn",
+  "CommentOut",
+  "CommentsOut",
+  "ConnectIn",
+  "ConnectOut",
+  "CountsOut",
+  "CreateIn",
+  "CursorOut",
+  "DashboardOut",
+  "DeviceOut",
+  "DisplayNameIn",
+  "Done",
+  "DownloadIn",
+  "EmailIn",
+  "Entry",
+  "FactorResetIn",
+  "FinishIn",
+  "FocusIn",
+  "ForgotIn",
+  "GoneOut",
+  "HTTPValidationError",
+  "InviteIn",
+  "InviteOut",
+  "InviteRow",
+  "KeepIn",
+  "KeyIn",
+  "KeyOut",
+  "LanguageIn",
+  "Limits",
+  "ListOut",
+  "ListsOut",
+  "LocaleEntry",
+  "LogEntry",
+  "LogMode",
+  "LogModeChange",
+  "LoginIn",
+  "MadeOut",
+  "MeAccount",
+  "MeDevice",
+  "MeIn",
+  "MembersOut",
+  "NameIn",
+  "NoticeOut",
+  "OpIn",
+  "OperatorConfirmIn",
+  "OrderIn",
+  "PairedAccount",
+  "PairingIn",
+  "PairingOut",
+  "PairingState",
+  "PasswordChangeIn",
+  "PasswordSetIn",
+  "Problem",
+  "ProfileIn",
+  "ProviderIn",
+  "PushIn",
+  "RemoveEmailIn",
+  "RemoveIn",
+  "ResetIn",
+  "ResetLinkIn",
+  "ResultOut",
+  "RouteIn",
+  "ScheduleIn",
+  "SectionOut",
+  "SettingsIn",
+  "SettingsOut",
+  "SpaceBrief",
+  "SpaceInviteIn",
+  "SpaceOut",
+  "SpaceRef",
+  "SpacesOut",
+  "StatsSummaryOut",
+  "StreakOut",
+  "SubtasksOut",
+  "SwitchIn",
+  "TakeAddressIn",
+  "TaskChange",
+  "TaskIn",
+  "TaskOut",
+  "TasksOut",
+  "TestMailIn",
+  "TokenIn",
+  "TokenOut",
+  "TokensOut",
+  "UpdateSwitchIn",
+  "UpdatesOut",
+  "ValidationError",
+  "WebPushIn",
+  "WebPushKeyOut",
+  "WebPushKeys",
+  "WebPushOff",
+  "app__routers__accounts__RoleIn",
+  "app__routers__app1__CodeIn",
+  "app__routers__app1__MeOut",
+  "app__routers__app1__MemberOut",
+  "app__routers__app1__Person",
+  "app__routers__app1__RoleIn",
+  "app__routers__auth__SetupIn",
+  "app__routers__backups__PasswordIn",
+  "app__routers__notifications__ConfirmIn",
+  "app__routers__oidc__PasswordIn",
+  "app__routers__oidc__SetupIn",
+  "app__routers__totp__CodeIn",
+  "app__routers__totp__ConfirmIn",
+  "app__routers__totp__PasswordIn",
+  "app__routers__v1__MeOut",
+  "app__routers__v1__MemberOut",
+  "app__routers__v1__Person"
+ ]
+}

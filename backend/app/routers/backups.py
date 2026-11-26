@@ -33,7 +33,10 @@ def _error(code: str, text: str, status: int) -> Exception:
 
 
 router = APIRouter()
+# The names of the API's description stay those of 0.8.0 (E53): the schemas of before for both routers, and the
+# operationId and summaries of the old ways under /api/backups.
 router.include_router(routes.router(operator=OperatorAccount, confirm=_confirm, error=_error,
-                                    prefix="/api/server/storage"))
+                                    prefix="/api/server/storage", schema_names=routes.FORMER_SCHEMAS))
 router.include_router(routes.legacy_router(prefix="/api/backups", password_header="x-nextasks-password",
-                                           operator=OperatorAccount, confirm=_confirm, error=_error))
+                                           operator=OperatorAccount, confirm=_confirm, error=_error,
+                                           **routes.former_names("/api/backups")))

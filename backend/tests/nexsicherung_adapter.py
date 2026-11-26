@@ -24,6 +24,22 @@ class Adapter(StandardAdapter):
     prefix = "/api/server/storage"
     legacy_prefix = "/api/backups"
     legacy_header = "x-nextasks-password"
+    # E53: the names given to the routers (routers/backups.py), those of nextasks' own backup routes before the module.
+    openapi_path = "/api/openapi.json"
+
+    def __init__(self) -> None:
+        from app.vendor.nexsicherung import routes
+
+        names = routes.former_names(self.legacy_prefix)
+        self.operation_ids = names["operation_ids"]
+        self.summaries = names["summaries"]
+        self.schema_names = names["schema_names"]
+
+    def description(self) -> dict[str, Any]:
+        # nextasks publishes its description only with NEXTASKS_API_DOCS (off in the tests): its own, never for tests.
+        from app.main import app
+
+        return app.openapi()
 
     def start(self) -> None:
         import shutil
