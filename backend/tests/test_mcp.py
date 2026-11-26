@@ -296,6 +296,28 @@ def test_a_comment_names_the_program_that_wrote_it() -> None:
     assert record is not None and record["data"]["text"] == "Done by the program" and "via" not in record["data"]
 
 
+def test_a_change_by_a_program_stands_in_the_history_with_the_program() -> None:
+    """N-2 (MCP decision 15): ``update_task`` on a task made by hand writes every field the history keeps for a change
+    by hand (date, priority, title, list) with the program; a flag or a note the history keeps for nobody."""
+    from .sync_helpers import now_ms, put
+
+    _account, anna = person("anna")
+    family = shared_space(anna)
+    shopping = make_list(anna, family)
+    other = make_list(anna, family, name="Garden", position="a2")
+    task = make_reminder(anna, shopping, title="Milk")
+    secret = mcp_key(anna, right="write")
+    data(call(secret, "update_task", task_id=task, title="Oat milk", priority=3, due_date="2026-12-24",
+              flagged=True, notes="Two packs", list_id=other))
+    events = anna.get(f"/api/reminders/{task}/history").json()["events"]
+    told = {event["field"]: event["via"] for event in events if event["field"] != "created"}
+    assert told == {"title": "mcp:Assistant", "priority": "mcp:Assistant", "due": "mcp:Assistant",
+                    "list": "mcp:Assistant"}
+    assert put(anna, "reminder", task, {"flagged": False, "notes": "One pack"}, now_ms() + 1000)["ok"]
+    after = anna.get(f"/api/reminders/{task}/history").json()["events"]
+    assert {event["field"] for event in after} == {event["field"] for event in events}
+
+
 def test_a_waiting_request_says_what_it_wants_with_the_title_not_the_id() -> None:
     """mcp 1.1.1 (M-12): the line of a request names the task by its title, in the language of the account."""
     _account, anna = person("anna")
