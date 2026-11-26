@@ -290,3 +290,23 @@ describe('Server › General › Languages', () => {
     expect([...menu.options].map((option) => option.value)).toContain('nl')
   })
 })
+
+describe('the words of a new password (konten 1.1.2)', () => {
+  const labels = (container: ParentNode) => [...container.querySelectorAll('label')].map((label) => label.textContent?.trim())
+
+  it('say "New password" in the window "Change password", beside the current one and the repeat', async () => {
+    const { server } = smallWorld()
+    const page = await mount(server, '/settings/security')
+    await click(button(page, 'Change password'))
+    const window = document.querySelector('[role="dialog"]') as HTMLElement
+    expect(labels(window)).toEqual(expect.arrayContaining(['Current password', 'New password']))
+    expect(labels(window)).not.toContain('Password')
+  })
+
+  it('say "New password" on the page of a reset link', async () => {
+    const { server } = smallWorld()
+    server.session = null
+    const page = await mount(server, '/reset/abc')
+    expect(labels(page)).toContain('New password')
+  })
+})

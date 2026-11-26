@@ -29,6 +29,7 @@ import { safeNext, useAuth } from '../state/auth'
 import {
   DISPLAY_NAME_MAX,
   EMAIL_MAX,
+  fieldLabel,
   followUsername,
   normalizeUsername,
   PASSWORD_MIN,
@@ -504,7 +505,7 @@ export function ResetPage() {
         }}
       >
         <Problem problem={problem} />
-        <AuthField label={t('account.newPassword')} value={password} onChange={setPassword} type="password" autoComplete="new-password" autoFocus hint={t('account.passwordRules', { minimum: min })} />
+        <AuthField label={t(fieldLabel('reset', 'newPassword'))} value={password} onChange={setPassword} type="password" autoComplete="new-password" autoFocus hint={t('account.passwordRules', { minimum: min })} />
         <PasswordConfirmField value={again.confirm} onChange={again.setConfirm} mismatch={again.mismatch} />
         <Primary name="resetSubmit" busy={busy}>
           {t('auth.reset.submit')}

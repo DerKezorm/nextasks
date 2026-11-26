@@ -26,7 +26,7 @@ import { copyText } from '../../lib/copy'
 import { errorText, problemText, returnErrorText } from '../../lib/errors'
 import { usePasswordConfirm } from '../../lib/passwordConfirm'
 import { useAuth } from '../../state/auth'
-import { confirmLine, DISPLAY_NAME_MAX, EMAIL_MAX, FIELDS, PAGES, PASSWORD_MIN, passwordChanged, screenFields, SECOND_FACTOR_STATE, USERNAME_MAX } from '../../vendor/nexkonten/konten'
+import { confirmLine, DISPLAY_NAME_MAX, EMAIL_MAX, fieldLabel, FIELDS, PAGES, PASSWORD_MIN, passwordChanged, screenFields, SECOND_FACTOR_STATE, USERNAME_MAX } from '../../vendor/nexkonten/konten'
 import { Badge, Box, Card, CheckboxRow, ConfirmDialog, Field, Notice, Row, Rows, SelectField } from '../../vendor/nexui'
 import { SignOutCard, UnconfirmedEmailBox } from '../../vendor/nexkonten/AccountCards'
 import { pagePart } from './accountPages'
@@ -357,7 +357,7 @@ export function AccountTab({ part }: { part: AccountPart }) {
               }}
             >
               <Field label={t(FIELDS.currentPassword.label)} value={current} onChange={(event) => setCurrent(event.target.value)} type="password" autoComplete="current-password" />
-              <Field label={t(FIELDS.newPassword.label)} value={next} onChange={(event) => setNext(event.target.value)} type="password" autoComplete="new-password" hints={[t('account.passwordRules', { minimum: me.min_password ?? PASSWORD_MIN })]} />
+              <Field label={t(fieldLabel('change', 'newPassword'))} value={next} onChange={(event) => setNext(event.target.value)} type="password" autoComplete="new-password" hints={[t('account.passwordRules', { minimum: me.min_password ?? PASSWORD_MIN })]} />
               <Field
                 label={t(FIELDS.passwordRepeat.label)}
                 name="password_confirm"
