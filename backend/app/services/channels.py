@@ -194,30 +194,38 @@ class MailChannel(Channel):
         return Status("ready", target.address, _say(MAIL_TEXTS, language, "ready_hint"))
 
     def deliver(self, db: Session, target: Target, message: Message) -> None:
-        """A letter of the app through the shared post module (post 1.1.0): nextasks' body in the module's frame, in
-        the language it was written in, with ``List-Unsubscribe`` and one click (RFC 8058) where it has the link."""
-        from ..vendor import nexpost
+        """At once, through the shared post module (post 1.1.0, ``deliver_now``). Reports and events do not come here
+        any more: they go into the one outbox of the module (``outbox.enqueue`` → ``queue_mail``)."""
         from . import post_store, settings_service
 
         if not settings_service.public_url(db):
             # Every message carries links; never one to an address a request made up.
             raise DeliveryError("public_url_missing")
-        try:
-            if message.body_html:
-                letter = nexpost.app_letters.write(
-                    target.address, kind=message.kind or "notify", subject=message.title, language=message.language,
-                    text=message.text, body_html=message.body_html, heading=message.heading or message.title,
-                    unsubscribe=message.unsubscribe)
-            else:
-                letter = nexpost.app_letters.write(
-                    target.address, kind=message.kind or "notify", subject=message.title, language=message.language,
-                    text=message.text, html=message.html or "", unsubscribe=message.unsubscribe)
-        except (ValueError, nexpost.MailError) as exc:
-            raise DeliveryError("invalid_email") from exc
+        letter = mail_letter(target.address, message)
         try:
             post_store.send_letter(db, letter)
         except post_store.MailError as exc:
             raise DeliveryError(exc.code) from exc
+
+
+def mail_letter(address: str, message: Message, key: str = "") -> Any:
+    """A report or event as a letter of the app (post 1.1.0, E26): nextasks' body in the module's frame, in the language
+    it was written in, with ``List-Unsubscribe`` and one click (RFC 8058) where it has the link. A message queued by an
+    older version (no ``body_html``) goes as its whole document. ``DeliveryError("invalid_email")`` for an address the
+    module refuses."""
+    from ..vendor import nexpost
+
+    try:
+        if message.body_html:
+            return nexpost.app_letters.write(
+                address, kind=message.kind or "notify", subject=message.title, language=message.language,
+                text=message.text, body_html=message.body_html, heading=message.heading or message.title,
+                unsubscribe=message.unsubscribe, key=key)
+        return nexpost.app_letters.write(
+            address, kind=message.kind or "notify", subject=message.title, language=message.language,
+            text=message.text, html=message.html or "", unsubscribe=message.unsubscribe, key=key)
+    except (ValueError, nexpost.MailError) as exc:
+        raise DeliveryError("invalid_email") from exc
 
 
 #: What went to the browsers and the app before there were choices; on from the start there. Comments and mentions

@@ -147,6 +147,9 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     init_db()
     # A restore that failed at this start: the operators hear it once (the log; the page says it too).
     backups.report_failed_restore()
+    # Mail of the notifications an older version left waiting goes into the one outbox of the post module.
+    with SessionLocal() as db:
+        outbox.move_waiting_mail(db)
     private.tighten_all()
     logs.attach_store(_read_log_mode, _write_log_mode)
     logs.apply_stored_mode()

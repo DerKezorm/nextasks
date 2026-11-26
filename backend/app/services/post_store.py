@@ -210,6 +210,13 @@ class PostStore:
         if not getattr(previous, "nested", False):
             self._pending = []
 
+    def after_attempt(self, item: OutboxItem, error: str, given_up: bool) -> None:
+        """Every try of the outbox: a report or event of nextasks (key ``notify:…``) shows at the person's way of mail
+        (``outbox.after_mail_attempt``)."""
+        from . import outbox
+
+        outbox.after_mail_attempt(self.db, item.letter.key or "", error, given_up)
+
     def recipient(self, account: object) -> Recipient | None:
         """The address that counts, the account's language (its own, then its browser's; the module's letters speak
         de, en and fr), its name, its zone."""
@@ -235,7 +242,10 @@ def own_store() -> Iterator[PostStore]:
 
 def run_due() -> int:
     """What the minute loop calls: send what is due, and forget what went out or was given up long ago."""
+    from . import outbox
+
     with own_store() as store:
+        outbox.drop_stale_mail(store.db)
         sent = nexpost.outbox.run_once(store)
         limit = utcnow() - timedelta(days=KEEP_DAYS)
         store.db.execute(delete(MailOutbox).where(MailOutbox.created_at < limit, MailOutbox.next_at.is_(None)))

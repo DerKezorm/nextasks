@@ -33,6 +33,25 @@ from .sync_helpers import API, batch, make_list, make_reminder, person, private_
 PUBLIC = "https://tasks.example.test"
 
 
+def send_all() -> int:
+    """A round of the push channels and one of the outbox of the post module, where reports go by mail since post
+    1.1.0 (decided E33): how many notifications went out (the module's own mails about an account not counted)."""
+    from sqlalchemy import func, select
+
+    from app.models_accounts import MailOutbox
+    from app.services import post_store
+
+    def reports_sent() -> int:
+        with SessionLocal() as db:
+            return int(db.scalar(select(func.count()).select_from(MailOutbox).where(
+                MailOutbox.sent_at.is_not(None), MailOutbox.key.like(f"{outbox.MAIL_KEY}%"))) or 0)
+
+    before = reports_sent()
+    pushed = outbox.send_round()
+    post_store.run_due()
+    return pushed + reports_sent() - before
+
+
 class Postbox:
     sent: ClassVar[list[EmailMessage]] = []
     fail = False
@@ -289,13 +308,13 @@ def test_a_new_channel_takes_the_same_message_through_the_outbox(recorder: Recor
     turn_on(ben, "assigned", "test")
     reminder = make_reminder(anna, list_id, "Take the bins out")
     put(anna, "reminder", reminder, {"assignees": [ben_account.id]})
-    assert outbox.send_round() == 1
+    assert send_all() == 1
     [(address, message)] = recorder.got
     assert address == f"hook-{ben_account.id}"
     assert message.title == "anna assigned a task to you" and "Take the bins out" in message.text
     assert message.link == f"{PUBLIC}/lists/{list_id}?reminder={reminder}"
     assert message.unsubscribe.startswith(f"{PUBLIC}/api/notify/unsubscribe/")
-    assert outbox.send_round() == 0, "once"
+    assert send_all() == 0, "once"
     _ = anna_account
 
 
@@ -341,8 +360,8 @@ def test_a_queued_message_waits_for_a_confirmed_address(postbox: type[Postbox]) 
     # Taking the address away asks for the own password (konten 0.3.10).
     assert browser.request("DELETE", "/api/me/email", json={"password": PASSWORD}).status_code == 200
     before = len(postbox.sent)
-    assert outbox.send_round() == 0
-    assert len(postbox.sent) == before, "removed address: nothing goes out"
+    assert send_all() == 0
+    assert not any(mail["Subject"] == "Hello" for mail in postbox.sent[before:]), "removed address: nothing goes out"
 
 
 # --- Reports -----------------------------------------------------------------------------------------------------------
@@ -377,7 +396,7 @@ def test_my_day_with_tasks_goes_out_once_with_its_parts(postbox: type[Postbox]) 
 
     assert reports.report_round(MORNING - timedelta(minutes=1)) == 0, "not yet"
     assert reports.report_round(MORNING) == 1
-    assert outbox.send_round() == 1
+    assert send_all() == 1
     [mail] = postbox.sent[before:]
     assert mail["To"] == "robin@example.test" and mail["Subject"] == "Mein Tag: 3 Aufgaben"
     text = text_of(mail)
@@ -403,7 +422,7 @@ def test_a_task_newly_assigned_and_due_today_shows_once(postbox: type[Postbox]) 
     put(alex, "reminder", given, {"assignees": [robin_account.id]})
     turn_on(robin, "daily")
     assert reports.report_round(MORNING) == 1
-    outbox.send_round()
+    send_all()
     text = text_of(postbox.sent[-1])
     assert postbox.sent[-1]["Subject"] == "Mein Tag: 1 Aufgabe"
     assert text.count("Bring the parcel") == 1 and "neu von alex" in text
@@ -416,7 +435,7 @@ def test_an_empty_day_sends_no_mail(postbox: type[Postbox]) -> None:
     turn_on(robin, "daily")
     before = len(postbox.sent)
     assert reports.report_round(MORNING) == 0
-    assert outbox.send_round() == 0
+    assert send_all() == 0
     assert len(postbox.sent) == before
     with SessionLocal() as db:
         assert db.scalars(select(NotifyOutbox)).all() == []
@@ -446,7 +465,7 @@ def test_no_report_twice_after_a_restart(postbox: type[Postbox]) -> None:
     make_reminder(robin, private_list, "Pay the rent", due_date="2026-11-05")
     turn_on(robin, "daily")
     assert reports.report_round(MORNING) == 1
-    assert outbox.send_round() == 1
+    assert send_all() == 1
     # As after a restart: the next round finds the day made already.
     assert reports.report_round(MORNING + timedelta(seconds=30)) == 0
     # Even when the note of the day got lost, the outbox knows the day's report and queues it no second time.
@@ -454,7 +473,7 @@ def test_no_report_twice_after_a_restart(postbox: type[Postbox]) -> None:
         db.execute(update(NotifySchedule).where(NotifySchedule.account_id == account.id).values(last_period=""))
         db.commit()
     assert reports.report_round(MORNING + timedelta(minutes=2)) == 0
-    assert outbox.send_round() == 0
+    assert send_all() == 0
     sent = [mail for mail in postbox.sent if mail["Subject"].startswith("Mein Tag")]
     assert len(sent) == 1
 
@@ -495,7 +514,7 @@ def test_the_week_names_what_others_did_in_shared_spaces(postbox: type[Postbox])
     sunday = datetime(2026, 11, 8, 17, 0, tzinfo=UTC)
     assert reports.report_round(sunday - timedelta(days=1)) == 0, "Saturday is not the day"
     assert reports.report_round(sunday) == 1
-    outbox.send_round()
+    send_all()
     mail = postbox.sent[-1]
     assert mail["Subject"] == "Your week in nextasks"
     text = text_of(mail)
@@ -513,13 +532,13 @@ def test_assigned_and_joined_go_out_by_mail_when_chosen(postbox: type[Postbox]) 
     turn_on(alex, "joined")
     turn_on(robin, "assigned")
     family = shared_space(alex, robin)
-    outbox.send_round()
+    send_all()
     joined = postbox.sent[-1]
     assert joined["To"] == "alex@example.test" and joined["Subject"] == "robin is in “Family” now"
     shared = make_list(alex, family, "Home")
     task = make_reminder(alex, shared, "Bring the parcel")
     put(alex, "reminder", task, {"assignees": [robin_account.id]})
-    outbox.send_round()
+    send_all()
     assigned = postbox.sent[-1]
     assert assigned["To"] == "robin@example.test" and assigned["Subject"] == "alex assigned a task to you"
     assert assigned["List-Unsubscribe-Post"] == "List-Unsubscribe=One-Click"
@@ -537,7 +556,7 @@ def test_one_click_unsubscribes_exactly_this_report(postbox: type[Postbox]) -> N
     turn_on(robin, "daily")
     turn_on(robin, "weekly")
     reports.report_round(MORNING)
-    outbox.send_round()
+    send_all()
     mail = postbox.sent[-1]
     header = mail["List-Unsubscribe"]
     assert header.startswith(f"<{PUBLIC}/api/notify/unsubscribe/") and header.endswith(">")
@@ -672,3 +691,62 @@ def test_the_operator_sees_the_last_mail_and_the_last_failure(client: TestClient
     client.post("/api/settings/mail-test", json={"to": "robin@example.test"})
     shown = client.get("/api/settings").json()
     assert shown["mail_last_error"] == "mail_unreachable" and shown["mail_last_error_at"]
+
+
+# --- One outbox for mail (post 1.1.0, decided E33) ------------------------------------------------------------------
+
+
+def test_a_report_by_mail_waits_in_the_one_outbox_and_its_tries_show_at_the_way(postbox: type[Postbox]) -> None:
+    """Reports go into the outbox of the post module, none into ``notify_outbox``; every try shows at the person's
+    way of mail (last delivered, last failure), as before."""
+    from sqlalchemy import select
+
+    from app.models import NotifyOutbox
+    from app.models_accounts import MailOutbox
+
+    mail_server()
+    account, robin = _ready("robin", postbox)
+    _space, private_list = private_space(robin)
+    make_reminder(robin, private_list, "Pay the rent", due_date="2026-11-05")
+    turn_on(robin, "daily")
+    Postbox.fail = True
+    try:
+        assert reports.report_round(MORNING) == 1
+        with SessionLocal() as db:
+            assert db.scalar(select(NotifyOutbox).where(NotifyOutbox.channel == "mail")) is None
+            queued = db.scalar(select(MailOutbox).where(MailOutbox.key.like(f"notify:{account.id}:daily:%")))
+            assert queued is not None and queued.sent_at is None
+        assert send_all() == 0
+        assert mail_channel(robin)["last_error"], "the failure shows at the way"
+    finally:
+        Postbox.fail = False
+    with SessionLocal() as db:
+        db.execute(update(MailOutbox).values(next_at=MailOutbox.created_at))
+        db.commit()
+    assert send_all() == 1
+    assert mail_channel(robin)["last_ok_at"], "the delivery shows at the way"
+
+
+def test_mail_an_older_version_left_waiting_moves_into_the_one_outbox(postbox: type[Postbox]) -> None:
+    """A row of 0.8.0 for mail still waiting in ``notify_outbox`` goes into the outbox of the post module at the
+    start, under its key, and out once; the old row is closed."""
+    from sqlalchemy import select
+
+    from app.models import NotifyOutbox
+    from app.services import clock
+
+    mail_server()
+    account, _robin = _ready("robin", postbox)
+    message = channels.Message("Mein Tag: 1 Aufgabe", "Pay the rent", link=PUBLIC + "/today", language="de")
+    with SessionLocal() as db:
+        db.add(NotifyOutbox(account_id=account.id, channel="mail", key="daily:2026-11-07", payload=message.to_dict(),
+                            created_at=clock.now(), next_try_at=clock.now(), attempts=1, last_error="mail_failed"))
+        db.commit()
+        assert outbox.move_waiting_mail(db) == 1
+        row = db.scalar(select(NotifyOutbox).where(NotifyOutbox.account_id == account.id))
+        assert row is not None and row.failed_at is not None and row.last_error == "moved_to_post"
+        assert outbox.move_waiting_mail(db) == 0, "once"
+    before = len(postbox.sent)
+    assert send_all() == 1
+    assert [mail["Subject"] for mail in postbox.sent[before:]] == ["Mein Tag: 1 Aufgabe"]
+    assert send_all() == 0
