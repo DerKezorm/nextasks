@@ -25,7 +25,7 @@ import { SyncProvider, useSyncState, useView } from './state/sync'
 import { shownTiles, TILES } from './sync/tiles'
 
 /** Everything behind the sign-in: without an account the page goes to the sign-in, and comes back after. An account
- * that still has to set up its second factor (the operator requires one) reaches Settings › Security only (and the
+ * that still has to set up its second factor (the operator requires one) reaches My account › Security only (and the
  * address of before, which leads there). */
 function SignedIn({ children }: { children: ReactNode }) {
   const { status, me, ended, refresh } = useAuth()

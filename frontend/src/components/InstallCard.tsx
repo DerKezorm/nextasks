@@ -1,5 +1,5 @@
 /**
- * Settings › Connections: "Auf diesem Gerät installieren" (plan "Einstellungen", Verbindungen 2, E6, E28). Always there:
+ * My account › Connections: "Auf diesem Gerät installieren" (plan "Einstellungen", Verbindungen 2, E6, E28). Always there:
  * what installing gives, then the browser's own install question as a button where it offers one, else a short way per
  * browser (Safari on iPhone and iPad: Share › Add to Home Screen; Firefox cannot install), and in the installed app
  * that it runs as one already. It moved here from the profile.

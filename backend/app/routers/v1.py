@@ -75,7 +75,8 @@ def caller(request: Request) -> Caller:
 def writer(found: Annotated[Caller, Depends(caller)]) -> Caller:
     if not found.writes:
         raise error("token_reads_only",
-                    "This API key only reads. For changes, create one that writes under Connections › API keys.", 403)
+                    "This API key only reads. For changes, create one that writes under"
+                    " My account › Connections › API keys.", 403)
     return found
 
 

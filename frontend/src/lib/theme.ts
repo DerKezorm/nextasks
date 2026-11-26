@@ -1,6 +1,6 @@
 /**
  * Light or dark mode, or as the system is set. Since konten 1.1.0 the choice belongs to the account, on every device
- * (`Me.theme`, Settings › Appearance); this browser keeps the last one it showed, for the sign-in pages and the first
+ * (`Me.theme`, My account › Appearance); this browser keeps the last one it showed, for the sign-in pages and the first
  * paint. The colors behind it live solely in styles/index.css, this only holds which mode is active.
  */
 

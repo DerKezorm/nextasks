@@ -192,7 +192,7 @@ export type ProviderButton = { slug: string; label: string }
 /** `providers`: the buttons, in the operator's order; `passkeys`: signing in with a passkey is allowed; `forgot_mail`:
  * "Forgot your password?" sends a link (a mail server is set up). */
 export type Methods = { password: boolean; providers: ProviderButton[]; passkeys?: boolean; forgot_mail?: boolean }
-/** An active provider and whether the own account is linked to it (My account, Security). */
+/** An active provider and whether the own account is linked to it (My account › Security). */
 export type MyProvider = { slug: string; label: string; linked: boolean; managed: string }
 /** A provider as the operator's list shows it; never the secret, only whether one is stored. */
 export type OidcProvider = {
@@ -399,7 +399,7 @@ export const accountsApi = {
     api<void>(`/api/accounts/${id}/totp/reset`, { method: 'POST', body: { current_password, disconnect_devices, remove_passkeys } }),
 }
 
-/** The operator's provider list and the authentik button (Settings, Server, Sign-in; the shared module's routes). */
+/** The operator's provider list and the authentik button (Server › Sign-in; the shared module's routes). */
 export const oidcApi = {
   providers: () => api<OidcProvider[]>('/api/oidc/admin/providers'),
   add: (form: OidcProviderForm) => api<OidcProvider>('/api/oidc/admin/providers', { method: 'POST', body: form }),

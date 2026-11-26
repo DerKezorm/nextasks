@@ -101,7 +101,7 @@
     "sections": [
       {
         "title": "The weekly report reads again",
-        "where": "Settings › Notifications",
+        "where": "My account › Notifications",
         "body": "Next to its weekday and time, a report's description got so narrow that nearly every word had a line of its own. When room is short, the fields now go below it."
       }
     ],
@@ -135,7 +135,7 @@
     "sections": [
       {
         "title": "Devices under Connections",
-        "where": "Settings › Connections",
+        "where": "My account › Connections",
         "body": "Your connected iPhones and iPads now come first, each with when it last checked in. “Disconnect” asks first. “Connect iPhone or iPad” opens the QR code; without a camera, the address and a code do it."
       },
       {
@@ -161,7 +161,7 @@
       {
         "title": "Settings in one place",
         "where": "Your name at the bottom of the sidebar",
-        "body": "The menu above your name is gone. Clicking your name opens the settings: “My account” with profile, security, appearance, connections and notifications, “Server” for operators, and “About nextasks” at the bottom. Language and sign out are in the profile, light and dark under appearance."
+        "body": "The menu above your name is gone. Clicking your name opens the settings: “My account” with profile, security, appearance, connections and notifications, “Server” for operators, and “About nextasks” at the bottom. Language and sign out are in the profile, light and dark under My account › Appearance."
       },
       {
         "title": "New task and search in the sidebar",
@@ -248,7 +248,7 @@
       },
       {
         "title": "The sidebar the way you like it",
-        "where": "Settings › Appearance › Sidebar",
+        "where": "My account › Appearance › Sidebar",
         "body": "The eye shows or hides each collection (Today, Scheduled, All and so on) and each own filter. It applies to all your devices, the iPhone app included."
       },
       {
@@ -283,7 +283,7 @@
       },
       {
         "title": "Notifications and reports",
-        "where": "Settings › Notifications",
+        "where": "My account › Notifications",
         "body": "One table says what reaches you by mail, in the browser or on the iPhone: tasks assigned to you, tasks that are due, changes in lists you follow, and the reports “My day” and “Weekly report”."
       }
     ],

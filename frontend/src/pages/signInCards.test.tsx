@@ -1,4 +1,4 @@
-// Settings, Server, Sign-in as the plan "Einstellungen" lays it out, the whole page from the shared modules (konten
+// Server › Sign-in as the plan "Einstellungen" lays it out, the whole page from the shared modules (konten
 // 1.1.0 `SignInPage`, oidc 1.2.0 `SignInProviders`): its cards in order, the provider form as a dialog, adding, editing
 // and removing with the question that names the accounts, and the steps of the authentik button by their names with
 // the reason of a failure. What the cards draw is the modules' (their tests: `nexkonten.cards.test.tsx`,
@@ -74,7 +74,7 @@ const named = (shown: ParentNode, text: string) => {
 const rows = (shown: HTMLElement) => [...shown.querySelectorAll('[data-testid="authentik-steps"] li')].map((row) => `${row.getAttribute('data-ok') === 'true' ? '✓' : '✗'}${row.textContent}`)
 const dialog = () => document.querySelector('[role="dialog"]') as HTMLElement
 
-describe('Settings, Server, Sign-in', () => {
+describe('Server › Sign-in', () => {
   it.each(['en', 'de'] as const)('has three cards in %s, the empty list says what to do', async (language) => {
     const shown = await page(language)
     const words = TEXTS[language]

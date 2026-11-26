@@ -1,5 +1,5 @@
 /**
- * Settings › Appearance (plan "Einstellungen", Darstellung): first "Aussehen" of the shared account module (light, dark
+ * My account › Appearance (plan "Einstellungen", Darstellung): first "Aussehen" of the shared account module (light, dark
  * or as the device says, for the account on every device, konten 1.1.0 `AppearanceCard`), then nextasks' own cards from
  * the ui kit: what the sidebar shows (the collections and the own filters, `tile_pref` and `hidden` of a filter; only
  * where the server knows filters), which spaces it shows (`space_pref`, on all devices), and the keyboard shortcuts.

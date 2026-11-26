@@ -202,6 +202,9 @@ describe('the settings', () => {
     expect(page.querySelector('[role="switch"], .nt-switch')).toBeNull()
     // The cards in the plan's order: limits, features for all accounts, interfaces (the API, the iPhone app), languages.
     expect([...page.querySelectorAll('[data-card]')].map((card) => card.getAttribute('data-card'))).toEqual(['limits', 'features', 'interfaces', 'languages'])
+    // The words as the plan and nexnotes write them (E39, E48): the same sentence on every server's features card.
+    expect(page.querySelector('[data-card="features"]')?.textContent).toContain('What every account may use on this server.')
+    expect([...page.querySelectorAll('[data-card="limits"] label')].map((label) => label.textContent)).toContain('Largest file per attachment (MB)')
   })
 })
 

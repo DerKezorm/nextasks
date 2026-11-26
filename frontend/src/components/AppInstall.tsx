@@ -1,6 +1,6 @@
 /**
  * nextasks as an installed app (`lib/pwa.ts`): the line "New version – reload" when a new version waits, and the page
- * without network. Installing has its card under Settings › Connections (`InstallCard.tsx`).
+ * without network. Installing has its card under My account › Connections (`InstallCard.tsx`).
  */
 import { RefreshCw, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

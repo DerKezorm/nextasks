@@ -14,7 +14,7 @@ afterEach(async () => {
 })
 
 describe('installing as an app', () => {
-  it('is offered under Settings › Connections when the browser offers it, no longer in the profile', async () => {
+  it('is offered under My account › Connections when the browser offers it, no longer in the profile', async () => {
     setPwaState({ installable: true })
     const profile = await mount(smallWorld().server, '/settings/profile')
     expect(profile.querySelector('[data-card="install"]')).toBeNull()

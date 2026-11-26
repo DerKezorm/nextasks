@@ -88,7 +88,7 @@ PROXY_HEADERS = ("x-forwarded-for", "x-real-ip", "forwarded")
 
 def behind_unknown_proxy(request: Request) -> bool:
     """A request that came through a proxy nextasks was not told to believe: all senders look alike then. Noted once
-    in the log, and remembered for the hint under Settings, Server (``unknown_proxy_seen``)."""
+    in the log, and remembered for the server's settings (``unknown_proxy_seen``, ``proxy_unknown``)."""
     global _warned_unknown_proxy
     if _trusted_networks(get_settings().trusted_proxies) or not any(request.headers.get(h) for h in PROXY_HEADERS):
         return False

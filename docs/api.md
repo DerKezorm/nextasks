@@ -8,8 +8,8 @@ change that would break a program goes to `/api/v2` beside it. Programs ignore f
 
 ## Switching it on
 
-The API is off until the operator switches it on, under **Settings → Server → General → Interfaces**. Then every account
-makes its own API keys under **Settings → My account → Connections → API keys** (keys made before as "API tokens", with
+The API is off until the operator switches it on, under **Settings › Server › General › Interfaces**. Then every account
+makes its own API keys under **Settings › My account › Connections › API keys** (keys made before as "API tokens", with
 `ntk_` in front, go on working):
 
 - An API key never does more than its account, and never sees more than the spaces chosen for it. "Every space I may see,
@@ -18,7 +18,7 @@ makes its own API keys under **Settings → My account → Connections → API k
 - **Read** fetches spaces, lists, tasks and the numbers. **Read and write** also makes, changes, ticks off and trashes
   tasks, in spaces where the account may write. Nothing under `/api/v1` deletes for good or touches members or rights.
 - The key is shown once. nextasks keeps only a checksum, and the key never reaches the log.
-- The operator sees every key under **Settings → Server → Accounts → API keys of all accounts** (never the key itself, nor
+- The operator sees every key under **Settings › Server › Accounts › API keys of all accounts** (never the key itself, nor
   its beginning) and can block and unblock one. A blocked or deleted account has no working key.
 
 ## Asking

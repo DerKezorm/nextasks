@@ -120,7 +120,7 @@ docker logs nextasks
 ```
 
 To choose the code yourself, set `NEXTASKS_SETUP_TOKEN`. Further accounts come by invitation: the operator invites
-into nextasks under **Settings → Server → Accounts**, and the managers of a space invite into their space.
+into nextasks under **Settings › Server › Accounts**, and the managers of a space invite into their space.
 
 `TZ` is the time zone of accounts that have not chosen one of their own.
 
@@ -135,7 +135,7 @@ Put nextasks behind a reverse proxy with TLS before you use it from anywhere but
 ```
 
 - `NEXTASKS_PUBLIC_URL` is the address people use. Invitation links, links in mails, the QR code of the iPhone app
-  and the redirect address of the sign-in providers carry it. It can also be set under **Settings → Server → Sign-in**; the
+  and the redirect address of the sign-in providers carry it. It can also be set under **Settings › Server › Sign-in**; the
   setting there wins.
 - `NEXTASKS_TRUSTED_PROXIES` names the proxy (addresses or networks, comma separated). Only from there does nextasks
   believe `X-Forwarded-For` and `X-Forwarded-Proto`. Without it every sign-in seems to come from the proxy, so the
@@ -146,13 +146,13 @@ The page keeps one request open for a while to hear about changes from others; t
 
 ## Sign-in with a provider
 
-Under **Settings → Server → Sign-in** the operator adds any number of OpenID Connect providers (authentik,
+Under **Settings › Server › Sign-in** the operator adds any number of OpenID Connect providers (authentik,
 Microsoft Entra ID, Keycloak, Authelia, Pocket ID and others), each with a button of its own on the sign-in page. For
 authentik there is a one-step setup that registers nextasks there, or a blueprint to download instead.
 
 - The redirect address to register at the provider is built from the public address; set that first.
 - An account is linked to a provider by the provider's own identity, never by a mail address. People link their
-  account themselves under **Settings → My account → Security**, or come in through an invitation.
+  account themselves under **Settings › My account › Security**, or come in through an invitation.
 - Password sign-in can be switched off once everybody signs in through a provider. Whether a provider's own second
   factor counts is set per provider.
 
@@ -167,12 +167,12 @@ password, the seeds of second factors and the key of web push. When `NEXTASKS_SE
 
 ### Backup
 
-Back up with nextasks's own backups under **Settings → Server → Storage and backups**: now, every night or every week, keeping as
+Back up with nextasks's own backups under **Settings › Server › Storage and backups**: now, every night or every week, keeping as
 many as you choose. They copy the database consistently while it runs, together with the files and `secret.key`. A
 backup holds everything; keep downloaded copies as carefully as the data folder itself.
 
-Moving to a new server: download a backup, set up nextasks there, upload the backup under **Backup**, check it and
-restore it. The new server then has the old accounts, spaces, tasks and files.
+Moving to a new server: download a backup, set up nextasks there, upload the backup under
+**Settings › Server › Storage and backups › Backup**, check it and restore it. The new server then has the old accounts, spaces, tasks and files.
 
 ## Updating
 
@@ -206,8 +206,8 @@ Make a backup first (see above). What changed is in the release notes, and nexta
 ## For programs
 
 Home Assistant, n8n or your own scripts use nextasks over `/api/v1`: spaces, lists and tasks, and making, changing and
-completing tasks. The operator switches the API on under **Settings → Server → General → Interfaces**; then every account
-makes its own API keys under **Settings → My account → Connections → API keys**, to read or to read and write, for chosen
+completing tasks. The operator switches the API on under **Settings › Server › General › Interfaces**; then every account
+makes its own API keys under **Settings › My account › Connections › API keys**, to read or to read and write, for chosen
 spaces, with an end date. The
 reference is in [docs/api.md](docs/api.md).
 
@@ -217,7 +217,7 @@ program goes to `/api/v2` beside it.
 ## Languages
 
 nextasks speaks English and German and follows the browser unless an account picks a language. The operator adds
-more under **Settings → Server → General**: download the template, translate the texts, upload the JSON file. What
+more under **Settings › Server › General**: download the template, translate the texts, upload the JSON file. What
 a file leaves out shows in English.
 
 ## Security in short
