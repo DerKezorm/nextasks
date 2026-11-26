@@ -28,3 +28,10 @@ CONFIG = nexsprachen.configure(nexsprachen.AppConfig(
     built_in={"de": "Deutsch", "en": "English"},
     # The template comes from the page, which knows the English texts (as nexnotes).
 ))
+
+
+def start() -> int:
+    """At the app's start (``main.lifespan``): the module's settings once more, and right after them away with what a
+    stopped upload left in the folder (hidden ``.part`` files only, E52). Returns how many it removed."""
+    nexsprachen.configure(CONFIG)
+    return nexsprachen.tidy_at_start()

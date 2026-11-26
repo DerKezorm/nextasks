@@ -238,3 +238,28 @@ def test_an_account_may_speak_a_language_the_operator_added_and_no_other(client:
     assert client.put("/api/me/language", json={"language": "es"}).json()["language"] == "es"
     put(folder, "it.json", b"{broken")
     assert client.put("/api/me/language", json={"language": "it"}).status_code == 422
+
+
+@pytest.mark.parametrize(("code", "status"), [("de", 200), ("en", 200), ("", 200), ("nl", 422), ("pt-BR", 422),
+                                              ("xx", 422), ("de-AT", 422)])
+def test_the_old_way_takes_a_language_as_before(client: TestClient, folder: Path, code: str, status: int) -> None:
+    """E52: PUT /api/me/language takes exactly what nextasks 0.8.0 took: a shipped language, a file of the operator,
+    or nothing (as the browser says); a valid code without a file is refused with 422 as before, no new refusal."""
+    from .conftest import make_account, sign_in
+
+    sign_in(client, make_account("robin"))
+    assert client.put("/api/me/language", json={"language": code}).status_code == status
+    put(folder, f"{code or 'xx'}.json", {"save": "x"})
+    assert client.put("/api/me/language", json={"language": code}).status_code == 200
+
+
+def test_the_start_takes_away_what_a_stopped_upload_left(folder: Path) -> None:
+    """E52: at the app's start (main.lifespan) the hidden passing file of an upload that stopped is gone; the
+    language files stay."""
+    from app.main import app
+
+    put(folder, "es.json", GOOD)
+    (folder / ".es.k3j9x_2a.part").write_bytes(b'{"half": "writ')
+    with TestClient(app):
+        pass
+    assert sorted(path.name for path in folder.iterdir()) == ["es.json"]

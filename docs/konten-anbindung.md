@@ -42,8 +42,12 @@ Eigene Sprachen (E51, `bauplaene-stand` `4a5bb15`, schluessel `4f3e75e`): Modul 
 Namen von vorher; `routers/locales.py` ist der Router des Moduls unter `/api/locales` (Lesen ohne Anmeldung, Ändern für
 den Betreiber, Fehler in nextasks' Form). Die Liste nennt jetzt zuerst die eingebauten Sprachen (`built_in`, `own`),
 `code`, `name`, `keys` bleiben; eine Seite von vorher übergeht eingebaute Codes und sieht dieselbe Liste (Test
-`test_locales.py`). Das Log nennt einen festen Grund statt eines Python-Typs. Die Profilsprache prüft
-`nexsprachen.known`. Seite: Karte `LanguagesCard` des Moduls unter Server › Allgemein (mit `X-Nextasks-Client`,
+`test_locales.py`). Das Log nennt einen festen Grund statt eines Python-Typs. Die Profilsprache nimmt genau
+an, was 0.8.0 annahm (eingebaut oder eine Datei der Liste; E52, `nexsprachen.known` nur für die Auswahl; Test „the old
+way takes a language as before“). Beim Start ruft `main.lifespan` `locales.start()`: `configure`, dann
+`tidy_at_start` (Reste eines abgebrochenen Hochladens). Die Wege behalten in der Beschreibung der Schnittstelle ihre
+operationIds, Zusammenfassungen und das Schema `LocaleEntry` von 0.8.0 (`routers/locales.py`, Vertragstest
+`test_nexsprachen_openapi.py`); `GET /api/locales/template` ist neu. Seite: Karte `LanguagesCard` des Moduls unter Server › Allgemein (mit `X-Nextasks-Client`,
 `onChange` = `own.forget`), i18n über `ownLanguages`, Profil über `useLanguageOptions`; die alte Karte und ihre Wörter
 (`server.languages*`, `template`, `upload`, `builtIn`, `texts*`, `languageCode`, `languageAdded`) sind weg. Die
 Anmeldeseite hat in nextasks keine Sprachauswahl (die Einrichtung nimmt die Sprache des Browsers, konten: kein Feld).

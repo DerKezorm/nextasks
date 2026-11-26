@@ -64,6 +64,12 @@ class Adapter(StandardAdapter):
         shutil.rmtree(locales.locales_dir(), ignore_errors=True)
         locales.forget()
 
+    def restart(self) -> None:
+        # As main.lifespan does at the app's start: configure, then tidy_at_start (the data stay).
+        from app.services import locales
+
+        locales.start()
+
     def client(self, role: str) -> Any:
         from tests.conftest import new_client
 
