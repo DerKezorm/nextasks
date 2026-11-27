@@ -8,8 +8,11 @@ import { describe, expect, it } from 'vitest'
 
 import de from './de.json'
 import en from './en.json'
-import whatsNewDe from '../../../backend/app/whatsnew/de.json'
-import whatsNewEn from '../../../backend/app/whatsnew/en.json'
+import { whatsNewTexts } from '../test/whatsNewTexts'
+
+// Read at run time: the image builds the interface from frontend/ alone, without the backend's texts.
+const whatsNewDe = await whatsNewTexts('de')
+const whatsNewEn = await whatsNewTexts('en')
 
 const all = (tree: unknown): string => JSON.stringify(tree)
 
