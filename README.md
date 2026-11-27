@@ -94,7 +94,8 @@ its own, and nextasks installs from the browser as an app.*
 - **An API** for programs and scripts under `/api/v1`, see [For programs](#for-programs).
 - **Languages**: English and German, plus languages of your own as JSON files.
 
-An iPhone and iPad app for nextasks is coming to the App Store.
+The iPhone and iPad app for nextasks is in the App Store. Connect it with the QR code under
+*My account › Connections*.
 
 ## Start
 
