@@ -10,8 +10,9 @@ import { useTranslation } from 'react-i18next'
 
 import { api, ApiError, tabId, type AddressQuestion } from '../../api/client'
 import { ENGLISH, own } from '../../i18n'
+import { errorText } from '../../lib/errors'
 import { LanguagesCard as ModuleLanguagesCard } from '../../vendor/nexsprachen/LanguagesCard'
-import { Button, Card, CheckboxRow, Field } from '../../vendor/nexui'
+import { Button, Card, CheckboxRow, Field, Notice } from '../../vendor/nexui'
 import { Outcome, useAction } from './actions'
 
 export type ServerSettings = {
@@ -52,21 +53,31 @@ export type ServerSettings = {
 
 type Change = Partial<ServerSettings> & { smtp_password?: string }
 type Server = ReturnType<typeof useServerSettings>
+/** The card that saved last: only it says how that went (both share one `useAction`). */
+type Place = 'limits' | 'features'
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useServerSettings() {
   const [settings, setSettings] = useState<ServerSettings | null>(null)
+  /** Why the settings could not be read (the server's code), shown with "Try again" instead of nothing. */
+  const [loadProblem, setLoadProblem] = useState<string | null>(null)
+  const [place, setPlace] = useState<Place | null>(null)
   const action = useAction()
-  const reload = useCallback(() => api<ServerSettings>('/api/settings').then(setSettings, () => undefined), [])
+  const reload = useCallback(() => {
+    setLoadProblem(null)
+    return api<ServerSettings>('/api/settings').then(setSettings, (error: unknown) => setLoadProblem(error instanceof ApiError ? error.code : 'internal_error'))
+  }, [])
   useEffect(() => {
     void reload()
   }, [reload])
-  /** The switch moves at once; the server's answer confirms it, a refusal puts it back. */
-  const save = async (change: Change, done?: string) => {
+  /** The switch moves at once; the server's answer confirms it, a refusal puts it back. Whether it was saved. */
+  const save = async (change: Change, from: Place, done?: string): Promise<boolean> => {
     const before = settings
+    setPlace(from)
     if (settings) setSettings({ ...settings, ...change })
     const ok = await action.run(async () => setSettings(await api<ServerSettings>('/api/settings', { method: 'PUT', body: change })), done)
     if (!ok) setSettings(before)
+    return ok
   }
   /**
    * The public address, which the server asks about first when a provider knows a redirect address that would stay
@@ -85,7 +96,23 @@ export function useServerSettings() {
     })
     return ok ? asked.question : null
   }
-  return { settings, save, saveAddress, reload, ...action }
+  return { settings, loadProblem, place, save, saveAddress, reload, ...action }
+}
+
+/** Server › General when the settings could not be read: why, and a way to ask again without reloading the page. */
+export function LoadProblem({ server }: { server: Server }) {
+  const { t } = useTranslation()
+  if (!server.loadProblem) return null
+  return (
+    <div className="flex flex-col items-start gap-2" data-testid="server-load-problem">
+      <Notice tone="danger" title={t('server.loadFailed')}>
+        {errorText(server.loadProblem)}
+      </Notice>
+      <Button kind="secondary" icon="RefreshCw" onClick={() => void server.reload()} testId="server-load-retry">
+        {t('server.retry')}
+      </Button>
+    </div>
+  )
 }
 
 
@@ -100,7 +127,8 @@ export function LimitsCard({ server }: { server: Server }) {
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          void server.save({ upload_max_mb: Math.max(1, Math.min(s.upload_ceiling_mb, Number(limit ?? s.upload_max_mb) || 1)) }, t('settings.saved')).then(() => setLimit(null))
+          // A refused value stays in the field, to be sent again or corrected; only a saved one gives way to the server's.
+          void server.save({ upload_max_mb: Math.max(1, Math.min(s.upload_ceiling_mb, Number(limit ?? s.upload_max_mb) || 1)) }, 'limits', t('settings.saved')).then((ok) => ok && setLimit(null))
         }}
       >
         <Field
@@ -119,8 +147,8 @@ export function LimitsCard({ server }: { server: Server }) {
           }
         />
       </form>
-      <CheckboxRow label={t('server.stripLocation')} hint={t('server.stripLocationHint')} checked={s.strip_location} onChange={(strip_location) => void server.save({ strip_location })} testId="strip-location" />
-      <Outcome problem={server.problem} done={server.done} />
+      <CheckboxRow label={t('server.stripLocation')} hint={t('server.stripLocationHint')} checked={s.strip_location} onChange={(strip_location) => void server.save({ strip_location }, 'limits')} testId="strip-location" />
+      {server.place === 'limits' && <Outcome problem={server.problem} done={server.done} />}
     </Card>
   )
 }
@@ -132,8 +160,8 @@ export function FeaturesCard({ server }: { server: Server }) {
   if (!s) return null
   return (
     <Card id="features" icon="SlidersHorizontal" title={t('server.features')} subtitle={t('server.featuresHint')}>
-      <CheckboxRow label={t('server.app.invites')} hint={t('server.app.invitesHint')} checked={s.invites_enabled !== false} onChange={(invites_enabled) => void server.save({ invites_enabled })} testId="invites-enabled" />
-      <Outcome problem={server.problem} done={server.done} />
+      <CheckboxRow label={t('server.app.invites')} hint={t('server.app.invitesHint')} checked={s.invites_enabled !== false} onChange={(invites_enabled) => void server.save({ invites_enabled }, 'features')} testId="invites-enabled" />
+      {server.place === 'features' && <Outcome problem={server.problem} done={server.done} />}
     </Card>
   )
 }

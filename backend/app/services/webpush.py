@@ -8,12 +8,17 @@ what. The message is the same plain text as the app's (``services/push.py``); a 
 
 The key pair is made at the first start and kept sealed with the server's secret; a new pair would mean signing every
 browser up again.
+
+**Only to push services out in the internet.** The address comes from a browser, so a member could name any: it must
+be https, no address in the own network written out, and it must resolve to public addresses only (``outbound.pin``,
+the shared rules of the module verbinden, as in nexfolk), checked at every send, never a redirect followed.
 """
 
 from __future__ import annotations
 
 import base64
 import hashlib
+import ipaddress
 import logging
 import os
 import threading
@@ -32,7 +37,8 @@ from sqlalchemy.orm import Session
 
 from ..models import Setting, WebPushSubscription, utcnow
 from ..security import decrypt_secret, encrypt_secret
-from . import net, settings_service
+from ..vendor.nexverbinden import outbound
+from . import settings_service
 
 logger = logging.getLogger("nextasks.push")
 
@@ -45,6 +51,8 @@ KEY_CONTEXT = "operator:vapid"
 PLACEHOLDER_CONTACT = "mailto:admin@example.com"
 #: How many browsers one account may sign up.
 MAX_PER_ACCOUNT = 20
+#: The whole request to a push service, the answer read included.
+SEND_SECONDS = 10.0
 
 _lock = threading.Lock()
 
@@ -146,9 +154,19 @@ def valid_keys(p256dh: str, auth: str) -> bool:
 
 
 def endpoint_valid(endpoint: str) -> bool:
-    """An https address of a push service: never a plain address in the own network to be sent requests to."""
+    """An https address of a push service: never a plain address in the own network to be sent requests to. A name
+    is looked up and checked when something is sent (``_post``)."""
     parts = urlsplit(endpoint.strip())
-    return parts.scheme == "https" and bool(parts.hostname) and not parts.username and not parts.password
+    host = (parts.hostname or "").lower()
+    if parts.scheme != "https" or not host or parts.username or parts.password:
+        return False
+    if host == "localhost" or host.endswith((".localhost", ".local")):
+        return False
+    try:
+        ipaddress.ip_address(host.split("%", 1)[0])
+    except ValueError:
+        return True
+    return outbound.public(host)
 
 
 def subscribe(db: Session, account_id: int, endpoint: str, p256dh: str, auth: str, user_agent: str = "") -> None:
@@ -173,9 +191,25 @@ def unsubscribe(db: Session, account_id: int, endpoint: str) -> None:
     db.commit()
 
 
+def _public(ip: outbound.IP) -> None:
+    if not outbound.public(str(ip)):
+        raise outbound.Refused("refused")
+
+
+#: How a push service's name is looked up, and the transport of the request; the tests put a fixed address and
+#: ``httpx.MockTransport`` in their place (nothing goes into the network).
+RESOLVE: Callable[[str, int], list[str]] = outbound.resolve
+TRANSPORT: httpx.BaseTransport | None = None
+
+
 def _post(url: str, body: bytes, headers: dict[str, str]) -> int:
-    with httpx.Client(timeout=10.0, verify=net.ssl_context()) as client:
-        return client.post(url, content=body, headers=headers).status_code
+    """One request to a push service: resolved once, public addresses only, no redirect, a deadline for all of it.
+    ``outbound.Refused`` or ``outbound.Unreachable`` when the address leads nowhere it may."""
+    place = outbound.pin(url, RESOLVE, _public)
+    with outbound.client(TRANSPORT) as session:
+        answer = outbound.send(session, "POST", place, headers, deadline=time.monotonic() + SEND_SECONDS,
+                               ticks=time.monotonic, limit=64 * 1024, connect_seconds=5.0, content=body)
+    return answer.status_code
 
 
 #: What sends to a push service; the tests put a recorder in its place.
@@ -203,7 +237,8 @@ def send_all(db: Session, account_id: int, plaintext: bytes, *, topic: str = "")
             headers["Topic"] = "".join(char for char in topic if char.isalnum() or char in "-_")[:32]
         try:
             status = POST(row.endpoint, encrypt(plaintext, row.p256dh, row.auth), headers)
-        except (httpx.HTTPError, OSError, ValueError) as exc:
+        except (httpx.HTTPError, OSError, ValueError, outbound.Refused, outbound.Unreachable, outbound.Late,
+                outbound.TooLarge) as exc:
             logger.info("Web push to one browser failed: %s", type(exc).__name__)
             failed += 1
             continue

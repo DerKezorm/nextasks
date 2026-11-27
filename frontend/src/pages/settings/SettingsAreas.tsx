@@ -25,7 +25,7 @@ import { AccountTab } from './AccountTab'
 import { AppearanceArea } from './AppearanceArea'
 import type { AreaSlug } from './areas'
 import { LogCard } from './LogCard'
-import { FeaturesCard, LanguagesCard, LimitsCard, useServerSettings } from './ServerCards'
+import { FeaturesCard, LanguagesCard, LimitsCard, LoadProblem, useServerSettings } from './ServerCards'
 import { SignInArea } from './SignInArea'
 import { StorageArea } from './StorageArea'
 
@@ -89,6 +89,16 @@ function ConnectionsArea() {
 /** Server › General: limits, features for all accounts, languages. */
 function GeneralArea() {
   const server = useServerSettings()
+  // Not read (the server did not answer, or answered with an error): say so with "Try again"; the languages need none
+  // of it and stay.
+  if (!server.settings && server.loadProblem) {
+    return (
+      <>
+        <LoadProblem server={server} />
+        <LanguagesCard />
+      </>
+    )
+  }
   if (!server.settings) return null
   return (
     <>

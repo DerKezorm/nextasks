@@ -315,3 +315,62 @@ def test_a_browser_signs_up_gets_notifications_and_goes_when_its_service_forgets
         assert db.scalar(select(WebPushSubscription)) is None
     assert ben.request("DELETE", f"{API}/webpush", json={"endpoint": endpoint}).status_code == 200
     _ = anna_account
+
+
+@pytest.mark.parametrize("endpoint", ["https://192.168.1.10:8443/api/restart", "https://localhost/x",
+                                      "https://127.0.0.1/x", "https://[::1]/x", "https://169.254.169.254/x",
+                                      "https://nas.local/x", "https://[fd00::1]/x"])
+def test_web_push_refuses_an_address_in_the_own_network(endpoint: str) -> None:
+    _account, ben = person("ben")
+    p256dh, auth = _browser_keys()
+    refused = ben.put(f"{API}/webpush", json={"endpoint": endpoint, "keys": {"p256dh": p256dh, "auth": auth}})
+    assert refused.status_code == 422, endpoint
+    assert refused.json()["detail"]["fields"] == ["endpoint"]
+
+
+def test_web_push_sends_only_to_public_addresses_of_the_name_and_follows_no_redirect(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A name that resolves into the own network (or rebinds there) is never sent to; a public one is, pinned to the
+    address checked, with the name kept for Host and TLS, and a redirect is not followed."""
+    import httpx
+
+    seen: list[httpx.Request] = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(302, headers={"Location": "https://10.0.0.1/x"})
+
+    monkeypatch.setattr(webpush, "TRANSPORT", httpx.MockTransport(answer))
+    for inner in ("192.168.1.10", "127.0.0.1", "10.0.0.5", "::1", "169.254.169.254"):
+        monkeypatch.setattr(webpush, "RESOLVE", lambda _host, _port, inner=inner: [inner])
+        with pytest.raises(webpush.outbound.Refused):
+            webpush._post("https://push.example.com/send/abc", b"x", {})
+    assert seen == []
+    monkeypatch.setattr(webpush, "RESOLVE", lambda _host, _port: ["93.184.216.34", "10.0.0.5"])
+    with pytest.raises(webpush.outbound.Refused):
+        webpush._post("https://push.example.com/send/abc", b"x", {})
+    assert seen == []
+    monkeypatch.setattr(webpush, "RESOLVE", lambda _host, _port: ["93.184.216.34"])
+    assert webpush._post("https://push.example.com/send/abc", b"x", {"TTL": "60"}) == 302
+    [request] = seen
+    assert request.url.host == "93.184.216.34" and request.headers["Host"] == "push.example.com"
+    assert request.method == "POST" and request.content == b"x"
+
+
+def test_a_refused_push_address_counts_as_failed_and_sends_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """send_all takes a refusal like any other failure: nothing sent, no last_ok_at, the row stays (no signal)."""
+    import httpx
+
+    seen: list[httpx.Request] = []
+    monkeypatch.setattr(webpush, "TRANSPORT", httpx.MockTransport(lambda r: seen.append(r) or httpx.Response(201)))
+    monkeypatch.setattr(webpush, "RESOLVE", lambda _host, _port: ["192.168.1.10"])
+    account, ben = person("ben")
+    p256dh, auth = _browser_keys()
+    assert ben.put(f"{API}/webpush", json={"endpoint": "https://push.example.com/send/inner",
+                                           "keys": {"p256dh": p256dh, "auth": auth}}).status_code == 200
+    with SessionLocal() as db:
+        assert webpush.send_all(db, account.id, b"hello") == (0, 1)
+        row = db.scalar(select(WebPushSubscription))
+        assert row is not None and row.last_ok_at is None
+    assert seen == []

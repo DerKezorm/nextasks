@@ -97,6 +97,8 @@
     "limits": "Grenzen",
     "features": "Funktionen für alle Konten",
     "featuresHint": "Was jedes Konto auf diesem Server nutzen darf.",
+    "loadFailed": "Die Einstellungen des Servers ließen sich nicht laden.",
+    "retry": "Erneut versuchen",
     "mailText": "Über diesen Server verschickt nextasks Einladungen, Links zum Bestätigen und für ein neues Passwort, Hinweise zu deinem Konto, „Mein Tag“, den Wochenbericht und Benachrichtigungen zu Aufgaben und Kommentaren.",
     "whatYouSee": "Als Betreiber siehst du Namen, Anmeldung, Rolle, wann ein Konto zuletzt da war, wie viele Bereiche es hat und seine API-Schlüssel, aber nie Aufgaben, Notizen, Kommentare oder Anhänge anderer Konten."
   },

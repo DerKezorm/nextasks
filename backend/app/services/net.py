@@ -2,7 +2,8 @@
 
 Making an ``httpx`` client reads the whole set of trusted certificates anew, 0.5 to 0.8 s on a small machine. Every
 step of an OIDC sign-in once made one inside the event loop, which stood still for that long for everybody. Now the
-context is read once, outside the event loop; the sign-in providers, the push relay and web push use it.
+context is read once, outside the event loop; the sign-in providers and the push relay use it (web push goes
+through ``outbound`` of the module verbinden).
 """
 
 from __future__ import annotations

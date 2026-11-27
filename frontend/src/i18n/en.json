@@ -97,6 +97,8 @@
     "limits": "Limits",
     "features": "Features for all accounts",
     "featuresHint": "What every account may use on this server.",
+    "loadFailed": "The server's settings could not be loaded.",
+    "retry": "Try again",
     "mailText": "Through this server nextasks sends invitations, links to confirm and for a new password, notices about your account, “My day”, the weekly report and notifications about tasks and comments.",
     "whatYouSee": "As the operator you see names, sign-in, role, when an account was last there, how many spaces it has and its API keys, but never the tasks, notes, comments or attachments of other accounts."
   },

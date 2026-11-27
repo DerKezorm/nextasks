@@ -221,6 +221,39 @@ describe('the settings', () => {
   })
 })
 
+describe('Server › General when the server stumbles', () => {
+  const cards = (page: HTMLElement) => [...page.querySelectorAll('[data-card]')].map((card) => card.getAttribute('data-card'))
+
+  it('says the settings could not be read, keeps the languages and loads them again with "Try again"', async () => {
+    const { server } = smallWorld()
+    server.fail('GET /api/settings', 500, 'internal_error')
+    const page = await mount(server, '/settings/general')
+    const problem = page.querySelector('[data-testid="server-load-problem"]')
+    expect(problem?.textContent).toContain("The server's settings could not be loaded.")
+    expect(cards(page)).toEqual(['languages'])
+    await click(page.querySelector('[data-testid="server-load-retry"]'))
+    expect(page.querySelector('[data-testid="server-load-problem"]')).toBeNull()
+    expect(cards(page)).toEqual(['limits', 'features', 'languages'])
+  })
+
+  it('keeps a refused limit in its field and says so under its own card only', async () => {
+    const { server } = smallWorld()
+    const page = await mount(server, '/settings/general')
+    const field = page.querySelector('[data-testid="limits-upload-max"] input, input[data-testid="limits-upload-max"]') as HTMLInputElement
+    await type(field, '30')
+    server.fail('PUT /api/settings', 500, 'internal_error')
+    await submit(field)
+    expect(field.value).toBe('30')
+    expect(page.querySelector('[data-card="limits"] [role="alert"]')).not.toBeNull()
+    expect(page.querySelector('[data-card="features"] [role="alert"]')).toBeNull()
+    // Sent again it is saved, and the field shows the server's value.
+    await submit(field)
+    expect(field.value).toBe('30')
+    expect(page.querySelector('[data-card="limits"] [role="alert"]')).toBeNull()
+    expect(page.querySelector('[data-card="limits"] [role="status"]')?.textContent).toBeTruthy()
+  })
+})
+
 describe('Server › Connections (E67)', () => {
   const cards = (page: HTMLElement) => [...page.querySelectorAll('[data-card]')].map((card) => card.getAttribute('data-card'))
 
