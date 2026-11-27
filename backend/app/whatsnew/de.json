@@ -9,8 +9,8 @@
       },
       {
         "title": "Was die anderen Apps mit deinen Aufgaben tun",
-        "where": "nexnotes, nexmail, nextime, nexpaper, nexdiary",
-        "body": "nexnotes schickt Zeilen, Checklistenpunkte oder eine ganze Notiz als Aufgabe in eine deiner Listen, mit Link zurück zur Notiz. nexmail macht aus einer Mail eine Aufgabe und zeigt deine Listen: abhaken, Datum, Priorität und Zuständige ändern, neue Aufgaben anlegen; was du hier erledigst, sieht nexmail auch. nextime zeigt deine und dir zugewiesene Aufgaben mit Fälligkeit im Kalender, abhaken geht direkt dort. Das gab es schon, jetzt ist es mit einem Klick verbunden. Neu: nexpaper legt aus einem Dokument eine Aufgabe an, mit Link zurück zum Dokument, und nexdiary zeigt beim Schreiben die Aufgaben, die an diesem Tag erledigt wurden. Die anderen Apps brauchen dafür eine aktuelle Version."
+        "where": "nexnotes, nexmail, nextime, nexpaper, nexdiary, nexfolk",
+        "body": "nexnotes schickt Zeilen, Checklistenpunkte oder eine ganze Notiz als Aufgabe in eine deiner Listen, mit Link zurück zur Notiz. nexmail macht aus einer Mail eine Aufgabe und zeigt deine Listen: abhaken, Datum, Priorität und Zuständige ändern, neue Aufgaben anlegen; was du hier erledigst, sieht nexmail auch. nextime zeigt deine und dir zugewiesene Aufgaben mit Fälligkeit im Kalender, abhaken geht direkt dort. Das gab es schon, jetzt ist es mit einem Klick verbunden. Neu: nexpaper legt aus einem Dokument eine Aufgabe an, mit Link zurück zum Dokument, nexdiary zeigt beim Schreiben die Aufgaben, die an diesem Tag erledigt wurden, und nexfolk zeigt bei einem Kontakt, wie viele offene Aufgaben ihn betreffen (sein Name im Titel oder ihm zugewiesen), und die nächste davon. Die anderen Apps brauchen dafür eine aktuelle Version."
       },
       {
         "title": "Deine Geräte",

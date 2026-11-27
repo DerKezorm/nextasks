@@ -41,8 +41,8 @@ export function errorText(code: string, values: Record<string, unknown> = {}): s
 
 /**
  * The sentence for `?error=` on the sign-in and account pages: a code of the shared module only through
- * `oidcErrorKey` (never a raw code from the address), else one of nextasks's own refusals (`managed_by_suite`,
- * `suite_no_account`) by its sentence, else the general one.
+ * `oidcErrorKey` (never a raw code from the address), else one of nextasks's own refusals by its sentence, else the
+ * general one.
  */
 export function returnErrorText(code: string): string {
   const shared = oidcErrorKey(code)

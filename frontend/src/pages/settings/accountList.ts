@@ -21,8 +21,8 @@ export const APP_CAPS: AccountCaps = capsOf('nextasks', {
 /** nextasks' own buttons and boxes in the dialog "Manage": none. */
 export const APP_OWN_ACTIONS: readonly OwnAction[] = []
 
-/** One row of nextasks' answer as the module's list knows it (the names of the interface stay). Former providers of
- * nexsuite are ordinary providers (plan "Einstellungen"); `forActions` is kept for the callers. */
+/** One row of nextasks' answer as the module's list knows it (the names of the interface stay); `forActions` is kept
+ * for the callers. */
 export function listedOf(row: AccountRow, ownId: number | undefined, forActions = false): ListedAccount {
   void forActions
   const providers = row.providers ?? []

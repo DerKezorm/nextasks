@@ -215,12 +215,12 @@ export type OidcProvider = {
   enabled: boolean
   auto_create: boolean
   trusts_second_factor: boolean
-  /** "" by hand, "authentik" from the button, another program's name while coupled. */
+  /** "" by hand, "authentik" through the button, anything else counts as by hand. */
   managed: string
   position: number
   redirect_uri: string
   links: number
-  /** False for an entry another program keeps (the shared module's coupling). */
+  /** Always true: every entry changes through the form. */
   editable: boolean
 }
 export type OidcProviderForm = {

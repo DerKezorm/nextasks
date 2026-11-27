@@ -15,7 +15,7 @@ type Call = { name: string; args: unknown[] }
 export interface FakeState {
   me: number
   /** What `/api/auth/methods` answers (the sign-in page). */
-  methods: { password: boolean; providers: ProviderButton[]; suite?: boolean; suite_url?: string }
+  methods: { password: boolean; providers: ProviderButton[] }
   /** The operator's provider list (`/api/oidc/admin/providers`) and the own account's rows (`/api/oidc/me`). */
   providers: OidcProvider[]
   myProviders: MyProvider[]

@@ -176,7 +176,7 @@ describe('Server › Sign-in', () => {
 describe('the authentik steps', () => {
   it('come from the module, and each has a name and each reason a sentence in both languages', () => {
     expect(STEP_KEYS).toEqual(['reached', 'signingKey', 'mapping', 'provider', 'application', 'filled'])
-    expect(REASONS).toContain('coupled')
+    expect(REASONS).not.toContain('coupled')
     for (const language of ['de', 'en'] as const) {
       for (const key of STEP_KEYS) expect(TEXTS[language].authentik.step[key as keyof typeof oidcEn.oidc.authentik.step], key).toBeTruthy()
       for (const reason of REASONS) {

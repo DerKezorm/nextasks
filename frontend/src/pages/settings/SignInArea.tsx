@@ -2,8 +2,7 @@
  * Server › Sign-in (plan "Einstellungen", Anmeldung), the whole page from the shared modules: konten's `SignInPage`
  * (the emergency hammer's notice, "Ready for the internet?", the card "Sign-in") with the module oidc's
  * `SignInProviders` after it ("Sign-in providers", "authentik in one step"). nextasks hands over its words, its
- * server's answers and how it calls it; order, wording, kinds and sizes come from the modules. The former sign-in
- * providers of nexsuite are ordinary providers there.
+ * server's answers and how it calls it; order, wording, kinds and sizes come from the modules.
  *
  * The switches go to `/api/server/sign-in` (the module's rules: the password sign-in off only with an active provider,
  * the second factor for everybody on only with an own one, off only with the password); the public address keeps its
