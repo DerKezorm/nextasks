@@ -5,7 +5,7 @@
       {
         "title": "Apps verbinden",
         "where": "Mein Konto › Verbindungen",
-        "body": "Andere nex-Apps kommen jetzt mit einem Klick an deine Aufgaben, ganz ohne API-Schlüssel abzutippen: Klick in der anderen App auf „Mit nextasks verbinden“ (oder hier in ihrer Karte) und stimm einmal zu. Die Zustimmungsseite sagt in Worten, was die andere App darf, etwa „Aufgaben lesen“ oder „Aufgaben abhaken“, und du wählst die Bereiche, die sie sehen darf. Mehr bekommt sie nicht. Jede Karte zeigt, seit wann ihr verbunden seid, was erlaubt ist und wann die App zuletzt da war; „Trennen“ beendet die Verbindung auf beiden Seiten. Was du früher mit einem Schlüssel verbunden hast, läuft weiter."
+        "body": "Andere nex-Apps kommen jetzt mit einem Klick an deine Aufgaben, ganz ohne API-Schlüssel abzutippen: Klick in der anderen App auf „Mit nextasks verbinden“ (oder hier in ihrer Karte) und stimm einmal zu. Die Zustimmungsseite sagt in Worten, was die andere App darf, etwa „Aufgaben lesen“ oder „Aufgaben abhaken“, und du wählst die Bereiche, die sie sehen darf. Mehr bekommt sie nicht. Jede Karte zeigt, seit wann ihr verbunden seid, was erlaubt ist und wann die App zuletzt da war; „Trennen“ beendet die Verbindung auf beiden Seiten. Was du früher mit einem Schlüssel verbunden hast, läuft weiter, bis du per Klick verbindest oder trennst: dann löst die neue Verbindung die alte ab."
       },
       {
         "title": "Was die anderen Apps mit deinen Aufgaben tun",
@@ -20,7 +20,7 @@
       {
         "title": "Server › Verbindungen",
         "where": "Server › Verbindungen",
-        "body": "„Andere nex-Apps“ und „Schnittstellen“ haben jetzt einen eigenen Platz. Unter Server › Verbindungen › Andere nex-Apps trägst du die Adressen der anderen nex-Apps einmal ein, dann verbindet jedes Konto mit einem Klick; dort steht auch „Verbindungen ins eigene Netz“. Unter Server › Verbindungen › Schnittstellen schaltest du die API, den Zugang für KI-Werkzeuge, die iPhone-App und das Verbinden neuer Geräte ein und aus. Unter Server › Konten › Verwalten siehst du, wie viele Geräte ein Konto hat, welche und wann zuletzt, nie was darauf ist, und kannst sie trennen.",
+        "body": "„Andere nex-Apps“ und „Schnittstellen“ haben jetzt einen eigenen Platz. Unter Server › Verbindungen › Andere nex-Apps trägst du die Adressen der anderen nex-Apps einmal ein, dann verbindet jedes Konto mit einem Klick; dort steht auch „Verbindungen ins eigene Netz“. Beim Speichern prüft nextasks jede neue Adresse und sagt, ob dort die richtige App antwortet. Verbindet sich ein Konto mit einer anderen nex-App, nennt sie die Adressen, die sie schon kennt; du übernimmst sie dort mit einem Klick. Unter Server › Verbindungen › Schnittstellen schaltest du die API, den Zugang für KI-Werkzeuge, die iPhone-App und das Verbinden neuer Geräte ein und aus. Unter Server › Konten › Verwalten siehst du, wie viele Geräte ein Konto hat, welche und wann zuletzt, nie was darauf ist, und kannst sie trennen.",
         "operator": true
       },
       {

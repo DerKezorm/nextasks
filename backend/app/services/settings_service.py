@@ -50,6 +50,9 @@ DEFAULTS: dict[str, Any] = {
     "connections_enabled": None,
     "connections_addresses": None,
     "connections_local_network": False,
+    #: Addresses of other nex apps a partner passed on when it connected (verbinden 0.2.0, V58): partner ->
+    #: {"address", "from"}; only suggestions the operator takes over with a click, never used on their own.
+    "connections_suggestions": None,
     #: Ask GitHub once a day whether a newer nextasks is out (services/updates). Only the question goes out, so on.
     "update_check": True,
     #: The newest version the operators' devices were told about (``services/updates``, U24), so none hears it twice.

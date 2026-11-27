@@ -5,7 +5,7 @@
       {
         "title": "Connect apps",
         "where": "My account › Connections",
-        "body": "Other nex apps now reach your tasks with one click, with no API key to copy: click “Connect with nextasks” in the other app (or here in its card) and agree once. The consent page says in plain words what the other app may do, such as “Read your tasks” or “Tick tasks off”, and you pick the spaces it may see. It gets nothing more. Each card shows since when you are connected, what is allowed and when the app last came by; “Disconnect” ends the connection on both sides. What you connected with a key before keeps working."
+        "body": "Other nex apps now reach your tasks with one click, with no API key to copy: click “Connect with nextasks” in the other app (or here in its card) and agree once. The consent page says in plain words what the other app may do, such as “Read your tasks” or “Tick tasks off”, and you pick the spaces it may see. It gets nothing more. Each card shows since when you are connected, what is allowed and when the app last came by; “Disconnect” ends the connection on both sides. What you connected with a key before keeps working until you connect by click or disconnect: then the new connection takes its place."
       },
       {
         "title": "What the other apps do with your tasks",
@@ -20,7 +20,7 @@
       {
         "title": "Server › Connections",
         "where": "Server › Connections",
-        "body": "“Other nex apps” and “Interfaces” now have a place of their own. Under Server › Connections › Other nex apps you enter the addresses of the other nex apps once, and every account connects with one click; “Connections into the local network” is there too. Under Server › Connections › Interfaces you switch the API, access for AI tools, the iPhone app and connecting new devices on and off. Under Server › Accounts › Manage you see how many devices an account has, which ones and when last, never what is on them, and you can disconnect them.",
+        "body": "“Other nex apps” and “Interfaces” now have a place of their own. Under Server › Connections › Other nex apps you enter the addresses of the other nex apps once, and every account connects with one click; “Connections into the local network” is there too. On saving, nextasks checks every new address and says whether the right app answers there. When an account connects with another nex app, that app passes on the addresses it already knows; you take them over there with one click. Under Server › Connections › Interfaces you switch the API, access for AI tools, the iPhone app and connecting new devices on and off. Under Server › Accounts › Manage you see how many devices an account has, which ones and when last, never what is on them, and you can disconnect them.",
         "operator": true
       },
       {

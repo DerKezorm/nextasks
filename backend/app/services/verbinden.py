@@ -56,7 +56,7 @@ CONFIG = nexverbinden.AppConfig(
 
 #: The module's settings under nextasks' names (``settings_service.DEFAULTS``).
 SETTINGS = {"connections": "connections_enabled", "addresses": "connections_addresses",
-            "connections_local_network": "connections_local_network"}
+            "connections_local_network": "connections_local_network", "suggestions": "connections_suggestions"}
 #: What a sealed secret of a connection is bound to (``security.encrypt_secret``).
 SEAL = "nexverbinden"
 
@@ -239,6 +239,9 @@ class VerbindenStore:
     def legacy(self, account_id: Any) -> list[Legacy]:
         # nextasks never typed in a key of another app: no older connection of its own.
         return []
+
+    def forget_legacy(self, account_id: Any, partner: str) -> None:
+        """verbinden 0.2.0 (B9, V56): nothing to end, nextasks holds no connection typed in by hand (``legacy``)."""
 
     def retire_key(self, token: str) -> bool:
         """An older API key (``ntk_``) a partner had typed in ends itself, as revoking it would."""

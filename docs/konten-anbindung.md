@@ -41,6 +41,22 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug (27.11.2026): ui 1.3.0, verbinden 0.2.0, geraete 0.1.4
+
+- **ui 1.3.0** (B19, B20): nur kopiert; `NexMark`/`NexWordmark` nutzt hier nur die Karte „Andere nex-Apps“ des Moduls.
+- **verbinden 0.2.0** (B9 bis B18, V56 bis V63): `VerbindenStore.forget_legacy` ist leer (nextasks hat keine von Hand
+  eingetragene Verbindung, `legacy()` gibt `[]`); die alten `ntk_`-Schlüssel der Partner beendet weiter `retire_key`.
+  Neue Einstellung `connections_suggestions` (Vorschläge `partner -> {address, from}`) unter `SETTINGS["suggestions"]`.
+  `ConsentPage app="nextasks"`. Kein eigener Routen-Wächter für `/api/connect/admin…` (die neuen Wege
+  `POST|DELETE /api/connect/admin/suggestions/{partner}` prüft der Vertrag). Vorlage `nexverbinden.test.tsx` 0.2.0 von
+  Hand übernommen (App-Werte `nextasks`/`nexmail`); eigene Tests klickten `connections-save-…` nie.
+- **geraete 0.1.4** (G60 bis G64): der Namensfall des Moduls ist jetzt grün (fragt nur nach `Nexgeraete…`).
+  Zurückgebaut: der zweite Betreiber im Adapter, den der Vertrag nur zum Sperren des Betreibers brauchte (G63).
+  Kein eigener `PUT /api/app/1/push` (kein `skip`), keine Arten aus älterer Form (G61). Vorlage `nexgeraete.test.tsx`
+  0.1.4 mit B21-Block übernommen (`BASE` `/api/devices`).
+- Was ist neu 0.9.0 und `einst-werkzeug/release/nextasks-0.9.0.md`: Klick löst alte Schlüssel-Verbindung ab, Adressen
+  beim Speichern geprüft, Vorschläge der Partner mit einem Klick.
+
 ### Nachzug (27.11.2026): geraete 0.1.1, updates 0.1.3 (U24, G50 bis G59)
 
 - **Neue Version an die Geräte (G56, U24):** `services/updates.py` gibt `nexupdates` `devices_want` =

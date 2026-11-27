@@ -159,23 +159,12 @@ class Adapter(StandardAdapter):
         from app.vendor.nexkonten import manage
 
         with SessionLocal() as db:
-            getattr(manage, action)(KontenStore(db), self.ids[account], actor_id=self._actor(account),
+            getattr(manage, action)(KontenStore(db), self.ids[account], actor_id=self.ids["operator"],
                                     password=self.password)
         # Blocking and deleting end the account's browser sessions: its browser signs in anew when asked next.
         old = self.clients.pop(account, None)
         if old is not None:
             old.close()
-
-    def _actor(self, account: str) -> Any:
-        """Who blocks or deletes: the operator, and for the operator itself a second one (nobody acts on their own
-        account; nextasks may have several operators)."""
-        if account != "operator":
-            return self.ids["operator"]
-        if "second operator" not in self.ids:
-            from tests.conftest import make_account
-
-            self.ids["second operator"] = make_account("otto", "operator").id
-        return self.ids["second operator"]
 
     def block(self, account: str = "owner") -> None:
         self._manage("block", account)

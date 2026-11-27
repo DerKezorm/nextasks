@@ -19,7 +19,7 @@ const request: VerbindenRequest = <T,>(path: string, init: Parameters<VerbindenR
 
 export function ConnectConsentPage() {
   const { t, i18n } = useTranslation()
-  return <ConsentPage request={request} areaWord={t('mcp.areas')} language={i18n.language} />
+  return <ConsentPage request={request} app="nextasks" areaWord={t('mcp.areas')} language={i18n.language} />
 }
 
 export function ConnectReturnPage() {
