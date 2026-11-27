@@ -215,7 +215,8 @@ export function AppShell() {
   return (
     <ShellContext.Provider value={shell}>
       <ContextMenuProvider>
-      <div className="nt-safe flex h-dvh overflow-hidden">
+      {/* `relative` (B7): hidden texts (`sr-only`, absolute) are placed and clipped in this frame instead of making the page taller than the window. */}
+      <div className="nt-safe relative flex h-dvh overflow-hidden">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <UpdateBanner />
