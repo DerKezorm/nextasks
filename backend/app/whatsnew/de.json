@@ -1,6 +1,6 @@
 {
   "0.9.0": {
-    "lead": "Deine anderen nex-Apps verbinden sich jetzt mit einem Klick mit nextasks. Dazu kommen Passkeys, KI-Werkzeuge und Einstellungen, die in allen nex-Apps gleich aufgebaut sind.",
+    "lead": "Deine anderen nex-Apps verbinden sich jetzt mit einem Klick mit nextasks. Dazu kommen eine Übersicht deiner Geräte, Passkeys, KI-Werkzeuge und Einstellungen, die in allen nex-Apps gleich aufgebaut sind.",
     "sections": [
       {
         "title": "Apps verbinden",
@@ -10,7 +10,18 @@
       {
         "title": "Was die anderen Apps mit deinen Aufgaben tun",
         "where": "nexnotes, nexmail, nextime, nexpaper, nexdiary",
-        "body": "nexnotes schickt Zeilen, Checklistenpunkte oder eine ganze Notiz als Aufgabe in eine deiner Listen, mit Link zurück zur Notiz. nexmail macht aus einer Mail eine Aufgabe und zeigt deine Listen: abhaken, Datum, Priorität und Zuständige ändern, neue Aufgaben anlegen; was du hier erledigst, sieht nexmail auch. nextime zeigt deine und dir zugewiesene Aufgaben mit Fälligkeit im Kalender, abhaken geht direkt dort. Das gab es schon, jetzt ist es mit einem Klick verbunden. Neu: nexpaper legt aus einem Dokument eine Aufgabe an, mit Link zurück zum Dokument, und nexdiary zeigt beim Schreiben, welche Aufgaben du an dem Tag erledigt hast. Die anderen Apps brauchen dafür eine aktuelle Version."
+        "body": "nexnotes schickt Zeilen, Checklistenpunkte oder eine ganze Notiz als Aufgabe in eine deiner Listen, mit Link zurück zur Notiz. nexmail macht aus einer Mail eine Aufgabe und zeigt deine Listen: abhaken, Datum, Priorität und Zuständige ändern, neue Aufgaben anlegen; was du hier erledigst, sieht nexmail auch. nextime zeigt deine und dir zugewiesene Aufgaben mit Fälligkeit im Kalender, abhaken geht direkt dort. Das gab es schon, jetzt ist es mit einem Klick verbunden. Neu: nexpaper legt aus einem Dokument eine Aufgabe an, mit Link zurück zum Dokument, und nexdiary zeigt beim Schreiben die Aufgaben, die an diesem Tag erledigt wurden. Die anderen Apps brauchen dafür eine aktuelle Version."
+      },
+      {
+        "title": "Deine Geräte",
+        "where": "Mein Konto › Verbindungen › Geräte",
+        "body": "Alle verbundenen iPhones und iPads stehen in einer Liste: mit Namen, wann sie zuletzt da waren und ob sie Mitteilungen bekommen. Du kannst jedes umbenennen oder trennen, auf Wunsch alle auf einmal. „iPhone oder iPad verbinden“ zeigt einen QR-Code und darunter einen Code zum Abtippen. Unter Benachrichtigungen stellst du je Gerät ein, welche Mitteilungen es bekommt. Kommt ein neues Gerät dazu, bekommst du eine Mail wie bei einer neuen Anmeldung. Sperrt der Betreiber dein Konto oder löscht es, ruhen deine Geräte und gehen danach wieder, ohne neu zu verbinden. Die iPhone-App selbst ändert sich noch nicht: Modell und App-Version und die Mitteilung „Neues Gerät verbunden“ kommen erst mit einer späteren Version der App."
+      },
+      {
+        "title": "Server › Verbindungen",
+        "where": "Server › Verbindungen",
+        "body": "„Andere nex-Apps“ und „Schnittstellen“ haben jetzt einen eigenen Platz. Unter Server › Verbindungen › Andere nex-Apps trägst du die Adressen der anderen nex-Apps einmal ein, dann verbindet jedes Konto mit einem Klick; dort steht auch „Verbindungen ins eigene Netz“. Unter Server › Verbindungen › Schnittstellen schaltest du die API, den Zugang für KI-Werkzeuge, die iPhone-App und das Verbinden neuer Geräte ein und aus. Unter Server › Konten › Verwalten siehst du, wie viele Geräte ein Konto hat, welche und wann zuletzt, nie was darauf ist, und kannst sie trennen.",
+        "operator": true
       },
       {
         "title": "Anmelden mit Passkey",
@@ -25,12 +36,11 @@
       {
         "title": "Einstellungen neu geordnet",
         "where": "Einstellungen",
-        "body": "Die Einstellungen sind aufgebaut wie in allen nex-Apps: unter Mein Konto Profil, Sicherheit, Darstellung, Benachrichtigungen und Verbindungen, für den Betreiber unter Server Allgemein, Verbindungen, Anmeldung, Mail, Speicher und Sicherungen, Konten und Log; Server › Verbindungen hält „Andere nex-Apps“ und „Schnittstellen“. Hell oder Dunkel gehört jetzt zu deinem Konto und folgt dir auf jedes Gerät, die Zeitzone steht im Profil, und Daten und Uhrzeiten sehen überall gleich aus."
+        "body": "Die Einstellungen sind aufgebaut wie in allen nex-Apps: unter Mein Konto Profil, Sicherheit, Darstellung, Benachrichtigungen und Verbindungen, für den Betreiber unter Server Allgemein, Verbindungen, Anmeldung, Mail, Speicher und Sicherungen, Konten und Log. Hell oder Dunkel gehört jetzt zu deinem Konto und folgt dir auf jedes Gerät, die Zeitzone steht im Profil, und Daten und Uhrzeiten sehen überall gleich aus."
       }
     ],
     "smallTitle": "Außerdem",
     "small": [
-      "Für Betreiber: Die Adressen der anderen nex-Apps trägst du einmal unter Server › Verbindungen › Andere nex-Apps ein, dann verbindet jedes Konto mit einem Klick. Dort steht auch „Verbindungen ins eigene Netz“.",
       "Es kann mehrere Betreiber geben. Ein gelöschtes Konto lässt sich 30 Tage lang zurückholen, samt seinen Bereichen und Zuweisungen.",
       "Statt ein Passwort selbst zu setzen, schickt der Betreiber einen Link für ein neues Passwort.",
       "Sicherungen laufen zu einer Uhrzeit deiner Wahl, auf Wunsch auch monatlich; „Jetzt sichern“ nimmt eine Notiz mit.",

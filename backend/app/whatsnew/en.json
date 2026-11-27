@@ -1,6 +1,6 @@
 {
   "0.9.0": {
-    "lead": "Your other nex apps now connect with nextasks in one click. Also new: passkeys, AI tools and settings laid out the same way in every nex app.",
+    "lead": "Your other nex apps now connect with nextasks in one click. Also new: an overview of your devices, passkeys, AI tools and settings laid out the same way in every nex app.",
     "sections": [
       {
         "title": "Connect apps",
@@ -10,7 +10,18 @@
       {
         "title": "What the other apps do with your tasks",
         "where": "nexnotes, nexmail, nextime, nexpaper, nexdiary",
-        "body": "nexnotes sends lines, checklist items or a whole note as tasks into one of your lists, with a link back to the note. nexmail turns a mail into a task and shows your lists: tick off, change date, priority and assignees, add new tasks; what you complete here, nexmail sees too. nextime shows your tasks and those assigned to you with a due date in the calendar, and you tick them off right there. All this was there before; now it connects with one click. New: nexpaper makes a task from a document, with a link back to it, and nexdiary shows, while you write up a day, which tasks you completed on it. The other apps need a current version for this."
+        "body": "nexnotes sends lines, checklist items or a whole note as tasks into one of your lists, with a link back to the note. nexmail turns a mail into a task and shows your lists: tick off, change date, priority and assignees, add new tasks; what you complete here, nexmail sees too. nextime shows your tasks and those assigned to you with a due date in the calendar, and you tick them off right there. All this was there before; now it connects with one click. New: nexpaper makes a task from a document, with a link back to it, and nexdiary shows, while you write up a day, the tasks that were completed on it. The other apps need a current version for this."
+      },
+      {
+        "title": "Your devices",
+        "where": "My account › Connections › Devices",
+        "body": "All connected iPhones and iPads are in one list: with their names, when they last came by and whether they get notifications. You can rename or disconnect each one, or all at once. “Connect iPhone or iPad” shows a QR code with a code to type in below it. Under Notifications you choose per device which notifications it gets. When a new device joins, you get a mail as for a new sign-in. If the operator blocks or deletes your account, your devices rest and work again afterwards without connecting anew. The iPhone app itself does not change yet: model and app version, and the notification “New device connected”, come with a later version of the app."
+      },
+      {
+        "title": "Server › Connections",
+        "where": "Server › Connections",
+        "body": "“Other nex apps” and “Interfaces” now have a place of their own. Under Server › Connections › Other nex apps you enter the addresses of the other nex apps once, and every account connects with one click; “Connections into the local network” is there too. Under Server › Connections › Interfaces you switch the API, access for AI tools, the iPhone app and connecting new devices on and off. Under Server › Accounts › Manage you see how many devices an account has, which ones and when last, never what is on them, and you can disconnect them.",
+        "operator": true
       },
       {
         "title": "Sign in with a passkey",
@@ -25,12 +36,11 @@
       {
         "title": "Settings in a new order",
         "where": "Settings",
-        "body": "The settings are laid out as in every nex app: under My account Profile, Security, Appearance, Notifications and Connections, for the operator under Server General, Connections, Sign-in, Mail, Storage and backups, Accounts and Log; Server › Connections holds “Other nex apps” and “Interfaces”. Light or dark now belongs to your account and follows you to every device, the time zone sits in the profile, and dates and times look the same everywhere."
+        "body": "The settings are laid out as in every nex app: under My account Profile, Security, Appearance, Notifications and Connections, for the operator under Server General, Connections, Sign-in, Mail, Storage and backups, Accounts and Log. Light or dark now belongs to your account and follows you to every device, the time zone sits in the profile, and dates and times look the same everywhere."
       }
     ],
     "smallTitle": "Also",
     "small": [
-      "For operators: enter the addresses of the other nex apps once under Server › Connections › Other nex apps, and every account connects with one click. “Connections into the local network” is there too.",
       "There can be several operators. A deleted account can be brought back for 30 days, with its spaces and assignments.",
       "Instead of setting a password themselves, operators send a link for a new password.",
       "Backups run at a time of your choice, monthly too if you like; “Back up now” takes a note.",
