@@ -41,6 +41,10 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug caafd08 (27.11.2026): verbinden 0.1.14
+
+Nur ein Vertragsfall: die Verbindung von nexfolk (nur `tasks.about`) öffnet keinen anderen Zweck von nextasks (403).
+
 ### Nachzug (27.11.2026): verbinden 0.1.13 (mit 0.1.12)
 
 0.1.12 nur Beispieladressen der Modultests. 0.1.13 (V49 bis V53): nexfolk fragt mit `tasks.about` unter
