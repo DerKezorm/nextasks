@@ -6,7 +6,8 @@
  * filter shows its plaque (its symbol in white on its colour, docs "Aussehen"), its name and its number, the overdue
  * ones on a red pill before it; under the pointer or with the focus "…" takes the numbers' place and opens its menu.
  * "Today" shows today's day in its symbol. The filters, each space and the hidden spaces fold, and stay so on this
- * device (`lib/sidebarFold.ts`). A new space is made from the menu of any space's head.
+ * device (`lib/sidebarFold.ts`). Under the spaces "+ New space" stands always in sight, quiet in grey (B22: in the
+ * menu of a space's head alone nobody found it); the menu keeps it too.
  * Lists and spaces are sorted by dragging; a task dropped on a list moves there. Spaces one hid wait folded under
  * "Hidden spaces (n)" to be shown again. At the bottom the trash and how the sync stands; the account with the way to
  * the settings at the foot. The column is as wide as one drags it (`ColumnHandle`, `lib/columns.ts`). On a phone the
@@ -124,6 +125,9 @@ function SideHead({ title, open, onToggle, children, ...rest }: { title: string;
   )
 }
 
+/** "+ New space" under the spaces: a row like a list's, in grey until the pointer is on it. */
+const NEW_SPACE = 'mt-2 flex h-8 w-full items-center gap-2.5 rounded-lg px-2.5 text-[13.5px] text-mist-500 transition-colors hover:bg-ink-800 hover:text-mist-100 max-md:h-[38px]'
+
 /** "+" in a head. */
 const PLUS = 'rounded-md p-1 text-mist-500 hover:bg-ink-800 hover:text-mist-100'
 
@@ -214,6 +218,10 @@ export function SidebarBody() {
             <SpaceBlock key={space.id} space={space} index={view.spaces.indexOf(space)} />
           ))}
         </div>
+        <button type="button" onClick={() => shell.newSpace()} className={NEW_SPACE} data-testid="new-space">
+          <FolderPlus className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden />
+          <span className="min-w-0 flex-1 truncate text-left">{t('sidebar.newSpace')}</span>
+        </button>
         {view.hiddenSpaces.length > 0 && <HiddenSpaces />}
 
         <div className="mt-auto pt-3">

@@ -324,6 +324,22 @@ describe('the ways that must stay', () => {
     page = await mount(server, '/today')
     expect(page.querySelector('[data-testid="new-space-hidden"]')?.getAttribute('aria-label')).toBe('New space')
   })
+
+  it('show "New space" under the spaces without pointer or menu, and open its dialog with a click (B22)', async () => {
+    const { server } = smallWorld()
+    const page = await mount(server, '/today')
+    const sidebar = page.querySelector('[data-testid="sidebar"]')!
+    const entry = [...sidebar.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'New space')
+    expect(entry).toBeDefined()
+    expect(entry!.closest('[role="menu"], [hidden]')).toBeNull()
+    expect(entry!.className).not.toMatch(/opacity-0|(^|\s)hidden(\s|$)/)
+    // It stands under the spaces, after the last of them.
+    const spaces = sidebar.querySelector('[data-testid="spaces"]')!
+    expect(spaces.compareDocumentPosition(entry!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(page.ownerDocument.querySelector('[role="dialog"]')).toBeNull()
+    await click(entry)
+    expect(page.ownerDocument.querySelector('[role="dialog"]')?.getAttribute('aria-label')).toBe('New space')
+  })
 })
 
 describe('the box Passkeys', () => {
