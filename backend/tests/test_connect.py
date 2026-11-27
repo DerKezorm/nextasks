@@ -310,7 +310,17 @@ def test_the_next_is_the_one_due_next_else_the_one_made_last() -> None:
 
 def test_nexfolk_reads_nothing_at_api_v1() -> None:
     """``tasks.about`` opens the small answer only: ``/api/v1`` turns nexfolk away, ``/me`` included."""
-    anna_account, _anna, _space, _own, _shared = family()
+    anna_account, _anna, space, own, _shared = family()
     folk = connected(anna_account, "nexfolk")
-    for route in ("/me", "/spaces", "/lists", "/tasks", "/dashboard"):
+    assert CATALOG.uses("nexfolk", "nextasks") == ("tasks.about",)
+    for route in ("/me", "/spaces", f"/spaces/{space}/members", "/lists", "/tasks", f"/tasks/{own}",
+                  f"/tasks/{own}/comments", "/dashboard", "/stats/summary"):
         assert status(folk.get(V1 + route), "purpose_missing") == 403, route
+    for method, route, body in (("POST", "/tasks", {"title": "From nexfolk"}),
+                                ("PATCH", f"/tasks/{own}", {"completed": True}),
+                                ("DELETE", f"/tasks/{own}", None),
+                                ("POST", f"/tasks/{own}/comments", {"text": "Hello"})):
+        answer = folk.request(method, V1 + route, json=body)
+        assert status(answer, "purpose_missing") == 403, (method, route)
+    # What it is for answers.
+    assert folk.get(ABOUT, params={"name": "Own"}).status_code == 200
