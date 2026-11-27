@@ -41,6 +41,11 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug 22671dd (27.11.2026): verbinden 0.1.10
+
+Die Karte „Andere nex-Apps“ rollt sich ins Bild, wenn die Seite mit `#nex-apps` geöffnet wurde, wohin „Einrichten“ der
+Karten führt. Nur die Kopie und die Vorlage `nexverbinden.test.tsx` (eigenes Paar behalten).
+
 ### Nachzug b277da0 (27.11.2026): verbinden 0.1.9 (mit 0.1.7 und 0.1.8)
 
 0.1.7 (V41): der Adapter nennt `write_into` (nextime hakt eine Aufgabe im gegebenen Bereich ab, im anderen wird es abgelehnt);
