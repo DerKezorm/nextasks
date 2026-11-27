@@ -1,8 +1,9 @@
-"""nextasks among the other nex apps (verbinden 0.1.1), what is nextasks' own beside the contract tests in
+"""nextasks among the other nex apps (verbinden 0.1.1 to 0.1.9), what is nextasks' own beside the contract tests in
 ``tests/nexverbinden``: a connection opens ``/api/v1`` only for the purposes of its pair in the catalog (nexnotes reads
 and writes, nextime reads and ticks off, nexdiary only reads), only in the spaces given; the API keys other apps typed
 in before keep working as before, beside a connection and with their own switch; ``/api/v1/me`` names when such a key
-runs out; and the old switch of API tokens does not close connections (they have their own, V14)."""
+runs out; the old switch of API tokens does not close connections (they have their own, V14); and the consent page
+shows the account as the profile does (0.1.8, B1)."""
 
 from __future__ import annotations
 
@@ -154,6 +155,37 @@ def test_nexpaper_makes_a_task_from_a_document_and_reads_it_but_never_the_member
     assert paper.get(f"{V1}/tasks/{made.json()['id']}").json()["title"] == "Pay the invoice"
     assert status(paper.patch(f"{V1}/tasks/{own}", json={"completed": True})) == 200
     assert status(paper.get(f"{V1}/spaces/{space}/members"), "purpose_missing") == 403
+
+
+def test_the_consent_page_shows_the_account_as_the_profile_does() -> None:
+    """verbinden 0.1.8 (B1): ``account_card`` gives the shown name, the user name and the own picture at the very
+    address the profile asks for it (``avatarUrl``: ``/api/avatars/<id>?v=<avatar>``), which opens for the account; no
+    picture: none, the page draws the letter as the profile does."""
+    from urllib.parse import quote
+
+    from app.vendor.nexverbinden.connect import account_card
+
+    from .test_avatars import photo
+
+    anna_account, anna = person("anna")
+    with SessionLocal() as db:
+        card = verbinden.VerbindenStore(db).account_card(anna_account.id)
+        # Without a shown name the module shows the user name alone.
+        assert account_card(verbinden.VerbindenStore(db), anna_account.id) == {
+            "name": "", "username": "anna", "picture": None, "color": None}
+        row = db.get(Account, anna_account.id)
+        assert row is not None
+        row.display_name = "Anna Example"
+        db.commit()
+    assert card == {"name": "anna", "username": "anna", "picture": None, "color": None}
+    assert anna.put("/api/auth/avatar", content=photo()).status_code == 200
+    me = anna.get("/api/auth/me").json()
+    with SessionLocal() as db:
+        card = account_card(verbinden.VerbindenStore(db), anna_account.id)
+    assert card == {"name": "Anna Example", "username": "anna",
+                    "picture": f"/api/avatars/{anna_account.id}?v={quote(me['avatar'], safe='')}", "color": None}
+    shown = anna.get(card["picture"])
+    assert shown.status_code == 200 and shown.headers["content-type"].startswith("image/")
 
 
 def test_every_partner_card_stands_for_purposes_nextasks_really_grants() -> None:

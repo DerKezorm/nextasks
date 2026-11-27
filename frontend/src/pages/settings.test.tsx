@@ -323,3 +323,23 @@ describe('the words of a new password (konten 1.1.2)', () => {
     expect(labels(page)).toContain('New password')
   })
 })
+
+describe('My account › Connections › Other nex apps (verbinden 0.1.8)', () => {
+  const open = async (page: HTMLElement) => {
+    await click(page.querySelector('[data-testid="connection-nexmail"] [data-part="collapsible-head"]'))
+    return page.querySelector('[data-testid="connection-nexmail"]')!
+  }
+
+  it('an app the operator has not set up: the operator gets the way to set it up, a member only the word (V42)', async () => {
+    const { server, alex } = smallWorld()
+    let card = await open(await mount(server, '/settings/connections'))
+    expect(card.querySelector('[data-testid="connection-not-set-up"]')).not.toBeNull()
+    expect(card.querySelector('[data-testid="connection-set-up"]')?.getAttribute('href')).toBe('/settings/general#nex-apps')
+    expect(card.querySelector('input[type="url"]')).toBeNull()
+    await unmount()
+    server.session = alex
+    card = await open(await mount(server, '/settings/connections'))
+    expect(card.querySelector('[data-testid="connection-not-set-up"]')).not.toBeNull()
+    expect(card.querySelector('[data-testid="connection-set-up"]')).toBeNull()
+  })
+})

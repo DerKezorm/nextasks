@@ -1,4 +1,4 @@
-"""nextasks among the other nex apps (shared module ``vendor/nexverbinden``, verbinden 0.1.4): its ``AppConfig`` and the
+"""nextasks among the other nex apps (shared module ``vendor/nexverbinden``, verbinden 0.1.9): its ``AppConfig`` and the
 ``Store`` over its tables (``models_connect.py``).
 
 nextasks is a host in five pairs of the catalog (V2): nexnotes, nexmail, nextime, nexpaper and nexdiary use its tasks;
@@ -18,6 +18,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import quote
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
@@ -213,6 +214,18 @@ class VerbindenStore:
     def account_name(self, account_id: Any) -> str:
         row = self.db.get(Account, int(account_id))
         return row.name if row is not None else ""
+
+    def account_card(self, account_id: Any) -> dict[str, Any] | None:
+        """Who is signed in, for the consent page (verbinden 0.1.8, B1): the shown name, the user name and the
+        address of the own picture exactly as the profile and the account menu ask for it (``avatarUrl`` in the
+        frontend: ``/api/avatars/<id>?v=<when it was set>``), or none. No colour: nextasks draws a person without a
+        picture as the letter of the account module (``Avatar``), the module's consent page does the same."""
+        row = self.db.get(Account, int(account_id))
+        if row is None:
+            return None
+        picture = (f"/api/avatars/{row.id}?v={quote(row.avatar_at.isoformat(), safe='')}"
+                   if row.avatar_at is not None else None)
+        return {"name": row.display_name or row.name, "username": row.name, "picture": picture, "color": None}
 
     def areas(self, account_id: Any) -> list[dict[str, Any]]:
         """The spaces of the account, by name (as an API key may be given them)."""

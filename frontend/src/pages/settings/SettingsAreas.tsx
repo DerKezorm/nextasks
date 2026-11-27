@@ -74,7 +74,7 @@ function ConnectionsArea() {
     <>
       <DevicesSection />
       <InstallCard />
-      <OtherApps app="nextasks" request={request} areaWord={t('mcp.areas')} language={i18n.language} when={when} />
+      <OtherApps app="nextasks" request={request} areaWord={t('mcp.areas')} language={i18n.language} when={when} operator={me?.role === 'operator'} />
       <ApiKeysCard request={request} things={t('settings.things')} thingsDative={t('settings.thingsDative')} words={{ areas: t('apiTokens.where') }} docsHref={API_DOCS} operator={me?.role === 'operator'} when={when} />
       <ToolsCard request={request} words={{ areas: t('apiTokens.where') }} when={when} extra={(key) => <ToolRights request={mcpRequest} keyId={key.id} words={words} />}>
         <PendingRequests request={mcpRequest} words={words} when={when} viewHref={(entry) => `/mcp/requests/${entry.id}`} />

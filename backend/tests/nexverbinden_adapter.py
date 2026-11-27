@@ -26,6 +26,8 @@ class Adapter(StandardAdapter):
     partner = "nextime"
     base = BASE
     older_link = False
+    #: verbinden 0.1.8 (B1): owner and other have a shown name besides the user name, as people set it in the profile.
+    shown_names = {"owner": "Kim Example", "other": "Sam Example"}  # noqa: RUF012 (read only)
 
     def start(self, folder: Path, *, older: bool = False) -> None:
         from app.db import SessionLocal
@@ -42,20 +44,23 @@ class Adapter(StandardAdapter):
         self._password = PASSWORD
         with SessionLocal() as db:
             settings_service.save(db, {"public_url": BASE})
-            for account in self._accounts.values():
+            for role, account in self._accounts.items():
                 row = db.get(Account, account.id)
                 assert row is not None
+                row.display_name = self.shown_names.get(role, "")
                 ensure_private(db, row)
         self._clients: dict[str, TestClient] = {}
         # Two spaces of the owner with a list and a task in each (the card asks which of them a partner reads).
         from tests.sync_helpers import make_list, make_reminder, private_space, shared_space
 
         owner = self.client("owner")
-        _private, first_list = private_space(owner)
+        private, first_list = private_space(owner)
         self._garden = shared_space(owner, name="Garden")
         garden_list = make_list(owner, self._garden, name="Beds")
         self._task = make_reminder(owner, first_list, title="Milk")
-        make_reminder(owner, garden_list, title="Water the roses")
+        # verbinden 0.1.7 (V41): a task in each space, for a write into the space given and one into the other.
+        self._lists = {private: first_list, self._garden: garden_list}
+        self._tasks = {private: self._task, self._garden: make_reminder(owner, garden_list, title="Water the roses")}
         self.older_key = ""
         self.older_key_path = "/api/v1/me"
         if older:
@@ -135,6 +140,13 @@ class Adapter(StandardAdapter):
             "tasks.write": ("POST", "/api/v1/tasks", {"title": "From the probe"}),
             "members.read": f"/api/v1/spaces/{self._garden}/members",
         }[purpose]
+
+    def write_into(self, purpose: str, area: Any) -> tuple[str, str, Any]:
+        """A write of ``purpose`` into the space ``area`` of the owner (verbinden 0.1.7): a task completed there, or a
+        new task in its list; ``routers/v1.py`` refuses both outside the spaces the connection was given."""
+        if purpose == "tasks.complete":
+            return ("PATCH", f"/api/v1/tasks/{self._tasks[str(area)]}", {"completed": True})
+        return ("POST", "/api/v1/tasks", {"title": "From the partner", "list_id": self._lists[str(area)]})
 
     def areas_seen(self, purpose: str, answer: Any) -> set[str]:
         from app.db import SessionLocal
