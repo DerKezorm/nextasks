@@ -41,6 +41,20 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug b277da0 (27.11.2026): verbinden 0.1.9 (mit 0.1.7 und 0.1.8)
+
+0.1.7 (V41): der Adapter nennt `write_into` (nextime hakt eine Aufgabe im gegebenen Bereich ab, im anderen wird es abgelehnt);
+`routers/v1.py` hielt die Bereiche schon ein. 0.1.8: `ConnectionsArea operator` (Betreiber bekommt „Einrichten“ bei
+einer nicht eingerichteten App; „Von Hand verbinden“ hat nextasks als reine Gastgeberin nicht);
+`VerbindenStore.account_card` mit Anzeigename, Benutzername und dem eigenen Bild unter derselben Adresse wie im Profil
+(`/api/avatars/<id>?v=<avatar>`), ohne Farbe, weil nextasks eine Person ohne Bild wie das Kontenmodul als Buchstaben
+zeigt; Adapter mit `shown_names` („Kim Example“, „Sam Example“); `/connect/app` und `/connect/return` ohne eigene Hülle
+(`PAGE_FRAME` des Moduls), Anmeldewächter `SignedIn` bleibt. Einen eigenen Schalter fürs eigene Netz hatte nextasks
+nie. 0.1.9: die Zustimmungsseite fragt einmal, ohne eigenes `navigate`. Vorlage `nexverbinden.test.tsx` 0.1.9 mit
+nextasks' Paar; neue Tests `test_connect.py` (account_card) und `settings.test.tsx` (Karte für Betreiber und
+Mitglied), Gegenproben rot. Kein `TODO` im Code. Läufe `verbinden018`: ruff, lint, build sauber; pytest 1747 grün, 12
+übersprungen; vitest 1291 grün; Start-Probe 200, keine Traceback.
+
 ### Nachzug 84d152a (27.11.2026): ui 1.1.3, verbinden 0.1.6, mcp 1.1.4
 
 ui 1.1.3 (U-3): Server › Allgemein bekommt `parts` = `GENERAL_PARTS` (`pages/settings/areas.ts`: Grenzen, Funktionen
