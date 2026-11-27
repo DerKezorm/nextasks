@@ -129,6 +129,34 @@ class Adapter(StandardAdapter):
 
             sign_in(self._clients[role], account)
 
+    def lock(self, role: str, locked: bool = True) -> None:
+        """verbinden 0.2.1 (BS5): the account locked after failed sign-ins (``locked_until`` ahead), or the lock over."""
+        from app.db import SessionLocal
+        from app.models import Account, utcnow
+
+        with SessionLocal() as db:
+            row = db.get(Account, self._accounts[role].id)
+            assert row is not None
+            row.locked_until = utcnow() + timedelta(minutes=10) if locked else None
+            db.commit()
+
+    def require_second_factor(self, role: str, required: bool = True) -> None:
+        """verbinden 0.2.1 (BS5): the operator requires a second factor and only ``role`` has none (the others get an
+        authenticator, so they work on); ``required=False`` lifts the demand again."""
+        from app.db import SessionLocal
+        from app.models import Account
+        from app.services import settings_service, totp
+
+        with SessionLocal() as db:
+            if required:
+                for other, account in self._accounts.items():
+                    if other != role:
+                        row = db.get(Account, account.id)
+                        assert row is not None
+                        row.totp_secret_enc = row.totp_secret_enc or totp.seal_seed(totp.generate_seed())
+                db.commit()
+            settings_service.save(db, {"two_factor_required": required})
+
     def account_id(self, role: str) -> Any:
         return self._accounts[role].id
 

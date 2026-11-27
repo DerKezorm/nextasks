@@ -39,7 +39,7 @@ import httpx
 from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.orm import Session
 
-from ..models import OPERATOR, Account, AppCode, AppDevice, AppPairing, utcnow
+from ..models import OPERATOR, Account, AppCode, AppDevice, AppGoneSibling, AppPairing, utcnow
 from ..vendor import nexgeraete
 from ..vendor.nexgeraete import ConnectCode, Device, DeviceChange, Holder, NewDevice, NewPairing, Pairing, PushState
 from . import clock, settings_service, totp
@@ -249,9 +249,23 @@ class GeraeteStore:
     def remove_device(self, device_id: Any) -> None:
         row = self._row(device_id)
         if row is not None:
+            if row.via == "icloud" and row.created_at is not None:
+                # geraete 0.1.5 (G33 anew): a sibling still counts for the hour after it is gone.
+                self.db.execute(delete(AppGoneSibling).where(
+                    AppGoneSibling.created_at < clock.now().astimezone(UTC) - timedelta(days=1)))
+                self.db.add(AppGoneSibling(account_id=row.account_id, created_at=row.created_at))
             self.db.delete(row)
             self.db.flush()
             logger.info("Device disconnected device_id=%s", row.id)
+
+    def sibling_times(self, account_id: Any, since: datetime) -> list[datetime]:
+        """geraete 0.1.5 (G33 anew): when each device of the account that came in over iCloud at or after ``since`` was
+        made, the disconnected ones included (``app_gone_siblings``)."""
+        living = self.db.scalars(select(AppDevice.created_at).where(
+            AppDevice.account_id == int(account_id), AppDevice.via == "icloud", AppDevice.created_at >= since))
+        gone = self.db.scalars(select(AppGoneSibling.created_at).where(
+            AppGoneSibling.account_id == int(account_id), AppGoneSibling.created_at >= since))
+        return [moment for moment in (_aware(found) for found in [*living, *gone]) if moment is not None]
 
     def touch(self, device_id: Any, when: datetime) -> None:
         self.db.execute(update(AppDevice).where(AppDevice.id == int(device_id)).values(last_seen_at=when))

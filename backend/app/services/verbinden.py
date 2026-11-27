@@ -1,4 +1,4 @@
-"""nextasks among the other nex apps (shared module ``vendor/nexverbinden``, verbinden 0.1.13): its ``AppConfig``, the
+"""nextasks among the other nex apps (shared module ``vendor/nexverbinden``, verbinden 0.2.1): its ``AppConfig``, the
 ``Store`` over its tables (``models_connect.py``) and the hook ``about``.
 
 nextasks is a host in six pairs of the catalog (V2): nexnotes, nexmail, nextime, nexpaper and nexdiary use its tasks;
@@ -210,10 +210,15 @@ class VerbindenStore:
     # --- the account and the app -------------------------------------------------------------------------------------
 
     def account_may(self, account_id: Any) -> bool:
-        """False while the account is blocked or deleted, or its keys wait for a second factor it owes (its
-        connections rest, E41)."""
+        """False while the account is blocked or deleted, locked after failed sign-ins, or its keys wait for a second
+        factor it owes (its connections rest, E41; the lock since verbinden 0.2.1, BS5)."""
         row = self.db.get(Account, int(account_id))
-        return row is not None and not row.shut and not totp.setup_required(self.db, row)
+        if row is None or row.shut:
+            return False
+        locked = _aware(row.locked_until)
+        if locked is not None and locked > datetime.now(UTC):
+            return False
+        return not totp.setup_required(self.db, row)
 
     def account_name(self, account_id: Any) -> str:
         row = self.db.get(Account, int(account_id))

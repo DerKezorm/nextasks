@@ -371,6 +371,18 @@ class AppDevice(Base):
     push_kinds: Mapped[Any] = mapped_column(JSON, nullable=True)
 
 
+class AppGoneSibling(Base):
+    """When a disconnected device that came in over iCloud (``via == "icloud"``) was made (module geraete 0.1.5, G33
+    anew): the limit of siblings per hour counts it on after it was disconnected (``GeraeteStore.sibling_times``).
+    Rows older than a day go at the next disconnect."""
+
+    __tablename__ = "app_gone_siblings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime)
+
+
 class WebPushSubscription(Base):
     """A browser that takes notifications (``PUT /api/app/1/webpush``)."""
 
@@ -961,6 +973,7 @@ __all__ = [
     "ApiToken",
     "AppCode",
     "AppDevice",
+    "AppGoneSibling",
     "AppOp",
     "AppPairing",
     "AssignedLog",
