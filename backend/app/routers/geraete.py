@@ -1,4 +1,4 @@
-"""The routes of the shared device module (``vendor/nexgeraete``, geraete 0.1.0), mounted in nextasks.
+"""The routes of the shared device module (``vendor/nexgeraete``, geraete 0.1.1), mounted in nextasks.
 
 App (``/api/app/1``, in ``PROMISED`` of ``routers/app1.py``): ``pairing/{id}/key``, ``pairing/code``, ``devices``
 (another own device; the list), ``devices/{id}``, ``device`` (rename), ``push``, ``push/kinds``. They answer the
@@ -14,8 +14,9 @@ module's. ``DELETE devices/{id}`` answers 204 without a body and is left out of 
 Browser (``/api/devices`` + the module's paths: ``/app-pairing``, ``/app-connect``, ``/app-devices`` …, and the
 operator's ``/server/accounts/{id}/devices``): the cards of the module on the pages. The addresses of before
 (``/api/app-pairing``, ``/api/app-devices``, ``/api/app-connect``) keep their old answers in ``routers/app_pairing.py``,
-so the module's sit under a prefix of their own, and out of the description (their schema names would push nextasks'
-own ``NameIn``, ``AddressIn``, ``ConnectIn`` to longer names).
+so the module's sit under a prefix of their own. Since geraete 0.1.1 they stand in the description too: the module's
+bodies are called ``Nexgeraete…`` (G59) and leave nextasks' own ``NameIn``, ``AddressIn``, ``ConnectIn`` as they were.
+The module's ``PushIn`` became ``NexgeraetePushIn``; ``PUT /api/app/1/push`` keeps ``PushIn`` below.
 """
 
 from __future__ import annotations
@@ -39,8 +40,14 @@ from .app1 import CodeIn, Done, KeyIn, KeyOut, MeDevice
 BROWSER_PREFIX = "/api/devices"
 
 
-class DeviceNameIn(nexgeraete_api.NameIn):
+class DeviceNameIn(nexgeraete_api.NexgeraeteNameIn):
     """A new name for this device (the module's ``NameIn``, named so beside nextasks' own ``NameIn``)."""
+
+
+class PushIn(nexgeraete_api.NexgeraetePushIn):
+    # The module's body under its name of before (``fixtures/openapi-names-0.8.0.json``); since geraete 0.1.1 the
+    # module calls it ``NexgeraetePushIn`` (G59).
+    pass
 
 
 class KindOut(BaseModel):
@@ -81,7 +88,8 @@ _WAYS: dict[tuple[str, str], Way] = {
     ("DELETE", "/api/app/1/devices/{device_id}"): Way(answer=None),
     ("PATCH", "/api/app/1/device"): Way(answer=(200, MeDevice), body=DeviceNameIn),
     ("PUT", "/api/app/1/push"): Way(
-        answer=(200, Done), name="set_push", summary="Where notifications for this device go (device key only)"),
+        answer=(200, Done), name="set_push", summary="Where notifications for this device go (device key only)",
+        body=PushIn),
     ("DELETE", "/api/app/1/push"): Way(
         answer=(200, Done), name="stop_push", summary="Stop notifications for this device; it stays paired"),
     ("GET", "/api/app/1/push/kinds"): Way(answer=(200, KindsOut)),
@@ -161,4 +169,4 @@ browser = nexgeraete_api.browser_router(
     prefix=BROWSER_PREFIX,
     tags=["devices"],
 )
-router.include_router(browser, include_in_schema=False)
+router.include_router(browser)

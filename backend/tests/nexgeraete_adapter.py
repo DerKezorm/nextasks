@@ -159,12 +159,23 @@ class Adapter(StandardAdapter):
         from app.vendor.nexkonten import manage
 
         with SessionLocal() as db:
-            getattr(manage, action)(KontenStore(db), self.ids[account], actor_id=self.ids["operator"],
+            getattr(manage, action)(KontenStore(db), self.ids[account], actor_id=self._actor(account),
                                     password=self.password)
         # Blocking and deleting end the account's browser sessions: its browser signs in anew when asked next.
         old = self.clients.pop(account, None)
         if old is not None:
             old.close()
+
+    def _actor(self, account: str) -> Any:
+        """Who blocks or deletes: the operator, and for the operator itself a second one (nobody acts on their own
+        account; nextasks may have several operators)."""
+        if account != "operator":
+            return self.ids["operator"]
+        if "second operator" not in self.ids:
+            from tests.conftest import make_account
+
+            self.ids["second operator"] = make_account("otto", "operator").id
+        return self.ids["second operator"]
 
     def block(self, account: str = "owner") -> None:
         self._manage("block", account)
@@ -230,11 +241,21 @@ class Adapter(StandardAdapter):
             devices.tell(db, self.ids[account], kind, message)
 
     def announce(self, version: str) -> None:
+        # As nexupdates' on_devices does it (services/updates.py, U24).
         from app.services import devices
 
-        # The contract checks the running version in the text against "1.2.1", the version its reference app runs
-        # (test_nexgeraete_push.py); nextasks says its own __version__ in production.
-        devices.announce(version, current="1.2.1")
+        devices.announce(version)
+
+    def update_wanted(self) -> bool:
+        # As nexupdates' devices_want asks it.
+        from app.services import devices
+
+        return devices.update_wanted()
+
+    def running(self) -> str:
+        from app import __version__
+
+        return __version__
 
     def sweep(self) -> int:
         from app.services import devices

@@ -1,4 +1,4 @@
-// Vorlage nexgeraete 0.1.0
+// Vorlage nexgeraete 0.1.1
 // @vitest-environment jsdom
 /**
  * The parts of the module in the app: the card "Geräte" with the pairing window, renaming and disconnecting, the card
@@ -26,7 +26,9 @@ import {
   type PushKind,
 } from './vendor/nexgeraete'
 
-// APP: where the app mounts the module's browser routes, its name and its link scheme.
+// APP: where the app mounts the module's browser routes (`browser_router`; '/api', or its own prefix such as
+// '/api/devices' where the app's older browser routes stay under /api), its name and its link scheme. Every card gets
+// it as `base`.
 const BASE = '/api/devices'
 const APP = 'nextasks'
 const SCHEME = 'nextasks'
@@ -46,6 +48,8 @@ let kinds: Record<string, PushKind[]>
 let operatorView: AccountDevices
 let redirect: string
 let refuse: { method: string; path: string; detail: Record<string, unknown> } | null
+/** An answer of another shape for every GET (a test double of the app answering `[]`). */
+let oddAnswer: unknown
 
 function device(id: number, extra: Partial<Device> = {}): Device {
   return {
@@ -78,6 +82,7 @@ const request: DeviceRequest = async <T,>(path: string, init: { method?: string;
     refuse = null
     throw Object.assign(new Error('refused'), { detail })
   }
+  if (oddAnswer !== undefined && method === 'GET') return oddAnswer as T
   const kindsMatch = path.match(new RegExp(`^${BASE}/app-devices/([^/]+)/push-kinds$`))
   if (kindsMatch) {
     const id = decodeURIComponent(kindsMatch[1]!)
@@ -168,6 +173,7 @@ const made = (method: string, path: string) => calls.filter((call) => call.metho
 beforeEach(() => {
   calls = []
   refuse = null
+  oddAnswer = undefined
   hasApp = true
   pairingState = 'waiting'
   pairings = 0
@@ -437,6 +443,8 @@ describe('the card Mitteilungen auf deinen Geräten', () => {
     expect(boxes.map((found) => found.querySelector('h3')!.textContent)).toEqual(['Kims iPhone · iPhone 15', 'iPad Air · iPad', 'MacBook Air · Mac'])
     expect(all('[data-testid="devices-push-state"]').map((badge) => badge.textContent)).toEqual(['Mitteilungen erlaubt', 'Keine Mitteilungen angemeldet', 'Keine Mitteilungen angemeldet'])
     expect(boxes[1]!.textContent).toContain(`nicht für Mitteilungen von ${APP} angemeldet`)
+    expect(boxes[0]!.textContent).toContain(`In ${APP} auf dem Gerät wählst du sie erst mit einer kommenden App-Version.`)
+    expect(boxes[0]!.textContent).not.toContain('Einstellungen › Mitteilungen')
     expect(boxes[0]!.querySelectorAll('input[type="checkbox"]')).toHaveLength(2)
     expect(boxes[0]!.querySelector('[data-testid="devices-push-operator"]')!.textContent).toBe('nur Betreiber')
     expect(boxes[2]!.textContent).toContain('noch keine Mitteilungen zum Auswählen')
@@ -447,6 +455,22 @@ describe('the card Mitteilungen auf deinen Geräten', () => {
     expect(made('PUT', `${BASE}/app-devices/1/push-kinds`).at(-1)!.body).toEqual({ changed: false })
     expect(find<HTMLInputElement>('[data-testid="devices-push-1-changed"]')!.checked).toBe(false)
     expect(boxes[0]!.querySelector('[data-testid="devices-push-saved"]')!.textContent).toBe('Gespeichert.')
+  })
+
+  it('points to the app\'s own ticks only where the app on the device shows them', async () => {
+    devices = devices.map((found) => (found.id === 1 ? { ...found, chooses_kinds: true } : found))
+    show(<DevicePushCard request={request} base={BASE} app={APP} />)
+    await settle()
+    const boxes = all('[data-testid="devices-push-device"]')
+    expect(boxes[0]!.textContent).toContain('Die App zeigt dieselben Haken unter Einstellungen › Mitteilungen.')
+    expect(find('[data-card="devices-push"]')!.textContent).toContain('Jedes Gerät hat seine eigene Auswahl.')
+  })
+
+  it('shows an answer of another shape as a problem', async () => {
+    oddAnswer = []
+    show(<DevicePushCard request={request} base={BASE} app={APP} />)
+    await settle()
+    expect(find('[data-testid="devices-push-problem"]')!.textContent).toBe('Das hat nicht geklappt. Versuche es noch einmal.')
   })
 
   it('without devices says where to connect one', async () => {
@@ -484,6 +508,19 @@ describe("the operator's part in Konten › Verwalten", () => {
     expect(made('DELETE', `${BASE}/server/accounts/7/devices`)).toHaveLength(1)
     expect(find('[data-testid="account-devices-line"]')!.textContent).toBe('Kein Gerät verbunden')
     expect(find('[data-testid="account-devices-sub"]')!.textContent).toBe('Mila Example kann jederzeit neu verbinden.')
+  })
+
+  it('shows an answer of another shape as a problem and never falls over', async () => {
+    oddAnswer = []
+    show(<AccountDevicesPart request={request} base={BASE} accountId={7} name="Mila Example" />)
+    await settle()
+    expect(find('[data-testid="account-devices-problem"]')!.textContent).toBe('Das hat nicht geklappt. Versuche es noch einmal.')
+    expect(find('[data-testid="account-devices-line"]')).toBeNull()
+    expect(find('[data-testid="account-devices-privacy"]')).not.toBeNull()
+    oddAnswer = { count: 1 }
+    show(<DevicesCard request={request} base={BASE} app={APP} />)
+    await settle()
+    expect(find('[data-testid="devices-problem"]')!.textContent).toBe('Das hat nicht geklappt. Versuche es noch einmal.')
   })
 
   it('says the devices rest while the account is blocked', async () => {

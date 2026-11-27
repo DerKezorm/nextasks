@@ -1,4 +1,4 @@
-"""The iPhone app's devices: nextasks' side of the shared module ``vendor/nexgeraete`` (geraete 0.1.0).
+"""The iPhone app's devices: nextasks' side of the shared module ``vendor/nexgeraete`` (geraete 0.1.1).
 
 The module manages pairing (QR code, code to type, sign-in in the browser, another own device over iCloud), knowing a
 device again by its key, the list, renaming, disconnecting, the kinds of notification per device and the push through
@@ -412,8 +412,8 @@ def send(url: str, body: dict[str, Any]) -> int:
 
 
 def on_paired(holder: Holder, device: Device) -> None:
-    """After every new device (G29): the mail "New sign-in" as after a sign-in in a new browser, unless the person
-    turned it off; it names the device."""
+    """After every new device (G29, G50): the mail "New sign-in" as after a sign-in in a new browser, unless the person
+    turned it off; it names the device and its model (``nexgeraete.notices.letter``)."""
     from ..db import SessionLocal
     from ..vendor.nexkonten import sessions as konten_sessions
     from . import kontenpost
@@ -425,22 +425,29 @@ def on_paired(holder: Holder, device: Device) -> None:
         if account is None or konto is None:
             return
         mail = konten_sessions.new_sign_in(konto, known=False, wanted=bool(account.new_sign_in_mail))
-        if kontenpost.queue(db, mail, where=nexgeraete.describe(device)):
+        if kontenpost.queue_device(db, mail, device):
             logger.info("Mail about a new device queued account_id=%s", holder.id)
 
 
-def announce(version: str, current: str | None = None) -> None:
-    """The operators' devices hear of a new version (G18; ``current`` is the running one, ``__version__``). Not
-    wired to ``updates`` yet: nextasks has no bell, and the module updates gives ``on_newer`` only to an app with one
-    (U19, its contract ``test_the_bell_is_given_exactly_where_the_app_has_one``); the contract of the device module
-    calls it."""
+def announce(version: str) -> None:
+    """The operators' devices hear of a new version (G56, U24): ``on_devices`` of ``nexupdates`` (``services/updates``),
+    once per version and only while the update check is on; the text names the running version (``__version__``)."""
     from .. import __version__
     from ..db import SessionLocal
 
     with SessionLocal() as db:
         base = settings_service.public_url(db)
-        nexgeraete.notices.newer(GeraeteStore(db), LIVE, version, current or __version__,
+        nexgeraete.notices.newer(GeraeteStore(db), LIVE, version, __version__,
                                  f"{base}{WHATS_NEW_PAGE}" if base else "", send=send)
+
+
+def update_wanted() -> bool:
+    """``devices_want`` of ``nexupdates`` (G56, U24): a device of an operator understands and wants ``update``. Such a
+    device counts as a bell: the background looks at most once a day."""
+    from ..db import SessionLocal
+
+    with SessionLocal() as db:
+        return nexgeraete.notices.update_wanted(GeraeteStore(db), LIVE)
 
 
 def sweep() -> int:

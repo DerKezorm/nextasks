@@ -41,6 +41,36 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug (27.11.2026): geraete 0.1.1, updates 0.1.3 (U24, G50 bis G59)
+
+- **Neue Version an die Geräte (G56, U24):** `services/updates.py` gibt `nexupdates` `devices_want` =
+  `devices.update_wanted()` (`nexgeraete.notices.update_wanted`) und `on_devices` = `devices.announce(version)`
+  (`notices.newer` mit `__version__` und dem Link auf Über); `on_newer` bleibt None (keine Glocke). Die gemeldete
+  Version steht in der Einstellung `update_told`. `main.py` startet `updates.run_forever` (ein Blick je Stunde):
+  gefragt wird im Hintergrund höchstens einmal am Tag und nur, solange ein Gerät eines Betreibers `update` versteht und
+  will und die Prüfung an ist; sonst wie bisher nur beim Öffnen von Über (U19). Zurückgebaut: der Satz „not wired to
+  updates yet“ und `announce(version, current=…)`; der Adapter nannte fest „1.2.1“ (jetzt `running()`).
+- **Seite:** Einrichtung `UpdateSetupRow bell={false} devices`, Über `updatesDailyHint: dailyHint(texts, { bell:
+  false, devices: true })`.
+- **Mail bei neuem Gerät (G50):** `kontenpost.queue_device` mit `nexgeraete.notices.letter` („„Annas iPhone“
+  (iPhone 16 Pro)“) statt `from_account_mail(where=describe(...))`; Test in `test_app_devices.py`, Gegenprobe rot.
+- **G59:** Die Körper des Moduls heißen `Nexgeraete…`; `KeyIn`/`CodeIn`/`DeviceNameIn` erben von ihnen, `PUT
+  /api/app/1/push` behält über eine eigene Klasse den Namen `PushIn` von 0.8.0. Die Browser-Wege unter `/api/devices`
+  stehen jetzt in der Beschreibung (`include_in_schema=False` weg): kein Name und kein Weg von vorher ändert sich (Abzug
+  vor/nach verglichen, `test_openapi_names` grün). Der neue Modulfall
+  `test_the_module_s_bodies_keep_their_names_beside_the_app_s` bleibt rot: er verbietet jeden Namen mit `__`, und
+  nextasks hat seit 0.8.0 eigene solche Namen (`app__routers__accounts__RoleIn` u. a., E53 hält sie fest), mit und
+  ohne die Modulwege gleich (Modulfehler gemeldet).
+- **G55:** nichts zu tun; nextasks' Ausgang wiederholt je Konto nur, wenn kein Gerät die Nachricht nahm, und schickt
+  über `push.tell`. **G57/G58:** `open_pairings` bleibt 5, der alte Weg `/api/app-pairing` ersetzte nie (409 ab 5),
+  Link bleibt `connect`.
+- Vertragsadapter: `nexgeraete_adapter.py` `running()`, `update_wanted()`, ein zweiter Betreiber sperrt den ersten;
+  `nexupdates_adapter.py` `has_devices`, `want_on_device`, `devices_told` (entschlüsselt, was am Gerät ankam).
+  Vorlagen `nexgeraete.test.tsx` (0.1.1) und `nexupdates.test.tsx` (0.1.3) von Hand übernommen.
+- Was ist neu 0.9.0 (de/en): der Satz zur Suche nach neuen Versionen nennt auch die Mitteilung auf den Geräten des
+  Betreibers (mit einer späteren App-Version); `einst-werkzeug/release/nextasks-0.9.0.md` dazu, wann nextasks von
+  selbst nachsieht.
+
 ### Nachzug (27.11.2026): E67 Server › Verbindungen; ui 1.2.1, verbinden 0.1.18, schluessel 1.1.3, mcp 1.1.5
 
 Eigener Bereich Server › Verbindungen (`server-connections`, `/settings/server-connections`, Symbol `Plug`, direkt nach

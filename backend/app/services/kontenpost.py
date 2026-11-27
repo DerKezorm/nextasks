@@ -20,7 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import OPERATOR, Account
-from ..vendor import nexkonten, nexpost
+from ..vendor import nexgeraete, nexkonten, nexpost
 from . import clock, post_store, settings_service
 from .post_store import PostStore
 
@@ -67,14 +67,41 @@ def language_for(db: Session, account: Account | None) -> str:
     return "en"
 
 
+def _account_of(db: Session, mail: nexkonten.Mail) -> Account | None:
+    return db.get(Account, int(mail.account_id)) if str(mail.account_id).isdigit() else None
+
+
+def _zone(account: Account | None) -> str:
+    """The moment of a new sign-in in the person's own zone (the profile's, else the server's); never an address of
+    the net anywhere in the letter (post 1.0.0)."""
+    return (account.timezone if account is not None else "") or clock.zone_name()
+
+
 def letter_of(db: Session, mail: nexkonten.Mail, *, by: str = "", where: str = "", days: int = 0) -> nexpost.Letter:
     """The letter of a mail of the account module; ``ValueError``/``MailError`` for an address it refuses."""
-    account = db.get(Account, int(mail.account_id)) if str(mail.account_id).isdigit() else None
-    # The moment of a new sign-in in the person's own zone (the profile's, else the server's); never an address of
-    # the net anywhere in the letter (post 1.0.0).
-    zone = (account.timezone if account is not None else "") or clock.zone_name()
+    account = _account_of(db, mail)
     return nexpost.letters.from_account_mail(mail, language=language_for(db, account), link=link_for(db, mail),
-                                             by=by, where=where, days=days, time_zone=zone)
+                                             by=by, where=where, days=days, time_zone=_zone(account))
+
+
+def queue_device(db: Session, mail: nexkonten.Mail | None, device: nexgeraete.Device) -> bool:
+    """The mail "New sign-in" for a newly paired device into the outbox (geraete 0.1.1, G29, G50): the letter of
+    ``nexgeraete.notices.letter``, which names the device ("„Kims iPhone“ (iPhone 16 Pro)") where
+    ``from_account_mail`` would read a browser. False when nothing went in."""
+    if mail is None or not post_store.configured(db):
+        return False
+    account = _account_of(db, mail)
+    try:
+        letter = nexgeraete.notices.letter(nexpost.letters, mail, device, language=language_for(db, account),
+                                           link=link_for(db, mail), time_zone=_zone(account))
+    except (nexpost.MailError, ValueError) as exc:
+        logger.warning("Mail not queued kind=%s reason=%s", mail.kind, type(exc).__name__)
+        return False
+    if letter is None:
+        return False
+    nexpost.outbox.queue(PostStore(db), letter)
+    db.commit()
+    return True
 
 
 def queue(db: Session, mail: nexkonten.Mail | None, *, by: str = "", where: str = "", days: int = 0) -> bool:

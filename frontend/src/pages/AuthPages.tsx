@@ -211,8 +211,9 @@ export function SetupPage() {
         <AuthField label={t('account.email')} value={email} onChange={setEmail} type="email" autoComplete="email" maxLength={EMAIL_MAX} hint={t('account.emailHint')} />
         <AuthField label={t('account.newPassword')} value={password} onChange={setPassword} type="password" autoComplete="new-password" hint={t('account.passwordRules', { minimum: min })} />
         <PasswordConfirmField value={again.confirm} onChange={again.setConfirm} mismatch={again.mismatch} />
-        {/* No bell in nextasks: the sentence says it looks when an operator opens About (updates 0.1.2). */}
-        <UpdateSetupRow app="nextasks" bell={false} checked={updateCheck} onChange={setUpdateCheck} language={i18n.language} />
+        {/* No bell in nextasks: the sentence says it looks when an operator opens About, and once a day while a device of an
+            operator wants to hear of new versions (updates 0.1.3, U24). */}
+        <UpdateSetupRow app="nextasks" bell={false} devices checked={updateCheck} onChange={setUpdateCheck} language={i18n.language} />
         {/* No word about the second factor under the password unless one is required (konten 0.3.6): the first
             account comes before any switch of the operator. */}
         {setupNotes({ factorRequired: false }).map((note) => (

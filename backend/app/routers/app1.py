@@ -193,12 +193,12 @@ Who = Annotated[Caller, Depends(caller)]
 # --- Pairing: the module's routes (``routers/geraete.py``), described under the names of before ---------------------
 
 
-class KeyIn(nexgeraete_api.PairIn):
+class KeyIn(nexgeraete_api.NexgeraetePairIn):
     """What a device sends to pick its key up: ``device`` in the old form; ``secret``, ``device_name``,
     ``device_kind`` from an app built on the module."""
 
 
-class CodeIn(nexgeraete_api.PairIn):
+class CodeIn(nexgeraete_api.NexgeraetePairIn):
     """The typed code (``ABCD-EFGH``) or the one-time code of the sign-in in the browser, and the device's name."""
 
 

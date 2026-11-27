@@ -1,9 +1,10 @@
-"""The about page and the update check in nextasks (shared module ``nexupdates``, updates 0.1.1).
+"""The about page and the update check in nextasks (shared module ``nexupdates``, updates 0.1.3).
 
 What every app shares is held by the contract tests in ``tests/nexupdates``; here what is nextasks' own: its
 repository and no project page (U18), a member's answer in the old form with nothing in it (U15, U21), the setup box
 and the old setup page (U1), the operator's switch under Settings › Server through the old ``PUT /api/settings``, no
-look in the background (U19: nextasks has no bell), and the one address asked. No test here reaches GitHub; the
+look in the background while no device of an operator wants to hear of new versions (U19, U24: nextasks has no bell;
+the contract holds the case with such a device), and the one address asked. No test here reaches GitHub; the
 conftest points the address at a port that refuses.
 """
 
@@ -96,7 +97,8 @@ def test_the_old_settings_switch_is_the_modules(client: TestClient, account: Acc
 
 def test_no_look_in_the_background_without_a_bell(client: TestClient, account: Account,
                                                   monkeypatch: pytest.MonkeyPatch) -> None:
-    """U19: the daily look serves a bell; nextasks has none, so only an operator opening "About" asks."""
+    """U19: the daily look serves a bell or a device of an operator that wants it (U24); nextasks has no bell, and
+    without such a device only an operator opening "About" asks."""
     asked = answers(monkeypatch, "v99.0.0")
     assert updates.configure().on_newer is None
     assert check.look_once() is None

@@ -243,3 +243,37 @@ def test_a_brought_in_device_name_is_cleaned_like_a_pairing() -> None:
     empty = phone.post(f"{API}/devices", json={}).json()["key"]
     pad2 = TestClient(app, base_url="http://testserver", headers={"Authorization": f"Bearer {empty}"})
     assert pad2.get(f"{API}/me").json()["device"]["name"] == "iPhone"
+
+
+def test_a_new_device_brings_a_mail_that_names_it_and_its_model() -> None:
+    """geraete 0.1.1 (G29, G50): the mail "New sign-in" for a new device names it as "„Annas iPhone“ (iPhone 16 Pro)",
+    through ``nexgeraete.notices.letter``, never as a browser."""
+    import json
+
+    from sqlalchemy import select
+
+    from app.models import Account
+    from app.models_accounts import MailOutbox
+
+    account, browser = person("anna")
+    with SessionLocal() as db:
+        settings_service.save(db, {"smtp_host": "mail.example.com", "smtp_from": "tasks@example.com",
+                                   "public_url": "https://tasks.example.com"})
+        row = db.get(Account, account.id)
+        assert row is not None
+        row.email = row.email_confirmed = "anna@example.com"
+        row.language = "de"
+        db.commit()
+    pairing = _pair(browser)
+    query = parse_qs(urlsplit(pairing["link"]).query)
+    picked = TestClient(app, base_url="http://testserver").post(
+        f"{API}/pairing/{pairing['id']}/key",
+        json={"secret": query["secret"][0], "device_name": "Annas iPhone", "device_kind": "ios"},
+        headers={"X-Nex-App": "nextasks-ios/2.0.0 (iPhone 16 Pro; iOS 26.1)"})
+    assert picked.status_code in (200, 201), picked.text
+    with SessionLocal() as db:
+        letters = [json.loads(row.letter) for row in db.scalars(select(MailOutbox))]
+    [letter] = [letter for letter in letters if letter.get("kind") == "new_sign_in"]
+    text = json.dumps(letter, ensure_ascii=False)
+    assert "„Annas iPhone“ (iPhone 16 Pro)" in text
+    assert "https://tasks.example.com/settings/security" in text

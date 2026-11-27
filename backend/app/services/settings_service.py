@@ -52,6 +52,8 @@ DEFAULTS: dict[str, Any] = {
     "connections_local_network": False,
     #: Ask GitHub once a day whether a newer nextasks is out (services/updates). Only the question goes out, so on.
     "update_check": True,
+    #: The newest version the operators' devices were told about (``services/updates``, U24), so none hears it twice.
+    "update_told": None,
     #: Invitation mail: without a host nothing is sent, the link to copy is enough.
     "smtp_host": "",
     "smtp_port": 587,

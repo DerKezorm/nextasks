@@ -179,8 +179,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         if folder is not None:
             folder.mkdir(parents=True, exist_ok=True)
     locales.start()
-    # Whether a newer nextasks is out: asked only when an operator opens "About" (no bell, so no look in the
-    # background, U19).
+    # Whether a newer nextasks is out: no bell, so the background looks only while a device of an operator wants to
+    # hear it (U24, at most once a day); otherwise asked when an operator opens "About" (U19).
     updates.configure()
     added = locales.available()
     if added:
@@ -195,6 +195,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         tasks.append(asyncio.create_task(notify.run_forever(stop)))
         tasks.append(asyncio.create_task(outbox.run_forever(stop)))
         tasks.append(asyncio.create_task(_sweep_forever(stop)))
+        tasks.append(asyncio.create_task(updates.run_forever(stop)))
     # The TLS context for calls outside (the sign-in providers, the push relay), read once in a thread, never in the
     # event loop: the first sign-in through a provider does not wait for it.
     threading.Thread(target=_share_tls_context, name="tls-context", daemon=True).start()

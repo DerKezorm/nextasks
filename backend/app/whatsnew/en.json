@@ -44,7 +44,7 @@
       "There can be several operators. A deleted account can be brought back for 30 days, with its spaces and assignments.",
       "Instead of setting a password themselves, operators send a link for a new password.",
       "Backups run at a time of your choice, monthly too if you like; “Back up now” takes a note.",
-      "The check for new versions asks once at setup; only the operator sees its answer, under About.",
+      "The check for new versions asks once at setup; only the operator sees its answer, under About and, with a later version of the iPhone app, as a notification too.",
       "When your session ends, the page stays and asks you to sign in; what you just changed goes out afterwards.",
       "API keys, the iPhone app and the Home Assistant integration keep working as before.",
       "The context menu is never wider than the window."

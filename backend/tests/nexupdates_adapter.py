@@ -3,12 +3,18 @@
 The app as in production: the switch ``update_check`` in the settings table (JSON, as before the module), the routes
 under ``/api/about`` (``routers/about.py``), the setup route ``POST /api/setup`` with the box (U1).
 
-nextasks has no bell (``has_bell`` False, updates 0.1.2): it never looks in the background (U19, ``on_newer`` is None)
-and asks only when an operator opens "About".
+nextasks has no bell (``has_bell`` False, updates 0.1.2, ``on_newer`` is None). It pairs devices (``has_devices``,
+updates 0.1.3, U24): an operator's device that understands and wants ``update`` counts as a bell, the background looks
+at most once a day and tells it through the module geraete (``services/devices.py``); without one it asks nothing
+(U19) and only an operator opening "About" asks.
+
+Nothing reaches the relay: ``push.POST`` (what ``devices.send`` posts with) is a recorder here, and ``devices_told``
+opens what reached the operator's device with its own key, as the app would.
 """
 
 from __future__ import annotations
 
+import json
 import secrets
 from typing import Any
 
@@ -20,13 +26,19 @@ class Adapter(StandardAdapter):
     prefix = "/api/about"
     also: tuple[str, ...] = ()
     has_bell = False
+    has_devices = True
 
     def start(self) -> None:
         from app.models import MEMBER, OPERATOR
-        from app.services import updates
+        from app.services import push, updates
         from tests.conftest import make_account
 
         updates.configure()
+        self._post = push.POST
+        self._sent: list[dict[str, Any]] = []
+        push.POST = self._record
+        #: The operator's device of ``want_on_device``: its id and its private key, per operator.
+        self._devices: dict[int, tuple[Any, str]] = {}
         self._accounts = {
             "operator": make_account("boss", OPERATOR, password=secrets.token_urlsafe(12)),
             "member": make_account("robin", MEMBER, password=secrets.token_urlsafe(12)),
@@ -34,9 +46,17 @@ class Adapter(StandardAdapter):
         self._clients: dict[str, Any] = {}
 
     def stop(self) -> None:
+        from app.services import push
+
         for client in self._clients.values():
             client.close()
         self._clients = {}
+        if getattr(self, "_post", None) is not None:
+            push.POST = self._post
+
+    def _record(self, url: str, body: dict[str, Any]) -> int:
+        self._sent.append(body)
+        return 200
 
     def restart(self) -> None:
         # As main.lifespan does at the app's start (the data stay).
@@ -78,7 +98,9 @@ class Adapter(StandardAdapter):
         from app.models import MEMBER, Account
         from tests.conftest import SETUP_CODE, TAB, make_account
 
-        self.stop()
+        for client in self._clients.values():
+            client.close()
+        self._clients = {}
         with SessionLocal() as db:
             db.execute(delete(Account))
             db.commit()
@@ -102,3 +124,48 @@ class Adapter(StandardAdapter):
         from app.main import app
 
         return app.openapi()
+
+    def want_on_device(self, on: bool) -> None:
+        """The operator's iPhone, paired as a coming app pairs: it names ``update`` among what it understands and has
+        it switched on (``on``) or off."""
+        from app.db import SessionLocal
+        from app.models import utcnow
+        from app.services import devices
+        from app.vendor.nexgeraete import NewDevice, PushState, seal
+
+        operator = self._accounts["operator"].id
+        with SessionLocal() as db:
+            store = devices.GeraeteStore(db)
+            if operator not in self._devices:
+                private, public = seal.key_pair()
+                made = store.add_device(NewDevice(account_id=operator, name="Olga's iPhone",
+                                                  token_hash=secrets.token_hex(32), prefix="ntd_test", kind="ios",
+                                                  created_at=utcnow(),
+                                                  model="iPhone 16", system="iOS 26.1", app_version="2.0", via="qr"))
+                store.set_push(made.id, PushState(f"ticket-{secrets.token_urlsafe(6)}", public, ("update",)))
+                self._devices[operator] = (made.id, private)
+            store.set_kinds(self._devices[operator][0], {"update": on})
+            db.commit()
+
+    def devices_told(self) -> list[str]:
+        """The versions that reached the operators' devices, opened with each device's key, oldest first."""
+        from app.db import SessionLocal
+        from app.services import devices
+        from app.vendor.nexgeraete import seal
+
+        tickets: dict[str, str] = {}
+        with SessionLocal() as db:
+            store = devices.GeraeteStore(db)
+            for device_id, private in self._devices.values():
+                found = store.device(device_id)
+                if found is not None and found.push is not None:
+                    tickets[found.push.ticket] = private
+        told = []
+        for body in self._sent:
+            private = tickets.get(str(body.get("ticket")))
+            if private is None:
+                continue
+            message = json.loads(seal.unseal(str(body["enc"]), private, devices.CONFIG.push_info))
+            if message.get("type") == "update":
+                told.append(str(message["version"]))
+        return told
