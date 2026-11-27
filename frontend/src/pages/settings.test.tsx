@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { forgetPrefs } from '../lib/devicePref'
 import { smallWorld } from '../test/fakeServer'
 import { button, choose, click, mount, press, settle, submit, type, unmount, where } from '../test/harness'
+import { areaText, NEXUI_TEXTS } from '../vendor/nexui'
 
 afterEach(async () => {
   await unmount()
@@ -89,6 +90,7 @@ describe('the settings', () => {
       'Notifications',
       'Connections',
       'General',
+      'Connections',
       'Sign-in',
       'Mail',
       'Storage and backups',
@@ -115,7 +117,7 @@ describe('the settings', () => {
       'connections',
       'about',
     ])
-    for (const area of ['sign-in', 'mail', 'storage', 'accounts', 'log']) {
+    for (const area of ['server-connections', 'sign-in', 'mail', 'storage', 'accounts', 'log']) {
       await unmount()
       await mount(server, `/settings/${area}`)
       expect(where.path).toBe('/settings')
@@ -133,8 +135,9 @@ describe('the settings', () => {
       ['/settings?tab=looks', '/settings/appearance'],
       ['/settings?tab=general', '/settings/appearance'],
       ['/settings?tab=server&sub=backups', '/settings/storage'],
-      ['/settings?tab=server&sub=app', '/settings/general'],
-      ['/settings?tab=server&sub=api', '/settings/general'],
+      // The iPhone app and the API are switches of "Schnittstellen", under Server › Connections since E67.
+      ['/settings?tab=server&sub=app', '/settings/server-connections'],
+      ['/settings?tab=server&sub=api', '/settings/server-connections'],
     ]
     for (const [before, now] of cases) {
       await mount(server, before)
@@ -194,20 +197,77 @@ describe('the settings', () => {
 
   it('draw every switch as a box in a row, never a sliding switch', async () => {
     const { server } = smallWorld()
-    const page = await mount(server, '/settings/general')
-    // Every switch a box to tick in a row with its label (`CheckboxRow`), none a sliding switch (ui 1.1.0, E11).
-    const switches = [...page.querySelectorAll('input[type="checkbox"]')] as HTMLInputElement[]
+    // Every switch a box to tick in a row with its label (`CheckboxRow`), none a sliding switch (ui 1.1.0, E11), under
+    // General and under Server › Connections (E67).
+    let page = await mount(server, '/settings/server-connections')
+    let switches = [...page.querySelectorAll('input[type="checkbox"]')] as HTMLInputElement[]
     expect(switches.length).toBeGreaterThan(3)
     expect(switches.every((entry) => !!entry.id && page.querySelector(`label[for="${entry.id}"]`) !== null)).toBe(true)
     expect(page.querySelector('[role="switch"], .nt-switch')).toBeNull()
-    // The cards in the plan's order: limits, features for all accounts, interfaces (the API, MCP, the iPhone app), the
-    // other nex apps (verbinden 0.1.1, V14), languages.
-    expect([...page.querySelectorAll('[data-card]')].map((card) => card.getAttribute('data-card'))).toEqual(['limits', 'features', 'interfaces', 'nex-apps', 'languages'])
+    await unmount()
+    page = await mount(server, '/settings/general')
+    switches = [...page.querySelectorAll('input[type="checkbox"]')] as HTMLInputElement[]
+    expect(switches.length).toBeGreaterThan(1)
+    expect(switches.every((entry) => !!entry.id && page.querySelector(`label[for="${entry.id}"]`) !== null)).toBe(true)
+    expect(page.querySelector('[role="switch"], .nt-switch')).toBeNull()
+    // The cards in the plan's order: limits, features for all accounts, languages; the interfaces and the other nex apps
+    // stand under Server › Connections (E67).
+    expect([...page.querySelectorAll('[data-card]')].map((card) => card.getAttribute('data-card'))).toEqual(['limits', 'features', 'languages'])
     // The line under the title names exactly these cards, in this order (ui 1.1.3, U-3): no Web Push in nextasks.
-    expect(page.querySelector('[data-testid="settings-area-general"] p')?.textContent).toBe('Limits, features for every account, interfaces, other nex apps and added languages.')
+    expect(page.querySelector('[data-testid="settings-area-general"] p')?.textContent).toBe('Limits, features for every account and added languages.')
     // The words as the plan and nexnotes write them (E39, E48): the same sentence on every server's features card.
     expect(page.querySelector('[data-card="features"]')?.textContent).toContain('What every account may use on this server.')
     expect([...page.querySelectorAll('[data-card="limits"] label')].map((label) => label.textContent)).toContain('Largest file per attachment (MB)')
+  })
+})
+
+describe('Server › Connections (E67)', () => {
+  const cards = (page: HTMLElement) => [...page.querySelectorAll('[data-card]')].map((card) => card.getAttribute('data-card'))
+
+  it('holds "Other nex apps", then "Interfaces" with every switch of both, under the title and line of the kit', async () => {
+    const { server } = smallWorld()
+    const page = await mount(server, '/settings/server-connections')
+    const area = page.querySelector('[data-testid="settings-area-server-connections"]') as HTMLElement
+    expect(cards(page)).toEqual(['nex-apps', 'interfaces'])
+    const kit = areaText(NEXUI_TEXTS.en, 'server-connections', { app: 'nextasks' })!
+    expect(area.querySelector('h1')?.textContent).toBe(kit.title)
+    expect(kit.title).toBe('Connections')
+    expect(area.textContent).toContain(kit.text)
+    expect(page.querySelector('[data-testid="settings-nav-server-connections"]')?.getAttribute('aria-current')).toBe('page')
+    // The switches of both cards, each a box to tick with its label: the other nex apps, the local network, the API,
+    // MCP (with its settings after it), the iPhone app.
+    const labelled = (name: string) => [...area.querySelectorAll('label')].find((label) => label.textContent?.startsWith(name))
+    for (const name of ['Connections with other nex apps', 'Connections into the local network', 'Programming interface (API) for members', 'MCP access', 'Allow the iPhone app']) {
+      const label = labelled(name)
+      expect(label, name).toBeDefined()
+      expect((document.getElementById(label!.htmlFor) as HTMLInputElement | null)?.type, name).toBe('checkbox')
+    }
+    expect(area.querySelectorAll('input[type="checkbox"]').length).toBeGreaterThanOrEqual(5)
+  })
+
+  it('is where the anchors of the cards under General lead, the anchor kept, for the operator only', async () => {
+    const { server, alex } = smallWorld()
+    for (const anchor of ['#nex-apps', '#interfaces']) {
+      const page = await mount(server, `/settings/general${anchor}`)
+      expect(where.path + where.hash).toBe(`/settings/server-connections${anchor}`)
+      expect(cards(page)).toEqual(['nex-apps', 'interfaces'])
+      await unmount()
+    }
+    // A member lands on the profile, as for every server area.
+    server.session = alex
+    await mount(server, '/settings/general#nex-apps')
+    expect(where.path).toBe('/settings')
+  })
+
+  it('took both cards out of General, which keeps the rest', async () => {
+    const { server } = smallWorld()
+    const page = await mount(server, '/settings/general#limits')
+    expect(where.path + where.hash).toBe('/settings/general#limits')
+    expect(cards(page)).toEqual(['limits', 'features', 'languages'])
+    expect(page.querySelector('[data-testid="interfaces-card"]')).toBeNull()
+    const area = page.querySelector('[data-testid="settings-area-general"]')!.textContent
+    expect(area).not.toContain('Connections with other nex apps')
+    expect(area).not.toContain('MCP access')
   })
 })
 
@@ -334,7 +394,7 @@ describe('My account › Connections › Other nex apps (verbinden 0.1.8)', () =
     const { server, alex } = smallWorld()
     let card = await open(await mount(server, '/settings/connections'))
     expect(card.querySelector('[data-testid="connection-not-set-up"]')).not.toBeNull()
-    expect(card.querySelector('[data-testid="connection-set-up"]')?.getAttribute('href')).toBe('/settings/general#nex-apps')
+    expect(card.querySelector('[data-testid="connection-set-up"]')?.getAttribute('href')).toBe('/settings/server-connections#nex-apps')
     expect(card.querySelector('input[type="url"]')).toBeNull()
     await unmount()
     server.session = alex

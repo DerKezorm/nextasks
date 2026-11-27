@@ -1118,8 +1118,21 @@ export class FakeServer {
         if ('api' in change) set.api_tokens_allowed = change.api
         if ('app' in change) set.app_enabled = change.app
         if ('pairing' in change) set.app_pairing_allowed = change.pairing
+        if ('mcp' in change) set.mcp_enabled = change.mcp
       }
-      return { status: 200, body: { api: !!set.api_tokens_allowed, app: set.app_enabled !== false, pairing: set.app_pairing_allowed !== false } }
+      return { status: 200, body: { api: !!set.api_tokens_allowed, mcp: !!set.mcp_enabled, app: set.app_enabled !== false, pairing: set.app_pairing_allowed !== false } }
+    }
+    // The operator's MCP settings under the switch "MCP access" (mcp, `McpOperatorSettings`).
+    if (path === '/api/connections/mcp/admin') return { status: 200, body: { programs: true, levels: ['read', 'write'], max_level: 'write', blocked_tools: [], tools: [] } }
+    // The operator's card "Other nex apps" (verbinden, `ConnectionsOperatorCard`): both switches and the addresses.
+    if (path === '/api/connect/admin') {
+      const set = this.settings as Record<string, unknown>
+      if (method === 'PUT') {
+        const change = body as Record<string, unknown>
+        if ('connections' in change) set.connections_enabled = change.connections
+        if ('local' in change) set.connections_local_network = change.local
+      }
+      return { status: 200, body: { connections: set.connections_enabled !== false, local: !!set.connections_local_network, partners: ['nexnotes', 'nexmail', 'nextime', 'nexpaper', 'nexdiary', 'nexfolk'], addresses: {} } }
     }
     if (path === '/api/connections/keys' && method === 'GET') {
       const set = this.settings as Record<string, unknown>

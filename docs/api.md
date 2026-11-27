@@ -8,7 +8,7 @@ change that would break a program goes to `/api/v2` beside it. Programs ignore f
 
 ## Switching it on
 
-The API is off until the operator switches it on, under **Settings › Server › General › Interfaces**. Then every account
+The API is off until the operator switches it on, under **Settings › Server › Connections › Interfaces**. Then every account
 makes its own API keys under **Settings › My account › Connections › API keys** (keys made before as "API tokens", with
 `ntk_` in front, go on working):
 
@@ -36,7 +36,7 @@ family, plus `"fields"` inside `detail` for `422 invalid_input`.
 
 | Status | Code | Meaning |
 |---|---|---|
-| 401 | `api_off` | The operator has not switched the API on (Server › General › Interfaces). |
+| 401 | `api_off` | The operator has not switched the API on (Server › Connections › Interfaces). |
 | 401 | `token_invalid` | No valid API key (missing, unknown, run out, blocked). |
 | 403 | `token_reads_only` | A write with a key that only reads. |
 | 403 | `not_allowed` | The account may read the space but not write in it. |
@@ -278,7 +278,7 @@ nexnotes, nexmail, nextime, nexpaper and nexdiary connect with nextasks with one
 Connections** (no key to copy): the account agrees on nextasks' page `/connect/app`, and the other app then calls
 `/api/v1` with the token of its connection (`Authorization: Bearer ntc_…`) instead of an API key. The places of this
 are the same in every nex app: `/.well-known/nex-app`, `/api/connect/…`. Such a token works only while the operator
-leaves **Settings › Server › General › Other nex apps** on (else `403 connections_off`; the switch of API keys does
+leaves **Settings › Server › Connections › Other nex apps** on (else `403 connections_off`; the switch of API keys does
 not count for it), only in the spaces the account gave, and only for what the other app needs:
 
 | Purpose | Opens | Used by |
@@ -294,7 +294,7 @@ account_resting`). API keys typed into another app before keep working as they a
 ## AI tools (MCP)
 
 AI programs that speak MCP work with an account's tasks at `POST /api/mcp`, once the operator switches **MCP access**
-on under **Settings › Server › General › Interfaces** (off on every installation). They connect themselves with the
+on under **Settings › Server › Connections › Interfaces** (off on every installation). They connect themselves with the
 account's consent (OAuth, the metadata under `/.well-known/oauth-authorization-server`), or take an MCP key (`ntm_`)
 made under **Settings › My account › Connections › AI tools (MCP)**. The tools read and change tasks the way `/api/v1`
 does, in the spaces the key was given: `list_spaces`, `list_lists`, `list_tasks`, `read_task`, `list_comments`,

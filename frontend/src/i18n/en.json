@@ -139,7 +139,7 @@
     "own_second_factor_first": "Set up your own second factor first, on your account page.",
     "use_disable": "Turn your own second factor off on your account page.",
     "provider_first": "Set up a sign-in provider first, or nobody but you could sign in.",
-    "api_off": "The operator has not switched the API on (Server › General › Interfaces).",
+    "api_off": "The operator has not switched the API on (Server › Connections › Interfaces).",
     "too_many_tokens": "An account has at most 20 API keys.",
     "operator_network": "The operator's settings are open only from the home network.",
     "display_name_invalid": "A display name cannot contain control or invisible characters.",

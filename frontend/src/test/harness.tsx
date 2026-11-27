@@ -20,13 +20,15 @@ let root: Root | null = null
 let host: HTMLElement | null = null
 let server: FakeServer | null = null
 const realFetch = globalThis.fetch
-export const where = { path: '' }
+/** Where the page is: `path` with the search, `hash` the anchor apart (`#nex-apps`). */
+export const where = { path: '', hash: '' }
 
 // eslint-disable-next-line react-refresh/only-export-components
 function Where() {
   const location = useLocation()
   useEffect(() => {
     where.path = location.pathname + location.search
+    where.hash = location.hash
   }, [location])
   return null
 }

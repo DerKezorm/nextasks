@@ -105,7 +105,7 @@ def _refused(refusal: KeyRefused) -> HTTPException:
 @router.post("/api-tokens", response_model=MadeOut, status_code=201, summary="Make an API token; shown once")
 def make_token(body: TokenIn, account: Account, db: DbSession) -> MadeOut:
     if not apitokens.allowed(db):
-        raise error("api_off", "The operator has not switched the API on (Server › General › Interfaces).", 403)
+        raise error("api_off", "The operator has not switched the API on (Server › Connections › Interfaces).", 403)
     if body.all_spaces and body.spaces is not None:
         raise error("invalid_input", "Choose spaces, or all of them, not both.", 422)
     if not body.all_spaces and not body.spaces:

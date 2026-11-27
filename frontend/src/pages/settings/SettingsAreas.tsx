@@ -57,6 +57,8 @@ export function AreaContent({ area }: { area: AreaSlug }) {
       return <LogCard />
     case 'about':
       return <AboutArea />
+    case 'server-connections':
+      return <ServerConnectionsArea />
     default:
       return <GeneralArea />
   }
@@ -83,19 +85,27 @@ function ConnectionsArea() {
   )
 }
 
-/** Server › General: limits, features for all accounts, interfaces (the module schluessel's), the other nex apps
- * (verbinden), languages. */
+/** Server › General: limits, features for all accounts, languages. */
 function GeneralArea() {
   const server = useServerSettings()
-  const words = useMcpWords()
   if (!server.settings) return null
   return (
     <>
       <LimitsCard server={server} />
       <FeaturesCard server={server} />
-      <InterfacesCard request={request} docsHref={API_DOCS} after={{ mcp: <McpOperatorSettings request={mcpRequest} words={words} /> }} />
-      <ConnectionsOperatorCard app="nextasks" request={request} />
       <LanguagesCard />
+    </>
+  )
+}
+
+/** Server › Connections (E67), the operator's mirror of My account › Connections: the other nex apps (verbinden), then
+ * the interfaces (the module schluessel's: API, MCP with its settings, the iPhone app, pairing). */
+function ServerConnectionsArea() {
+  const words = useMcpWords()
+  return (
+    <>
+      <ConnectionsOperatorCard app="nextasks" request={request} />
+      <InterfacesCard request={request} docsHref={API_DOCS} after={{ mcp: <McpOperatorSettings request={mcpRequest} words={words} /> }} />
     </>
   )
 }

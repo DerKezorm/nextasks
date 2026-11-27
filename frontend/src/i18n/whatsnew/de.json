@@ -20,17 +20,17 @@
       {
         "title": "KI-Werkzeuge (MCP)",
         "where": "Mein Konto › Verbindungen › KI-Werkzeuge (MCP)",
-        "body": "KI-Programme, die MCP sprechen, arbeiten auf Wunsch mit deinen Aufgaben: lesen, anlegen, ändern, abhaken und kommentieren. Ein Programm verbindet sich mit deiner Zustimmung im Browser oder bekommt einen MCP-Schlüssel, so oder so nur für die Bereiche, die du wählst. Je Werkzeug legst du fest: erlauben, erst fragen oder verweigern. Wartet ein Programm auf dein Ja, sagt nextasks dir Bescheid, und im Verlauf einer Aufgabe steht, welches Programm sie geändert hat. Der Betreiber schaltet den MCP-Zugang unter Server › Allgemein › Schnittstellen ein; ab Werk ist er aus."
+        "body": "KI-Programme, die MCP sprechen, arbeiten auf Wunsch mit deinen Aufgaben: lesen, anlegen, ändern, abhaken und kommentieren. Ein Programm verbindet sich mit deiner Zustimmung im Browser oder bekommt einen MCP-Schlüssel, so oder so nur für die Bereiche, die du wählst. Je Werkzeug legst du fest: erlauben, erst fragen oder verweigern. Wartet ein Programm auf dein Ja, sagt nextasks dir Bescheid, und im Verlauf einer Aufgabe steht, welches Programm sie geändert hat. Der Betreiber schaltet den MCP-Zugang unter Server › Verbindungen › Schnittstellen ein; ab Werk ist er aus."
       },
       {
         "title": "Einstellungen neu geordnet",
         "where": "Einstellungen",
-        "body": "Die Einstellungen sind aufgebaut wie in allen nex-Apps: unter Mein Konto Profil, Sicherheit, Darstellung, Benachrichtigungen und Verbindungen, für den Betreiber unter Server Allgemein, Anmeldung, Mail, Speicher und Sicherungen, Konten und Log. Hell oder Dunkel gehört jetzt zu deinem Konto und folgt dir auf jedes Gerät, die Zeitzone steht im Profil, und Daten und Uhrzeiten sehen überall gleich aus."
+        "body": "Die Einstellungen sind aufgebaut wie in allen nex-Apps: unter Mein Konto Profil, Sicherheit, Darstellung, Benachrichtigungen und Verbindungen, für den Betreiber unter Server Allgemein, Verbindungen, Anmeldung, Mail, Speicher und Sicherungen, Konten und Log; Server › Verbindungen hält „Andere nex-Apps“ und „Schnittstellen“. Hell oder Dunkel gehört jetzt zu deinem Konto und folgt dir auf jedes Gerät, die Zeitzone steht im Profil, und Daten und Uhrzeiten sehen überall gleich aus."
       }
     ],
     "smallTitle": "Außerdem",
     "small": [
-      "Für Betreiber: Die Adressen der anderen nex-Apps trägst du einmal unter Server › Allgemein › Andere nex-Apps ein, dann verbindet jedes Konto mit einem Klick. Dort steht auch „Verbindungen ins eigene Netz“.",
+      "Für Betreiber: Die Adressen der anderen nex-Apps trägst du einmal unter Server › Verbindungen › Andere nex-Apps ein, dann verbindet jedes Konto mit einem Klick. Dort steht auch „Verbindungen ins eigene Netz“.",
       "Es kann mehrere Betreiber geben. Ein gelöschtes Konto lässt sich 30 Tage lang zurückholen, samt seinen Bereichen und Zuweisungen.",
       "Statt ein Passwort selbst zu setzen, schickt der Betreiber einen Link für ein neues Passwort.",
       "Sicherungen laufen zu einer Uhrzeit deiner Wahl, auf Wunsch auch monatlich; „Jetzt sichern“ nimmt eine Notiz mit.",

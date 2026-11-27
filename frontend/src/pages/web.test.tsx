@@ -873,7 +873,7 @@ describe('spaces and people', () => {
 
   it('switches the iPhone app and invitations off for the operator', async () => {
     const { server } = world()
-    const page = await mount(server, '/settings/general')
+    let page = await mount(server, '/settings/general')
     const toggle = (label: string) => {
       const found = [...page.querySelectorAll('label')].find((l) => l.textContent?.startsWith(label))
       return found ? document.getElementById(found.htmlFor) : null
@@ -881,6 +881,10 @@ describe('spaces and people', () => {
     await settle()
     await click(toggle('Invitations to spaces'))
     expect(server.settings.invites_enabled).toBe(false)
+    // The iPhone app is a switch of "Interfaces", under Server › Connections since E67.
+    await unmount()
+    page = await mount(server, '/settings/server-connections')
+    await settle()
     await click(toggle('Allow the iPhone app'))
     expect(server.settings.app_enabled).toBe(false)
   })

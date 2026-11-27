@@ -41,6 +41,18 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug (27.11.2026): E67 Server › Verbindungen; ui 1.2.1, verbinden 0.1.18, schluessel 1.1.3, mcp 1.1.5
+
+Eigener Bereich Server › Verbindungen (`server-connections`, `/settings/server-connections`, Symbol `Plug`, direkt nach
+Allgemein): erst `ConnectionsOperatorCard` („Andere nex-Apps“, `#nex-apps`), dann `InterfacesCard` („Schnittstellen“,
+`#interfaces`, mit `McpOperatorSettings` unter MCP), Titel und Zeile aus `areaText` des Kits. Allgemein behält Grenzen,
+Funktionen für alle Konten und Sprachen, `GENERAL_PARTS` ebenso. `/settings/general#nex-apps` und `#interfaces` leiten
+für den Betreiber mit Anker nach Server › Verbindungen um (`resolveArea` bekommt den Hash), die alten
+`/settings?tab=server&sub=app` und `sub=api` ebenfalls. Texte, README, `docs/api.md`, Fehlertexte von `/api/v1` und
+`api_off`, „Was ist neu“ 0.9.0 nennen Server › Verbindungen. ui 1.2.1 bringt auch Banner und Fenster „Was ist neu“ des
+Kits (1.2.0), hier nicht benutzt. Vorlagen `nexverbinden.test.tsx` und `nexschluessel.test.tsx` von Hand übernommen.
+Neuer Test in `settings.test.tsx` („Server › Connections (E67)“), Gegenprobe gegen den alten Stand rot.
+
 ### Nachzug caafd08 (27.11.2026): verbinden 0.1.14
 
 Nur ein Vertragsfall: die Verbindung von nexfolk (nur `tasks.about`) öffnet keinen anderen Zweck von nextasks (403).
@@ -225,7 +237,7 @@ Umwege: keine; ruff nimmt alle vendor-Module samt Vertragstests aus. sicherung a
 e2e Test 34: jetzt grün (Fläche über ihren h1, Karte über `data-card`).
 
 Verweise (E39, E46): Texte, README und `docs/api.md` nennen die Orte der Einstellungen von heute, mit „›“ und der
-Gruppe zuerst („Mein Konto › Verbindungen › API-Schlüssel“, „Server › Allgemein › Schnittstellen“, „Server ›
+Gruppe zuerst („Mein Konto › Verbindungen › API-Schlüssel“, „Server › Verbindungen › Schnittstellen“, „Server ›
 Anmeldung“, „Mein Konto › Darstellung › Seitenleiste“, „Mein Konto › Profil › Sprache“); „Einstellungen ›“ nur auf der
 Seite zum Abbestellen und im README vor der Gruppe. In „Was ist neu“ zeigen nur die Wegweiser („where“) auf den Ort
 von heute, der Text älterer Fassungen bleibt wie veröffentlicht (E49). Test `i18n/places.test.ts` (Pfeile, Kommas und

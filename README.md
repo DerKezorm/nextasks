@@ -220,7 +220,7 @@ Make a backup first (see above). What changed is in the release notes, and nexta
 ## For programs
 
 Home Assistant, n8n or your own scripts use nextasks over `/api/v1`: spaces, lists and tasks, and making, changing and
-completing tasks. The operator switches the API on under **Settings › Server › General › Interfaces**; then every account
+completing tasks. The operator switches the API on under **Settings › Server › Connections › Interfaces**; then every account
 makes its own API keys under **Settings › My account › Connections › API keys**, to read or to read and write, for chosen
 spaces, with an end date. The reference is in [docs/api.md](docs/api.md).
 
@@ -229,7 +229,7 @@ program goes to `/api/v2` beside it.
 
 **AI tools (MCP)**: programs that speak the Model Context Protocol work with an account's tasks at `/api/mcp`: they
 read spaces, lists, tasks and comments, and create, change, complete, comment on and trash tasks. The operator
-switches **MCP access** on under **Settings › Server › General › Interfaces** (off on every installation). A program
+switches **MCP access** on under **Settings › Server › Connections › Interfaces** (off on every installation). A program
 then connects itself with the account's consent in the browser (OAuth), or takes an MCP key made under
 **Settings › My account › Connections › AI tools (MCP)**, in both cases only for the spaces chosen. Each tool can be
 allowed, asked for first or denied; a request waiting for a yes shows there and comes as a notification, and a task's
@@ -251,7 +251,7 @@ when, what is allowed and when it was last used, with "Check now" and "Disconnec
 | nexpaper | Read tasks; create and change tasks | Make a task from a document, with a link back to it |
 | nexdiary | Read tasks | The tasks completed on a day, while you write that day up |
 
-The operator enters the address of each app once under **Settings › Server › General › Other nex apps**; from then
+The operator enters the address of each app once under **Settings › Server › Connections › Other nex apps**; from then
 on every account connects with one click. Apps that run in your own network (LAN, VPN) need the switch
 "Connections into the local network" there too. The same place switches connections with other nex apps off; then
 nobody connects anew and existing connections rest, nothing is deleted. Connections made before with an API key keep

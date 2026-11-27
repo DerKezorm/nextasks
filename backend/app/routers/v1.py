@@ -107,7 +107,7 @@ def caller(request: Request) -> Caller:
         return found
     with SessionLocal() as db:
         if not apitokens.allowed(db):
-            raise error("api_off", "The operator has not switched the API on (Server › General › Interfaces).", 401)
+            raise error("api_off", "The operator has not switched the API on (Server › Connections › Interfaces).", 401)
         found = apitokens.authenticate(db, given)
     if found is None:
         raise error("token_invalid", "No valid API key.", 401)

@@ -2,7 +2,7 @@
  * Every text that points somewhere names the place as the settings call it now (plan "Einstellungen", E39): the areas
  * and cards of the shared kit and modules, never the old names (API token, the tab "Server", "Einstellungen, Profil").
  * Written as the plan writes it (E46): "›" between the steps, starting with the group ("Mein Konto › Verbindungen ›
- * API-Schlüssel", "Server › Allgemein › Schnittstellen"); "Einstellungen ›" only in front of a group.
+ * API-Schlüssel", "Server › Verbindungen › Schnittstellen"); "Einstellungen ›" only in front of a group.
  */
 import { describe, expect, it } from 'vitest'
 
@@ -54,8 +54,13 @@ describe('the places the texts point to', () => {
   it('are the ones of the settings now', () => {
     expect(de.errors.public_url_missing).toContain('Server › Anmeldung')
     expect(en.errors.public_url_missing).toContain('Server › Sign-in')
-    expect(de.errors.api_off).toContain('Server › Allgemein › Schnittstellen')
-    expect(en.errors.api_off).toContain('Server › General › Interfaces')
+    // E67: the card "Schnittstellen" stands under Server › Verbindungen, no longer under Allgemein.
+    expect(de.errors.api_off).toContain('Server › Verbindungen › Schnittstellen')
+    expect(en.errors.api_off).toContain('Server › Connections › Interfaces')
+    const shipped = [de, en, whatsNewDe, whatsNewEn].map(all).join('\n')
+    expect(shipped).not.toMatch(/Allgemein › (Schnittstellen|Andere nex-Apps)|General › (Interfaces|Other nex apps)/)
+    expect(all(whatsNewDe['0.9.0'])).toContain('Server › Verbindungen › Andere nex-Apps')
+    expect(all(whatsNewEn['0.9.0'])).toContain('Server › Connections › Other nex apps')
     expect(de.errors.token_reads_only).toContain('Mein Konto › Verbindungen › API-Schlüssel')
     expect(en.errors.token_reads_only).toContain('My account › Connections › API keys')
     expect(de.someday.hidden).toContain('Mein Konto › Darstellung › Seitenleiste')
