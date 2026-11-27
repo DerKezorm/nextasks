@@ -41,6 +41,10 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug a2d6cac (27.11.2026): verbinden 0.1.11
+
+Die Karte „Andere nex-Apps“ wieder ohne Hülle (0.1.10 legte eine `<div>` um sie). Nur Kopie und Vorlage.
+
 ### Nachzug 22671dd (27.11.2026): verbinden 0.1.10
 
 Die Karte „Andere nex-Apps“ rollt sich ins Bild, wenn die Seite mit `#nex-apps` geöffnet wurde, wohin „Einrichten“ der
