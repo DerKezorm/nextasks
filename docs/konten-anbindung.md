@@ -41,6 +41,19 @@ kein git, kein eigener Scanner, keine Links unter Windows; 6 updates ohne Glocke
 die nextasks nicht hat: ausgediente Extras, „KI erlaubt“, ältere MCP-Schlüssel und Programme); lint sauber; vitest 1258
 grün; build sauber. Start mit Hintergrund (`start-probe.sh`): 200, keine Traceback. Playwright nicht gelaufen (zentral).
 
+### Nachzug (27.11.2026): verbinden 0.1.13 (mit 0.1.12)
+
+0.1.12 nur Beispieladressen der Modultests. 0.1.13 (V49 bis V53): nexfolk fragt mit `tasks.about` unter
+`GET /api/connect/about/tasks.about`, was nextasks über den Kontakt hat, den man dort ansieht; `nexfolk` steht in
+`in_use`, der Haken ist `services/verbinden.about` (`router(about=…)` in `routers/connect.py`). **Eine Aufgabe betrifft
+die Person**, wenn sie offen ist (nicht erledigt, nicht im Papierkorb, auch nicht über Liste oder Bereich) und in einem
+Bereich liegt, den das Konto sieht und die Verbindung bekam, und entweder der Name der Person als ganze Wörter im Titel
+steht (ohne Groß/klein) oder ein Mitglied zugewiesen ist, dessen zählende Adresse eine der Mailadressen der Person ist.
+Antwort: Zahl, als `next` die mit der nächsten Fälligkeit (Überfälliges zuerst; ohne Fälligkeit die zuletzt angelegte,
+`at` dann ihr Anlagetag), `last` leer, `open` der Pfad `/lists/<liste>?task=<id>`. Nie Notizen, nie wer sonst.
+`/api/v1` öffnet `tasks.about` nichts, seit 0.1.13 auch `/api/v1/me` nicht (dort jetzt `need(*PURPOSES)`). Adapter mit
+`about_purpose`, `about_seed` und Probe für `tasks.about` (nextime wird abgewiesen); eigene Tests in `test_connect.py`.
+
 ### Nachzug a2d6cac (27.11.2026): verbinden 0.1.11
 
 Die Karte „Andere nex-Apps“ wieder ohne Hülle (0.1.10 legte eine `<div>` um sie). Nur Kopie und Vorlage.

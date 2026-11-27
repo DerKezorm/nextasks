@@ -1126,11 +1126,12 @@ export class FakeServer {
       return { status: 200, body: { app: 'nextasks', api: !!set.api_tokens_allowed, mcp: null, programs: false, api_path: '/api/v1', mcp_path: null, keys_wait: false, warn_days: 7, kinds: [{ id: 'api', prefix: 'ntk_', creatable: true, editable: true, rights: ['read', 'write'], default_right: 'read', options: [], areas: [], areas_required: false, expiry_days: [30, 90, 365, null], default_days: 90, default_days_by_right: {}, max_keys: 20, count: 0, name_max: 100 }], keys: [], address: 'https://tasks.example.com' } }
     }
     if (path === '/api/connections/admin/keys') return { status: 200, body: { keys: [] } }
-    // The other nex apps (verbinden 0.1.1): nextasks' five partners, none connected yet.
+    // The other nex apps (verbinden 0.1.1): nextasks' six partners, none connected yet; nexfolk (since 0.1.13) asks
+    // about the contact it shows, so its card says what nexfolk sends (V53).
     if (path === '/api/connect/partners' && method === 'GET')
       return {
         status: 200,
-        body: ['nexnotes', 'nexmail', 'nextime', 'nexpaper', 'nexdiary'].map((partner) => ({ partner, state: 'none', address: '', address_from_operator: false, host: '', uses: [], grants: [], uses_levels: {}, grants_levels: {}, account: null, since: null, ok_at: null, used_at: null, stale_since: null, problem: null, areas_used: null, areas_granted: null, legacy: null, version: '', areas_choice: [] })),
+        body: ['nexnotes', 'nexmail', 'nextime', 'nexpaper', 'nexdiary', 'nexfolk'].map((partner) => ({ partner, state: 'none', address: '', address_from_operator: false, host: '', uses: [], grants: [], uses_levels: {}, grants_levels: {}, account: null, since: null, ok_at: null, used_at: null, stale_since: null, problem: null, areas_used: null, areas_granted: null, legacy: null, version: '', areas_choice: [], sends_person: false, receives_person: partner === 'nexfolk' })),
       }
     if (path === '/api/server/storage') return { status: 200, body: { app: 'nextasks', used: 0, parts: [], complete: true, total: 0, disk_used: 0, free: 0, nearly_full: false, where: {}, network: [] } }
     if (path === '/api/server/storage/backups') return { status: 200, body: { schedule: { every: 'daily', time: '03:00', keep: 7 }, zone: 'UTC', last: null, count: 0, kept: 0, failure: null, running: false, restore_failure: null, restored: null, restore: 'restart', download_password: false, backups: [] } }

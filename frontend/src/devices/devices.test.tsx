@@ -23,7 +23,14 @@ describe('My account › Connections › Devices', () => {
     const cards = [...page.querySelectorAll('section[id]')].map((section) => section.id)
     // The order of the plan "Einstellungen" (Verbindungen): devices, installing on this device, the other nex apps
     // (verbinden 0.1.1, in the order of the catalog), the API keys, the AI tools (MCP, since mcp 1.1.0).
-    expect(cards).toEqual(['devices', 'install', 'nexnotes', 'nexmail', 'nextime', 'nexpaper', 'nexdiary', 'api-keys', 'ai-tools'])
+    expect(cards).toEqual(['devices', 'install', 'nexnotes', 'nexmail', 'nextime', 'nexpaper', 'nexdiary', 'nexfolk', 'api-keys', 'ai-tools'])
+    // verbinden 0.1.13 (V53): only nexfolk's card says that it sends the contact it shows.
+    const folk = page.querySelector('section#nexfolk') as HTMLElement
+    await click(folk.querySelector('button'))
+    expect(folk.querySelector('[data-testid="connection-receives-person"]')?.textContent).toBe(
+      'For this, nexfolk sends nextasks the name, mail addresses and phone numbers of the contact you look at in nexfolk, only when you open it.',
+    )
+    expect(page.querySelectorAll('[data-testid="connection-receives-person"]')).toHaveLength(1)
     expect(card(page).querySelector('h2')?.textContent).toBe('Devices')
     const rows = [...card(page).querySelectorAll('[data-testid="device-row"]')]
     expect(rows.map((row) => row.querySelector('[data-testid="device-name"]')?.textContent)).toEqual(['Robin’s iPhone', 'iPad'])

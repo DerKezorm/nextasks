@@ -420,6 +420,8 @@ WRITE_ERRORS: dict[int | str, dict[str, Any]] = {**ERRORS, 409: {"model": Proble
 
 @router.get("/me", response_model=MeOut, responses=ERRORS, summary="Who the token speaks for, and what it may")
 def me(found: Reader) -> MeOut:
+    # A connection that only asks about a person (nexfolk, ``tasks.about``) learns nothing here (verbinden 0.1.13).
+    need(found, *PURPOSES)
     with SessionLocal() as db:
         sight = apiread.sight_of(db, found.account)
         rows = [db.get(SpaceRow, space_id) for space_id in sight.space_ids]

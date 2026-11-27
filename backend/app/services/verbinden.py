@@ -1,10 +1,12 @@
-"""nextasks among the other nex apps (shared module ``vendor/nexverbinden``, verbinden 0.1.9): its ``AppConfig`` and the
-``Store`` over its tables (``models_connect.py``).
+"""nextasks among the other nex apps (shared module ``vendor/nexverbinden``, verbinden 0.1.13): its ``AppConfig``, the
+``Store`` over its tables (``models_connect.py``) and the hook ``about``.
 
-nextasks is a host in five pairs of the catalog (V2): nexnotes, nexmail, nextime, nexpaper and nexdiary use its tasks;
+nextasks is a host in six pairs of the catalog (V2): nexnotes, nexmail, nextime, nexpaper and nexdiary use its tasks;
 it uses nothing of theirs. What it grants (V5): ``tasks.read``, ``tasks.write``, ``tasks.complete`` and
 ``members.read``, each limited to the spaces the account gives. A partner reaches ``/api/v1`` with the token of its
-connection (``ntc_``) and the same checks as an API key there, plus the purposes (``routers/v1.py``).
+connection (``ntc_``) and the same checks as an API key there, plus the purposes (``routers/v1.py``). Since 0.1.13
+(V51) nexfolk asks with ``tasks.about`` how many open tasks concern the contact it shows (``about``), only at
+``/api/connect/about/tasks.about``, never at ``/api/v1``.
 
 **Older connections notice nothing.** Other apps typed in an ``ntk_`` API key of nextasks (nexnotes ``PUT
 /api/nextasks``, nexmail ``POST /api/aufgabenziele/nextasks``, nextime ``PUT /api/nextasks``); such a key keeps working
@@ -16,6 +18,7 @@ the key ends itself (``retire_key``).
 from __future__ import annotations
 
 import logging
+import re
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote
@@ -30,7 +33,7 @@ from ..models_connect import ConnectionCode, ConnectionPending, ConnectionSpent,
 from ..security import decrypt_secret, encrypt_secret
 from ..vendor import nexverbinden
 from ..vendor.nexverbinden import Code, Connection, Legacy, Pending, Waiting
-from . import apitokens, settings_service, totp
+from . import apitokens, gone, records, settings_service, totp
 from .schluessel_store import SchluesselStore
 
 logger = logging.getLogger("nextasks.connect")
@@ -46,8 +49,9 @@ CONFIG = nexverbinden.AppConfig(
     access_prefix=ACCESS_PREFIX,
     refresh_prefix=REFRESH_PREFIX,
     code_prefix=CODE_PREFIX,
-    # V20: the partners nextasks has a use for, all five as host (its purposes work at /api/v1).
-    in_use=("nexnotes", "nexmail", "nextime", "nexpaper", "nexdiary"),
+    # V20: the partners nextasks has a use for, all as host: five use its purposes at /api/v1, nexfolk asks about a
+    # person at /api/connect/about/tasks.about (verbinden 0.1.13, ``about``).
+    in_use=("nexnotes", "nexmail", "nextime", "nexpaper", "nexdiary", "nexfolk"),
 )
 
 #: The module's settings under nextasks' names (``settings_service.DEFAULTS``).
@@ -279,6 +283,68 @@ def on_disconnected(store: VerbindenStore, account_id: Any, partner: str) -> Non
     host: what a partner made here (tasks, comments) stays, and it keeps no rows of its own about a connection, so there
     is nothing to drop; the log says it."""
     logger.info("Connection with another nex app ended partner=%s account_id=%s", partner, account_id)
+
+
+#: The purpose nexfolk asks with about one person (verbinden 0.1.13, V51).
+ABOUT = "tasks.about"
+
+
+def _named_in(name: str) -> re.Pattern[str] | None:
+    """The person's name as whole words in a title, without upper and lower case; blanks between the words may be
+    any blanks."""
+    words = name.split()
+    if not words:
+        return None
+    return re.compile(r"(?<!\w)" + r"\s+".join(re.escape(word) for word in words) + r"(?!\w)", re.IGNORECASE)
+
+
+def about(
+    store: VerbindenStore, caller: nexverbinden.Caller, purpose: str, person: nexverbinden.Person
+) -> dict[str, Any]:
+    """verbinden 0.1.13 (V52): what nextasks has about ``person`` for nexfolk's "In den anderen Apps".
+
+    **A task concerns the person** when it is open (not completed, not in the bin) in a space the account sees and the
+    connection was given (``caller.areas``; all of the account's when ``None``), and either the person's name stands in
+    its title as whole words (upper or lower case alike) or a member whose address counts is one of the person's mail
+    addresses is assigned to it. ``count`` is how many; ``next`` the one due next (overdue first), without any due
+    date the one made last, ``at`` its due date (with the time when it has one) or the day it was made; ``open`` the
+    path of that task in nextasks. Never notes, never who else."""
+    del purpose  # nextasks has one purpose about a person
+    from . import apiread
+    from .konten_store import counts
+
+    db = store.db
+    row = db.get(Account, int(caller.account_id))
+    if row is None or row.shut:
+        return {"count": 0, "next": None, "last": None, "open": None}
+    db.expunge(row)
+    if caller.areas is not None:
+        row.key_spaces = frozenset(str(area) for area in caller.areas)
+    sight = apiread.sight_of(db, row)
+    world = apiread.World.read(db, sight)
+    named = _named_in(person.name)
+    mails = {mail.casefold() for mail in person.mails}
+    assigned: set[int] = set()
+    if mails:
+        people = {person_id for task in world.tasks.values() for person_id in gone.shown(task.row.assignees)}
+        if people:
+            assigned = {account.id for account in db.scalars(select(Account).where(Account.id.in_(people)))
+                        if counts(account) and account.email.strip().casefold() in mails}
+    found = [task for task in world.tasks.values()
+             if task.open and task.trashed_at is None
+             and ((named is not None and named.search(task.row.title or ""))
+                  or any(person_id in assigned for person_id in gone.shown(task.row.assignees)))]
+    if not found:
+        return {"count": 0, "next": None, "last": None, "open": None}
+    due = [task for task in found if task.row.due_date]
+    if due:
+        first = min(due, key=apiread.World.by_due)
+        at = first.row.due_date + (f"T{first.due_time}" if first.due_time else "")
+    else:
+        first = max(found, key=lambda task: (task.row.created_at, task.id))
+        at = records.parse_stamp(first.row.created_at).astimezone(sight.zone).date().isoformat()
+    return {"count": len(found), "next": {"title": first.row.title, "at": at}, "last": None,
+            "open": f"/lists/{first.list_id}?task={first.id}"}
 
 
 def caller(db: Session, token: str) -> nexverbinden.Caller:

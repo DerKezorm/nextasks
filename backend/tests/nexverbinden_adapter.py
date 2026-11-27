@@ -133,12 +133,15 @@ class Adapter(StandardAdapter):
         return self._accounts[role].id
 
     def probe(self, purpose: str) -> str | tuple[str, str, Any] | None:
-        """The route of ``/api/v1`` each purpose opens (``routers/v1.py``)."""
+        """The route of ``/api/v1`` each purpose opens (``routers/v1.py``), and since 0.1.13 the question about a
+        person (``tasks.about``)."""
         return {
             "tasks.read": "/api/v1/tasks",
             "tasks.complete": ("PATCH", f"/api/v1/tasks/{self._task}", {"completed": True}),
             "tasks.write": ("POST", "/api/v1/tasks", {"title": "From the probe"}),
             "members.read": f"/api/v1/spaces/{self._garden}/members",
+            # verbinden 0.1.13: nexfolk's question about a person (nextime, the partner here, is turned away).
+            "tasks.about": "/api/connect/about/tasks.about?name=Pat",
         }[purpose]
 
     def write_into(self, purpose: str, area: Any) -> tuple[str, str, Any]:
@@ -147,6 +150,17 @@ class Adapter(StandardAdapter):
         if purpose == "tasks.complete":
             return ("PATCH", f"/api/v1/tasks/{self._tasks[str(area)]}", {"completed": True})
         return ("POST", "/api/v1/tasks", {"title": "From the partner", "list_id": self._lists[str(area)]})
+
+    #: verbinden 0.1.13 (V51): nexfolk asks how many open tasks concern a person (``services/verbinden.about``).
+    about_purpose = "tasks.about"
+
+    def about_seed(self, purpose: str, area: Any, person: Any) -> None:
+        """An open task of the owner in the space ``area`` with the person's name in its title."""
+        from tests.sync_helpers import make_reminder
+
+        assert purpose == self.about_purpose
+        make_reminder(self.client("owner"), self._lists[str(area)], title=f"Call {person.name} about the garden",
+                      position="a1")
 
     def areas_seen(self, purpose: str, answer: Any) -> set[str]:
         from app.db import SessionLocal

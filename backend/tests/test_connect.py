@@ -3,7 +3,8 @@
 and writes, nextime reads and ticks off, nexdiary only reads), only in the spaces given; the API keys other apps typed
 in before keep working as before, beside a connection and with their own switch; ``/api/v1/me`` names when such a key
 runs out; the old switch of API tokens does not close connections (they have their own, V14); and the consent page
-shows the account as the profile does (0.1.8, B1)."""
+shows the account as the profile does (0.1.8, B1); nexfolk learns how many open tasks concern a person, and nothing at
+``/api/v1`` (0.1.13)."""
 
 from __future__ import annotations
 
@@ -17,11 +18,11 @@ from fastapi.testclient import TestClient
 from app.db import SessionLocal
 from app.main import app
 from app.models import Account
-from app.services import apitokens, settings_service, verbinden
+from app.services import apitokens, clock, records, settings_service, verbinden
 from app.vendor.nexmcp import oauthcore
 from app.vendor.nexverbinden import CATALOG, Connection
 
-from .sync_helpers import make_list, make_reminder, person, private_space, shared_space
+from .sync_helpers import batch, make_list, make_reminder, person, private_space, put, shared_space
 from .test_api_v1 import token
 
 V1 = "/api/v1"
@@ -193,9 +194,123 @@ def test_every_partner_card_stands_for_purposes_nextasks_really_grants() -> None
     (a host only), so no card ever says "connected" without an effect here."""
     from app.routers.v1 import PURPOSES
 
-    assert verbinden.CONFIG.partners == ["nexnotes", "nexmail", "nextime", "nexpaper", "nexdiary"]
+    assert verbinden.CONFIG.partners == ["nexnotes", "nexmail", "nextime", "nexpaper", "nexdiary", "nexfolk"]
     assert verbinden.CONFIG.usable == verbinden.CONFIG.partners
     for partner in verbinden.CONFIG.partners:
         granted = CATALOG.uses(partner, "nextasks")
-        assert granted and set(granted) <= set(PURPOSES), partner
+        # verbinden 0.1.13: nexfolk's purpose is answered at /api/connect/about (``verbinden.about``).
+        assert granted and set(granted) <= {*PURPOSES, verbinden.ABOUT}, partner
         assert CATALOG.uses("nextasks", partner) == (), partner
+
+
+# --- verbinden 0.1.13: nexfolk asks which open tasks concern a person -----------------------------------------------
+
+ABOUT = "/api/connect/about/tasks.about"
+
+
+def _with_address(account: Account, address: str, *, counts: bool = True) -> None:
+    with SessionLocal() as db:
+        row = db.get(Account, account.id)
+        assert row is not None
+        row.email = address
+        row.email_counted = address if counts else ""
+        db.commit()
+
+
+def _ask(program: TestClient, **person: Any) -> dict[str, Any]:
+    answer = program.get(ABOUT, params=person)
+    assert answer.status_code == 200, answer.text
+    return dict(answer.json())
+
+
+def test_a_task_concerns_a_person_by_the_name_in_its_title_as_whole_words() -> None:
+    anna_account, anna, _space, _own, _shared = family()
+    _private, first = private_space(anna)
+    for title in ("Call pat example about the roof", "Patricia Exampleton", "Pat Examples birthday", "Pat"):
+        make_reminder(anna, first, title=title)
+    folk = connected(anna_account, "nexfolk")
+    found = _ask(folk, name="Pat  Example")
+    assert found["count"] == 1
+    assert found["next"]["title"] == "Call pat example about the roof"
+    assert _ask(folk, name="Nobody Else")["count"] == 0
+    # Without a name, a title never counts (only an address assigned).
+    assert _ask(folk, mail="pat@example.com")["count"] == 0
+
+
+def test_a_task_concerns_a_person_whose_counting_address_is_assigned_to_it() -> None:
+    anna_account, anna = person("anna")
+    ben_account, ben = person("ben")
+    space = shared_space(anna, ben)
+    family_list = make_list(anna, space)
+    task = make_reminder(anna, family_list, title="Fix the bike")
+    assert put(anna, "reminder", task, {"assignees": [ben_account.id]})["ok"]
+    folk = connected(anna_account, "nexfolk")
+    _with_address(ben_account, "ben@example.com", counts=False)
+    assert _ask(folk, mail="ben@example.com")["count"] == 0, "an address that does not count names nobody"
+    _with_address(ben_account, "Ben@Example.com")
+    found = _ask(folk, name="Somebody", mail="other@example.org", phone="+49 30 1234567")
+    assert found["count"] == 0
+    found = _ask(folk, mail="BEN@example.com")
+    assert found["count"] == 1 and found["next"]["title"] == "Fix the bike"
+    assert found["open"] == f"/lists/{family_list}?task={task}"
+
+
+def test_completed_tasks_and_those_in_the_bin_do_not_count() -> None:
+    anna_account, anna, space, _own, _shared = family()
+    family_list = make_list(anna, space, name="Errands", position="a2")
+    done = make_reminder(anna, family_list, title="Kim Example: gift")
+    binned = make_reminder(anna, family_list, title="Kim Example: card")
+    other_list = make_list(anna, space, name="Old", position="a3")
+    make_reminder(anna, other_list, title="Kim Example: letter")
+    make_reminder(anna, family_list, title="Kim Example: cake")
+    folk = connected(anna_account, "nexfolk")
+    assert _ask(folk, name="Kim Example")["count"] == 4
+    now = records.format_stamp(clock.now())
+    [completed] = batch(anna, {"type": "complete", "id": done, "occurrence": None, "at": now, "on": now[:10]})
+    assert completed["ok"], completed
+    assert put(anna, "reminder", binned, {"deleted_at": now})["ok"]
+    assert put(anna, "list", other_list, {"deleted_at": now})["ok"]
+    found = _ask(folk, name="Kim Example")
+    assert found["count"] == 1 and found["next"]["title"] == "Kim Example: cake"
+
+
+def test_only_the_spaces_given_count() -> None:
+    anna_account, anna, space, _own, _shared = family()
+    private, first = private_space(anna)
+    family_list = make_list(anna, space, name="Errands", position="a2")
+    make_reminder(anna, first, title="Kim Example: private")
+    make_reminder(anna, family_list, title="Kim Example: family")
+    # A space anna is no member of never counts.
+    _carl_account, carl = person("carl")
+    _carl_private, carl_list = private_space(carl)
+    make_reminder(carl, carl_list, title="Kim Example: carl")
+    assert _ask(connected(anna_account, "nexfolk"), name="Kim Example")["count"] == 2
+    found = _ask(connected(anna_account, "nexfolk", areas=[space]), name="Kim Example")
+    assert found["count"] == 1 and found["next"]["title"] == "Kim Example: family"
+    del private
+
+
+def test_the_next_is_the_one_due_next_else_the_one_made_last() -> None:
+    anna_account, anna = person("anna")
+    _private, first = private_space(anna)
+    make_reminder(anna, first, title="Kim Example older", created_at="2026-11-20T12:00:00.000Z")
+    last = make_reminder(anna, first, title="Kim Example newer", created_at="2026-11-25T12:00:00.000Z")
+    folk = connected(anna_account, "nexfolk")
+    found = _ask(folk, name="Kim Example")
+    assert found["next"] == {"title": "Kim Example newer", "at": "2026-11-25"}
+    assert found["last"] is None and found["open"] == f"/lists/{first}?task={last}"
+    make_reminder(anna, first, title="Kim Example later", due_date="2026-12-10")
+    soon = make_reminder(anna, first, title="Kim Example soon", due_date="2026-12-01", due_time="09:30")
+    make_reminder(anna, first, title="Kim Example same day", due_date="2026-12-01", due_time="18:00")
+    found = _ask(folk, name="Kim Example")
+    assert found["count"] == 5
+    assert found["next"] == {"title": "Kim Example soon", "at": "2026-12-01T09:30"}
+    assert found["open"] == f"/lists/{first}?task={soon}"
+
+
+def test_nexfolk_reads_nothing_at_api_v1() -> None:
+    """``tasks.about`` opens the small answer only: ``/api/v1`` turns nexfolk away, ``/me`` included."""
+    anna_account, _anna, _space, _own, _shared = family()
+    folk = connected(anna_account, "nexfolk")
+    for route in ("/me", "/spaces", "/lists", "/tasks", "/dashboard"):
+        assert status(folk.get(V1 + route), "purpose_missing") == 403, route

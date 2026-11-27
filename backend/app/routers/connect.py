@@ -1,8 +1,8 @@
-"""Connections with other nex apps: the routes of the shared module ``nexverbinden`` (verbinden 0.1.4), the same
+"""Connections with other nex apps: the routes of the shared module ``nexverbinden`` (verbinden 0.1.13), the same
 places in every app: ``/.well-known/nex-app``, ``/api/connect/…`` (the cards, the consent, the operator's switch and
-addresses, and between the apps ``token``, ``revoke``, ``retire``, ``hello``). The pages ``/connect/app`` and
-``/connect/return`` are the web's. A partner then uses ``/api/v1`` with the token of its connection
-(``routers/v1.py``)."""
+addresses, and between the apps ``token``, ``revoke``, ``retire``, ``hello``, since 0.1.13 ``about/tasks.about`` for
+nexfolk through ``verbinden.about``). The pages ``/connect/app`` and ``/connect/return`` are the web's. A partner then
+uses ``/api/v1`` with the token of its connection (``routers/v1.py``)."""
 
 from __future__ import annotations
 
@@ -37,4 +37,4 @@ def _disconnected(store: verbinden.VerbindenStore, account_id: object, partner: 
 
 
 router = api.router(config=verbinden.CONFIG, store=_store, account=require_account, operator=require_operator,
-                    address=_address, error=_error, on_disconnected=_disconnected)
+                    address=_address, error=_error, on_disconnected=_disconnected, about=verbinden.about)
