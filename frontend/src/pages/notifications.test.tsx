@@ -63,6 +63,14 @@ describe('notifications', () => {
     expect(box(again, 'route-daily-webpush').disabled).toBe(true)
   })
 
+  it('count the devices in "iPhone and iPad" and list each with its kinds of notification (geraete 0.1.0)', async () => {
+    const { server, robin } = smallWorld()
+    server.devices.push({ id: 'phone', account: robin, name: 'Robins iPhone', created_at: '2026-11-07T08:00:00Z', last_seen: null })
+    const page = await mount(server, '/settings/notifications')
+    expect(page.querySelector('[data-testid="notify-devices-box"]')?.textContent).toContain('1 device connected')
+    expect(page.querySelector('[data-testid="devices-push-card"]')?.textContent).toContain('Robins iPhone')
+  })
+
   it('become cards with three labelled boxes per row on a narrow screen, boxes as every switch of the settings', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('max-width'), media: query, addEventListener: () => undefined, removeEventListener: () => undefined }))
     const { server } = smallWorld()

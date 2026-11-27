@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
 import { api, ApiError } from '../api/client'
+import { CONNECTIONS_HREF, DEVICES_BASE, deviceRequest } from '../lib/devices'
 import { errorText } from '../lib/errors'
 import { usePwa } from '../lib/pwa'
 import { moment } from '../lib/time'
@@ -22,6 +23,7 @@ import { disablePush, enablePush, ownEndpointMark, pushState, type PushState } f
 import { useAuth } from '../state/auth'
 import { useEngine, useSyncState } from '../state/sync'
 import { AppError } from '../sync/transport'
+import { DevicePushCard, useDevicesWay } from '../vendor/nexgeraete'
 import { Card, Notice, NotifyWays } from '../vendor/nexui'
 import { Done } from './Field'
 
@@ -137,6 +139,7 @@ export function NotificationsPart() {
 
   const load = useCallback(() => api<NotifyState>('/api/notify').then(setState, (error) => setProblem(errorText(codeOf(error)))), [])
   const push = useBrowserPush(state?.channels.find((channel) => channel.kind === 'webpush'), load)
+  const devicesWay = useDevicesWay(deviceRequest, { base: DEVICES_BASE, href: CONNECTIONS_HREF, language: i18n.language })
   useEffect(() => {
     void load()
   }, [load])
@@ -211,7 +214,7 @@ export function NotificationsPart() {
               }
             : undefined
         }
-        devices={state.channels.some((channel) => channel.kind === 'app') ? { href: '/settings/connections' } : undefined}
+        devices={state.channels.some((channel) => channel.kind === 'app') ? (devicesWay ?? { href: CONNECTIONS_HREF }) : undefined}
       >
         {mail?.pending && <Notice tone="warn">{t('account.emailPending', { email: mail.pending })}</Notice>}
         {mail?.available && mail.can_send === false && <Notice tone="warn">{t('notify.mail.noPublic')}</Notice>}
@@ -226,6 +229,11 @@ export function NotificationsPart() {
         {mail && <LastDelivery channel={mail} />}
         {browser && <LastDelivery channel={browser} />}
       </NotifyWays>
+
+      {/* The device module's card (geraete 0.1.0): per device, which kinds of notification it gets. */}
+      {state.channels.some((channel) => channel.kind === 'app') && (
+        <DevicePushCard request={deviceRequest} base={DEVICES_BASE} app="nextasks" language={i18n.language} connectionsHref={CONNECTIONS_HREF} />
+      )}
 
       {/* nextasks' own: what comes which way (E18). */}
       <Card id="routes" icon={Zap} title={t('notify.tableTitle')} subtitle={`${t('notify.reportsText')} ${t('notify.zone', { zone: state.timezone })}`}>

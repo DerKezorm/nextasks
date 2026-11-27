@@ -10,7 +10,9 @@ encrypted for exactly that device: a fresh X25519 pair and nonce per message, HK
 The relay and Apple only ever see the ciphertext.
 
 Only 410 from the relay drops the ticket (the app brings a new one); any other failure leaves it and loses only this
-one message. What went wrong is logged without the ticket.
+one message. What went wrong is logged without the ticket. Since geraete 0.1.0 the shared module ``nexgeraete`` signs
+the devices up (``PUT /api/app/1/push``), keeps the kinds per device and sends (``services/devices.py``); this keeps
+the message's form and the way to the relay (``POST``).
 """
 
 from __future__ import annotations
@@ -83,29 +85,8 @@ def seal(message: Message, device_key: str) -> str:
     return push_crypto.encrypt(plaintext(message), device_key)
 
 
-def remember(db: Session, account_id: int, device_id: int, ticket: str, key: str) -> None:
-    """Ticket and key at the device. The same ticket belongs to one device of the person: a device paired again
-    brings its ticket, and the old pairing must not get every message twice."""
-    for other in db.scalars(select(AppDevice).where(AppDevice.account_id == account_id, AppDevice.id != device_id,
-                                                    AppDevice.push_ticket == ticket)):
-        other.push_ticket = ""
-        other.push_key = ""
-    row = db.get(AppDevice, device_id)
-    if row is not None:
-        row.push_ticket = ticket
-        row.push_key = key
-    db.commit()
-
-
-def forget(db: Session, device_id: int) -> None:
-    row = db.get(AppDevice, device_id)
-    if row is not None:
-        row.push_ticket = ""
-        row.push_key = ""
-        db.commit()
-
-
 def targets(db: Session, account_id: int) -> list[AppDevice]:
+    """The account's devices that took notifications (a ticket), while the relay is set."""
     if not relay_url():
         return []
     return list(db.scalars(select(AppDevice).where(AppDevice.account_id == account_id, AppDevice.push_ticket != "")))
@@ -126,30 +107,11 @@ def send(db: Session, account_id: int, message: Message) -> int:
 
 
 def send_all(db: Session, account_id: int, message: Message) -> tuple[int, int]:
-    """To every device of the person with a ticket: how many took it, and how many failed for a reason that may pass
-    (a ticket the relay says is gone counts as neither)."""
-    taken = failed = 0
-    for device in targets(db, account_id):
-        body: dict[str, object] = {"ticket": device.push_ticket, "enc": seal(message, device.push_key)}
-        if message.collapse:
-            body["collapse"] = message.collapse[:COLLAPSE_MAX]
-        try:
-            status = POST(f"{relay_url()}/v1/send", body)
-        except (httpx.HTTPError, OSError) as exc:
-            logger.info("Push to one device failed: %s", type(exc).__name__)
-            failed += 1
-            continue
-        except ValueError:
-            logger.info("Push to one device failed: its key is not usable")
-            continue
-        if status == 410:
-            logger.info("A push ticket is gone; removing it")
-            device.push_ticket = ""
-            device.push_key = ""
-            db.commit()
-        elif status == 200:
-            taken += 1
-        else:
-            logger.info("Push to one device failed: HTTP %s", status)
-            failed += 1
-    return taken, failed
+    """To every device of the person that may get it, through the shared module ``nexgeraete`` (geraete 0.1.0): only
+    the kinds a device understands (the published app: all of nextasks'), not switched off on it, nothing while the
+    account is out or the app switched off. How many took it, and how many failed for a reason that may pass (a ticket
+    the relay says is gone is dropped and counts as neither)."""
+    from . import devices
+
+    told = devices.tell(db, account_id, message.type, plaintext(message), collapse=message.collapse)
+    return told.sent, told.failed

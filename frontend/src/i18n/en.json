@@ -1271,15 +1271,6 @@
     "unknownTitle": "This link is not valid",
     "unknownText": "The invitation has expired, was used or withdrawn. Ask for a new link."
   },
-  "connect": {
-    "title": "Connect iPhone",
-    "text": "The nextasks app wants to connect with your account.",
-    "textNamed": "“{{device}}” wants to connect with your account.",
-    "button": "Connect iPhone",
-    "notOpened": "The app did not open?",
-    "again": "Try again",
-    "skip": "Not now"
-  },
   "overview": {
     "title": "Overview"
   },
@@ -1334,31 +1325,6 @@
     "list": "This list does not exist (any more), or you cannot see it.",
     "filter": "This filter does not exist (any more).",
     "home": "To the start page"
-  },
-  "devices": {
-    "section": {
-      "title": "Devices",
-      "text": "iPhone and iPad with the nextasks app.",
-      "none": "No device connected yet.",
-      "connect": "Connect iPhone or iPad",
-      "lastSeen": "last seen {{when}}",
-      "neverSeen": "not seen yet",
-      "disconnect": "Disconnect",
-      "disconnectName": "Disconnect “{{name}}”",
-      "disconnectTitle": "Disconnect “{{name}}”?",
-      "disconnectText": "From now on the device cannot reach your tasks. To connect it again, scan a new code."
-    },
-    "connect": {
-      "title": "Connect iPhone or iPad",
-      "qr": "QR code to connect",
-      "valid": "Valid for 10 minutes",
-      "renew": "new code",
-      "expired": "The code has expired.",
-      "step1": "Open nextasks on the iPhone or iPad.",
-      "step2": "Tap “Connect a server” and scan the code.",
-      "step3": "Done. Your tasks load, and the sign-in travels to your other devices through your Apple ID.",
-      "noCamera": "Without a camera: in the app under “Code”, enter the address <b>{{host}}</b> and the code <code>{{code}}</code>."
-    }
   },
   "row": {
     "date": "Date",

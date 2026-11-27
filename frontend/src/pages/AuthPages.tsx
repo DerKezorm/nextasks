@@ -13,7 +13,7 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { ApiError, api, authApi, invitesApi, resetApi, type InviteOffer, type Me, type Methods, type SetupState } from '../api/client'
 import { AccountButton } from '../components/AccountButton'
@@ -21,6 +21,7 @@ import { Logo } from '../components/Logo'
 import { PasswordConfirmField } from '../components/PasswordConfirm'
 import { ProviderButtons } from '../components/ProviderButtons'
 import { ThemeSwitcher } from '../components/ThemeSwitcher'
+import { DEVICES_BASE, deviceRequest } from '../lib/devices'
 import i18n from '../i18n'
 import { errorText, returnErrorText } from '../lib/errors'
 import { passkeysSupported, signInWithPasskey } from '../lib/passkeys'
@@ -42,6 +43,7 @@ import {
 } from '../vendor/nexkonten/konten'
 import type { ButtonName } from '../vendor/nexkonten/konten'
 import { AuthCard, Button, Checkbox, Field, Notice, TextLink } from '../vendor/nexui'
+import { AppConnectPage as ModuleAppConnectPage } from '../vendor/nexgeraete'
 import { UpdateSetupRow } from '../vendor/nexupdates/UpdateSetupRow'
 
 export function AuthFrame({ title, text, children }: { title: string; text?: string; children: ReactNode }) {
@@ -787,51 +789,34 @@ export function InvitePage() {
 }
 
 /**
- * `/app-connect?device=<name>`: the iPhone app opened this page to be connected through the browser's sign-in.
- * "Connect iPhone" asks the server for the app's link and hands over to the app.
+ * `/app-connect`: the iPhone app opened this page to be connected through the browser's sign-in, the page of the
+ * shared device module (geraete 0.1.0): the published app with `?device=<name>` (it gets the QR code's link), apps
+ * built on the module with `?state=…&challenge=…` (a one-time code). Signed in (the route waits for it, `SignedIn`),
+ * it names the account and connects only on the click; in nextasks' frame with logo and theme.
  */
 export function AppConnectPage() {
-  const { t } = useTranslation()
-  const [params] = useSearchParams()
-  const device = (params.get('device') ?? '').slice(0, 80)
-  const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState<Trouble>(null)
-  const [link, setLink] = useState<string | null>(null)
+  const { i18n } = useTranslation()
+  const { me } = useAuth()
+  const { search } = useLocation()
   return (
-    <AuthFrame title={t('connect.title')} text={device ? t('connect.textNamed', { device }) : t('connect.text')}>
-      <Problem problem={problem} />
-      <AccountButton
-        name="confirm"
-        wide
-        busy={busy}
-        testId="app-connect"
-        onClick={async () => {
-          setBusy(true)
-          setProblem(null)
-          try {
-            const answer = await api<{ link: string }>('/api/app-connect', { method: 'POST', body: { device } })
-            // Only the app's own scheme: the page never sends anyone elsewhere.
-            if (!answer.link.startsWith('nextasks://')) throw new ApiError(500, 'internal_error')
-            setLink(answer.link)
-            window.location.assign(answer.link)
-          } catch (error) {
-            setProblem(troubleOf(error))
-          } finally {
-            setBusy(false)
-          }
-        }}
-      >
-        {t('connect.button')}
-      </AccountButton>
-      {link && (
-        <p className="m-0 text-center text-xs text-[var(--nexui-text-muted)]">
-          {t('connect.notOpened')} <TextLink href={link}>{t('connect.again')}</TextLink>
-        </p>
+    <ModuleAppConnectPage
+      request={deviceRequest}
+      base={DEVICES_BASE}
+      app="nextasks"
+      scheme="nextasks"
+      account={me ? { name: me.display_name || me.name, login: me.name } : null}
+      language={i18n.language}
+      search={search}
+      frame={(card) => (
+        <div className="nt-safe nt-scroll flex min-h-dvh flex-col overflow-y-auto">
+          <header className="flex items-center justify-between px-5 py-4">
+            <Logo withWordmark />
+            <ThemeSwitcher />
+          </header>
+          <main className="flex flex-1 items-start justify-center px-4 pt-[6vh] pb-10">{card}</main>
+        </div>
       )}
-      <div className="text-center">
-        <TextLink href="/">{t('connect.skip')}</TextLink>
-      </div>
-    </AuthFrame>
+    />
   )
 }
 

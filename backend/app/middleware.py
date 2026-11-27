@@ -154,6 +154,8 @@ APP_PREFIX = "/api/app/1/"
 #: One click from a mail program (``List-Unsubscribe-Post``, RFC 8058): it sends no tab, the signed token in the address
 #: is all it may do (turn off one report or event of one account, ``routers/notifications.py``).
 UNSUBSCRIBE_PREFIX = "/api/notify/unsubscribe/"
+#: The browser routes of the device module (``routers/geraete.py``): sessions only, a device key hears 403.
+DEVICES_PREFIX = "/api/devices/"
 #: Ways for programs, not pages (mcp 1.1.0) and between the nex apps (verbinden 0.1.1): they bring a key or speak OAuth,
 #: never a session, and refuse a request with an ``Origin`` themselves. The consents (``/api/oauth/authorize``,
 #: ``/api/connect/consent``) are the page's and name its tab.
@@ -214,6 +216,10 @@ class GuardMiddleware:
                 return
         # The API for programs needs a token in ``Authorization`` instead, and refuses a request with an ``Origin``.
         exempt = path.startswith((API_PREFIX, APP_PREFIX, UNSUBSCRIBE_PREFIX)) or path in PROGRAM_PATHS
+        # A device key on the device module's browser routes hears 403 ``browser_only`` from the module (a key in
+        # ``Authorization`` is no cookie a page elsewhere could make a browser send).
+        if path.startswith(DEVICES_PREFIX) and headers.get(b"authorization", b"")[:7].lower() == b"bearer ":
+            exempt = True
         if scope.get("method") in CHANGING and not exempt and not named:
             for message in _refuse(400, "client_required", "Changes need the header X-Nextasks-Client."):
                 await send(message)

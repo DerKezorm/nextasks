@@ -889,6 +889,34 @@ describe('spaces and people', () => {
     expect(server.settings.app_enabled).toBe(false)
   })
 
+  it('shows the operator how many devices an account has in its window, never their names (geraete 0.1.0)', async () => {
+    const { server, alex } = world()
+    server.devices.push({ id: 'phone', account: alex, name: 'Alex phone', created_at: '2026-11-07T08:00:00Z', last_seen: '2026-11-20T08:00:00Z' })
+    const page = await mount(server, '/settings/accounts')
+    const rows = [...page.querySelectorAll('[data-testid="account-manage"]')]
+    await click(rows.find((entry) => entry.getAttribute('aria-label')?.includes('Alex')) ?? null)
+    await settle()
+    const part = document.querySelector('[data-testid="manage-dialog"] [data-testid="account-devices"]')
+    expect(part?.textContent).toContain('1 device')
+    // Never the device's name: only how many, which kind, when last.
+    expect(part?.textContent).not.toContain('Alex phone')
+  })
+
+  it('connects the iPhone app on /app-connect only after the click, with the link the server gives', async () => {
+    const { server } = world()
+    await mount(server, '/app-connect?device=Robins%20iPhone')
+    await settle()
+    const page = () => document.querySelector('[data-testid="app-connect"]') as HTMLElement
+    expect(page().dataset.state).toBe('ask')
+    expect(page().dataset.form).toBe('device')
+    expect(page().textContent).toContain('Robin')
+    await click(document.querySelector('[data-testid="app-connect-confirm"]'))
+    await settle()
+    // Handed over to the app; the way back into it stays on the page in case the app did not open.
+    expect(page().dataset.state).toBe('done')
+    expect(document.querySelector('[data-testid="app-connect-again"]')?.getAttribute('href')).toMatch(/^nextasks:\/\/connect\?/)
+  })
+
   it('invites a new account into nextasks without promising a space or a role it cannot choose', async () => {
     // The module's dialog "Invite a person" (konten 0.3.9, INVITE_DIALOG) without the role: nextasks' invitation makes
     // a member, and a space's managers invite into their space themselves.
@@ -904,14 +932,17 @@ describe('spaces and people', () => {
     const { server } = world()
     server.settings.public_url = 'https://tasks.example.com'
     const page = await mount(server, '/settings/connections')
+    // The device module's card (geraete 0.1.0) and its pairing window.
     await click(page.querySelector('[data-testid="devices-connect"]'))
-    expect(document.querySelector('[data-testid="devices-code"]')?.textContent).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/)
-    expect(document.querySelector('[data-testid="devices-qr"]')?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/)
+    expect(document.querySelector('[data-testid="pair-code"]')?.textContent).toMatch(/[A-Z2-9]{4}-[A-Z2-9]{4}/)
+    expect(document.querySelector('[data-testid="pair-qr"]')?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/)
     server.connectPairing([...server.pairings.keys()][0], 'Test phone')
     await new Promise((resolve) => setTimeout(resolve, 2200))
     await settle()
-    // Taken: the dialog closes itself, the phone stands among the devices.
-    expect(document.querySelector('[data-testid="devices-connect-dialog"]')).toBeNull()
+    // Taken: the window says so, "Fertig" closes it, the phone stands among the devices.
+    expect(document.querySelector('[data-testid="pair-paired"]')).not.toBeNull()
+    expect(document.querySelector('[data-testid="pair-dialog"]')?.textContent).toContain('Test phone')
+    await click(document.querySelector('[data-testid="pair-done"]'))
     expect(page.querySelector('[data-testid="devices-list"]')?.textContent).toContain('Test phone')
   })
 })

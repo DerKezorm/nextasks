@@ -1152,29 +1152,45 @@ export class FakeServer {
     if (path === '/api/logs/level') return { status: 200, body: { mode: 'normal', until: null, fixed_by_env: false, variable: 'NEXTASKS_LOG_LEVEL', modes: ['quiet', 'normal', 'detailed', 'trace'], durations: [30, 60, 120, 480] } }
     if (path === '/api/about') return { status: 200, body: { version: 'dev', license: 'AGPL-3.0', repo_url: 'https://github.com/example/nextasks', releases_url: 'https://github.com/example/nextasks/releases', project_url: '' } }
     if (path === '/api/me/whats-new/seen') return { status: 200, body: this.oldMe(me) }
-    if (path === '/api/app-devices' && method === 'GET') return { status: 200, body: this.devices.filter((d) => d.account === me.id).map(({ account: _a, ...d }) => d) }
-    const device = path.match(/^\/api\/app-devices\/([^/]+)$/)
-    if (device && method === 'DELETE') {
-      this.devices = this.devices.filter((d) => !(d.id === device[1] && d.account === me.id))
-      return { status: 204 }
+    // The device module's browser routes (geraete 0.1.0, `routers/geraete.py`), under /api/devices.
+    const entry = (d: (typeof this.devices)[number]) => ({ id: d.id, name: d.name, kind: 'ios', model: null, system: null, app_version: null, via: 'qr', created_at: d.created_at, last_seen_at: d.last_seen, push: false, this: false })
+    const own = this.devices.filter((d) => d.account === me.id)
+    if (path === '/api/devices/app-devices' && method === 'GET') return { status: 200, body: { devices: own.map(entry), max: 30, app_store_url: '', has_app: true } }
+    if (path === '/api/devices/app-devices' && method === 'DELETE') {
+      this.devices = this.devices.filter((d) => d.account !== me.id)
+      return { status: 200, body: { removed: own.length } }
     }
-    if (path === '/api/app-pairing' && method === 'POST') {
-      // As `services/devices.py` `prepare`: the app switched off first, then pairing.
+    const device = path.match(/^\/api\/devices\/app-devices\/([^/]+)(\/push-kinds)?$/)
+    if (device) {
+      const found = own.find((d) => d.id === device[1])
+      if (!found) return error(404, 'not_found')
+      if (device[2]) return { status: 200, body: { kinds: [] } }
+      if (method === 'DELETE') {
+        this.devices = this.devices.filter((d) => d !== found)
+        return { status: 204 }
+      }
+      if (method === 'PATCH') {
+        found.name = String(body.name ?? '').trim() || found.name
+        return { status: 200, body: entry(found) }
+      }
+    }
+    if (path === '/api/devices/app-pairing' && method === 'POST') {
+      // As the module's `pairing.start`: the app switched off first, then pairing.
       if (!this.settings.app_enabled) return error(403, 'app_disabled')
       if (!this.settings.app_pairing_allowed) return error(403, 'app_pairing_disabled')
       const address = String(this.settings.public_url || body.address || '')
       if (!address) return error(422, 'app_address_missing')
-      if ([...this.pairings.values()].filter((p) => p.account === me.id && p.state === 'waiting').length >= 5) return error(409, 'app_too_many_pairings')
+      if ([...this.pairings.values()].filter((p) => p.account === me.id && p.state === 'waiting').length >= 5) return error(409, 'too_many_pairings')
       const id = uuid4()
       const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
       const code = Array.from({ length: 8 }, (_, i) => letters[(i * 7 + this.pairings.size * 3) % letters.length]).join('')
       const pairing = { id, account: me.id, code: `${code.slice(0, 4)}-${code.slice(4)}`, state: 'waiting' as const, device: null, expires_at: this.iso(this.clock() + 600_000) }
       this.pairings.set(id, pairing)
-      const link = `nextasks://connect?address=${encodeURIComponent(address)}&pairing=${id}&secret=fake`
+      const link = `nextasks://connect?server=${encodeURIComponent(address)}&address=${encodeURIComponent(address)}&pairing=${id}&secret=fake`
       const qr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21"><rect width="21" height="21" fill="#fff"/><path d="M1 1h7v7H1zM13 1h7v7h-7zM1 13h7v7H1zM10 10h2v2h-2zM14 14h3v3h-3z" fill="#000"/></svg>`
-      return { status: 200, body: { id, code: pairing.code, expires_at: pairing.expires_at, address, link, qr_svg: qr } }
+      return { status: 201, body: { id, secret: 'fake', code: pairing.code, expires_at: pairing.expires_at, address, link, qr_svg: qr, app_store_url: '' } }
     }
-    const pairing = path.match(/^\/api\/app-pairing\/([^/]+)$/)
+    const pairing = path.match(/^\/api\/devices\/app-pairing\/([^/]+)$/)
     if (pairing) {
       const found = this.pairings.get(pairing[1])
       if (!found || found.account !== me.id) return error(404, 'not_found')
@@ -1182,9 +1198,23 @@ export class FakeServer {
         this.pairings.delete(found.id)
         return { status: 204 }
       }
-      return { status: 200, body: { state: found.state, device: found.device } }
+      const made = this.devices.find((d) => d.account === me.id && d.name === found.device)
+      return { status: 200, body: { state: found.state === 'connected' ? 'used' : found.state, device: made ? entry(made) : null } }
     }
-    if (path === '/api/app-connect' && method === 'POST') return { status: 200, body: { link: `nextasks://connect?address=${encodeURIComponent(String(this.settings.public_url || 'http://localhost'))}&pairing=fake&secret=fake&device=${encodeURIComponent(String(body.device ?? ''))}` } }
+    if (path === '/api/devices/app-connect' && method === 'POST') {
+      const address = encodeURIComponent(String(this.settings.public_url || 'http://localhost'))
+      const redirect = body.state ? `nextasks://connected?code=fake&state=${encodeURIComponent(String(body.state))}` : `nextasks://connect?server=${address}&address=${address}&pairing=fake&secret=fake`
+      return { status: 200, body: { redirect } }
+    }
+    const operatorView = path.match(/^\/api\/devices\/server\/accounts\/(\d+)\/devices$/)
+    if (operatorView) {
+      const theirs = this.devices.filter((d) => d.account === Number(operatorView[1]))
+      if (method === 'DELETE') {
+        this.devices = this.devices.filter((d) => !theirs.includes(d))
+        return { status: 200, body: { removed: theirs.length } }
+      }
+      return { status: 200, body: { count: theirs.length, devices: theirs.map((d) => ({ kind: 'ios', model: null, last_seen_at: d.last_seen })) } }
+    }
     return null
   }
 

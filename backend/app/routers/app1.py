@@ -10,6 +10,11 @@ nothing outside ``/api/app/1``); the web with its session cookie and the header 
 ``bad_client``, ``middleware.GuardMiddleware``). Walls, in this order: who it is (401 ``not_signed_in``, also while a
 second factor the operator requires is missing), the operator's switch for devices (403 ``app_disabled``), the rate of
 the device or session (429 ``too_many``). What the caller may not see does not exist (404 ``not_found``).
+
+**The devices are the shared module's** (``vendor/nexgeraete``, geraete 0.1.0, ``routers/geraete.py``): pairing,
+another own device, the list, renaming, notifications and their kinds. A device key is known again here through
+``nexgeraete.devices.authenticate``; a request without ``X-Nex-App`` hears the old form (``not_signed_in`` for every
+refused key), one with it the module's codes (``device_disconnected``, ``account_blocked`` …).
 """
 
 from __future__ import annotations
@@ -23,7 +28,7 @@ import unicodedata
 from typing import Annotated, Any, ClassVar
 
 import anyio
-from fastapi import APIRouter, Depends, Form, Header, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
@@ -32,7 +37,6 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from .. import __version__
 from ..db import SessionLocal
-from ..deps import client_ip
 from ..errors import error
 from ..models import (
     MANAGER,
@@ -50,7 +54,6 @@ from ..models import (
     utcnow,
 )
 from ..security import SESSION_COOKIE, hash_token, session_account, session_by_provider
-from ..security import brake as sign_in_brake
 from ..services import (
     accounts,
     avatars,
@@ -70,7 +73,8 @@ from ..services import (
     totp,
     webpush,
 )
-from ..services.devices import PairingError
+from ..vendor import nexgeraete
+from ..vendor.nexgeraete import api as nexgeraete_api
 from .invites import link_of
 
 logger = logging.getLogger("nextasks.app")
@@ -95,11 +99,15 @@ class Caller(sync.Caller):
 
     device_id: int | None = None
     device_name: str = ""
+    #: The module's view of the device and its account (``None`` for a browser session).
+    module: nexgeraete.Caller | None = None
 
-    def __init__(self, account: Account, key: str, device_id: int | None = None, device_name: str = "") -> None:
+    def __init__(self, account: Account, key: str, device_id: int | None = None, device_name: str = "",
+                 module: nexgeraete.Caller | None = None) -> None:
         super().__init__(account=account, key=key)
         self.device_id = device_id
         self.device_name = device_name
+        self.module = module
 
 
 def _token(request: Request) -> str | None:
@@ -139,19 +147,34 @@ def forget_private_cache() -> None:
         _private_known.clear()
 
 
+def _device_refused(request: Request, refused: nexgeraete.DeviceRefused) -> HTTPException:
+    """A refused key in the request's form: the old one (``not_signed_in``, ``app_disabled``) without ``X-Nex-App``."""
+    status, body, headers = nexgeraete.forms.refusal(nexgeraete.forms.form_of(devices.CONFIG, request.headers), refused)
+    return HTTPException(status_code=status, detail=body["detail"], headers=headers)
+
+
 def caller(request: Request) -> Caller:
     token = _token(request)
     with SessionLocal() as db:
         if token is not None:
-            found = devices.authenticate(db, token)
-            if found is None:
+            try:
+                known = nexgeraete.authenticate(
+                    devices.GeraeteStore(db), devices.CONFIG, token,
+                    client=nexgeraete.client_of(request.headers.get(nexgeraete.CLIENT_HEADER)), now=devices.now())
+            except nexgeraete.DeviceRefused as refused:
+                db.rollback()
+                raise _device_refused(request, refused) from None
+            account = db.get(Account, int(known.holder.id))
+            if account is None:
                 raise _refused("not_signed_in", "No valid device key.", 401)
-            if not devices.enabled(db):
-                raise _refused("app_disabled", "The operator has switched the app off.", 403)
-            who = Caller(found.account, found.client, found.device_id, found.device_name)
+            db.expunge(account)
+            who = Caller(account, f"d:{known.device.id}", int(known.device.id), known.device.name, known)
         else:
             cookie = request.cookies.get(SESSION_COOKIE)
             account = session_account(db, cookie)
+            if account is None and cookie is None and request.headers.get(nexgeraete.CLIENT_HEADER):
+                # An app built on the module without a key: its device is gone (``device_disconnected``).
+                raise _device_refused(request, nexgeraete.DeviceRefused("device_disconnected"))
             if account is None or totp.setup_required(db, account, by_provider=session_by_provider(db, cookie)):
                 raise _refused("not_signed_in", "Sign in first.", 401)
             session_id = db.scalar(select(AuthSession.id).where(AuthSession.token_hash == hash_token(cookie or "")))
@@ -167,63 +190,26 @@ def caller(request: Request) -> Caller:
 Who = Annotated[Caller, Depends(caller)]
 
 
-# --- Pairing (no key, behind the sign-in brake) -------------------------------------------------------------------
+# --- Pairing: the module's routes (``routers/geraete.py``), described under the names of before ---------------------
 
 
-class KeyIn(BaseModel):
-    device: str = Field(default="", max_length=200)
+class KeyIn(nexgeraete_api.PairIn):
+    """What a device sends to pick its key up: ``device`` in the old form; ``secret``, ``device_name``,
+    ``device_kind`` from an app built on the module."""
 
 
-class CodeIn(KeyIn):
-    code: str = Field(max_length=20)
+class CodeIn(nexgeraete_api.PairIn):
+    """The typed code (``ABCD-EFGH``) or the one-time code of the sign-in in the browser, and the device's name."""
 
 
 class PairedAccount(BaseModel):
     id: int
     name: str
-
-
-class KeyOut(BaseModel):
-    key: str
-    account: PairedAccount
-
-
-def _pickup(request: Request, take: Any) -> JSONResponse:
-    """The brake counts per sender: there is no account to count at, and 40 bits of a short code hold only with it."""
-    with SessionLocal() as db:
-        if not devices.enabled(db):
-            raise _refused("app_disabled", "The operator has switched the app off.", 403)
-        if not devices.allowed(db):
-            raise _refused("app_pairing_disabled", "The operator does not allow pairing the app.", 403)
-    key = "app-pairing:" + client_ip(request)
-    wait = sign_in_brake.wait_seconds(key)
-    if wait:
-        raise _refused("too_many", "Too many attempts. Try again later.", 429, wait)
-    with SessionLocal() as db:
-        try:
-            token, account, _row = take(db)
-        except PairingError as exc:
-            sign_in_brake.failed(key)
-            raise error(exc.code, exc.text, exc.status) from exc
-        out = KeyOut(key=token, account=PairedAccount(id=account.id, name=account.display_name or account.name))
-    sign_in_brake.succeeded(key)
-    return JSONResponse(content=out.model_dump(), headers={"Cache-Control": "no-store"})
-
-
-@router.post("/pairing/{pairing_id}/key", response_model=KeyOut, summary="Pick the device key up with the QR code")
-def pickup_by_secret(
-    pairing_id: str,
-    request: Request,
-    body: KeyIn | None = None,
-    secret: Annotated[str | None, Header(alias="X-Pairing-Secret", max_length=200)] = None,
-) -> JSONResponse:
-    """Unknown, wrong, expired and used answer the same (404 ``app_pairing_unknown``)."""
-    return _pickup(request, lambda db: devices.by_secret(db, pairing_id, secret, body.device if body else ""))
-
-
-@router.post("/pairing/code", response_model=KeyOut, summary="Pick the device key up with the short code")
-def pickup_by_code(body: CodeIn, request: Request) -> JSONResponse:
-    return _pickup(request, lambda db: devices.by_code(db, body.code, body.device))
+    #: With ``X-Nex-App`` only.
+    login: str | None = None
+    email: str | None = None
+    avatar: str | None = None
+    operator: bool | None = None
 
 
 # --- Who am I -----------------------------------------------------------------------------------------------------
@@ -238,11 +224,41 @@ class MeAccount(BaseModel):
     #: ``de`` or ``en``.
     language: str
     avatar_hash: str | None = None
+    #: Since geraete 0.1.0 (``nexgeraete.api.me_fields``): the username, the address, the picture's hash.
+    login: str | None = None
+    email: str | None = None
+    avatar: str | None = None
 
 
 class MeDevice(BaseModel):
     id: int
     name: str
+    #: Since geraete 0.1.0 (``nexgeraete.api.me_fields``): ``ios``, ``ipados``, ``mac``, what ``X-Nex-App`` named, how
+    #: it came in, whether it takes notifications.
+    kind: str | None = None
+    model: str | None = None
+    system: str | None = None
+    app_version: str | None = None
+    via: str | None = None
+    created_at: str | None = None
+    last_seen_at: str | None = None
+    push: bool | None = None
+    this: bool | None = None
+
+
+class Offers(BaseModel):
+    #: Notifications can go out (the operator set a relay).
+    push: bool
+
+
+class KeyOut(BaseModel):
+    """The old form ``{key, account{id, name}}``; with ``X-Nex-App`` also ``token``, ``account_id``, ``device``."""
+
+    key: str
+    account: PairedAccount
+    token: str | None = None
+    account_id: int | None = None
+    device: MeDevice | None = None
 
 
 class Limits(BaseModel):
@@ -257,6 +273,7 @@ class MeOut(BaseModel):
     device: MeDevice | None = None
     features: list[str]
     limits: Limits
+    offers: Offers | None = None
 
 
 class MeIn(BaseModel):
@@ -292,15 +309,25 @@ def _me(found: Caller) -> MeOut:
     with SessionLocal() as db:
         account = db.get(Account, found.account.id)
         assert account is not None
+        device = None
+        offers = None
+        added: dict[str, Any] = {}
+        if found.module is not None:
+            fields = nexgeraete_api.me_fields(devices.CONFIG, found.module)
+            device = MeDevice(**fields["device"])
+            offers = Offers(**fields["offers"])
+            added = {"login": fields["account"]["login"], "email": fields["account"]["email"],
+                     "avatar": fields["account"]["avatar"]}
         return MeOut(
             version=__version__,
             now=clock.now_ms(),
             account=MeAccount(id=account.id, name=account.display_name or account.name, username=account.name,
                               operator=account.role == OPERATOR, timezone=account.timezone or clock.zone_name(),
-                              language=_language(account), avatar_hash=account.avatar_hash or None),
-            device=MeDevice(id=found.device_id, name=found.device_name) if found.device_id is not None else None,
+                              language=_language(account), avatar_hash=account.avatar_hash or None, **added),
+            device=device,
             features=features(db),
             limits=Limits(attachment_bytes=attachment_bytes(db)),
+            offers=offers,
         )
 
 
@@ -332,28 +359,12 @@ def set_me(body: MeIn, found: Who) -> MeOut:
 
 @router.delete("/device", status_code=204, summary="Disconnect this device (device key only)")
 def forget_device(found: Who) -> Response:
+    """Kept as nextasks' own: a browser session has no device to disconnect (404), as before the module."""
     if found.device_id is None:
         raise error("not_found", "Not found.", 404)
     with SessionLocal() as db:
-        devices.disconnect(db, found.account.id, found.device_id)
+        nexgeraete.devices.disconnect(devices.GeraeteStore(db), devices.CONFIG, found.account.id, found.device_id)
     return Response(status_code=204)
-
-
-@router.post("/devices", response_model=KeyOut, summary="A key of its own for another device of this account")
-def bring_in_device(found: Who, body: KeyIn | None = None) -> JSONResponse:
-    """The owner's iPad takes the iPhone's connection from iCloud and comes in under its own name with it
-    (``devices.sibling``). Device key only; the answer is that of a pairing."""
-    if found.device_id is None:
-        raise _refused("not_signed_in", "No valid device key.", 401)
-    with SessionLocal() as db:
-        try:
-            token, _row = devices.sibling(db, found.account.id, found.device_id, body.device if body else "")
-        except PairingError as exc:
-            raise _refused(exc.code, exc.text, exc.status, 3600 if exc.status == 429 else None) from exc
-        account = db.get(Account, found.account.id)
-        assert account is not None
-        out = KeyOut(key=token, account=PairedAccount(id=account.id, name=account.display_name or account.name))
-    return JSONResponse(content=out.model_dump(), headers={"Cache-Control": "no-store"})
 
 
 # --- Fetching -----------------------------------------------------------------------------------------------------
@@ -717,35 +728,8 @@ def _answer_upload(found: Caller, op: dict[str, Any], stored: dict[str, Any], at
 # --- Notifications ------------------------------------------------------------------------------------------------
 
 
-class PushIn(BaseModel):
-    #: The relay's ticket for this device.
-    ticket: str = Field(min_length=1, max_length=1024)
-    #: The device's public X25519 key, base64 of 32 bytes.
-    key: str = Field(max_length=200)
-
-
 class Done(BaseModel):
     status: str = "ok"
-
-
-@router.put("/push", response_model=Done, summary="Where notifications for this device go (device key only)")
-def set_push(body: PushIn, found: Who) -> Done:
-    if found.device_id is None:
-        raise error("not_found", "Not found.", 404)
-    if not push.key_valid(body.key):
-        raise error("invalid_input", "The input is not valid.", 422, fields=["key"])
-    with SessionLocal() as db:
-        push.remember(db, found.account.id, found.device_id, body.ticket, body.key)
-    return Done()
-
-
-@router.delete("/push", response_model=Done, summary="Stop notifications for this device; it stays paired")
-def stop_push(found: Who) -> Done:
-    if found.device_id is None:
-        raise error("not_found", "Not found.", 404)
-    with SessionLocal() as db:
-        push.forget(db, found.device_id)
-    return Done()
 
 
 class WebPushKeyOut(BaseModel):
@@ -922,6 +906,7 @@ PROMISED = (
     "/api/app/1/changes",
     "/api/app/1/device",
     "/api/app/1/devices",
+    "/api/app/1/devices/{device_id}",
     "/api/app/1/files",
     "/api/app/1/files/{attachment_id}",
     "/api/app/1/me",
@@ -929,6 +914,7 @@ PROMISED = (
     "/api/app/1/pairing/{pairing_id}/key",
     "/api/app/1/people/{account_id}/avatar",
     "/api/app/1/push",
+    "/api/app/1/push/kinds",
     "/api/app/1/spaces/{space_id}/invites",
     "/api/app/1/spaces/{space_id}/invites/{invite_id}",
     "/api/app/1/spaces/{space_id}/members/{account_id}",

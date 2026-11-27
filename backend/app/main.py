@@ -38,6 +38,7 @@ from .routers import (
     app_pairing,
     auth,
     focus,
+    geraete,
     health,
     history,
     invites,
@@ -64,6 +65,7 @@ from .security import HashingBusy, purge_sessions
 from .services import (
     accounts,
     backups,
+    devices,
     locales,
     logs,
     net,
@@ -86,7 +88,7 @@ logger = logging.getLogger("nextasks")
 
 ROUTERS = [
     health, about, locales_router, logs_router, auth, totp_router, passkeys_router, oidc, accounts_router, invites,
-    settings_router, backups_router, avatars_router, apitokens, v1, app_pairing, app1, notifications, stats,
+    settings_router, backups_router, avatars_router, apitokens, v1, app_pairing, app1, geraete, notifications, stats,
     focus, sweep, history, server_signin_router, server_mail_router,
     connections_router, mcp, connect_router,
 ]
@@ -125,6 +127,12 @@ async def _sweep_forever(stop: asyncio.Event) -> None:
         if rounds % 60 == 0:
             with SessionLocal() as db:
                 purge_sessions(db)
+            # Devices unused for a year are disconnected (the device module, geraete 0.1.0, G27), once a day.
+            if rounds % 1440 == 0:
+                try:
+                    await asyncio.to_thread(devices.sweep)
+                except Exception:
+                    logger.exception("Disconnecting unused devices failed")
             # Accounts deleted 30 days ago go for good (the shared account module, konten 1.1.0).
             try:
                 with SessionLocal() as db:

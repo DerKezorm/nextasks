@@ -9,15 +9,16 @@ import { useTranslation } from 'react-i18next'
 import { api } from '../../api/client'
 import { InstallCard } from '../../components/InstallCard'
 import { NotificationsPart } from '../../components/Notifications'
-import { DevicesSection } from '../../devices/DevicesSection'
 import { useAuth } from '../../state/auth'
 import { WhatYouSeeCard } from '../../vendor/nexkonten/AccountCards'
 import { MailCard } from '../../vendor/nexpost/MailCard'
 import { mcpRequest, useMcpWords } from '../../lib/mcp'
 import { useWhen } from '../../lib/useWhen'
+import { DEVICES_BASE, deviceRequest, SERVER_CONNECTIONS_HREF } from '../../lib/devices'
 import { McpOperatorSettings, PendingRequests, ToolRights } from '../../vendor/nexmcp'
 import { AllKeysCard, ApiKeysCard, InterfacesCard, ToolsCard, type KeyRequest } from '../../vendor/nexschluessel'
 import { ConnectionsArea as OtherApps, ConnectionsOperatorCard } from '../../vendor/nexverbinden'
+import { DevicesCard } from '../../vendor/nexgeraete'
 import { AboutArea } from './AboutArea'
 import { AccountsTab } from './AccountsTab'
 import { AccountTab } from './AccountTab'
@@ -64,9 +65,9 @@ export function AreaContent({ area }: { area: AreaSlug }) {
   }
 }
 
-/** Mein Konto › Connections: the iPhone app's devices, installing on this device, the other nex apps that use the
- * tasks (verbinden), the API keys, the AI tools (MCP: programs and MCP keys, their rights per tool, the requests that
- * wait). */
+/** Mein Konto › Connections: the iPhone app's devices (the device module's card), installing on this device, the
+ * other nex apps that use the tasks (verbinden), the API keys, the AI tools (MCP: programs and MCP keys, their rights
+ * per tool, the requests that wait). */
 function ConnectionsArea() {
   const { t, i18n } = useTranslation()
   const { me } = useAuth()
@@ -74,7 +75,7 @@ function ConnectionsArea() {
   const when = useWhen()
   return (
     <>
-      <DevicesSection />
+      <DevicesCard request={deviceRequest} base={DEVICES_BASE} app="nextasks" language={i18n.language} when={when} operator={me?.role === 'operator'} serverHref={SERVER_CONNECTIONS_HREF} />
       <InstallCard />
       <OtherApps app="nextasks" request={request} areaWord={t('mcp.areas')} language={i18n.language} when={when} operator={me?.role === 'operator'} />
       <ApiKeysCard request={request} things={t('settings.things')} thingsDative={t('settings.thingsDative')} words={{ areas: t('apiTokens.where') }} docsHref={API_DOCS} operator={me?.role === 'operator'} when={when} />

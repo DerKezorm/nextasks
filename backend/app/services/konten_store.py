@@ -44,6 +44,7 @@ from ..models import (
     SIGN_IN_PASSWORD,
     Account,
     ApiToken,
+    AppCode,
     AppDevice,
     AppPairing,
     AuthSession,
@@ -442,10 +443,15 @@ class KontenStore:
         self.renew_device_key(account_id)
 
     def list_access(self, account_id: AccountId) -> list[Access]:
+        from ..vendor import nexgeraete
+        from .devices import GeraeteStore
+
         devices = self.db.scalars(
             select(AppDevice).where(AppDevice.account_id == int(account_id)).order_by(AppDevice.created_at)
         )
-        found = [Access(f"{DEVICE_UID}{row.id}", "device", row.name, row.last_seen_at) for row in devices]
+        # Named as the device module names them (geraete 0.1.0): the name, and the model where it says more.
+        found = [Access(f"{DEVICE_UID}{row.id}", "device", nexgeraete.describe(GeraeteStore._device(row)),
+                        row.last_seen_at) for row in devices]
         tokens = self.db.scalars(
             select(ApiToken).where(ApiToken.account_id == int(account_id), ApiToken.blocked_at.is_(None))
             .order_by(ApiToken.created_at)
@@ -465,8 +471,9 @@ class KontenStore:
         gone += int(self.db.execute(delete(ApiToken).where(ApiToken.account_id == int(account_id))).rowcount or 0)
         gone += self._end_mcp_keys(account_id)
         gone += self.remove_passkeys(account_id)
-        # A QR code nobody scanned yet would bring a device right back.
+        # A QR code nobody scanned yet, or a code of the sign-in in the browser, would bring a device right back.
         self.db.execute(delete(AppPairing).where(AppPairing.account_id == int(account_id)))
+        self.db.execute(delete(AppCode).where(AppCode.account_id == int(account_id)))
         return gone
 
     def second_factor(self, account_id: AccountId) -> str:
@@ -822,6 +829,9 @@ class KontenStore:
 
     @staticmethod
     def _device(row: AppDevice) -> SessionData:
+        from ..vendor import nexgeraete
+        from .devices import GeraeteStore
+
         created = _aware(row.created_at)
         return SessionData(
             uid=f"{DEVICE_UID}{row.id}",
@@ -830,7 +840,7 @@ class KontenStore:
             created_at=created,
             expires_at=created + timedelta(days=36500),
             last_seen_at=_aware(row.last_seen_at) if row.last_seen_at else None,
-            label=row.name,
+            label=nexgeraete.describe(GeraeteStore._device(row)),
         )
 
     def add_session(self, session: SessionData, token_hash: str) -> None:
@@ -1006,15 +1016,17 @@ class KontenStore:
         self.db.flush()
 
     def shut_out(self, account_id: AccountId) -> None:
-        """What blocking ended in 0.8.0: every browser session and sign-in that waits, every paired iPhone, the key of
-        known browsers. API tokens and calendar subscriptions stay, refused while the account is shut
-        (``Account.shut``)."""
+        """Blocking, or deleting with its days to bring it back: every browser session and sign-in that waits, the key
+        of known browsers, the QR codes nobody used yet. Paired iPhones, iPads and Macs rest (konten 1.1.5, G26): they
+        stay and are refused while the account is out (``nexgeraete.authenticate`` answers ``account_blocked``), and
+        work again once it is back, without pairing anew. API tokens and calendar subscriptions stay too, refused
+        while the account is shut (``Account.shut``)."""
         from ..vendor.nexkonten import factor
         from . import totp
 
-        self.db.execute(delete(AppDevice).where(AppDevice.account_id == int(account_id)))
         self.db.execute(delete(AuthSession).where(AuthSession.account_id == int(account_id)))
         self.db.execute(delete(AppPairing).where(AppPairing.account_id == int(account_id)))
+        self.db.execute(delete(AppCode).where(AppCode.account_id == int(account_id)))
         # Connected AI programs end like the sessions (E42); MCP keys made by hand rest like API tokens (E41).
         from .schluessel_store import SchluesselStore
 
@@ -1036,8 +1048,8 @@ class KontenStore:
     def on_shut_out(self, account: KontoAccount) -> None:
         """Konten 1.1.0 (E38), after the commit: the account went out. Nothing is pushed or mailed to it while it is
         out (``channels.ready`` answers none for a shut account; its browser subscriptions and its address stay), and
-        nextasks keeps no syncs of its own in the background that would need holding. Its paired iPhones ended with
-        ``shut_out``."""
+        nextasks keeps no syncs of its own in the background that would need holding. Its paired devices rest: the
+        device module sends nothing while ``Holder.out`` (G26)."""
         logger.info("Account out, its pushes held account_id=%s", account.id)
 
     def on_back(self, account: KontoAccount) -> None:

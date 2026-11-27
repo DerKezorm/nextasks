@@ -321,10 +321,29 @@ class AppPairing(Base):
     expires_at: Mapped[datetime] = mapped_column(UtcDateTime)
     used_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
     device_name: Mapped[str] = mapped_column(String(80), default="")
+    #: The device that used it (module geraete 0.1.0); empty in rows of before and while it waits.
+    device_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class AppCode(Base):
+    """The one-time code the sign-in in the browser (``/app-connect?state=…``) hands to the app: five minutes, once,
+    only its SHA-256 kept (module geraete 0.1.0, G8, G34)."""
+
+    __tablename__ = "app_codes"
+
+    code_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), index=True)
+    state: Mapped[str] = mapped_column(String(200), default="")
+    challenge: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    used_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
 
 
 class AppDevice(Base):
-    """A paired iPhone or iPad: its key (``ntd_…``) opens ``/api/app/1`` and nothing else. Only the SHA-256 is kept."""
+    """A paired iPhone, iPad or Mac: its key (``ntd_…``) opens ``/api/app/1`` and nothing else. Only the SHA-256 is
+    kept. The module geraete 0.1.0 manages them through ``services/devices.py`` (``GeraeteStore``); its columns come
+    after the push key, empty (``NULL``) in the rows of before."""
 
     __tablename__ = "app_devices"
 
@@ -338,6 +357,18 @@ class AppDevice(Base):
     #: X25519 key, base64. Empty: none.
     push_ticket: Mapped[str] = mapped_column(String(1024), default="")
     push_key: Mapped[str] = mapped_column(String(64), default="")
+    #: ``ios``, ``ipados``, ``mac``; ``NULL``: paired before the module (an iPhone).
+    kind: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    #: What ``X-Nex-App`` names: "iPhone 16 Pro", "iOS 26.1", the app's version.
+    model: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    system: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    app_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    #: How it came in: ``qr``, ``code``, ``browser``, ``icloud``; ``NULL`` before the module.
+    via: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    #: The kinds of notification the device understands (JSON list); ``NULL``: the published app's five.
+    push_understands: Mapped[Any] = mapped_column(JSON, nullable=True)
+    #: The kinds switched on or off on this device (JSON object); ``NULL``: as they come.
+    push_kinds: Mapped[Any] = mapped_column(JSON, nullable=True)
 
 
 class WebPushSubscription(Base):
@@ -928,6 +959,7 @@ __all__ = [
     "SPACE_ROLES",
     "Account",
     "ApiToken",
+    "AppCode",
     "AppDevice",
     "AppOp",
     "AppPairing",

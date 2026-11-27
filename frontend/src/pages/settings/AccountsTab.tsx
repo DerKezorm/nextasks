@@ -19,6 +19,7 @@ import { accountsApi, invitesApi, oidcApi, type AccountRow, type FactorResetOver
 import { AccountButton } from '../../components/AccountButton'
 import { confirmOf } from '../../lib/accountButton'
 import { copyText } from '../../lib/copy'
+import { DEVICES_BASE, deviceRequest } from '../../lib/devices'
 import { dayOf, momentIn } from '../../lib/time'
 import { useAuth } from '../../state/auth'
 import {
@@ -53,6 +54,7 @@ import {
   type ListedAccount,
   type ListedInvite,
 } from '../../vendor/nexkonten/konten'
+import { AccountDevicesPart } from '../../vendor/nexgeraete'
 import { Avatar, Badge, Button, ButtonGroup, Card, CheckboxRow, ConfirmDialog, Dialog, Facts, Field, Notice, Row, Rows, SelectField, type IconName } from '../../vendor/nexui'
 import { APP_CAPS, APP_OWN_ACTIONS, listedOf } from './accountList'
 import { Outcome as Feedback, useAction } from './actions'
@@ -271,6 +273,8 @@ function ManageDialog({ row, ownId, operatorHasPassword, mailServer, onClose, on
               )}
             </ButtonGroup>
           ))}
+          {/* The device module's part (geraete 0.1.0): how many devices, which kind, when last; never what is on them. */}
+          <AccountDevicesPart request={deviceRequest} base={DEVICES_BASE} accountId={row.id} name={name} blocked={Boolean(row.blocked_at || row.deleted_at)} language={lang} when={(iso, language) => momentIn(iso, language, zone)} />
           <Feedback problem={action.problem} done={action.done} />
         </div>
       </Dialog>

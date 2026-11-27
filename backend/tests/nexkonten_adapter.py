@@ -496,3 +496,37 @@ class Adapter(StandardAdapter):
             account = package.login.resolve_login(store, typed)
         return account.id if account is not None else None
 
+
+    # --- Paired devices rest while the account is out (konten 1.1.5, G26) ------------------------------------------
+
+    def pair_device(self, account_id: Any) -> Any:
+        """Through the device module, as a pairing makes one (``nexgeraete.devices.add``): its key."""
+        from app.db import SessionLocal
+        from app.services import devices
+        from app.vendor import nexgeraete
+
+        with SessionLocal() as db:
+            store = devices.GeraeteStore(db)
+            holder = store.holder(account_id)
+            assert holder is not None
+            _device, key = nexgeraete.devices.add(store, devices.CONFIG, holder, name="Contract iPhone", kind="ios",
+                                                  via=nexgeraete.VIA_QR, now=devices.now())
+            store.commit()
+        return key
+
+    def device_works(self, handle: Any) -> bool:
+        """``GET /api/app/1/me`` with the device's key, in the published app's form (no ``X-Nex-App``)."""
+        from fastapi.testclient import TestClient
+
+        from app.main import app
+
+        with TestClient(app) as client:
+            answer = client.get("/api/app/1/me", headers={"Authorization": f"Bearer {handle}"})
+        return answer.status_code == 200
+
+    def device_kept(self, handle: Any) -> bool:
+        from app.db import SessionLocal
+        from app.services import devices
+
+        with SessionLocal() as db:
+            return devices.GeraeteStore(db).device_by_hash(devices.digest(str(handle))) is not None
