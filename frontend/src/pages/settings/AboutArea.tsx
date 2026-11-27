@@ -8,12 +8,12 @@
  */
 import { useTranslation } from 'react-i18next'
 
-import { tabId } from '../../api/client'
+import { moduleFetch } from '../../api/client'
 import { momentIn } from '../../lib/time'
-import { useWhatsNew } from '../../lib/whatsNew'
 import { useAuth } from '../../state/auth'
 import { AboutPage, Notice, type BuiltWith } from '../../vendor/nexui'
-import { useUpdates, useUpdatesTexts, whatGoesOut, type Fetcher } from '../../vendor/nexupdates/updates'
+import { useUpdates, useUpdatesTexts, whatGoesOut } from '../../vendor/nexupdates/updates'
+import { useAboutWhatsNew } from '../../vendor/nexwasneu'
 
 const PARTS: BuiltWith[] = [
   { name: 'FastAPI', url: 'https://fastapi.tiangolo.com', licence: 'MIT' },
@@ -29,12 +29,8 @@ const PARTS: BuiltWith[] = [
   { name: 'Inter', url: 'https://rsms.me/inter/', licence: 'OFL-1.1' },
 ]
 
-/** nextasks' own way to the module's routes: every request names its tab (changes are refused without it). */
-const fetcher: Fetcher = (path, init) => {
-  const headers = new Headers(init.headers)
-  headers.set('X-Nextasks-Client', tabId())
-  return fetch(path, { credentials: 'same-origin', ...init, headers })
-}
+/** nextasks' own way to the modules' routes: every request names its tab (changes are refused without it). */
+const fetcher = moduleFetch
 
 export function AboutArea() {
   const { t, i18n } = useTranslation()
@@ -42,32 +38,35 @@ export function AboutArea() {
   const operator = me?.role === 'operator'
   const language = i18n.language
   const state = useUpdates({ fetcher, operator, language, when: (iso) => momentIn(iso, language, me?.timezone) })
-  // The written text of the running version, to read again at any time.
-  const { entry } = useWhatsNew(me?.version, language)
+  // "What's new" (wasneu 0.1.0): the newest text up to the running version, with the earlier ones (W18).
+  const news = useAboutWhatsNew({ app: 'nextasks', logo: '/logo.svg', fetcher, language })
   const texts = useUpdatesTexts(language)
 
   const about = state.about
   if (!about) return state.problem ? <Notice tone="danger">{state.problem}</Notice> : null
   return (
-    <AboutPage
-      app="nextasks"
-      logo="/logo.svg"
-      tagline={t('about.subtitle')}
-      version={about.version}
-      whatsNew={entry}
-      licence={{ name: about.license, href: 'https://www.gnu.org/licenses/agpl-3.0.html' }}
-      source={about.repo_url}
-      releases={about.releases_url}
-      project={about.project_url || null}
-      updates={state.updates}
-      showUpdates={state.showUpdates}
-      operator={operator}
-      onDaily={state.onDaily}
-      onCheck={state.onCheck}
-      checking={state.checking}
-      builtWith={PARTS}
-      problem={state.problem}
-      texts={{ updatesWhatGoesOut: whatGoesOut(texts, 'nextasks', undefined, [t('about.otherCalls')]) }}
-    />
+    <>
+      <AboutPage
+        app="nextasks"
+        logo="/logo.svg"
+        tagline={t('about.subtitle')}
+        version={about.version}
+        {...news.about}
+        licence={{ name: about.license, href: 'https://www.gnu.org/licenses/agpl-3.0.html' }}
+        source={about.repo_url}
+        releases={about.releases_url}
+        project={about.project_url || null}
+        updates={state.updates}
+        showUpdates={state.showUpdates}
+        operator={operator}
+        onDaily={state.onDaily}
+        onCheck={state.onCheck}
+        checking={state.checking}
+        builtWith={PARTS}
+        problem={state.problem}
+        texts={{ updatesWhatGoesOut: whatGoesOut(texts, 'nextasks', undefined, [t('about.otherCalls')]) }}
+      />
+      {news.window}
+    </>
   )
 }

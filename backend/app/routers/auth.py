@@ -68,11 +68,12 @@ from ..services import (
     totp,
     updates,
     visibility,
+    whats_new,
 )
 from ..services.accounts import AccountError
 from ..services.konten_store import KontenStore, counts, pending_of, proven
 from ..services.oidc_store import SqlStore
-from ..vendor import nexkonten
+from ..vendor import nexkonten, nexwasneu
 from ..vendor.nexkonten import login as konten_login
 from ..vendor.nexkonten import passkeys as konten_passkeys
 from ..vendor.nexkonten import profiles, resets
@@ -666,10 +667,11 @@ def set_profile(payload: ProfileIn, request: Request, account: Account, db: DbSe
 
 @router.post("/me/whats-new/seen", summary="\"What's new\" of the running version is read or put away")
 def whats_new_seen(account: Account, db: DbSession) -> dict[str, Any]:
+    """The route of before (wasneu 0.1.0, W10): the module marks the running version, the answer stays the account."""
+    nexwasneu.mark_seen(whats_new.viewer_of(db, account))
     row = db.get(AccountRow, account.id)
     assert row is not None
-    row.whats_new_seen = __version__
-    db.commit()
+    db.refresh(row)
     return account_view(row, db)
 
 

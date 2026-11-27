@@ -377,14 +377,6 @@
   "apiTokens": {
     "where": "Bereiche"
   },
-  "whatsNew": {
-    "title": "Neu in nextasks {{version}}",
-    "banner": "nextasks {{version}} ist da.",
-    "show": "Was ist neu?",
-    "putAway": "Wegklicken",
-    "where": "Wo:",
-    "done": "Verstanden"
-  },
   "tiles": {
     "label": "Sammlungen",
     "today": "Heute",

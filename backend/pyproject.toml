@@ -1,7 +1,7 @@
 [tool.ruff]
 target-version = "py313"
 line-length = 120
-# The shared modules (sign-in, accounts, mail, log, backup, keys) and their contract tests come unchanged from bauplaene and are
+# The shared modules (sign-in, accounts, mail, log, backup, keys, what is new) and their contract tests come unchanged from bauplaene and are
 # linted there; the references for repeating, the merge rule, order keys and push come unchanged from
 # nextasks-ios/docs/pruefsaetze.
 extend-exclude = ["app/vendor/nexoidc", "tests/nexoidc", "app/vendor/nexlog", "tests/nexlog", "app/vendor/nexkonten",
@@ -9,6 +9,7 @@ extend-exclude = ["app/vendor/nexoidc", "tests/nexoidc", "app/vendor/nexlog", "t
                   "app/vendor/nexsicherung", "tests/nexsicherung", "app/vendor/nexschluessel", "tests/nexschluessel",
                   "app/vendor/nexsprachen", "tests/nexsprachen", "app/vendor/nexupdates", "tests/nexupdates",
                   "app/vendor/nexmcp", "tests/nexmcp", "app/vendor/nexverbinden", "tests/nexverbinden",
+                  "app/vendor/nexwasneu", "tests/nexwasneu",
                   "app/services/wiederholung.py", "app/services/gleichstand.py", "app/services/position.py",
                   "app/services/push_crypto.py", "app/vendor/nexgeraete", "tests/nexgeraete"]
 

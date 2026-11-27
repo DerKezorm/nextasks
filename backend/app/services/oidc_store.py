@@ -19,7 +19,6 @@ import ssl
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
-from .. import __version__
 from ..config import get_settings
 from ..db import SessionLocal
 from ..models import MEMBER, SIGN_IN_OIDC, SIGN_IN_PASSWORD, Account, OidcLink, OidcProvider, utcnow
@@ -34,7 +33,7 @@ from ..vendor.nexoidc import (
     ProviderValues,
     secret_context,
 )
-from . import accounts, settings_service
+from . import accounts, settings_service, whats_new
 from .konten_store import KontenStore
 from .konten_store import provider_picture as konten_provider_picture
 
@@ -313,7 +312,7 @@ class SqlStore:
             email_counted=address,
             email_confirmed=address if invitation is not None and invitation.mailed else "",
             email_source="own" if address else "",
-            whats_new_seen=__version__,
+            whats_new_seen=whats_new.seen_for_new_account(),
         )
         self.db.add(row)
         self.db.flush()

@@ -22,7 +22,7 @@ from .errors import detail, error
 from .models import OPERATOR, SIGN_IN_PASSWORD, OidcLink, OidcProvider, utcnow
 from .models import Account as AccountRow
 from .security import SESSION_COOKIE, session_account, session_by_provider, session_created_at
-from .services import accounts, logs, totp
+from .services import accounts, logs, totp, whats_new
 from .vendor.nexkonten.brake import BRAKE, DOOR_CONFIRM, door_key
 from .vendor.nexkonten.common import FRESH_SIGN_IN_MINUTES, fresh_sign_in
 
@@ -162,6 +162,11 @@ def require_operator(request: Request, account: Annotated[AccountRow, Depends(re
 
 Account = Annotated[AccountRow, Depends(require_account)]
 OperatorAccount = Annotated[AccountRow, Depends(require_operator)]
+
+
+def whats_new_viewer(account: Account, db: DbSession) -> whats_new.nexwasneu.Viewer:
+    """The signed-in account for the routes of "What's new" (wasneu 0.1.0, ``/api/whats-new``)."""
+    return whats_new.viewer_of(db, account)
 
 
 # --- The password once more, while signed in ------------------------------------------------------------------------

@@ -9,7 +9,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
+import { moduleFetch } from '../api/client'
 import { hideNotice, showNotice } from '../lib/notice'
+import { useAuth } from '../state/auth'
 import { useEngine, useSyncState, useView } from '../state/sync'
 import { UpdateBanner } from './AppInstall'
 import { ConfirmDialog, type Question } from './ConfirmDialog'
@@ -23,7 +25,7 @@ import { ShellContext, type Shell } from './Shell'
 import { Sidebar } from './Sidebar'
 import { FilterDialog } from './FilterDialog'
 import { ListDialog, SpaceDialog } from './ThingDialogs'
-import { WhatsNewBanner } from './WhatsNew'
+import { WhatsNewAfterUpdate } from '../vendor/nexwasneu'
 
 /** Pages without a head of their own (the settings with all their areas, the trash): on a phone they get the way back
  * to the overview above them. */
@@ -38,7 +40,8 @@ function typing(target: EventTarget | null): boolean {
 }
 
 export function AppShell() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const { refresh } = useAuth()
   const view = useView()
   const engine = useEngine()
   const sync = useSyncState()
@@ -220,7 +223,8 @@ export function AppShell() {
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <UpdateBanner />
-          <WhatsNewBanner />
+          {/* "What's new" after an update (wasneu 0.1.0): the banner, the window on a click, put away per account. */}
+          <WhatsNewAfterUpdate app="nextasks" logo="/logo.svg" fetcher={moduleFetch} language={i18n.language} onSeen={() => void refresh()} />
           {sync.status === 'failed' && (
             <p role="alert" className="border-b border-bad-500/30 bg-bad-500/10 px-4 py-2 text-sm text-bad-500">
               {t('sync.serverOld')}

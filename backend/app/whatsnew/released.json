@@ -1,0 +1,62 @@
+{
+  "0.1.0": {
+    "de": "sha256-3bYjA+bls4cTBRm8yjKhzMPwlULBua5HNSpdnCcs4ao=",
+    "en": "sha256-ec3VJiD6MR3UGusrMPiw7OoHZhvCFdBBbnK9Ht0Cs0o="
+  },
+  "0.2.0": {
+    "de": "sha256-ZVtzi1az7rSqLI8LVt2XWZr3V8s6eitV1gWMezkLFQg=",
+    "en": "sha256-H0SJmwAULQRHNboPEZLaYsQI0OXhauZyFl2cuFZPv04="
+  },
+  "0.2.1": {
+    "de": "sha256-i5Is90bDYF+A5pvereoN50x5EQs8pMaefJx4YmHeZ68=",
+    "en": "sha256-tL1eejp1SHUo22bm+PrUkCHFdFuOMS/W8raPtodHnWM="
+  },
+  "0.3.0": {
+    "de": "sha256-bbzk9a31PfZL9ZkSfc7dMzPLsSaZHsnYOVYgi9v+K1M=",
+    "en": "sha256-my4GR0RmLfx2C388A/xQWsu5ddvkJFMFrd/HevkOTOw="
+  },
+  "0.3.1": {
+    "de": "sha256-/rnpHqEUk/4xJ/k+dpNh06VOa77zrpOo3S5vcnSlDiU=",
+    "en": "sha256-okWcLTSo6XBDl1sTbmGrPbfzv9CVHzqM2/VgQ5j66j8="
+  },
+  "0.3.2": {
+    "de": "sha256-WeNvoKrjMm7JK4gihDB/rCxZ3iazWZ4XBanfe/Qy9Ls=",
+    "en": "sha256-9S3f6fYGFBse5tO0us9DIYu3uPSLri8Rqo//FEfW/YI="
+  },
+  "0.4.0": {
+    "de": "sha256-RNkYOAGIVcg4qFG6lZJrsjfd2Tkf6Nt5ZEgRocOwCOs=",
+    "en": "sha256-qet8runQo3mdQBHoa5Gtp9jfShtwrZRjZygpklyYHpk="
+  },
+  "0.4.1": {
+    "de": "sha256-OZcm6DWwdQQX+sNFQ2rZaTsLds9uV3I/EowIg6Tci+I=",
+    "en": "sha256-cwwEzve9t6FE/c99O1NtQ547m9Q8G+7lkK0Ou4uWaew="
+  },
+  "0.4.2": {
+    "de": "sha256-okRa0J2Rmtyekx4dfc3F4q58a235G/G5bpNQ/UThxi0=",
+    "en": "sha256-8lRQM10uCKcmy3nOlh9xGWnqLnEut4cQoJ20vsyNyqM="
+  },
+  "0.4.3": {
+    "de": "sha256-xzDx3X7PAUauzPpui1HmGWXB0+Da+rjNeSjfpAAyiPI=",
+    "en": "sha256-y6DoaWt1/PSHT8NqI0pIz0sAlpjzMpeiRckUb01O01w="
+  },
+  "0.5.0": {
+    "de": "sha256-mshT51daNWQAW5yc1DL5tlBcNdf0vp4RywaAPLvOQlM=",
+    "en": "sha256-TonCKZQoKJpRbqbS0UQaiaUrGbCDKNtXLARtexw+69s="
+  },
+  "0.5.1": {
+    "de": "sha256-coSPug6PKDOF3baVgpstulfpwwpR37Ka1QglCGVd0nk=",
+    "en": "sha256-gyGjHZwhO9Sj11FCPdWF0taB5aRdP2/7GP7zlgFmUx0="
+  },
+  "0.6.0": {
+    "de": "sha256-PLtmW7otECB58LfvV3efiDbBqyhM8qv2ErH/zvaFclI=",
+    "en": "sha256-oylJYIpAsoiTFAKYR5t/IBTa9UvhWYiS/wshz2ORufU="
+  },
+  "0.7.0": {
+    "de": "sha256-OR/1bUydicKd3KWpENAPZvVflWkhCjEeolyi0T8UDXY=",
+    "en": "sha256-DU0iTH4mBps5ojufaET8njm4EqAP1M73jxKNlxz+UMI="
+  },
+  "0.8.0": {
+    "de": "sha256-DA3SNFLg5BZMEFzeAh4EKoAew+LVG6EHFGgIMAKZ+as=",
+    "en": "sha256-Gd1A9mbB/bwbNvV/nSS5W542J7GRefI2ZVn8KO448FU="
+  }
+}

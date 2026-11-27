@@ -70,6 +70,13 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   }
 }
 
+/** The way of the shared modules' pages (updates, wasneu) to their routes: every request names this tab. */
+export function moduleFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(init.headers)
+  headers.set('X-Nextasks-Client', tabId())
+  return fetch(path, { credentials: 'same-origin', ...init, headers })
+}
+
 async function once<T>(path: string, options: Options): Promise<T> {
   const url = new URL(path, window.location.origin)
   for (const [key, value] of Object.entries(options.query ?? {})) {
@@ -282,7 +289,6 @@ export const authApi = {
   resetNoticeSeen: () => api<Me>('/api/me/password-reset-notice/seen', { method: 'POST' }),
   password: (current: string, next: string, confirm: string) =>
     api<void>('/api/auth/password', { method: 'PUT', body: { current, new: next, password_confirm: confirm } }),
-  whatsNewSeen: () => api<Me>('/api/me/whats-new/seen', { method: 'POST' }),
   myProviders: () => api<MyProvider[]>('/api/oidc/me'),
   linkStart: (slug: string, password: string) => api<{ url: string }>(`/api/oidc/${encodeURIComponent(slug)}/link`, { method: 'POST', body: { password } }),
   unlink: (slug: string) => api<void>(`/api/oidc/${encodeURIComponent(slug)}/link`, { method: 'DELETE' }),

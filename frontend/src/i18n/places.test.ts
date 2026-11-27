@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest'
 
 import de from './de.json'
 import en from './en.json'
-import whatsNewDe from './whatsnew/de.json'
-import whatsNewEn from './whatsnew/en.json'
+import whatsNewDe from '../../../backend/app/whatsnew/de.json'
+import whatsNewEn from '../../../backend/app/whatsnew/en.json'
 
 const all = (tree: unknown): string => JSON.stringify(tree)
 

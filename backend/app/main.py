@@ -21,6 +21,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from . import __version__, private
 from .config import get_settings
 from .db import SessionLocal, init_db
+from .deps import whats_new_viewer
 from .errors import detail
 from .middleware import (
     API_PREFIX,
@@ -79,10 +80,12 @@ from .services import (
     updates,
     verbinden,
     webpush,
+    whats_new,
 )
 from .services.konten_store import KontenStore
 from .vendor.nexkonten import factor as konten_factor
 from .vendor.nexkonten import manage as konten_manage
+from .vendor.nexwasneu import api as whats_new_api
 
 logger = logging.getLogger("nextasks")
 
@@ -284,6 +287,9 @@ app.add_exception_handler(Exception, _unhandled)
 
 for module in ROUTERS:
     app.include_router(module.router)
+# "What's new" of the shared module (wasneu 0.1.0): ``/api/whats-new``, its history and "seen".
+whats_new.configure()
+app.include_router(whats_new_api.router(viewer=whats_new_viewer))
 
 # The shared sign-in module learns who it runs in before the first request (vendor/nexoidc).
 oidc_store.configure()

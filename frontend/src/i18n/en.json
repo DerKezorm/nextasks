@@ -377,14 +377,6 @@
   "apiTokens": {
     "where": "Spaces"
   },
-  "whatsNew": {
-    "title": "New in nextasks {{version}}",
-    "banner": "nextasks {{version}} is here.",
-    "show": "What's new?",
-    "putAway": "Dismiss",
-    "where": "Where:",
-    "done": "Got it"
-  },
   "tiles": {
     "label": "Collections",
     "today": "Today",

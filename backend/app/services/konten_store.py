@@ -35,7 +35,6 @@ from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from .. import __version__
 from ..config import get_settings
 from ..models import (
     MEMBER,
@@ -86,6 +85,7 @@ from ..vendor.nexkonten.model2 import KIND_BROWSER, KIND_DEVICE, KIND_WAITING, S
 from ..vendor.nexkonten.model2 import Passkey as PasskeyData
 from ..vendor.nexkonten.model2 import Session as SessionData
 from ..vendor.nexkonten.model3 import SignInSettings
+from . import whats_new
 
 logger = logging.getLogger("nextasks.auth")
 
@@ -315,7 +315,7 @@ class KontenStore:
             password_hash=hash_password(new.password) if new.password else "",
             password_changed_at=utcnow() if new.password else None,
             language=new.language or "",
-            whats_new_seen=__version__,
+            whats_new_seen=whats_new.seen_for_new_account(),
             # A new account starts "as the device says" (E45); only accounts of before take a browser's value once.
             theme=getattr(new, "theme", "system") or "system",
         )

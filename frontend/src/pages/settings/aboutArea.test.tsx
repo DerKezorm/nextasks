@@ -2,7 +2,8 @@
 /**
  * Über nextasks on the shared module updates (0.1.1): an operator sees the card "Aktualisierungen" with the state and
  * the sentence naming nextasks' other calls by itself (U11), and switches with the tab's header; a member sees only the
- * own version, no card, and the page never asks for the state (U2, U15).
+ * own version, no card, and the page never asks for the state (U2, U15). "Was ist neu" comes from the shared module
+ * wasneu (0.1.0) over `/api/whats-new`, with the tab's header too.
  */
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -16,11 +17,12 @@ const who = vi.hoisted(() => ({ role: 'operator' }))
 vi.mock('../../state/auth', () => ({
   useAuth: () => ({ me: { id: 1, version: '0.9.0', role: who.role, timezone: 'Europe/Berlin' } }),
 }))
-vi.mock('../../lib/whatsNew', () => ({ useWhatsNew: () => ({ entry: null }) }))
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
 const ABOUT = { version: '0.9.0', license: 'AGPL-3.0', repo_url: 'https://github.com/DerKezorm/nextasks', releases_url: 'https://github.com/DerKezorm/nextasks/releases', project_url: '' }
+const ENTRY = { version: '0.9.0', language: 'de', lead: 'Neu verbunden.', sections: [{ title: 'Apps verbinden', where: 'Mein Konto › Verbindungen', body: 'Mit einem Klick.', link: null, operator: false }], smallTitle: 'Außerdem', small: [] }
+const NEWS = { version: '0.9.0', seen: '0.9.0', unread: [], more: false, current: ENTRY, earlier: false }
 const STATE = { update_check: true, checked: true, latest: 'v9.0.0', newer: true, checked_at: '2026-11-26T09:12:00Z', release_url: 'https://github.com/DerKezorm/nextasks/releases/tag/v9.0.0', hidden: false }
 
 let root: Root
@@ -32,7 +34,7 @@ beforeEach(async () => {
   calls = []
   vi.stubGlobal('fetch', async (path: string, init: RequestInit = {}) => {
     calls.push({ path, method: init.method ?? 'GET', tab: new Headers(init.headers).get('X-Nextasks-Client') })
-    const body = path === '/api/about' ? ABOUT : init.method === 'PUT' ? { ...STATE, update_check: false } : STATE
+    const body = path.startsWith('/api/whats-new') ? NEWS : path === '/api/about' ? ABOUT : init.method === 'PUT' ? { ...STATE, update_check: false } : STATE
     return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } })
   })
   box = document.createElement('div')
@@ -89,6 +91,20 @@ describe('Über nextasks', () => {
     expect(box.textContent).not.toContain('9.0.0')
     expect(box.textContent).not.toContain('Aktualisierungen')
     expect(box.querySelector('input[type="checkbox"]')).toBeNull()
-    expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual(['GET /api/about'])
+    const asked = calls.filter((call) => !call.path.startsWith('/api/whats-new'))
+    expect(asked.map((call) => `${call.method} ${call.path}`)).toEqual(['GET /api/about'])
+  })
+
+  it('opens the text of the running version from the row "Was ist neu", asked with the header of the tab', async () => {
+    who.role = 'member'
+    await show()
+    const news = calls.find((call) => call.path.startsWith('/api/whats-new'))
+    expect(news?.tab).toBeTruthy()
+    const row = [...box.querySelectorAll('button')].find((button) => button.textContent?.includes('Neu in nextasks 0.9.0'))
+    expect(row).toBeDefined()
+    act(() => row!.click())
+    await settle()
+    expect(document.body.textContent).toContain('Apps verbinden')
+    expect(document.body.textContent).toContain('Mit einem Klick.')
   })
 })
