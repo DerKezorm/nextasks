@@ -81,10 +81,16 @@ its own, and nextasks installs from the browser as an app.*
   Events: a task was assigned to you, a task with a time is due, someone joined one of your spaces, and, for lists
   you follow, what others added or completed, bundled over ten minutes.
 - **Installable** from the browser as an app; it offers a reload when a new version is there.
-- **Accounts** by invitation only, a second factor (TOTP, which the operator can require for everybody), profile
-  pictures, sign-in through any number of OpenID Connect providers side by side.
-- **For the operator**: backups on a schedule, to download, upload and restore; a log in four levels; switches for
-  invitations, the API and the iPhone app.
+- **Accounts** by invitation only, sign-in with username or email, passkeys, a second factor (TOTP with recovery
+  codes, which the operator can require for everybody), a list of the devices you are signed in on, a forgotten
+  password by mail, profile pictures, sign-in through any number of OpenID Connect providers side by side.
+- **Connect nex apps**: nexnotes, nexmail, nextime, nexpaper and nexdiary connect with your tasks in one click and a
+  consent, each only for what it needs and only in the spaces you choose. See [Other nex apps](#other-nex-apps).
+- **AI tools (MCP)**: programs that speak the Model Context Protocol read and change tasks at `/api/mcp`, with your
+  consent or an MCP key, with rights per tool. Off until the operator switches it on.
+- **For the operator**: several operators; deleted accounts can be brought back for 30 days; backups on a schedule,
+  to download, upload and restore; a log in four levels; a check for new versions; switches for invitations, the API,
+  MCP, the connections with other nex apps and the iPhone app.
 - **An API** for programs and scripts under `/api/v1`, see [For programs](#for-programs).
 - **Languages**: English and German, plus languages of your own as JSON files.
 
@@ -121,6 +127,12 @@ docker logs nextasks
 
 To choose the code yourself, set `NEXTASKS_SETUP_TOKEN`. Further accounts come by invitation: the operator invites
 into nextasks under **Settings › Server › Accounts**, and the managers of a space invite into their space.
+
+Locked out as the operator? A link to set a new password comes from inside the container:
+
+```
+docker exec -u nextasks nextasks python -m app.emergency reset-link <username or email>
+```
 
 `TZ` is the time zone of accounts that have not chosen one of their own.
 
@@ -167,8 +179,8 @@ password, the seeds of second factors and the key of web push. When `NEXTASKS_SE
 
 ### Backup
 
-Back up with nextasks's own backups under **Settings › Server › Storage and backups**: now, every night or every week, keeping as
-many as you choose. They copy the database consistently while it runs, together with the files and `secret.key`. A
+Back up with nextasks's own backups under **Settings › Server › Storage and backups**: now (with a note if you like), or every day,
+week or month at a time you choose, keeping as many as you choose. They copy the database consistently while it runs, together with the files and `secret.key`. A
 backup holds everything; keep downloaded copies as carefully as the data folder itself.
 
 Moving to a new server: download a backup, set up nextasks there, upload the backup under
@@ -200,6 +212,7 @@ Make a backup first (see above). What changed is in the release notes, and nexta
 | `NEXTASKS_COOKIE_SECURE` | `auto` | `on`, `off` or `auto` (from the request, or from a trusted proxy) |
 | `NEXTASKS_API_DOCS` | `false` | Serves `/api/docs` and `/api/openapi.json` |
 | `NEXTASKS_PORT` | `8000` | Port inside the container, for host networking |
+| `NEXTASKS_SECOND_FACTOR_OFF` | none | Emergency only: `true` asks nobody for a second factor (passkey or code) until it is removed. The log warns while it is set |
 | `TZ` | `UTC` | The time zone of accounts without one of their own |
 | `PUID`, `PGID` | `1000` | Owner of the files in the data folder |
 
@@ -208,11 +221,40 @@ Make a backup first (see above). What changed is in the release notes, and nexta
 Home Assistant, n8n or your own scripts use nextasks over `/api/v1`: spaces, lists and tasks, and making, changing and
 completing tasks. The operator switches the API on under **Settings › Server › General › Interfaces**; then every account
 makes its own API keys under **Settings › My account › Connections › API keys**, to read or to read and write, for chosen
-spaces, with an end date. The
-reference is in [docs/api.md](docs/api.md).
+spaces, with an end date. The reference is in [docs/api.md](docs/api.md).
 
 What is under `/api/v1` stays: new fields may come, nothing is renamed or taken away. A change that would break a
 program goes to `/api/v2` beside it.
+
+**AI tools (MCP)**: programs that speak the Model Context Protocol work with an account's tasks at `/api/mcp`: they
+read spaces, lists, tasks and comments, and create, change, complete, comment on and trash tasks. The operator
+switches **MCP access** on under **Settings › Server › General › Interfaces** (off on every installation). A program
+then connects itself with the account's consent in the browser (OAuth), or takes an MCP key made under
+**Settings › My account › Connections › AI tools (MCP)**, in both cases only for the spaces chosen. Each tool can be
+allowed, asked for first or denied; a request waiting for a yes shows there and comes as a notification, and a task's
+history names the program behind a change.
+
+## Other nex apps
+
+nextasks shares its tasks with the other nex apps on your server, each with one click instead of an API key to copy.
+An account clicks "Connect with nextasks" in the other app (or connect in the app's card under
+**Settings › My account › Connections**) and agrees once on nextasks' page. The page says in words what the other app
+may do, and the account picks the spaces it may see; the other app gets nothing beyond that. The card shows since
+when, what is allowed and when it was last used, with "Check now" and "Disconnect", which ends both sides.
+
+| App | What it may do in nextasks | What you do with it |
+|---|---|---|
+| nexnotes | Read your tasks and those assigned to you; create and change tasks | Send lines, checklist items or a whole note as tasks into a list, with a link back to the note |
+| nexmail | Read tasks; create and change tasks; tick tasks off; see the members of your spaces | Turn a mail into a task; work with your lists in nexmail: tick off, change date, priority and assignees, add tasks; what is completed in nextasks shows there too |
+| nextime | Read tasks; tick tasks off | Your tasks and those assigned to you with a due date in the calendar, ticked off right there |
+| nexpaper | Read tasks; create and change tasks | Make a task from a document, with a link back to it |
+| nexdiary | Read tasks | The tasks completed on a day, while you write that day up |
+
+The operator enters the address of each app once under **Settings › Server › General › Other nex apps**; from then
+on every account connects with one click. Apps that run in your own network (LAN, VPN) need the switch
+"Connections into the local network" there too. The same place switches connections with other nex apps off; then
+nobody connects anew and existing connections rest, nothing is deleted. Connections made before with an API key keep
+working as they are.
 
 ## Languages
 

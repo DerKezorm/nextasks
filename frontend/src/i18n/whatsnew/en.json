@@ -1,4 +1,45 @@
 {
+  "0.9.0": {
+    "lead": "Your other nex apps now connect with nextasks in one click. Also new: passkeys, AI tools and settings laid out the same way in every nex app.",
+    "sections": [
+      {
+        "title": "Connect apps",
+        "where": "My account › Connections",
+        "body": "Other nex apps now reach your tasks with one click, with no API key to copy: click “Connect with nextasks” in the other app (or here in its card) and agree once. The consent page says in plain words what the other app may do, such as “Read your tasks” or “Tick tasks off”, and you pick the spaces it may see. It gets nothing more. Each card shows since when you are connected, what is allowed and when the app last came by; “Disconnect” ends the connection on both sides. What you connected with a key before keeps working."
+      },
+      {
+        "title": "What the other apps do with your tasks",
+        "where": "nexnotes, nexmail, nextime, nexpaper, nexdiary",
+        "body": "nexnotes sends lines, checklist items or a whole note as tasks into one of your lists, with a link back to the note. nexmail turns a mail into a task and shows your lists: tick off, change date, priority and assignees, add new tasks; what you complete here, nexmail sees too. nextime shows your tasks and those assigned to you with a due date in the calendar, and you tick them off right there. All this was there before; now it connects with one click. New: nexpaper makes a task from a document, with a link back to it, and nexdiary shows, while you write up a day, which tasks you completed on it. The other apps need a current version for this."
+      },
+      {
+        "title": "Sign in with a passkey",
+        "where": "My account › Security",
+        "body": "Sign in with your fingerprint, your face or your device's PIN, without a password; a passkey also counts as the second step after the password. Also new: “Forgot your password?” with a link by mail, “Stay signed in”, signing in with username or email, and the list of devices you are signed in on, each to sign out on its own. When your account signs in somewhere new, you get a mail."
+      },
+      {
+        "title": "AI tools (MCP)",
+        "where": "My account › Connections › AI tools (MCP)",
+        "body": "AI programs that speak MCP can work with your tasks if you want: read, create, change, tick off and comment. A program connects with your consent in the browser or takes an MCP key, either way only for the spaces you choose. For each tool you decide: allow, ask first or deny. When a program waits for your yes, nextasks tells you, and a task's history names the program that changed it. The operator switches MCP access on under Server › General › Interfaces; out of the box it is off."
+      },
+      {
+        "title": "Settings in a new order",
+        "where": "Settings",
+        "body": "The settings are laid out as in every nex app: under My account Profile, Security, Appearance, Notifications and Connections, for the operator under Server General, Sign-in, Mail, Storage and backups, Accounts and Log. Light or dark now belongs to your account and follows you to every device, the time zone sits in the profile, and dates and times look the same everywhere."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "For operators: enter the addresses of the other nex apps once under Server › General › Other nex apps, and every account connects with one click. “Connections into the local network” is there too.",
+      "There can be several operators. A deleted account can be brought back for 30 days, with its spaces and assignments.",
+      "Instead of setting a password themselves, operators send a link for a new password.",
+      "Backups run at a time of your choice, monthly too if you like; “Back up now” takes a note.",
+      "The check for new versions asks once at setup; only the operator sees its answer, under About.",
+      "When your session ends, the page stays and asks you to sign in; what you just changed goes out afterwards.",
+      "API keys, the iPhone app and the Home Assistant integration keep working as before.",
+      "The context menu is never wider than the window."
+    ]
+  },
   "0.8.0": {
     "lead": "Tasks take turns, and you talk right at the task.",
     "sections": [

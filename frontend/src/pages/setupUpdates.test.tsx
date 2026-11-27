@@ -19,7 +19,7 @@ vi.mock('../api/client', async (importOriginal) => {
     ...real,
     authApi: {
       ...real.authApi,
-      setupState: async () => ({ needs_setup: true, code_required: true, signed_in: false, version: '0.8.0', min_password: 8 }),
+      setupState: async () => ({ needs_setup: true, code_required: true, signed_in: false, version: '0.9.0', min_password: 8 }),
       setup: async (body: Record<string, unknown>) => {
         sent.bodies.push(body)
         return { id: 1 }

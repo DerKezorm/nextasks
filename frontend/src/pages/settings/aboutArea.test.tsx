@@ -14,13 +14,13 @@ import { NexuiLanguage } from '../../vendor/nexui'
 const who = vi.hoisted(() => ({ role: 'operator' }))
 
 vi.mock('../../state/auth', () => ({
-  useAuth: () => ({ me: { id: 1, version: '0.8.0', role: who.role, timezone: 'Europe/Berlin' } }),
+  useAuth: () => ({ me: { id: 1, version: '0.9.0', role: who.role, timezone: 'Europe/Berlin' } }),
 }))
 vi.mock('../../lib/whatsNew', () => ({ useWhatsNew: () => ({ entry: null }) }))
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
-const ABOUT = { version: '0.8.0', license: 'AGPL-3.0', repo_url: 'https://github.com/DerKezorm/nextasks', releases_url: 'https://github.com/DerKezorm/nextasks/releases', project_url: '' }
+const ABOUT = { version: '0.9.0', license: 'AGPL-3.0', repo_url: 'https://github.com/DerKezorm/nextasks', releases_url: 'https://github.com/DerKezorm/nextasks/releases', project_url: '' }
 const STATE = { update_check: true, checked: true, latest: 'v9.0.0', newer: true, checked_at: '2026-11-26T09:12:00Z', release_url: 'https://github.com/DerKezorm/nextasks/releases/tag/v9.0.0', hidden: false }
 
 let root: Root
@@ -85,7 +85,7 @@ describe('Über nextasks', () => {
   it('shows a member only the own version and never asks for the state', async () => {
     who.role = 'member'
     await show()
-    expect(box.textContent).toContain('0.8.0')
+    expect(box.textContent).toContain('0.9.0')
     expect(box.textContent).not.toContain('9.0.0')
     expect(box.textContent).not.toContain('Aktualisierungen')
     expect(box.querySelector('input[type="checkbox"]')).toBeNull()

@@ -1,4 +1,45 @@
 {
+  "0.9.0": {
+    "lead": "Deine anderen nex-Apps verbinden sich jetzt mit einem Klick mit nextasks. Dazu kommen Passkeys, KI-Werkzeuge und Einstellungen, die in allen nex-Apps gleich aufgebaut sind.",
+    "sections": [
+      {
+        "title": "Apps verbinden",
+        "where": "Mein Konto › Verbindungen",
+        "body": "Andere nex-Apps kommen jetzt mit einem Klick an deine Aufgaben, ganz ohne API-Schlüssel abzutippen: Klick in der anderen App auf „Mit nextasks verbinden“ (oder hier in ihrer Karte) und stimm einmal zu. Die Zustimmungsseite sagt in Worten, was die andere App darf, etwa „Aufgaben lesen“ oder „Aufgaben abhaken“, und du wählst die Bereiche, die sie sehen darf. Mehr bekommt sie nicht. Jede Karte zeigt, seit wann ihr verbunden seid, was erlaubt ist und wann die App zuletzt da war; „Trennen“ beendet die Verbindung auf beiden Seiten. Was du früher mit einem Schlüssel verbunden hast, läuft weiter."
+      },
+      {
+        "title": "Was die anderen Apps mit deinen Aufgaben tun",
+        "where": "nexnotes, nexmail, nextime, nexpaper, nexdiary",
+        "body": "nexnotes schickt Zeilen, Checklistenpunkte oder eine ganze Notiz als Aufgabe in eine deiner Listen, mit Link zurück zur Notiz. nexmail macht aus einer Mail eine Aufgabe und zeigt deine Listen: abhaken, Datum, Priorität und Zuständige ändern, neue Aufgaben anlegen; was du hier erledigst, sieht nexmail auch. nextime zeigt deine und dir zugewiesene Aufgaben mit Fälligkeit im Kalender, abhaken geht direkt dort. Das gab es schon, jetzt ist es mit einem Klick verbunden. Neu: nexpaper legt aus einem Dokument eine Aufgabe an, mit Link zurück zum Dokument, und nexdiary zeigt beim Schreiben, welche Aufgaben du an dem Tag erledigt hast. Die anderen Apps brauchen dafür eine aktuelle Version."
+      },
+      {
+        "title": "Anmelden mit Passkey",
+        "where": "Mein Konto › Sicherheit",
+        "body": "Melde dich mit Fingerabdruck, Gesicht oder der PIN deines Geräts an, ganz ohne Passwort; ein Passkey zählt auch als zweiter Schritt nach dem Passwort. Neu sind außerdem „Passwort vergessen?“ mit einem Link per Mail, „Angemeldet bleiben“, die Anmeldung mit Benutzername oder E-Mail und die Liste deiner angemeldeten Geräte, jedes einzeln abzumelden. Meldet sich dein Konto irgendwo neu an, bekommst du eine Mail."
+      },
+      {
+        "title": "KI-Werkzeuge (MCP)",
+        "where": "Mein Konto › Verbindungen › KI-Werkzeuge (MCP)",
+        "body": "KI-Programme, die MCP sprechen, arbeiten auf Wunsch mit deinen Aufgaben: lesen, anlegen, ändern, abhaken und kommentieren. Ein Programm verbindet sich mit deiner Zustimmung im Browser oder bekommt einen MCP-Schlüssel, so oder so nur für die Bereiche, die du wählst. Je Werkzeug legst du fest: erlauben, erst fragen oder verweigern. Wartet ein Programm auf dein Ja, sagt nextasks dir Bescheid, und im Verlauf einer Aufgabe steht, welches Programm sie geändert hat. Der Betreiber schaltet den MCP-Zugang unter Server › Allgemein › Schnittstellen ein; ab Werk ist er aus."
+      },
+      {
+        "title": "Einstellungen neu geordnet",
+        "where": "Einstellungen",
+        "body": "Die Einstellungen sind aufgebaut wie in allen nex-Apps: unter Mein Konto Profil, Sicherheit, Darstellung, Benachrichtigungen und Verbindungen, für den Betreiber unter Server Allgemein, Anmeldung, Mail, Speicher und Sicherungen, Konten und Log. Hell oder Dunkel gehört jetzt zu deinem Konto und folgt dir auf jedes Gerät, die Zeitzone steht im Profil, und Daten und Uhrzeiten sehen überall gleich aus."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Für Betreiber: Die Adressen der anderen nex-Apps trägst du einmal unter Server › Allgemein › Andere nex-Apps ein, dann verbindet jedes Konto mit einem Klick. Dort steht auch „Verbindungen ins eigene Netz“.",
+      "Es kann mehrere Betreiber geben. Ein gelöschtes Konto lässt sich 30 Tage lang zurückholen, samt seinen Bereichen und Zuweisungen.",
+      "Statt ein Passwort selbst zu setzen, schickt der Betreiber einen Link für ein neues Passwort.",
+      "Sicherungen laufen zu einer Uhrzeit deiner Wahl, auf Wunsch auch monatlich; „Jetzt sichern“ nimmt eine Notiz mit.",
+      "Die Suche nach neuen Versionen fragt bei der Einrichtung einmal nach; ihre Antwort sieht nur der Betreiber, unter Über.",
+      "Endet deine Sitzung, bleibt die Seite stehen und bittet um die Anmeldung; was du gerade geändert hast, geht danach hinaus.",
+      "API-Schlüssel, die iPhone-App und die Home-Assistant-Integration laufen weiter wie bisher.",
+      "Das Kontextmenü ist nie breiter als das Fenster."
+    ]
+  },
   "0.8.0": {
     "lead": "Aufgaben gehen reihum, und ihr redet direkt an der Aufgabe miteinander.",
     "sections": [
