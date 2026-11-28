@@ -1,7 +1,9 @@
 """The routes of the module, in two routers the app mounts, and the dependency for the app's own device routes.
 
-App (``app_router``, prefix ``/api/app/1``; without a key only the two pickups):
+App (``app_router``, prefix ``/api/app/1``; without a key only ``hello`` and the two pickups):
 
+``GET    hello``              which app and interface this server is, how one signs in, what it offers (since 0.1.6,
+                             when the app gives ``hello=``)
 ``POST   pairing/{id}/key``   the key for the QR code (``{secret}``; old forms ``X-Pairing-Secret`` and ``{device}``)
 ``POST   pairing/code``       the key for a typed code or the one-time code of the sign-in (``verifier`` with PKCE)
 ``POST   devices``            a key of its own for another device of the account (iCloud)
@@ -155,6 +157,26 @@ def hello_fields(config: AppConfig) -> dict[str, Any]:
     return {"pairing": ["qr", "code", "browser", "icloud"]}
 
 
+class NexgeraeteHello(BaseModel):
+    """What only the app knows for ``GET /api/app/1/hello`` (since 0.1.6, I30): the interface it speaks (``api``) and
+    the oldest an app may speak with it (``min_api``), its version, how an account signs in (``password``, ``oidc``) and
+    the words of what it offers (``features``, the same list as in ``me``)."""
+
+    api: int = 1
+    min_api: int = 1
+    version: str
+    sign_in: list[str] = Field(default_factory=list)
+    features: list[str] = Field(default_factory=list)
+
+
+def hello_answer(config: AppConfig, hello: NexgeraeteHello) -> dict[str, Any]:
+    """The answer of ``GET /api/app/1/hello``, the same in every app: ``app``, ``api``, ``min_api``, ``version``,
+    ``sign_in``, ``features``, ``pairing``. An app that answers ``hello`` itself (nexnotes before 0.1.6) gives the same
+    with this function."""
+    return {"app": config.app, "api": hello.api, "min_api": hello.min_api, "version": hello.version,
+            "sign_in": list(hello.sign_in), "features": list(hello.features), **hello_fields(config)}
+
+
 def me_fields(config: AppConfig, caller: Caller) -> dict[str, Any]:
     """What the app's ``me`` adds: the account, this device, the server's mark, whether notifications can go out."""
     found: dict[str, Any] = {
@@ -199,13 +221,16 @@ def app_router(
     prefix: str = "/api/app/1",
     tags: list[str] | None = None,
     skip: Collection[str] = (),
+    hello: Callable[[], NexgeraeteHello] | None = None,
 ) -> APIRouter:
     """The app's routes. ``store``: the dependency giving the app's ``Store`` for this request. ``brake``: the sign-in
     brake of ``konten`` (pot ``app-pairing:<sender>``); ``sender(request)`` the sender's address behind the app's
     proxies (``konten`` ``client_address``). ``on_paired(holder, device)``: after every new device (G29, the mail "Neue
     Anmeldung"). ``send``: what posts to the relay (default ``push.post``). ``skip`` (G62): routes of the module the
     app answers itself on the same path, from ``SKIPPABLE`` (``put_push``, ``delete_push``); the app's route then calls
-    ``push.register`` / ``push.unregister``."""
+    ``push.register`` / ``push.unregister``. ``hello()`` (since 0.1.6, I30): what the app answers at ``GET hello``
+    besides the module's fields; without it the app has no ``hello`` from the module (nexnotes keeps its own until it
+    moves over)."""
     skipped = frozenset(skip)
     if skipped - set(SKIPPABLE):
         raise ValueError(f"skip names routes the module does not have: {sorted(skipped - set(SKIPPABLE))}")
@@ -391,6 +416,13 @@ def app_router(
             data.rollback()
             return _refuse(forms.form_of(config, request.headers), refused)
         return {"kinds": push.kinds(config, changed, found.holder, _language(request, found.holder))}
+
+    if hello is not None:
+        describe = hello
+
+        @routes.get("/hello", response_model=None, summary="Which app and interface this server is (no key)")
+        def hello_route() -> Any:
+            return JSONResponse(hello_answer(config, describe()), headers={"Cache-Control": "no-store"})
 
     return routes
 

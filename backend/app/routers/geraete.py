@@ -1,6 +1,7 @@
 """The routes of the shared device module (``vendor/nexgeraete``, geraete 0.1.1), mounted in nextasks.
 
-App (``/api/app/1``, in ``PROMISED`` of ``routers/app1.py``): ``pairing/{id}/key``, ``pairing/code``, ``devices``
+App (``/api/app/1``, in ``PROMISED`` of ``routers/app1.py``): ``hello`` (since geraete 0.1.6, the first question of
+an app built on the module: which app, interface, sign-in, features, ways in), ``pairing/{id}/key``, ``pairing/code``, ``devices``
 (another own device; the list), ``devices/{id}``, ``device`` (rename), ``push``, ``push/kinds``. They answer the
 published iPhone app in its old form ``tasks``, and an app that sends ``X-Nex-App`` in the module's. ``DELETE device``
 stays nextasks' own (a browser session hears 404 there, as before).
@@ -30,11 +31,15 @@ from fastapi import APIRouter, Body, Request
 from fastapi.routing import APIRoute
 from pydantic import BaseModel
 
+from .. import __version__
+from ..db import SessionLocal
 from ..deps import client_ip, require_account, require_operator
-from ..services import devices
+from ..services import devices, settings_service
+from ..services.oidc_store import SqlStore
+from ..vendor.nexoidc import providers
 from ..vendor.nexgeraete import api as nexgeraete_api
 from ..vendor.nexkonten.brake import BRAKE
-from .app1 import CodeIn, Done, KeyIn, KeyOut, MeDevice
+from .app1 import CodeIn, Done, KeyIn, KeyOut, MeDevice, features
 
 #: Where the module's browser routes are mounted (the cards take it as ``base``).
 BROWSER_PREFIX = "/api/devices"
@@ -60,6 +65,38 @@ class KindOut(BaseModel):
 
 class KindsOut(BaseModel):
     kinds: list[KindOut]
+
+
+class HelloOut(BaseModel):
+    """The first question of an app built on the module (geraete 0.1.6), the same in every nex app."""
+
+    app: str
+    api: int
+    min_api: int
+    version: str
+    #: ``password``, ``oidc``: how an account signs in here.
+    sign_in: list[str]
+    #: The same words as ``features`` in ``me``.
+    features: list[str]
+    #: ``qr``, ``code``, ``browser``, ``icloud``.
+    pairing: list[str]
+
+
+#: The interface the app speaks (``/api/app/1``) and the oldest an app may speak with this server.
+API = 1
+MIN_API = 1
+
+
+def hello() -> nexgeraete_api.NexgeraeteHello:
+    """What nextasks answers at ``GET /api/app/1/hello`` besides the module's ``pairing``."""
+    with SessionLocal() as db:
+        ways = []
+        if settings_service.get(db, "password_login"):
+            ways.append("password")
+        if providers.public_list(SqlStore(db)):
+            ways.append("oidc")
+        offered = features(db)
+    return nexgeraete_api.NexgeraeteHello(api=API, min_api=MIN_API, version=__version__, sign_in=ways, features=offered)
 
 
 @dataclass(frozen=True)
@@ -93,6 +130,7 @@ _WAYS: dict[tuple[str, str], Way] = {
     ("DELETE", "/api/app/1/push"): Way(
         answer=(200, Done), name="stop_push", summary="Stop notifications for this device; it stays paired"),
     ("GET", "/api/app/1/push/kinds"): Way(answer=(200, KindsOut)),
+    ("GET", "/api/app/1/hello"): Way(answer=(200, HelloOut)),
     ("PUT", "/api/app/1/push/kinds"): Way(answer=(200, KindsOut)),
 }
 #: nextasks keeps its own ``DELETE /api/app/1/device`` (``routers/app1.py``).
@@ -155,6 +193,7 @@ router = _described(
         send=devices.send,
         sender=_sender,
         clock=devices.now,
+        hello=hello,
     )
 )
 

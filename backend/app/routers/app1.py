@@ -909,6 +909,7 @@ PROMISED = (
     "/api/app/1/devices/{device_id}",
     "/api/app/1/files",
     "/api/app/1/files/{attachment_id}",
+    "/api/app/1/hello",
     "/api/app/1/me",
     "/api/app/1/pairing/code",
     "/api/app/1/pairing/{pairing_id}/key",
