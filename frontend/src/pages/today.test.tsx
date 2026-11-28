@@ -2,7 +2,7 @@
 // line of now, the week band (a click leads to the day, a drop moves there), the focus of the day on the server, the
 // right column shared and alone, "Plan tomorrow", the quiet card once nothing is left.
 import { act } from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { localDay } from '../lib/due'
 import { fromNow, nowIndex } from '../lib/today'
@@ -10,7 +10,10 @@ import { addDays } from '../sync/repeat'
 import { FakeServer, smallWorld } from '../test/fakeServer'
 import { button, click, drag, mount, row, settle, unmount, where } from '../test/harness'
 
-afterEach(unmount)
+afterEach(async () => {
+  await unmount()
+  vi.useRealTimers()
+})
 
 const today = localDay()
 const tomorrow = addDays(today, 1)
@@ -61,6 +64,8 @@ describe('the words of time', () => {
 
 describe('Today', () => {
   it('parts the day into overdue, with a time and some time today, and keeps what was done today ticked', async () => {
+    // Noon of today: 00:01 has passed and 23:58 is still to come, whenever the run starts.
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date(`${today}T12:00:00`) })
     const { server } = world()
     const page = await mount(server, '/today')
     expect(titlesIn(card(page, 'overdue'))).toEqual(['Overdue bins'])
