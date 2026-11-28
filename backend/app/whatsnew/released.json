@@ -58,5 +58,9 @@
   "0.8.0": {
     "de": "sha256-DA3SNFLg5BZMEFzeAh4EKoAew+LVG6EHFGgIMAKZ+as=",
     "en": "sha256-Gd1A9mbB/bwbNvV/nSS5W542J7GRefI2ZVn8KO448FU="
+  },
+  "0.9.0": {
+    "de": "sha256-Y6/NcxcPQgHNQdJcNvraszue7Q1Oetk3k6z4jdnikd8=",
+    "en": "sha256-AqCNBPhdvOhZ9VhLNHn00X6DYdBv1UDJrcRPAn/z1b8="
   }
 }

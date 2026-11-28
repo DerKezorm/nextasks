@@ -1,4 +1,18 @@
 {
+  "0.9.1": {
+    "lead": "Die kommende iPhone- und iPad-App erkennt beim Verbinden gleich, ob unter der Adresse nextasks antwortet.",
+    "sections": [
+      {
+        "title": "Verbinden mit der App",
+        "where": "Mein Konto › Verbindungen › iPhone oder iPad verbinden",
+        "body": "Bevor die App einen Code oder die Anmeldung im Browser nutzt, fragt sie den Server, wer er ist und was er kann. So sagt sie gleich, wenn eine Adresse nicht zu nextasks führt oder der Server zu alt ist, und wartet beim ersten Verbinden im Heimnetz, bis iOS nach dem lokalen Netzwerk gefragt hat. Die App aus dem App Store merkt davon nichts und läuft weiter wie bisher."
+      }
+    ],
+    "smallTitle": "Außerdem",
+    "small": [
+      "Die Startfrage kommt aus dem gemeinsamen Gerätemodul und antwortet in allen nex-Apps gleich, auch in nexnotes."
+    ]
+  },
   "0.9.0": {
     "lead": "Deine anderen nex-Apps verbinden sich jetzt mit einem Klick mit nextasks. Dazu kommen eine Übersicht deiner Geräte, Passkeys, KI-Werkzeuge und Einstellungen, die in allen nex-Apps gleich aufgebaut sind.",
     "sections": [

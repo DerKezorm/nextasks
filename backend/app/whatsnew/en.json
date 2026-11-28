@@ -1,4 +1,18 @@
 {
+  "0.9.1": {
+    "lead": "The coming iPhone and iPad app knows right away whether nextasks answers at an address.",
+    "sections": [
+      {
+        "title": "Connecting the app",
+        "where": "My account › Connections › Connect iPhone or iPad",
+        "body": "Before the app uses a code or the sign-in in the browser, it asks the server who it is and what it offers. So it says at once when an address does not lead to nextasks or the server is too old, and on the first connection in the home network it waits until iOS has asked about the local network. The app from the App Store notices nothing and works as before."
+      }
+    ],
+    "smallTitle": "Also",
+    "small": [
+      "The first question comes from the shared device module and answers the same in every nex app, nexnotes too."
+    ]
+  },
   "0.9.0": {
     "lead": "Your other nex apps now connect with nextasks in one click. Also new: an overview of your devices, passkeys, AI tools and settings laid out the same way in every nex app.",
     "sections": [
