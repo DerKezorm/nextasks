@@ -1,10 +1,10 @@
-"""The routes of the shared device module (``vendor/nexgeraete``, geraete 0.1.1), mounted in nextasks.
+"""The routes of the shared device module (``vendor/nexgeraete``, geraete 0.1.6), mounted in nextasks.
 
-App (``/api/app/1``, in ``PROMISED`` of ``routers/app1.py``): ``hello`` (since geraete 0.1.6, the first question of
-an app built on the module: which app, interface, sign-in, features, ways in), ``pairing/{id}/key``,
-``pairing/code``, ``devices`` (another own device; the list), ``devices/{id}``, ``device`` (rename), ``push``, ``push/kinds``. They answer the
-published iPhone app in its old form ``tasks``, and an app that sends ``X-Nex-App`` in the module's. ``DELETE device``
-stays nextasks' own (a browser session hears 404 there, as before).
+App (``/api/app/1``, in ``PROMISED`` of ``routers/app1.py``): ``hello`` (since geraete 0.1.6, the first question of an
+app built on the module: which app, interface, sign-in, features, ways in), ``pairing/{id}/key``, ``pairing/code``,
+``devices`` (another own device; the list), ``devices/{id}``, ``device`` (rename), ``push``, ``push/kinds``. They
+answer the published iPhone app in its old form ``tasks``, and an app that sends ``X-Nex-App`` in the module's.
+``DELETE device`` stays nextasks' own (a browser session hears 404 there, as before).
 
 The module's routes answer with plain JSON. So that ``/api/app/1`` stays described as before (``tests/
 app1_contract.json`` keeps the fields of every answer, ``tests/test_openapi_names.py`` the names of 0.8.0), each is
