@@ -1,8 +1,8 @@
 """The routes of the shared device module (``vendor/nexgeraete``, geraete 0.1.1), mounted in nextasks.
 
 App (``/api/app/1``, in ``PROMISED`` of ``routers/app1.py``): ``hello`` (since geraete 0.1.6, the first question of
-an app built on the module: which app, interface, sign-in, features, ways in), ``pairing/{id}/key``, ``pairing/code``, ``devices``
-(another own device; the list), ``devices/{id}``, ``device`` (rename), ``push``, ``push/kinds``. They answer the
+an app built on the module: which app, interface, sign-in, features, ways in), ``pairing/{id}/key``,
+``pairing/code``, ``devices`` (another own device; the list), ``devices/{id}``, ``device`` (rename), ``push``, ``push/kinds``. They answer the
 published iPhone app in its old form ``tasks``, and an app that sends ``X-Nex-App`` in the module's. ``DELETE device``
 stays nextasks' own (a browser session hears 404 there, as before).
 
@@ -36,9 +36,9 @@ from ..db import SessionLocal
 from ..deps import client_ip, require_account, require_operator
 from ..services import devices, settings_service
 from ..services.oidc_store import SqlStore
-from ..vendor.nexoidc import providers
 from ..vendor.nexgeraete import api as nexgeraete_api
 from ..vendor.nexkonten.brake import BRAKE
+from ..vendor.nexoidc import providers
 from .app1 import CodeIn, Done, KeyIn, KeyOut, MeDevice, features
 
 #: Where the module's browser routes are mounted (the cards take it as ``base``).
